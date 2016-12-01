@@ -1,4 +1,4 @@
-include("/Users/davidlittle/MEGA/Research/software/Psychotask.jl/src/Psychotask.jl")
+include(joinpath(dirname(@__FILE__),"Psychotask.jl"))
 using Psychotask
 
 sid = (length(ARGS) > 0 ? ARGS[1] : "test_sid")
