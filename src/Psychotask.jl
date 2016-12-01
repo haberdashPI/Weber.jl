@@ -1,4 +1,4 @@
-module Psychoacoustics
+module Psychotask
 
 include(joinpath(dirname(@__FILE__),"Trial.jl"))
 include(joinpath(dirname(@__FILE__),"VideoUtil.jl"))
