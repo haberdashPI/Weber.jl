@@ -414,7 +414,7 @@ const Error = 3
 
 function watch_pauses(exp,e)
   if exp.mode == Running && iskeydown(e,KeyCode.ESCAPE)
-    pause(exp,"Exit program? [hit Y or N]")
+    pause(exp,"Exit? [Y for yes, or N for no]")
     exp.mode = ToExit
   elseif exp.mode == Running && isunfocused(e)
     pause(exp,"Waiting for window focus...")
@@ -425,10 +425,8 @@ function watch_pauses(exp,e)
   elseif exp.mode == ToExit && iskeydown(e,key"n")
     unpause(exp)
   elseif exp.mode == Unfocused && isfocused(e)
-    popview(exp.window)
-    record_ifheader(exp,"unpaused")
-    exp.mode = Running
-    push!(exp.running,true)
+    pause(exp,"Paused. [To exit hit Y, to resume hit N]")
+    exp.mode = ToExit
   end
 end
 
