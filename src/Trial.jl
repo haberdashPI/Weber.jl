@@ -1,5 +1,5 @@
 # TODO: use the version indicated by Pkg
-const psych_version = v"0.0.1"
+const psych_version = v"0.0.2"
 
 using Reactive
 using Lazy: @>>, @>, @_
@@ -8,8 +8,8 @@ using SFML
 import SFML: KeyCode
 import Base: isnull, run
 
-export Experiment, run, addtrial, moment, response, record,
-  iskeydown, iskeyup, iskeypressed, isfocused, isunfocused, KeyCode,
+export Experiment, run, addtrial, addbreak, moment, response, record,
+  iskeydown, iskeyup, iskeypressed, isfocused, isunfocused, endofpause, KeyCode,
   @key_str
 
 const default_moment_resolution = 1000
@@ -18,14 +18,21 @@ const exp_width = 1024
 const exp_height = 768
 const exp_color_depth = 32
 
-type WindowEvent
-  data::Nullable{SFML.Event}
+abstract ExpEvent
+
+type SFMLEvent <: ExpEvent
+  data::SFML.Event
   time::Float64
 end
 
-WindowEvent() = WindowEvent(Nullable{SFML.Event}(),0)
+type EndPauseEvent <: ExpEvent
+end
 
-isnull(event::WindowEvent) = isnull(event.data)
+type EmptyEvent <: ExpEvent
+end
+
+isnull(e::ExpEvent) = false
+isnull(e::EmptyEvent) = true
 
 str_to_code = Dict(
   "a" => KeyCode.A,
@@ -75,42 +82,56 @@ macro key_str(key)
   end
 end
 
-function iskeydown(event::WindowEvent)
-  !isnull(event.data) && (get_type(get(event.data)) == EventType.KEY_PRESSED)
+endofpause(event::EmptyEvent) = false
+endofpause(event::EndPauseEvent) = true
+endofpause(event::SFMLEvent) = false
+
+function iskeydown(event::SFMLEvent)
+  get_type(event.data) == EventType.KEY_PRESSED
 end
+iskeydown(event::EndPauseEvent) = false
+iskeydown(event::EmptyEvent) = false
 
 const iskeypressed = is_key_pressed
 
-function iskeydown(event::WindowEvent,keycode)
-  !isnull(event.data) &&
-    get_type(get(event.data)) == EventType.KEY_PRESSED &&
-    get_key(get(event.data)).key_code == keycode
+function iskeydown(event::SFMLEvent,keycode)
+  get_type(event.data) == EventType.KEY_PRESSED &&
+    get_key(event.data).key_code == keycode
 end
+iskeydown(event::EndPauseEvent,keycode) = false
+iskeydown(event::EmptyEvent,keycode) = false
 
-function iskeyup(event::WindowEvent,keycode)
-  !isnull(event.data) &&
-    get_type(get(event.data)) == EventType.KEY_RELEASED &&
-    get_key(get(event.data)).key_code == keycode
+function iskeyup(event::SFMLEvent,keycode)
+  get_type(event.data) == EventType.KEY_RELEASED &&
+    get_key(event.data).key_code == keycode
 end
+iskeyup(event::EndPauseEvent,keycode) = false
+iskeyup(event::EmptyEvent,keycode) = false
 
-function iskeyup(event::WindowEvent)
-  !isnull(event.data) && get_type(get(event.data)) == EventType.KEY_RELEASED
+function iskeyup(event::SFMLEvent)
+  get_type(event.data) == EventType.KEY_RELEASED
 end
+iskeyup(event::EndPauseEvent) = false
+iskeyup(event::EmptyEvent) = false
 
-function isfocused(event::WindowEvent)
-  !isnull(event.data) && get_type(get(event.data)) == EventType.GAINED_FOCUS
+function isfocused(event::SFMLEvent)
+  get_type(event.data) == EventType.GAINED_FOCUS
 end
+isfocused(event::EndPauseEvent) = false
+isfocused(event::EmptyEvent) = false
 
-function isunfocused(event::WindowEvent)
-  !isnull(event.data) && get_type(get(event.data)) == EventType.LOST_FOCUS
+function isunfocused(event::SFMLEvent)
+  get_type(event.data) == EventType.LOST_FOCUS
 end
+isunfocused(event::EndPauseEvent) = false
+isunfocused(event::EmptyEvent) = false
 
 function event_streamer(window)
   function helper(time::Float64)
-    events = Signal(WindowEvent())
+    events = Signal(ExpEvent,EmptyEvent())
     event = Event()
     while pollevent(window,event)
-      push!(events,WindowEvent(event,time))
+      push!(events,SFMLEvent(event,time))
       event = Event()
     end
     events
@@ -165,6 +186,7 @@ type ExperimentState
   exception::Nullable{Exception}
   moment_resolution::Float64
   pause_state::Reactive.Signal{Bool}
+  pause_events::Reactive.Signal{ExpEvent}
 end
 
 function record_helper(exp::ExperimentState,kwds,onlyifheader=false)
@@ -318,10 +340,12 @@ function ExperimentState(debug::Bool;
   started = Reactive.Signal(false)
 
   timing = foldp(+,0.0,fpswhen(running,moment_resolution))
+  pause_events = Reactive.Signal(ExpEvent,EmptyEvent())
   events = @_ fpswhen(started,input_resolution) begin
     sampleon(_,timing)
     map(event_streamer(window),_)
     flatten(_)
+    merge(_,pause_events)
   end
 
   state = Reactive.Signal(Bool,false)
@@ -331,9 +355,9 @@ function ExperimentState(debug::Bool;
                         MomentQueue(Queue(TrialMoment),0),state,data_file,window,
                         () -> error("no cleanup function available!"),
                         Nullable{Exception}(),
-                        moment_resolution,Reactive.Signal(false))
+                        moment_resolution,Reactive.Signal(false),pause_events)
 
-  exp.state = map(filterwhen(running,WindowEvent(),merge(timing,events))) do x
+  exp.state = map(filterwhen(running,EmptyEvent(),merge(timing,events))) do x
     if !isnull(x)
       handle(exp,exp.moments,x)
       true
@@ -346,7 +370,7 @@ function ExperimentState(debug::Bool;
     false
   end
 
-  exp.watcher_state = map(filterwhen(running,WindowEvent(),events)) do e
+  exp.watcher_state = map(filterwhen(running,EmptyEvent(),events)) do e
     if !isnull(e)
       try
         exp.trial_watcher(e)
@@ -375,7 +399,9 @@ function addtrial(exp::ExperimentState,moments::Vararg{TrialMoment})
 end
 
 function addtrial(watcher::Function,exp::ExperimentState,moments::Vararg{TrialMoment})
-  precompile(watcher,(WindowEvent,))
+  precompile(watcher,(SFMLEvent,))
+  precompile(watcher,(EndPauseEvent,))
+  precompile(watcher,(EmptyEvent,))
 
   start_trial = moment() do t
     # make sure the trial doesn't lag due to memory allocation
@@ -393,7 +419,6 @@ end
 
 function pause(exp,message)
   push!(exp.running,false)
-  pushview(exp.window)
   record_ifheader(exp,"paused")
   clear(exp.window,SFML.black)
   draw(exp.window,message)
@@ -401,10 +426,12 @@ function pause(exp,message)
 end
 
 function unpause(exp)
-  popview(exp.window)
   record_ifheader(exp,"unpaused")
   exp.mode = Running
+  clear(exp.window,SFML.black)
+  display(exp.window)
   push!(exp.running,true)
+  push!(exp.pause_events,EndPauseEvent())
 end
 
 const Running = 0
@@ -450,7 +477,10 @@ function moment(fn::Function)
 end
 
 function response(fn::Function;timeout = 0,timeout_callback = t->nothing)
-  precompile(fn,(WindowEvent,))
+  precompile(fn,(SFMLEvent,))
+  precompile(fn,(EndPauseEvent,))
+  precompile(fn,(EmptyEvent,))
+
   precompile(timeout_callback,(Float64,))
   ResponseMoment(fn,timeout_callback,timeout)
 end
@@ -470,7 +500,7 @@ function handle(exp::ExperimentState,moment::TimedMoment,time::Float64)
   true
 end
 
-function handle(exp::ExperimentState,moment::TimedMoment,event::WindowEvent)
+function handle(exp::ExperimentState,moment::TimedMoment,event::ExpEvent)
   false
 end
 
@@ -489,7 +519,7 @@ function handle(exp::ExperimentState,moment::ResponseMoment,time::Float64)
   true
 end
 
-function handle(exp::ExperimentState,moment::ResponseMoment,event::WindowEvent)
+function handle(exp::ExperimentState,moment::ResponseMoment,event::ExpEvent)
   handled = true
   try
     handled = moment.respond(event)
@@ -501,7 +531,7 @@ function handle(exp::ExperimentState,moment::ResponseMoment,event::WindowEvent)
   handled
 end
 
-function handle(exp::ExperimentState,queue::MomentQueue,event::WindowEvent)
+function handle(exp::ExperimentState,queue::MomentQueue,event::ExpEvent)
   if !isempty(queue.data)
     moment = front(queue.data)
     handled = handle(exp,moment,event)
@@ -519,11 +549,14 @@ function handle(exp::ExperimentState,queue::MomentQueue,t::Float64)
     event_time = delta_t(moment) + queue.last
     if event_time - t <= 1/exp.moment_resolution
       offset = t - start_time
-      while event_time > offset + time(); end
+      run_time = offset + time()
+      while event_time > run_time
+        run_time = offset + time()
+      end
       handled = handle(exp,moment,t)
       if handled
         dequeue!(queue.data)
-        queue.last += delta_t(moment)
+        queue.last = run_time
       end
     end
   end
