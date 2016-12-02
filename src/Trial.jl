@@ -417,6 +417,31 @@ function addtrial(watcher::Function,exp::ExperimentState,moments::Vararg{TrialMo
   enqueue!(exp.moments.data,end_trial)
 end
 
+function addbreak(watcher::Function,moments::Vararg{TrialMoment})
+  addbreak(watcher,get_experiment(),moments...)
+end
+
+function addbreak(moments::Vararg{TrialMoment})
+  addbreak(get_experiment(),moments...)
+end
+
+function addbreak(exp::ExperimentState,moments::Vararg{TrialMoment})
+  addbreak(e -> nothing,exp,moments...)
+end
+
+function addbreak(watcher::Function,exp::ExperimentState,moments::Vararg{TrialMoment})
+  precompile(watcher,(SFMLEvent,))
+  precompile(watcher,(EndPauseEvent,))
+  precompile(watcher,(EmptyEvent,))
+
+  start_break = moment() do t
+    exp.trial_watcher = watcher
+  end
+
+  enqueue!(exp.moments.data,start_break)
+  for m in moments;enqueue!(exp.moments.data,m);end
+end
+
 function pause(exp,message)
   push!(exp.running,false)
   record_ifheader(exp,"paused")
