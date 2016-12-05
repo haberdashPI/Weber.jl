@@ -31,24 +31,3 @@ function display_text(str::String)
   draw(str)
   display()
 end
-
-savedwindow = Nullable{Texture}()
-function pushview(window::RenderWindow)
-  global savedwindow
-
-  size = get_size(window)
-  saved = Texture(size.x,size.y)
-  update(saved,window)
-
-  savedwindow = Nullable(saved)
-end
-
-function popview(window::RenderWindow)
-  global savedwindow
-
-  if isnull(savedwindow)
-    error("No view was pushed!")
-  else
-    draw(window,Sprite(get(savedwindow)))
-  end
-end
