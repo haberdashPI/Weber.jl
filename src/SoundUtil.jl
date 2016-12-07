@@ -122,7 +122,8 @@ function sound(x::Array{Float64};sample_rate_Hz=44100)
 end
 
 function sound(x::SampleBuf)
-  sound(SampleBuf(Fixed{Int16,15}.(x),samplerate(x)))
+  bounded = max(min(x,typemax(Fixed{Int16,15})),typemin(Fixed{Int16,15}))
+  sound(SampleBuf(Fixed{Int16,15}.(bounded),samplerate(x)))
 end
 
 function play(x,async=true)
@@ -151,22 +152,21 @@ end
 const SDL_INIT_AUDIO = 0x0010
 const AUDIO_S16LSB = 0x8010
 function init_sound(samplerate=44100)
-  println("_psycho_SDL: $_psycho_SDL")
-  #init = ccall((:SDL_Init,_psycho_SDL),Cint,(UInt32,),SDL_INIT_AUDIO)
+  init = ccall((:SDL_Init,_psycho_SDL),Cint,(UInt32,),SDL_INIT_AUDIO)
   if init < 0
-    error_str = ccall((:SDL_GetError(),_psycho_SDL),Cstring,())
+    error_str = ccall((:SDL_GetError,_psycho_SDL),Cstring,())
     error("Failed to initialize SDL: $error_str")
   end
 
   # we use a very small buffer, to minimize latency
-  #mixer_init = ccall((:Mix_OpenAudio,_psycho_SDLmixer),Cint,
-  #                   (Cint,UInt16,Cint,Cint),samplerate,AUDIO_S16LSB,2,64)
-  if mixier_init < 0
+  mixer_init = ccall((:Mix_OpenAudio,_psycho_SDLmixer),Cint,
+                     (Cint,UInt16,Cint,Cint),samplerate,AUDIO_S16LSB,2,64)
+  if mixer_init < 0
     error("Failed to initialize sound.")
   end
 
   result = SoundEnvironment()
-  finalize(result,x -> close_sound())
+  finalizer(result,x -> close_sound())
   result
 end
 
@@ -181,7 +181,8 @@ function play(x::Sound,async=true)
                  (Cint,Ref{MixChunk},Cint),
                  -1,x.chunk,0)
   if result < 0
-    error("Failed to play sound!")
+    error_str = ccall((:Mix_GetError,_psycho_SDLmixer),Cint,())
+    error("Failed to play sound: $error_str")
   end
   if !async
     error("unsupported functionality: synchronous audio playback")

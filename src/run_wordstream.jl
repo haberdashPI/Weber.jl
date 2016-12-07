@@ -14,7 +14,7 @@ using Psychotask
 using Lazy: @_, @>
 
 # make sure the play function is fully compiled
-play(tone(1))
+play(noise(1))
 
 sid = (length(ARGS) > 0 ? ARGS[1] : "test_sid")
 
