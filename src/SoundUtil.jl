@@ -3,6 +3,8 @@ using DSP
 using LibSndFile
 using Gadfly
 using FixedPointNumbers
+using BinDeps
+@BinDeps.load_dependencies [:_psycho_SDL, :_psycho_SDLmixer]
 
 import Gadfly: plot
 import Base: wait
@@ -147,17 +149,16 @@ end
 const SDL_INIT_AUDIO = 0x0010
 const AUDIO_S16LSB = 0x8010
 function init_sound(samplerate=44100)
-  Libdl.dlopen("libSDL")
-  #dlopen("libSDL_mixer")
-  init = ccall((:SDL_Init,"libSDL"),Cint,(UInt32,),SDL_INIT_AUDIO)
+  println("_psycho_SDL: $_psycho_SDL")
+  #init = ccall((:SDL_Init,_psycho_SDL),Cint,(UInt32,),SDL_INIT_AUDIO)
   if init < 0
-    error_str = ccall((:SDL_GetError(),"libSDL"),Cstring,(Void,))
+    error_str = ccall((:SDL_GetError(),_psycho_SDL),Cstring,())
     error("Failed to initialize SDL: $error_str")
   end
 
   # we use a very small buffer, to minimize latency
-  mixer_init = ccall((:Mix_OpenAudio,"libSDL_mixer"),Cint,
-                     (Cint,UInt16,Cint,Cint),samplerate,AUDIO_S16LSB,2,64)
+  #mixer_init = ccall((:Mix_OpenAudio,_psycho_SDLmixer),Cint,
+  #                   (Cint,UInt16,Cint,Cint),samplerate,AUDIO_S16LSB,2,64)
   if mixier_init < 0
     error("Failed to initialize sound.")
   end
@@ -168,13 +169,13 @@ function init_sound(samplerate=44100)
 end
 
 function close_sound()
-  ccall((:Mix_CloseAudio,"libSDL_mixer"),Void,(Void,))
-  ccall((:SDL_Quit,"libSDL"),Void,(Void,))
+  ccall((:Mix_CloseAudio,_psycho_SDLmixer),Void,())
+  ccall((:SDL_Quit,_psycho_SDL),Void,())
 end
 
 sound_environment = init_sound()
 function play(x::Sound,async=true)
-  result = ccall((:Mix_PlayChannel,"libSDL_mixer"),Cint,
+  result = ccall((:Mix_PlayChannel,_psycho_SDLmixer),Cint,
                  (Cint,Ref{MixChunk},Cint),
                  -1,x.chunk,0)
   if result < 0
