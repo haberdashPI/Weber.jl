@@ -14,7 +14,7 @@ using Psychotask
 using Lazy: @_, @>
 
 # make sure the play function is fully compiled
-play(silence(0.1))
+play(tone(1))
 
 sid = (length(ARGS) > 0 ? ARGS[1] : "test_sid")
 
@@ -26,11 +26,11 @@ dome_sound = loadsound("/Users/davidlittle/Downloads/Stimuli for Joel/Canadian/d
 s_sound = s_sound[1:end-round(Int,sr*0.027)]
 
 function gapstone(gap)
-  sound(mix(s_sound,[silence(length(s_sound)/sr+gap); dhone_sound]))
+  sound(attenuate(mix(s_sound,[silence(length(s_sound)/sr+gap); dhone_sound]),20))
 end
 
 function gapstome(gap)
-  sound(mix(s_sound,[silence(length(s_sound)/sr+gap); dome_sound]))
+  sound(attenuate(mix(s_sound,[silence(length(s_sound)/sr+gap); dome_sound]),20))
 end
 
 const ms = 1/1000
@@ -59,7 +59,7 @@ break_text = render_text("You can take a break. Hit"*
 SOA = 672.5ms
 
 n_trials = 60
-n_break_after = 2
+n_break_after = 10
 
 stimuli_per_phase = 25 # phase = context or test
 context_types = [:normal,:small,:negative]
@@ -84,11 +84,16 @@ end
 function asmoment(spacing,gap,stimulus,phase)
   sound = stimuli[spacing,gap,stimulus]
   moment(SOA) do t
-    play(sound)
+    play(sound,false)
     record("stimulus",time=t,stimulus=stimulus,
            spacing=spacing,gap=gap,phase=phase)
   end
 end
+
+# TODO: use SDL instead of SFML and make sure this works on Windows.
+
+# TODO: fix timing to skip over pauses correctly. record
+# start of each trial
 
 # TODO: create higher level primitives from these lower level primitives
 # e.g. continuous response, adpative 2AFC, and constant stimulus 2AFC tasks.
