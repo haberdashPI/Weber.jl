@@ -3,8 +3,10 @@ using DSP
 using LibSndFile
 using Gadfly
 using FixedPointNumbers
-using BinDeps
-@BinDeps.load_dependencies [:_psycho_SDL, :_psycho_SDLmixer]
+
+depsjl = joinpath(dirname(@__FILE__), "..", "deps", "deps.jl")
+isfile(depsjl) ? include(depsjl) : error("Psychotask not properly ",
+    "installed. Please run\nPkg.build(\"Psychotask\")")
 
 import Gadfly: plot
 import Base: wait
