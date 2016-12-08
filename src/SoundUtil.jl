@@ -146,6 +146,13 @@ immutable Sound
   samplerate::Int
 end
 
+function plot(x::Psychotask.Sound;resolution=1000)
+  buf = unsafe_wrap(Array,x.chunk.buffer,div(x.chunk.byte_length,2))
+  plot(x=linspace(0,length(buf)/x.samplerate,resolution),
+       y=Float64.(buf[floor(Int,linspace(1,length(buf),resolution))]),
+       Geom.line)
+end
+
 function sound(x::SampleBuf{Fixed{Int16,15}})
   Sound(MixChunk(0,pointer(x.data),sizeof(x.data),128),samplerate(x))
 end
