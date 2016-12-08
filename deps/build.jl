@@ -3,58 +3,64 @@ using BinDeps
 
 @BinDeps.setup
 
-libSDL = library_dependency("libSDL", aliases = ["libSDL", "SDL"])
-libSDL_image = library_dependency("libSDL_image", aliases = ["libSDL_image"], depends = [libSDL])
-libSDL_mixer = library_dependency("libSDL_mixer", aliases = ["libSDL_mixer"], depends = [libSDL])
-libSDL_ttf = library_dependency("libSDL_ttf", aliases = ["libSDL_ttf"], depends = [libSDL])
+libSDL2 = library_dependency("libSDL2", aliases = ["libSDL2", "SDL"])
+libSDL2_image = library_dependency("libSDL2_image", aliases = ["libSDL2_image"], depends = [libSDL2])
+libSDL2_mixer = library_dependency("libSDL2_mixer", aliases = ["libSDL2_mixer"], depends = [libSDL2])
+libSDL2_ttf = library_dependency("libSDL2_ttf", aliases = ["libSDL2_ttf"], depends = [libSDL2])
 
 @static if is_windows()
   if Pkg.installed("WinRPM") === nothing
     error("WinRPM package not installed, pluse run Pkg.add(\"WinRPM\")")
   end
 	using WinRPM
-	provides(WinRPM.RPM, "libSDL", libSDL, os = :Windows)
-	provides(WinRPM.RPM, "libSDL_image", libSDL_image, os = :Windows)
-	provides(WinRPM.RPM, "libSDL_mixer", libSDL_mixer, os = :Windows)
-	provides(WinRPM.RPM, "libSDL_ttf", libSDL_ttf, os = :Windows)
+	provides(WinRPM.RPM, "SDL2", libSDL2, os = :Windows)
+	provides(WinRPM.RPM, "SDL2_image", libSDL2_image, os = :Windows)
+	provides(WinRPM.RPM, "SDL2_mixer", libSDL2_mixer, os = :Windows)
+	provides(WinRPM.RPM, "SDL2_ttf", libSDL2_ttf, os = :Windows)
 elseif is_apple()
 	if Pkg.installed("Homebrew") === nothing
 		error("Hombrew package not installed, please run Pkg.add(\"Homebrew\")")
 	end
 	using Homebrew
-	provides(Homebrew.HB, "sdl", libSDL, os = :Darwin)
-	provides(Homebrew.HB, "sdl_image", libSDL_image, os = :Darwin)
-	provides(Homebrew.HB, "sdl_mixer", libSDL_mixer, os = :Darwin)
-	provides(Homebrew.HB, "sdl_ttf", libSDL_ttf, os = :Darwin)
+	provides(Homebrew.HB, "sdl2", libSDL2, os = :Darwin)
+	provides(Homebrew.HB, "sdl2_image", libSDL2_image, os = :Darwin)
+	provides(Homebrew.HB, "sdl2_mixer", libSDL2_mixer, os = :Darwin)
+	provides(Homebrew.HB, "sdl2_ttf", libSDL2_ttf, os = :Darwin)
 elseif is_linux()
     provides(AptGet,
-	    	     Dict("libsdl1.2-dev" => libSDL,
-	    	          "libsdl-image1.2-dev" => libSDL_image,
-	    	          "libsdl-mixer1.2-dev" => libSDL_mixer,
-	    	          "libsdl-ttf2.0-dev" => libSDL_ttf))
-
-  provides(Yum,
-    		   Dict("SDL-devel" => libSDL,
-    		        "SDL_image-devel" => libSDL_image,
-    		        "SDL_mixer-devel" => libSDL_mixer,
-    		        "SDL_ttf-devel" => libSDL_ttf))
+	    	     Dict("libsdl2-2.0-0" => libSDL2,
+	    	          "libsdl2-image-2.0-0" => libSDL2_image,
+	    	          "libsdl2-mixer-2.0-0" => libSDL2_mixer,
+	    	          "libsdl2-ttf-2.0-0" => libSDL2_ttf))
 else
   error("Unsupported operating system.")
 end
 
-@BinDeps.install Dict(:libSDL => :_psycho_SDL, :libSDL_mixer => :_psycho_SDLmixer)
+@BinDeps.install Dict(:libSDL2 => :_psycho_SDL,
+                      :libSDL2_mixer => :_psycho_SDLmixer,
+                      :libSDL2_ttf => :_psycho_SDLttf)
 
-# install headers for SDL 1.2
-SDLSource = "SDL-1.2.15"
-
+# install headers for SDL 2.0 and SDL_mixer 2.0
 downloaddir = joinpath(dirname(@__FILE__),"downloads")
-SDLuri = "https://www.libsdl.org/release/$SDLSource.tar.gz"
-SDLtar = joinpath(downloaddir,SDLSource*".tar.gz")
+includedir = joinpath(dirname(@__FILE__),"usr","include")
 
-mkpath(joinpath(dirname(@__FILE__),"usr"))
+rm(includedir,force=true,recursive=true)
+mkpath(includedir)
 mkpath(downloaddir)
-download(SDLuri,SDLtar)
-success(BinDeps.unpack_cmd(SDLtar,downloaddir,".tgz",""))
-mv(joinpath(downloaddir,SDLSource,"include"),
-   joinpath(dirname(@__FILE__),"usr","include"))
+
+function addheaders(source,header_location,uri)
+  tar_file = joinpath(downloaddir,source*".tar.gz")
+  download(uri*source*".tar.gz",tar_file)
+  success(BinDeps.unpack_cmd(tar_file,downloaddir,".tar",".gz"))
+  headers = filter(s -> endswith(s,".h"),
+                   readdir(joinpath(downloaddir,source,header_location)))
+  for header in headers
+    mv(joinpath(downloaddir,source,header_location,header),
+       joinpath(includedir,header))
+  end
+end
+
+addheaders("SDL2-2.0.1","include","https://www.libsdl.org/release/")
+addheaders("SDL2_mixer-2.0.1",".","https://www.libsdl.org/projects/SDL_mixer/release/")
+
 rm(downloaddir,force=true,recursive=true)
