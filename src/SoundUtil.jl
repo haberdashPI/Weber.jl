@@ -120,13 +120,14 @@ function attenuate(x,atten_dB=20)
 	10^(-atten_dB/20) * x/sqrt(mean(x.^2))
 end
 
-function sound(x::Array{Float64};sample_rate_Hz=44100)
-  SampleBuf(trunc(Fixed{Int16,15},x),sample_rate_Hz)
+function sound{T <: Number}(x::Array{T};sample_rate_Hz=44100)
+  bounded = max(min(x,typemax(Fixed{Int16,15})),typemin(Fixed{Int16,15}))
+  sound(SampleBuf(trunc(Fixed{Int16,15},bounded),sample_rate_Hz))
 end
 
 function sound(x::SampleBuf)
-  bounded = max(min(x,typemax(Fixed{Int16,15})),typemin(Fixed{Int16,15}))
-  sound(SampleBuf(Fixed{Int16,15}.(bounded),samplerate(x)))
+  bounded = max(min(x.data,typemax(Fixed{Int16,15})),typemin(Fixed{Int16,15}))
+  sound(SampleBuf(trunc(Fixed{Int16,15},bounded),samplerate(x)))
 end
 
 function play(x,async=true)
