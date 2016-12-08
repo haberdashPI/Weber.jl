@@ -413,6 +413,7 @@ function addtrial(watcher::Function,exp::ExperimentState,moments::Vararg{TrialMo
     gc_enable(false)
     exp.trial += 1
     exp.trial_watcher = watcher
+    record("trial_start",time=t)
   end
 
   end_trial = moment(t -> gc_enable(true))
