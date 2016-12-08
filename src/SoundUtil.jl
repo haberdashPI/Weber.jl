@@ -125,7 +125,7 @@ function sound{N}(x::SampleBuf{PCM16Sample,N})
   sound(Sound(SoundBuffer(reinterpret(Int16,x.data),floor(Int,samplerate(x)))))
 end
 
-function sound{N}(x::SampleBuf{Float64,N})
+function sound{T<:Number,N}(x::SampleBuf{T,N})
   buf = SampleBuf(PCM16Sample,samplerate(x),size(x)...)
   rate = samplerate(x)
   vals = trunc(Int16,max(min(2^15*x.data,typemax(Int16)),typemin(Int16)))
