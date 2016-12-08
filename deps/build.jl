@@ -42,6 +42,19 @@ else
   error("Unsupported operating system.")
 end
 
-#download()
-
 @BinDeps.install Dict(:libSDL => :_psycho_SDL, :libSDL_mixer => :_psycho_SDLmixer)
+
+# install headers for SDL 1.2
+SDLSource = "SDL-1.2.15"
+
+downloaddir = joinpath(dirname(@__FILE__),"downloads")
+SDLuri = "https://www.libsdl.org/release/$SDLSource.tar.gz"
+SDLtar = joinpath(downloaddir,SDLSource*".tar.gz")
+
+mkpath(joinpath(dirname(@__FILE__),"usr"))
+mkpath(downloaddir)
+download(SDLuri,SDLtar)
+success(BinDeps.unpack_cmd(SDLtar,downloaddir,".tgz",""))
+mv(joinpath(downloaddir,SDLSource,"include"),
+   joinpath(dirname(@__FILE__),"usr","include"))
+rm(downloaddir,force=true,recursive=true)
