@@ -5,8 +5,12 @@ using Gadfly
 using FixedPointNumbers
 
 depsjl = joinpath(dirname(@__FILE__), "..", "deps", "deps.jl")
-isfile(depsjl) ? include(depsjl) : error("Psychotask not properly ",
-    "installed. Please run\nPkg.build(\"Psychotask\")")
+if isfile(depsjl)
+  include(depsjl)
+else
+  error("Psychotask not properly installed. "*
+        "Please run\nPkg.build(\"Psychotask\")")
+end
 
 import Gadfly: plot
 
