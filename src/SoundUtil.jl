@@ -9,11 +9,10 @@ isfile(depsjl) ? include(depsjl) : error("Psychotask not properly ",
     "installed. Please run\nPkg.build(\"Psychotask\")")
 
 import Gadfly: plot
-import Base: wait
 
 export match_lengths, mix, mult, silence, noise, bandpass, tone, ramp,
 	harmonic_complex, attenuate, sound, loadsound, play,
-  wait, savesound, stretch, highpass, lowpass, duration
+  pause, stop, savesound, stretch, highpass, lowpass, duration
 
 const loadsound = LibSndFile.load
 const savesound = LibSndFile.save
@@ -175,19 +174,47 @@ function close_sound()
   ccall((:SDL_Quit,_psycho_SDL),Void,())
 end
 
+type PlayingSound
+  channel::Int
+  sound::Sound
+end
+
 sound_environment = init_sound()
 function play(x::Sound,async=true)
-  result = ccall((:Mix_PlayChannel,_psycho_SDLmixer),Cint,
-                 (Cint,Ref{MixChunk},Cint),
-                 -1,x.chunk,0)
-  if result < 0
+  channel = ccall((:Mix_PlayChannelTimed,_psycho_SDLmixer),Cint,
+                 (Cint,Ref{MixChunk},Cint,Cint),
+                 -1,x.chunk,0,-1)
+  if channel < 0
     error_str = ccall((:Mix_GetError,_psycho_SDLmixer),Cint,())
     error("Failed to play sound: $error_str")
   end
-  if !async
-    error("unsupported functionality: synchronous audio playback")
+  if async
+    PlayingSound(channel,x)
+  else
+    sleep(duration(x)-0.01)
+    while ccall((:Mix_Playing,_psycho_SDLmixer),Cint,(Cint,),channel) > 0; end
+    nothing
   end
 end
+
+function play(x::PlayingSound)
+  ccall((:Mix_Resume,_psycho_SDLmixer),Void,(Cint,),x.channel)
+  x
+end
+
+function pause(x::PlayingSound)
+  ccall((:Mix_Pause,_psycho_SDLmixer),Void,(Cint,),x.channel)
+end
+
+function stop(x::PlayingSound)
+  ccall((:Mix_HaltChannel,_psycho_SDLmixer),Void,(Cint,),x.channel)
+end
+
+function duration(s::Sound)
+  s.chunk.byte_length / 2 / s.samplerate
+end
+
+# TODO: add function to wait for the end of sound playback
 
 function duration(s::SampleBuf)
   length(s) / samplerate(s)
