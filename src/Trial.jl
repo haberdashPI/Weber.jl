@@ -1,5 +1,5 @@
 # TODO: use the version indicated by Pkg
-const psych_version = v"0.0.2"
+const psych_version = v"0.0.3"
 
 using Reactive
 using Lazy: @>>, @>, @_
@@ -188,7 +188,7 @@ type ExperimentState
   file::String
   window::SFML.RenderWindow
   cleanup::Function
-  exception::Nullable{Exception}
+  exception::Nullable{Tuple{Exception,Array{Ptr{Void}}}}
   moment_resolution::Float64
   pause_state::Reactive.Signal{Bool}
   pause_events::Reactive.Signal{ExpEvent}
@@ -258,7 +258,6 @@ type Experiment
       push!(exp.running,false)
       push!(exp.started,false)
       close(exp.window)
-      experiment_context = Nullable{ExperimentState}()
 
       # gc is disabled during individual trials (and enabled at the end of
       # a trial). Make sure it really does return to an enabled state.
@@ -305,8 +304,12 @@ type Experiment
       # if an exception occuring during the experiment, it is handled here
       if !isnull(exp.exception)
         record(exp,"program_error")
-        rethrow(get(exp.exception))
+        println("Stacktrace in experiment: ")
+        map(println,stacktrace(get(exp.exception)[2]))
+        rethrow(get(exp.exception)[1])
       end
+
+      experiment_context = Nullable{ExperimentState}()
     end
 
     new(runfn,exp)
@@ -315,6 +318,7 @@ end
 
 function run(exp::Experiment)
   exp.runfn()
+  nothing
 end
 
 function get_experiment()
@@ -359,7 +363,7 @@ function ExperimentState(debug::Bool;
                         e -> nothing,Reactive.Signal(false),Running,
                         MomentQueue(Queue(TrialMoment),0),state,data_file,window,
                         () -> error("no cleanup function available!"),
-                        Nullable{Exception}(),
+                        Nullable{Tuple{Exception,Array{Ptr{Void}}}}(),
                         moment_resolution,Reactive.Signal(false),pause_events)
 
   exp.state = map(filterwhen(running,EmptyEvent(),merge(timing,events))) do x
@@ -380,7 +384,7 @@ function ExperimentState(debug::Bool;
       try
         exp.trial_watcher(e)
       catch e
-        exp.exception = Nullable(e)
+        exp.exception = Nullable((e,catch_backtrace()))
         exp.mode = Error
         exp.cleanup()
       end
@@ -524,7 +528,7 @@ function handle(exp::ExperimentState,moment::TimedMoment,time::Float64)
   try
     moment.run(time)
   catch e
-    exp.exception = Nullable(e)
+    exp.exception = Nullable((e,catch_backtrace()))
     exp.mode = Error
     exp.cleanup()
   end
@@ -543,7 +547,7 @@ function handle(exp::ExperimentState,moment::ResponseMoment,time::Float64)
   try
     moment.timeout(time)
   catch e
-    exp.exception = Nullable(e)
+    exp.exception = Nullable((e,catch_backtrace()))
     exp.mode = Error
     exp.cleanup()
   end
@@ -555,7 +559,7 @@ function handle(exp::ExperimentState,moment::ResponseMoment,event::ExpEvent)
   try
     handled = moment.respond(event)
   catch e
-    exp.exception = Nullable(e)
+    exp.exception = Nullable((e,catch_backtrace()))
     exp.mode = Error
     exp.cleanup()
   end
