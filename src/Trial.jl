@@ -71,7 +71,8 @@ str_to_code = Dict(
   "7" => KeyCode.NUM7,
   "8" => KeyCode.NUM8,
   "9" => KeyCode.NUM9,
-  " " => KeyCode.SPACE
+  " " => KeyCode.SPACE,
+  ":space:" => KeyCode.SPACE
 )
 
 macro key_str(key)
@@ -94,25 +95,29 @@ iskeydown(event::EmptyEvent) = false
 
 const iskeypressed = is_key_pressed
 
-function iskeydown(event::SFMLEvent,keycode)
+function iskeydown(event::SFMLEvent,keycode::Number)
   get_type(event.data) == EventType.KEY_PRESSED &&
     get_key(event.data).key_code == keycode
 end
-iskeydown(event::EndPauseEvent,keycode) = false
-iskeydown(event::EmptyEvent,keycode) = false
+iskeydown(event::EndPauseEvent,keycode::Number) = false
+iskeydown(event::EmptyEvent,keycode::Number) = false
 
-function iskeyup(event::SFMLEvent,keycode)
+iskeydown(keycode::Number) = e -> iskeydown(e,keycode::Number)
+
+function iskeyup(event::SFMLEvent,keycode::Number)
   get_type(event.data) == EventType.KEY_RELEASED &&
     get_key(event.data).key_code == keycode
 end
-iskeyup(event::EndPauseEvent,keycode) = false
-iskeyup(event::EmptyEvent,keycode) = false
+iskeyup(event::EndPauseEvent,keycode::Number) = false
+iskeyup(event::EmptyEvent,keycode::Number) = false
 
 function iskeyup(event::SFMLEvent)
   get_type(event.data) == EventType.KEY_RELEASED
 end
 iskeyup(event::EndPauseEvent) = false
 iskeyup(event::EmptyEvent) = false
+
+iskeyup(keycode::Number) = e -> iskeyup(e,keycode::Number)
 
 function isfocused(event::SFMLEvent)
   get_type(event.data) == EventType.GAINED_FOCUS
