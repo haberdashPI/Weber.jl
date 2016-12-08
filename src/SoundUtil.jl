@@ -122,12 +122,12 @@ end
 
 function sound{T <: Number}(x::Array{T};sample_rate_Hz=44100)
   bounded = max(min(x,typemax(Fixed{Int16,15})),typemin(Fixed{Int16,15}))
-  sound(SampleBuf(trunc(Fixed{Int16,15},bounded),sample_rate_Hz))
+  sound(SampleBuf(Fixed{Int16,15}.(bounded),sample_rate_Hz))
 end
 
 function sound(x::SampleBuf)
   bounded = max(min(x.data,typemax(Fixed{Int16,15})),typemin(Fixed{Int16,15}))
-  sound(SampleBuf(trunc(Fixed{Int16,15},bounded),samplerate(x)))
+  sound(SampleBuf(Fixed{Int16,15}.(bounded),samplerate(x)))
 end
 
 function play(x,async=true)
