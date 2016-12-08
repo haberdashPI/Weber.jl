@@ -321,7 +321,7 @@ function run(exp::Experiment)
   nothing
 end
 
-function get_experiment()
+afunction get_experiment()
   if isnull(experiment_context)
     error("Unknown experiment context, call me inside run_experiment.")
   else
