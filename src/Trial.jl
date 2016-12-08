@@ -208,9 +208,9 @@ function record_helper(exp::ExperimentState,kwds,onlyifheader=false)
   elseif !isempty(columns) && !all(map(c -> c ∈ exp.header,columns))
     missing = filter(c -> c ∉ exp.header,columns)
 
-    error("""Unexpected columns $(join(missing,", "," and ")).
-             Make sure that the first call to record includes all
-             columns you plan to use.""")
+    error("Unexpected columns $(join(missing,", "," and ")). "*
+          "Make sure that the first call to record includes all "*
+          "columns you plan to use.")
   end
 
   open(exp.file,"a") do stream
