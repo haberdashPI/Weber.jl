@@ -4,13 +4,16 @@ using LibSndFile
 using Gadfly
 using FixedPointNumbers
 
-depsjl = joinpath(dirname(@__FILE__), "..", "deps", "deps.jl")
-if isfile(depsjl)
-  include(depsjl)
-else
-  error("Psychotask not properly installed. "*
-        "Please run\nPkg.build(\"Psychotask\")")
-end
+# depsjl = joinpath(dirname(@__FILE__), "..", "deps", "deps.jl")
+# if isfile(depsjl)
+#   include(depsjl)
+# else
+#   error("Psychotask not properly installed. "*
+#         "Please run\nPkg.build(\"Psychotask\")")
+# end
+
+const _psycho_SDL = "/usr/local/lib/libSDL2.dylib"
+const _psycho_SDLmixer = "/usr/local/lib/libSDL2_mixer.dylib"
 
 import Gadfly: plot
 
