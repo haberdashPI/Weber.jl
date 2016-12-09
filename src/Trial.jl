@@ -6,7 +6,7 @@ using Lazy: @>>, @>, @_
 using DataStructures
 using SFML
 import SFML: KeyCode
-import Base: isnull, run
+import Base: isnull, run, wait
 
 export Experiment, run, addtrial, addbreak, moment, response, record,
   iskeydown, iskeyup, iskeypressed, isfocused, isunfocused, endofpause, KeyCode,
@@ -337,7 +337,7 @@ function ExperimentState(debug::Bool;
   mkpath(data_dir)
   exp_start = now()
   timestr = Dates.format(exp_start,"yyyy-mm-dd__HH_MM_SS")
-  data_file = joinpath(data_dir,findkwd(info,:sid,"file")*"_"*timestr)
+  data_file = joinpath(data_dir,findkwd(info,:sid,"file")*"_"*timestr*".csv")
 
   window = RenderWindow(VideoMode(width,height,exp_color_depth),
                         "Psychoacoustics",
