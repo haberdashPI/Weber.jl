@@ -1,12 +1,21 @@
+using Cxx
 using SampledSignals
 using DSP
 using LibSndFile
 using Gadfly
 using FixedPointNumbers
 
+# FOUND IT! The version of SDL that is being
+# installed by Homebrew.jl doens't work, while the one installed
+# by homebrew itself does.
+
 # depsjl = joinpath(dirname(@__FILE__), "..", "deps", "deps.jl")
 # if isfile(depsjl)
 #   include(depsjl)
+#   Libdl.dlopen(_psycho_SDL)
+#   Libdl.dlopen(_psycho_SDLmixer)
+#   cxxinclude(joinpath(dirname(@__FILE__),"..","deps","usr","include","SDL.h"))
+#   cxxinclude(joinpath(dirname(@__FILE__),"..","deps","usr","include","SDL_mixer.h"))
 # else
 #   error("Psychotask not properly installed. "*
 #         "Please run\nPkg.build(\"Psychotask\")")
@@ -14,6 +23,10 @@ using FixedPointNumbers
 
 const _psycho_SDL = "/usr/local/lib/libSDL2.dylib"
 const _psycho_SDLmixer = "/usr/local/lib/libSDL2_mixer.dylib"
+Libdl.dlopen(_psycho_SDL)
+Libdl.dlopen(_psycho_SDLmixer)
+cxxinclude(joinpath(dirname(@__FILE__),"..","deps","usr","include","SDL.h"))
+cxxinclude(joinpath(dirname(@__FILE__),"..","deps","usr","include","SDL_mixer.h"))
 
 import Gadfly: plot
 
@@ -146,37 +159,42 @@ end
 
 immutable Sound
   chunk::MixChunk
-  samplerate::Int
+  buffer::SampleBuf
 end
 
 function plot(x::Psychotask.Sound;resolution=1000)
-  buf = unsafe_wrap(Array,x.chunk.buffer,div(x.chunk.byte_length,2))
-  plot(x=linspace(0,length(buf)/x.samplerate,resolution),
-       y=Float64.(buf[floor(Int,linspace(1,length(buf),resolution))]),
-       Geom.line)
+  plot(x.buffer;resolution=resolution)
 end
 
 function sound(x::SampleBuf{Fixed{Int16,15}})
-  Sound(MixChunk(0,pointer(x.data),sizeof(x.data),128),samplerate(x))
+  Sound(MixChunk(0,pointer(x.data),sizeof(x.data),128),x)
 end
 
 type SoundEnvironment
 end
 
-const SDL_INIT_AUDIO = 0x0010
-const AUDIO_S16LSB = 0x8010
+type DirectSound
+  chunk_ptr
+end
+
+function load_sound_directly(filename)
+  rw = @cxx SDL_RWFromFile(pointer(filename), pointer("rb"))
+  chunk = @cxx Mix_LoadWAV_RW(rw,0)
+  DirectSound(chunk)
+end
+
 function init_sound(samplerate=44100)
-  init = ccall((:SDL_Init,_psycho_SDL),Cint,(UInt32,),SDL_INIT_AUDIO)
+  init = @cxx SDL_Init(icxx"SDL_INIT_AUDIO;")
   if init < 0
-    error_str = ccall((:SDL_GetError,_psycho_SDL),Cstring,())
+    error_str = @cxx Mix_GetError()
     error("Failed to initialize SDL: $error_str")
   end
 
   # we use a very small buffer, to minimize latency
-  mixer_init = ccall((:Mix_OpenAudio,_psycho_SDLmixer),Cint,
-                     (Cint,UInt16,Cint,Cint),samplerate,AUDIO_S16LSB,2,64)
+  mixer_init = @cxx Mix_OpenAudio(round(Cint,samplerate/2),icxx"AUDIO_S16LSB;",2,64)
   if mixer_init < 0
-    error("Failed to initialize sound.")
+    error_str = @cxx Mix_GetError()
+    error("Failed to initialize sound: $error_str.")
   end
 
   result = SoundEnvironment()
@@ -185,8 +203,8 @@ function init_sound(samplerate=44100)
 end
 
 function close_sound()
-  ccall((:Mix_CloseAudio,_psycho_SDLmixer),Void,())
-  ccall((:SDL_Quit,_psycho_SDL),Void,())
+  @cxx Mix_CloseAudio()
+  @cxx SDL_Quit()
 end
 
 type PlayingSound
@@ -200,29 +218,39 @@ function play(x::Sound,async=true)
                  (Cint,Ref{MixChunk},Cint,Cint),
                  -1,x.chunk,0,-1)
   if channel < 0
-    error_str = ccall((:Mix_GetError,_psycho_SDLmixer),Cint,())
+    error_str = @cxx Mix_GetError()
     error("Failed to play sound: $error_str")
   end
   if async
     PlayingSound(channel,x)
   else
     sleep(duration(x)-0.01)
-    while ccall((:Mix_Playing,_psycho_SDLmixer),Cint,(Cint,),channel) > 0; end
+    while @cxx(Mix_Playing(channel)) > 0; end
     nothing
   end
 end
 
+function play(x::DirectSound)
+  channel = @cxx Mix_PlayChannelTimed(-1,x.chunk_ptr,0,-1)
+  if channel < 0
+    error_str = @cxx Mix_GetError()
+    error("Failed to play sound: $error_str")
+  end
+end
+
 function play(x::PlayingSound)
-  ccall((:Mix_Resume,_psycho_SDLmixer),Void,(Cint,),x.channel)
+  @cxx Mix_Resume(x.channel)
   x
 end
 
 function pause(x::PlayingSound)
-  ccall((:Mix_Pause,_psycho_SDLmixer),Void,(Cint,),x.channel)
+  @cxx Mix_Pause(x.channel)
+  x
 end
 
 function stop(x::PlayingSound)
-  ccall((:Mix_HaltChannel,_psycho_SDLmixer),Void,(Cint,),x.channel)
+  @cxx Mix_HaltChannel(x.channel)
+  nothing
 end
 
 function duration(s::Sound)
