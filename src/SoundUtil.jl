@@ -9,24 +9,24 @@ using FixedPointNumbers
 # installed by Homebrew.jl doens't work, while the one installed
 # by homebrew itself does.
 
-# depsjl = joinpath(dirname(@__FILE__), "..", "deps", "deps.jl")
-# if isfile(depsjl)
-#   include(depsjl)
-#   Libdl.dlopen(_psycho_SDL)
-#   Libdl.dlopen(_psycho_SDLmixer)
-#   cxxinclude(joinpath(dirname(@__FILE__),"..","deps","usr","include","SDL.h"))
-#   cxxinclude(joinpath(dirname(@__FILE__),"..","deps","usr","include","SDL_mixer.h"))
-# else
-#   error("Psychotask not properly installed. "*
-#         "Please run\nPkg.build(\"Psychotask\")")
-# end
+depsjl = joinpath(dirname(@__FILE__), "..", "deps", "deps.jl")
+if isfile(depsjl)
+  include(depsjl)
+  Libdl.dlopen(_psycho_SDL2)
+  Libdl.dlopen(_psycho_SDL2_mixer)
+  cxxinclude(joinpath(dirname(@__FILE__),"..","deps","usr","include","SDL.h"))
+  cxxinclude(joinpath(dirname(@__FILE__),"..","deps","usr","include","SDL_mixer.h"))
+else
+  error("Psychotask not properly installed. "*
+        "Please run\nPkg.build(\"Psychotask\")")
+end
 
-const _psycho_SDL = "/usr/local/lib/libSDL2.dylib"
-const _psycho_SDLmixer = "/usr/local/lib/libSDL2_mixer.dylib"
-Libdl.dlopen(_psycho_SDL)
-Libdl.dlopen(_psycho_SDLmixer)
-cxxinclude(joinpath(dirname(@__FILE__),"..","deps","usr","include","SDL.h"))
-cxxinclude(joinpath(dirname(@__FILE__),"..","deps","usr","include","SDL_mixer.h"))
+# const _psycho_SDL2 = "/usr/local/lib/libSDL2.dylib"
+# const _psycho_SDL2_mixer = "/usr/local/lib/libSDL2_mixer.dylib"
+# Libdl.dlopen(_psycho_SDL2)
+# Libdl.dlopen(_psycho_SDL2_mixer)
+# cxxinclude(joinpath(dirname(@__FILE__),"..","deps","usr","include","SDL.h"))
+# cxxinclude(joinpath(dirname(@__FILE__),"..","deps","usr","include","SDL_mixer.h"))
 
 import Gadfly: plot
 
@@ -173,16 +173,6 @@ end
 type SoundEnvironment
 end
 
-type DirectSound
-  chunk_ptr
-end
-
-function load_sound_directly(filename)
-  rw = @cxx SDL_RWFromFile(pointer(filename), pointer("rb"))
-  chunk = @cxx Mix_LoadWAV_RW(rw,0)
-  DirectSound(chunk)
-end
-
 function init_sound(samplerate=44100)
   init = @cxx SDL_Init(icxx"SDL_INIT_AUDIO;")
   if init < 0
@@ -214,7 +204,7 @@ end
 
 sound_environment = init_sound()
 function play(x::Sound,async=true)
-  channel = ccall((:Mix_PlayChannelTimed,_psycho_SDLmixer),Cint,
+  channel = ccall((:Mix_PlayChannelTimed,_psycho_SDL2_mixer),Cint,
                  (Cint,Ref{MixChunk},Cint,Cint),
                  -1,x.chunk,0,-1)
   if channel < 0
@@ -227,14 +217,6 @@ function play(x::Sound,async=true)
     sleep(duration(x)-0.01)
     while @cxx(Mix_Playing(channel)) > 0; end
     nothing
-  end
-end
-
-function play(x::DirectSound)
-  channel = @cxx Mix_PlayChannelTimed(-1,x.chunk_ptr,0,-1)
-  if channel < 0
-    error_str = @cxx Mix_GetError()
-    error("Failed to play sound: $error_str")
   end
 end
 
@@ -254,7 +236,7 @@ function stop(x::PlayingSound)
 end
 
 function duration(s::Sound)
-  s.chunk.byte_length / 2 / s.samplerate
+  duration(s.buffer)
 end
 
 # TODO: add function to wait for the end of sound playback

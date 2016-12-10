@@ -1,75 +1,79 @@
-# modified from: https://github.com/rennis250/SDL.jl/blob/ef125ec/deps/build.jl
-using BinDeps
+downloaddir = joinpath(dirname(@__FILE__),"downloads")
+includedir = joinpath(dirname(@__FILE__),"usr","include")
+bindir = joinpath(dirname(@__FILE__),"usr","lib")
 
-# TODO: remove BinDeps, and just do a straigtforward download and install
-# from the SDL website.
+for d in [downloaddir,includedir,bindir]
+  rm(d,recursive=true,force=true)
+  mkpath(d)
+end
 
-@BinDeps.setup
+# NOTE: I'm not using BinDeps.jl here because I have found that
+# the binaries from the various julia package managers can be
+# corrupt, leading to weird runtime errors (e.g. playing sound just plays random
+# chunks of memory).
 
-libSDL2 = library_dependency("libSDL2", aliases = ["libSDL2", "SDL"])
-libSDL2_image = library_dependency("libSDL2_image", aliases = ["libSDL2_image"], depends = [libSDL2])
-libSDL2_mixer = library_dependency("libSDL2_mixer", aliases = ["libSDL2_mixer"], depends = [libSDL2])
-libSDL2_ttf = library_dependency("libSDL2_ttf", aliases = ["libSDL2_ttf"], depends = [libSDL2])
+SDL2 = "unknown"
+SDL2_mixer = "unknown"
+SDL2_ttf = "unknown"
 
 @static if is_windows()
-  # TODO: create a function to download and install binaries
-  # from sdl website
-  if Pkg.installed("WinRPM") === nothing
-    error("WinRPM package not installed, pluse run Pkg.add(\"WinRPM\")")
+  function setupbin(library,uri)
+    try
+      libdir = joinpath(downloaddir,library)
+      zipfile = joinpath(downloaddir,library*".zip")
+      download(uri,zipfile)
+      run(`7z x $zipfile -y -o$libdir`)
+      cp(joinpath(libdir,libraray*".dll"),joinpath(bindir,library*".dll"))
+      joinpath(bindir,library*".dll")
+    finally
+      rm(libdir,recursive=true,force=true)
+      rm(zipfile,force=true)
+    end
   end
-	using WinRPM
-	provides(WinRPM.RPM, "SDL2", libSDL2, os = :Windows)
-	provides(WinRPM.RPM, "SDL2_image", libSDL2_image, os = :Windows)
-	provides(WinRPM.RPM, "SDL2_mixer", libSDL2_mixer, os = :Windows)
-	provides(WinRPM.RPM, "SDL2_ttf", libSDL2_ttf, os = :Windows)
-elseif is_apple()
-  # TODO: create function to install mac os x DMG fiels
 
-	if Pkg.installed("Homebrew") === nothing
-		error("Hombrew package not installed, please run Pkg.add(\"Homebrew\")")
-	end
-	using Homebrew
-	provides(Homebrew.HB, "sdl2", libSDL2, os = :Darwin)
-	provides(Homebrew.HB, "sdl2_image", libSDL2_image, os = :Darwin)
-	provides(Homebrew.HB, "sdl2_mixer", libSDL2_mixer, os = :Darwin)
-	provides(Homebrew.HB, "sdl2_ttf", libSDL2_ttf, os = :Darwin)
+  function setupinclude(library,incudedir,uri)
+    try
+      libdir = joinpath(downloaddir,library)
+      zipfile = joinpath(downloaddir,library*".zip")
+      download(uri,zipfile)
+      run(`7z x $zipfile -y -o$libdir`)
+      headdir = joinpath(libdir,includedir)
+      for header in filter(f -> endswith(".h"),readdir(headdir))
+        cp(joinpath(headdir,header),joinpath(includedir,header))
+      end
+    finally
+      rm(libdir,recursive=true,force=true)
+      rm(zipfile,force=true)
+    end
+  end
+
+  try
+    SDL2 = setupbin("SDL2","https://www.libsdl.org/release/SDL2-2.0.5-win32-x64.zip")
+    SDL2_mixer = setupbin("SDL2_mixer","https://www.libsdl.org/projects/SDL_mixer/release/SDL2_mixer-2.0.1-win32-x64.zip")
+    SDL2_ttf = setupbin("SDL2_ttf","https://www.libsdl.org/projects/SDL_ttf/release/SDL2_ttf-2.0.14-win32-x64.zip")
+
+    setupbin("SDL2","include","https://www.libsdl.org/release/SDL2-2.0.5.zip")
+    setupbin("SDL2_mixer",".","https://www.libsdl.org/projects/SDL_mixer/release/SDL2_mixer-2.0.1.zip")
+    setupbin("SDL2_ttf",".","https://www.libsdl.org/projects/SDL_ttf/release/SDL2_ttf-2.0.14.zip")
+  finally
+    rm(downloaddir,recursive=true,force=true)
+  end
+elseif is_apple()
+  # TODO: host custom binaries on my github website
 elseif is_linux()
-  # TODO: create a function to download and install binaries
-  # from sdl website
-    provides(AptGet,
-	    	     Dict("libsdl2-2.0-0" => libSDL2,
-	    	          "libsdl2-image-2.0-0" => libSDL2_image,
-	    	          "libsdl2-mixer-2.0-0" => libSDL2_mixer,
-	    	          "libsdl2-ttf-2.0-0" => libSDL2_ttf))
+  error("I don't have access to an available linux distro to troubleshoot"*
+        " installation, so it is left unimplemented.")
 else
   error("Unsupported operating system.")
 end
 
-@BinDeps.install Dict(:libSDL2 => :_psycho_SDL,
-                      :libSDL2_mixer => :_psycho_SDLmixer,
-                      :libSDL2_ttf => :_psycho_SDLttf)
+@assert SDL2 != "unknown"
+@assert SDL2_mixer != "unknown"
+@assert SDL2_ttf != "unknown"
 
-# install headers for SDL 2.0 and SDL_mixer 2.0
-downloaddir = joinpath(dirname(@__FILE__),"downloads")
-includedir = joinpath(dirname(@__FILE__),"usr","include")
-
-rm(includedir,force=true,recursive=true)
-mkpath(includedir)
-mkpath(downloaddir)
-
-function addheaders(source,header_location,uri)
-  tar_file = joinpath(downloaddir,source*".tar.gz")
-  download(uri*source*".tar.gz",tar_file)
-  success(BinDeps.unpack_cmd(tar_file,downloaddir,".tar",".gz"))
-  headers = filter(s -> endswith(s,".h"),
-                   readdir(joinpath(downloaddir,source,header_location)))
-  for header in headers
-    mv(joinpath(downloaddir,source,header_location,header),
-       joinpath(includedir,header))
+deps = joinpath(dirname(@__FILE__),"deps.jl")
+open("deps.jl","w") do s
+  for (var,val) in [:SDL2 => SDL2, :SDL2_mixer => SDL2_mixer,:SDL2_ttf => SDL2_ttf]
+    println(s,"const _psycho_$var = \"$val\"")
   end
 end
-
-addheaders("SDL2-2.0.5","include","https://www.libsdl.org/release/")
-addheaders("SDL2_mixer-2.0.1",".","https://www.libsdl.org/projects/SDL_mixer/release/")
-
-rm(downloaddir,force=true,recursive=true)
