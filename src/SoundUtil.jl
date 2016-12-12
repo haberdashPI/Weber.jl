@@ -2,7 +2,7 @@ using Cxx
 using SampledSignals
 using DSP
 using LibSndFile
-using Gadfly
+# using Gadfly
 using FixedPointNumbers
 
 # FOUND IT! The version of SDL that is being
@@ -28,7 +28,7 @@ end
 # cxxinclude(joinpath(dirname(@__FILE__),"..","deps","usr","include","SDL.h"))
 # cxxinclude(joinpath(dirname(@__FILE__),"..","deps","usr","include","SDL_mixer.h"))
 
-import Gadfly: plot
+# import Gadfly: plot
 
 export match_lengths, mix, mult, silence, noise, bandpass, tone, ramp,
 	harmonic_complex, attenuate, sound, loadsound, play,
@@ -37,11 +37,11 @@ export match_lengths, mix, mult, silence, noise, bandpass, tone, ramp,
 const loadsound = LibSndFile.load
 const savesound = LibSndFile.save
 
-function plot(x::SampleBuf;resolution=1000)
-  plot(x=linspace(0,length(x)/x.samplerate,resolution),
-       y=Float64.(x.data[floor(Int,linspace(1,length(x),resolution))]),
-       Geom.line)
-end
+# function plot(x::SampleBuf;resolution=1000)
+#   plot(x=linspace(0,length(x)/x.samplerate,resolution),
+#        y=Float64.(x.data[floor(Int,linspace(1,length(x),resolution))]),
+#        Geom.line)
+# end
 
 function match_lengths(xs...)
 	max_length = maximum(map(x -> size(x,1), xs))
@@ -162,9 +162,9 @@ immutable Sound
   buffer::SampleBuf
 end
 
-function plot(x::Psychotask.Sound;resolution=1000)
-  plot(x.buffer;resolution=resolution)
-end
+# function plot(x::Psychotask.Sound;resolution=1000)
+#   plot(x.buffer;resolution=resolution)
+# end
 
 function sound(x::SampleBuf{Fixed{Int16,15}})
   Sound(MixChunk(0,pointer(x.data),sizeof(x.data),128),x)
