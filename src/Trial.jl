@@ -8,7 +8,7 @@ using SFML
 import SFML: KeyCode
 import Base: isnull, run, wait
 
-export Experiment, run, addtrial, addbreak, moment, response, record,
+export Experiment, run, addtrial, addbreak, moment, response, record, timeout,
   iskeydown, iskeyup, iskeypressed, isfocused, isunfocused, endofpause, KeyCode,
   @key_str
 
@@ -492,7 +492,7 @@ function watch_pauses(exp,e)
   end
 end
 
-function moment(delta_t::Float64)
+function moment(delta_t::Number)
   TimedMoment(delta_t,t->nothing)
 end
 
@@ -511,13 +511,21 @@ function moment(fn::Function)
   TimedMoment(0,fn)
 end
 
-function response(fn::Function;timeout = 0,timeout_callback = t->nothing)
+function response(fn::Function)
   precompile(fn,(SFMLEvent,))
   precompile(fn,(EndPauseEvent,))
   precompile(fn,(EmptyEvent,))
 
-  precompile(timeout_callback,(Float64,))
-  ResponseMoment(fn,timeout_callback,timeout)
+  ResponseMoment(fn,(t) -> nothing,0)
+end
+
+function timeout(fn::Function,isresponse::Function,timeout)
+  precompile(fn,(Float64,))
+  precompile(isresponse,(SFMLEvent,))
+  precompile(isresponse,(EndPauseEvent,))
+  precompile(isresponse,(EmptyEvent,))
+
+  ResponseMoment(isresponse,fn,timeout)
 end
 
 function delta_t(moment::TimedMoment)
