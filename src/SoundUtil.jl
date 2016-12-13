@@ -1,47 +1,14 @@
-using Cxx
 using SampledSignals
 using DSP
 using LibSndFile
-# using Gadfly
 using FixedPointNumbers
 
-# FOUND IT! The version of SDL that is being
-# installed by Homebrew.jl doens't work, while the one installed
-# by homebrew itself does.
-
-depsjl = joinpath(dirname(@__FILE__), "..", "deps", "deps.jl")
-if isfile(depsjl)
-  include(depsjl)
-  Libdl.dlopen(_psycho_SDL2)
-  Libdl.dlopen(_psycho_SDL2_mixer)
-  cxxinclude(joinpath(dirname(@__FILE__),"..","deps","usr","include","SDL.h"))
-  cxxinclude(joinpath(dirname(@__FILE__),"..","deps","usr","include","SDL_mixer.h"))
-else
-  error("Psychotask not properly installed. "*
-        "Please run\nPkg.build(\"Psychotask\")")
-end
-
-# const _psycho_SDL2 = "/usr/local/lib/libSDL2.dylib"
-# const _psycho_SDL2_mixer = "/usr/local/lib/libSDL2_mixer.dylib"
-# Libdl.dlopen(_psycho_SDL2)
-# Libdl.dlopen(_psycho_SDL2_mixer)
-# cxxinclude(joinpath(dirname(@__FILE__),"..","deps","usr","include","SDL.h"))
-# cxxinclude(joinpath(dirname(@__FILE__),"..","deps","usr","include","SDL_mixer.h"))
-
-# import Gadfly: plot
-
-export match_lengths, mix, mult, silence, noise, bandpass, tone, ramp,
-	harmonic_complex, attenuate, sound, loadsound, play,
-  pause, stop, savesound, stretch, highpass, lowpass, duration
+export match_lengths, mix, mult, silence, noise, highpass, lowpass, bandpass,
+	tone, ramp, harmonic_complex, attenuate, sound, loadsound, play, pause, stop,
+	savesound, duration
 
 const loadsound = LibSndFile.load
 const savesound = LibSndFile.save
-
-# function plot(x::SampleBuf;resolution=1000)
-#   plot(x=linspace(0,length(x)/x.samplerate,resolution),
-#        y=Float64.(x.data[floor(Int,linspace(1,length(x),resolution))]),
-#        Geom.line)
-# end
 
 function match_lengths(xs...)
 	max_length = maximum(map(x -> size(x,1), xs))
@@ -162,10 +129,6 @@ immutable Sound
   buffer::SampleBuf
 end
 
-# function plot(x::Psychotask.Sound;resolution=1000)
-#   plot(x.buffer;resolution=resolution)
-# end
-
 function sound(x::SampleBuf{Fixed{Int16,15}})
   Sound(MixChunk(0,pointer(x.data),sizeof(x.data),128),x)
 end
@@ -176,15 +139,13 @@ end
 function init_sound(samplerate=44100)
   init = @cxx SDL_Init(icxx"SDL_INIT_AUDIO;")
   if init < 0
-    error_str = @cxx Mix_GetError()
-    error("Failed to initialize SDL: $error_str")
+    error("Failed to initialize SDL: "*SDL_GetError())
   end
 
   # we use a very small buffer, to minimize latency
   mixer_init = @cxx Mix_OpenAudio(round(Cint,samplerate/2),icxx"AUDIO_S16LSB;",2,64)
   if mixer_init < 0
-    error_str = @cxx Mix_GetError()
-    error("Failed to initialize sound: $error_str.")
+    error("Failed to initialize sound: "*Mix_GetError())
   end
 
   result = SoundEnvironment()
@@ -208,8 +169,7 @@ function play(x::Sound,async=true)
                  (Cint,Ref{MixChunk},Cint,Cint),
                  -1,x.chunk,0,-1)
   if channel < 0
-    error_str = @cxx Mix_GetError()
-    error("Failed to play sound: $error_str")
+    error("Failed to play sound: "*Mix_GetError())
   end
   if async
     PlayingSound(channel,x)

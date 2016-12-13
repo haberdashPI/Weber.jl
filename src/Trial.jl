@@ -1,15 +1,13 @@
 # TODO: use the version indicated by Pkg
-const psych_version = v"0.0.3"
+const psych_version = v"0.0.4"
 
 using Reactive
 using Lazy: @>>, @>, @_
 using DataStructures
-using SFML
-import SFML: KeyCode
-import Base: isnull, run, wait
+import Base: isnull, run, time
 
 export Experiment, run, addtrial, addbreak, moment, response, record, timeout,
-  iskeydown, iskeyup, iskeypressed, isfocused, isunfocused, endofpause, KeyCode,
+  iskeydown, iskeyup, iskeypressed, isfocused, isunfocused, endofpause,
   @key_str
 
 const default_moment_resolution = 1000
@@ -20,59 +18,99 @@ const exp_color_depth = 32
 
 abstract ExpEvent
 
-type SFMLEvent <: ExpEvent
-  data::SFML.Event
+type KeyUpEvent <: ExpEvent
+  code::Int32
+  time::Float64
+end
+
+type KeyDownEvent <: ExpEvent
+  code::Int32
+  time::Float64
+end
+
+type WindowFocused <: ExpEvent
+  time::Float64
+end
+
+type WindowUnfocused <: ExpEvent
   time::Float64
 end
 
 type EndPauseEvent <: ExpEvent
+  time::Float64
 end
 
 type EmptyEvent <: ExpEvent
 end
 
+const concrete_events = [
+  KeyUpEvent,
+  KeyDownEvent,
+  WindowFocused,
+  WindowUnfocused,
+  EndPauseEvent,
+  EmptyEvent
+]
+
+"""
+    time(e::ExpEvent)
+
+Get the time an event occured relative to the start of the experiment.
+"""
+time(event::ExpEvent) = 0
+time(event::KeyUpEvent) = event.time
+time(event::KeyDownEvent) = event.time
+time(event::WindowFocused) = event.time
+time(event::WindowUnfocused) = event.time
+time(event::EndPauseEvent) = event.time
+
 isnull(e::ExpEvent) = false
 isnull(e::EmptyEvent) = true
 
 str_to_code = Dict(
-  "a" => KeyCode.A,
-  "b" => KeyCode.B,
-  "c" => KeyCode.C,
-  "d" => KeyCode.D,
-  "e" => KeyCode.E,
-  "f" => KeyCode.F,
-  "g" => KeyCode.G,
-  "h" => KeyCode.H,
-  "i" => KeyCode.I,
-  "j" => KeyCode.J,
-  "k" => KeyCode.K,
-  "l" => KeyCode.L,
-  "m" => KeyCode.M,
-  "n" => KeyCode.N,
-  "o" => KeyCode.O,
-  "p" => KeyCode.P,
-  "q" => KeyCode.Q,
-  "r" => KeyCode.R,
-  "s" => KeyCode.S,
-  "t" => KeyCode.T,
-  "u" => KeyCode.U,
-  "v" => KeyCode.V,
-  "w" => KeyCode.W,
-  "x" => KeyCode.X,
-  "y" => KeyCode.Y,
-  "z" => KeyCode.Z,
-  "0" => KeyCode.NUM0,
-  "1" => KeyCode.NUM1,
-  "2" => KeyCode.NUM2,
-  "3" => KeyCode.NUM3,
-  "4" => KeyCode.NUM4,
-  "5" => KeyCode.NUM5,
-  "6" => KeyCode.NUM6,
-  "7" => KeyCode.NUM7,
-  "8" => KeyCode.NUM8,
-  "9" => KeyCode.NUM9,
-  " " => KeyCode.SPACE,
-  ":space:" => KeyCode.SPACE
+  "a" => reinterpret(Int32,icxx"SDLK_a;"),
+  "b" => reinterpret(Int32,icxx"SDLK_b;"),
+  "c" => reinterpret(Int32,icxx"SDLK_c;"),
+  "d" => reinterpret(Int32,icxx"SDLK_d;"),
+  "e" => reinterpret(Int32,icxx"SDLK_e;"),
+  "f" => reinterpret(Int32,icxx"SDLK_f;"),
+  "g" => reinterpret(Int32,icxx"SDLK_g;"),
+  "h" => reinterpret(Int32,icxx"SDLK_h;"),
+  "i" => reinterpret(Int32,icxx"SDLK_i;"),
+  "j" => reinterpret(Int32,icxx"SDLK_j;"),
+  "k" => reinterpret(Int32,icxx"SDLK_k;"),
+  "l" => reinterpret(Int32,icxx"SDLK_l;"),
+  "m" => reinterpret(Int32,icxx"SDLK_m;"),
+  "n" => reinterpret(Int32,icxx"SDLK_n;"),
+  "o" => reinterpret(Int32,icxx"SDLK_o;"),
+  "p" => reinterpret(Int32,icxx"SDLK_p;"),
+  "q" => reinterpret(Int32,icxx"SDLK_q;"),
+  "r" => reinterpret(Int32,icxx"SDLK_r;"),
+  "s" => reinterpret(Int32,icxx"SDLK_s;"),
+  "t" => reinterpret(Int32,icxx"SDLK_t;"),
+  "u" => reinterpret(Int32,icxx"SDLK_u;"),
+  "v" => reinterpret(Int32,icxx"SDLK_v;"),
+  "w" => reinterpret(Int32,icxx"SDLK_w;"),
+  "x" => reinterpret(Int32,icxx"SDLK_x;"),
+  "y" => reinterpret(Int32,icxx"SDLK_y;"),
+  "z" => reinterpret(Int32,icxx"SDLK_z;"),
+  "0" => reinterpret(Int32,icxx"SDLK_0;"),
+  "1" => reinterpret(Int32,icxx"SDLK_1;"),
+  "2" => reinterpret(Int32,icxx"SDLK_2;"),
+  "3" => reinterpret(Int32,icxx"SDLK_3;"),
+  "4" => reinterpret(Int32,icxx"SDLK_4;"),
+  "5" => reinterpret(Int32,icxx"SDLK_5;"),
+  "6" => reinterpret(Int32,icxx"SDLK_6;"),
+  "7" => reinterpret(Int32,icxx"SDLK_7;"),
+  "8" => reinterpret(Int32,icxx"SDLK_8;"),
+  "9" => reinterpret(Int32,icxx"SDLK_9;"),
+  " " => reinterpret(Int32,icxx"SDLK_SPACE;"),
+  ":space:" => reinterpret(Int32,icxx"SDLK_SPACE;"),
+  ":up:" => reinterpret(Int32,icxx"SDLK_UP;"),
+  ":down:" => reinterpret(Int32,icxx"SDLK_DOWN;"),
+  ":left:" => reinterpret(Int32,icxx"SDLK_LEFT;"),
+  ":right:" => reinterpret(Int32,icxx"SDLK_RIGHT;"),
+  ":escape:" => reinterpret(Int32,icxx"SDLK_ESCAPE;")
 )
 
 macro key_str(key)
@@ -83,61 +121,55 @@ macro key_str(key)
   end
 end
 
-endofpause(event::EmptyEvent) = false
+endofpause(event::ExpEvent) = false
 endofpause(event::EndPauseEvent) = true
-endofpause(event::SFMLEvent) = false
 
-function iskeydown(event::SFMLEvent)
-  get_type(event.data) == EventType.KEY_PRESSED
-end
-iskeydown(event::EndPauseEvent) = false
-iskeydown(event::EmptyEvent) = false
-
-const iskeypressed = is_key_pressed
-
-function iskeydown(event::SFMLEvent,keycode::Number)
-  get_type(event.data) == EventType.KEY_PRESSED &&
-    get_key(event.data).key_code == keycode
-end
-iskeydown(event::EndPauseEvent,keycode::Number) = false
-iskeydown(event::EmptyEvent,keycode::Number) = false
-
+iskeydown(event::ExpEvent) = false
+iskeydown(event::KeyDownEvent) = true
 iskeydown(keycode::Number) = e -> iskeydown(e,keycode::Number)
+iskeydown(event::ExpEvent,keycode::Number) = false
+iskeydown(event::KeyDownEvent,keycode::Number) = event.code == keycode
 
-function iskeyup(event::SFMLEvent,keycode::Number)
-  get_type(event.data) == EventType.KEY_RELEASED &&
-    get_key(event.data).key_code == keycode
-end
-iskeyup(event::EndPauseEvent,keycode::Number) = false
-iskeyup(event::EmptyEvent,keycode::Number) = false
-
-function iskeyup(event::SFMLEvent)
-  get_type(event.data) == EventType.KEY_RELEASED
-end
-iskeyup(event::EndPauseEvent) = false
-iskeyup(event::EmptyEvent) = false
-
+iskeyup(event::ExpEvent) = false
+iskeyup(event::KeyUpEvent) = true
 iskeyup(keycode::Number) = e -> iskeyup(e,keycode::Number)
+iskeyup(event::ExpEvent,keycode::Number) = false
+iskeyup(event::KeyUpEvent,keycode::Number) = event.code == keycode
 
-function isfocused(event::SFMLEvent)
-  get_type(event.data) == EventType.GAINED_FOCUS
+isfocused(event::ExpEvent) = false
+isfocused(event::WindowFocused) = true
+
+isunfocused(event::ExpEvent) = false
+isunfocused(event::WindowUnfocused) = true
+
+# the C++ SDL_Event* is very verbose expressed in Cxx.jl so
+# this macro makes the code to access fields of an SDL_event more
+# readable
+macro cxx_SDL_Event_str(str)
+  event_type_str = "Cxx.CppPtr{Cxx.CxxQualType{Cxx.CppBaseType{:SDL_Event},(false,false,false)},(false,false,false)}"
+  mstr = replace(str,"\$:(event)",
+                 "\$:(event::"*event_type_str*")")
+  :(@icxx_str($mstr))
 end
-isfocused(event::EndPauseEvent) = false
-isfocused(event::EmptyEvent) = false
 
-function isunfocused(event::SFMLEvent)
-  get_type(event.data) == EventType.LOST_FOCUS
-end
-isunfocused(event::EndPauseEvent) = false
-isunfocused(event::EmptyEvent) = false
-
-function event_streamer(window)
+function event_streamer(win)
   function helper(time::Float64)
     events = Signal(ExpEvent,EmptyEvent())
-    event = Event()
-    while pollevent(window,event)
-      push!(events,SFMLEvent(event,time))
-      event = Event()
+    event = icxx"new SDL_Event();"
+    while @cxx(SDL_PollEvent(event)) != 0
+      if cxx_SDL_Event"$:(event)->type == SDL_KEYDOWN;"
+        code = reinterpret(Int32,cxx_SDL_Event"$:(event)->key.keysym.sym;")
+        push!(events,KeyDownEvent(code,time))
+      elseif cxx_SDL_Event"$:(event)->type == SDL_KEYUP;"
+        code = reinterpret(Int32,cxx_SDL_Event"$:(event)->key.keysym.sym;")
+        push!(events,KeyUpEvent(code,time))
+      elseif cxx_SDL_Event"$:(event)->type == SDL_WINDOWEVENT;"
+        if cxx_SDL_Event"$:(event)->window.event == SDL_WINDOWEVENT_FOCUS_GAINED;"
+          push!(events,WindowFocused(time))
+        elseif cxx_SDL_Event"$:(event)->window.event == SDL_WINDOWEVENT_FOCUS_LOST;"
+          push!(events,WindowUnfocused(time))
+        end
+      end
     end
     events
   end
@@ -186,7 +218,7 @@ type ExperimentState
   moments::MomentQueue
   state::Reactive.Signal{Bool}
   file::String
-  window::SFML.RenderWindow
+  win::SDLWindow
   cleanup::Function
   exception::Nullable{Tuple{Exception,Array{Ptr{Void}}}}
   moment_resolution::Float64
@@ -257,7 +289,7 @@ type Experiment
     function cleanup()
       push!(exp.running,false)
       push!(exp.started,false)
-      close(exp.window)
+      close(exp.win)
 
       # gc is disabled during individual trials (and enabled at the end of
       # a trial). Make sure it really does return to an enabled state.
@@ -281,7 +313,7 @@ type Experiment
       # the last moment run cleans up the experiment
       enqueue!(exp.moments.data,moment(t -> cleanup()))
     catch e
-      close(exp.window)
+      close(exp.win)
       gc_enable(true)
       rethrow(e)
     end
@@ -296,7 +328,7 @@ type Experiment
       try
         wait(clenup_run)
       catch
-        close(exp.window)
+        close(exp.win)
         gc_enable(true)
         rethrow()
       end
@@ -339,11 +371,7 @@ function ExperimentState(debug::Bool;
   timestr = Dates.format(exp_start,"yyyy-mm-dd__HH_MM_SS")
   data_file = joinpath(data_dir,findkwd(info,:sid,"file")*"_"*timestr*".csv")
 
-  window = RenderWindow(VideoMode(width,height,exp_color_depth),
-                        "Psychoacoustics",
-                        (debug ? window_defaultstyle : window_fullscreen))
-  set_keyrepeat_enabled(window,false)
-  set_mousecursor_visible(window,false)
+  win = window(width,height,fullscreen=!debug)
 
   running = Reactive.Signal(false)
   started = Reactive.Signal(false)
@@ -352,7 +380,7 @@ function ExperimentState(debug::Bool;
   pause_events = Reactive.Signal(ExpEvent,EmptyEvent())
   events = @_ fpswhen(started,input_resolution) begin
     sampleon(_,timing)
-    map(event_streamer(window),_)
+    map(event_streamer(win),_)
     flatten(_)
     merge(_,pause_events)
   end
@@ -361,7 +389,7 @@ function ExperimentState(debug::Bool;
 
   exp = ExperimentState(0,exp_start,info,running,started,Array{Symbol}(0),events,
                         e -> nothing,Reactive.Signal(false),Running,
-                        MomentQueue(Queue(TrialMoment),0),state,data_file,window,
+                        MomentQueue(Queue(TrialMoment),0),state,data_file,win,
                         () -> error("no cleanup function available!"),
                         Nullable{Tuple{Exception,Array{Ptr{Void}}}}(),
                         moment_resolution,Reactive.Signal(false),pause_events)
@@ -395,22 +423,43 @@ function ExperimentState(debug::Bool;
   exp
 end
 
-function addtrial(watcher::Function,moments::Vararg{TrialMoment})
+function addtrial(watcher::Function,moments...)
   addtrial(watcher,get_experiment(),moments...)
 end
 
-function addtrial(moments::Vararg{TrialMoment})
+function addtrial(moments...)
   addtrial(get_experiment(),moments...)
 end
 
-function addtrial(exp::ExperimentState,moments::Vararg{TrialMoment})
+function addtrial(exp::ExperimentState,moments...)
   addtrial(e -> nothing,exp,moments...)
 end
 
-function addtrial(watcher::Function,exp::ExperimentState,moments::Vararg{TrialMoment})
-  precompile(watcher,(SFMLEvent,))
-  precompile(watcher,(EndPauseEvent,))
-  precompile(watcher,(EmptyEvent,))
+addmoment(exp::ExperimentState,m::TrialMoment) = enqueue!(exp.moments.data,m)
+function addmoment(exp::ExperimentState,ms)
+  try
+    for m in ms
+      # some types iterate over themselves (e.g. numbers);
+      # check for this to avoid infinite recursion
+      if m == ms
+        error("Expected a value of type `TrialMoment` but got a value of type "*
+              "$(typeof(ms)) instead.")
+      end
+      addmoment(exp,m)
+    end
+  catch e
+    if isa(e,MethodException)
+        error("Expected a value of type `TrialMoment` but got a value of type "*
+              "$(typeof(ms)) instead.")
+    end
+    rethrow(e)
+  end
+end
+
+function addtrial(watcher::Function,exp::ExperimentState,moments...)
+  for t in concrete_events
+    precompile(watcher,(t,))
+  end
 
   start_trial = moment() do t
     # make sure the trial doesn't lag due to memory allocation
@@ -419,54 +468,46 @@ function addtrial(watcher::Function,exp::ExperimentState,moments::Vararg{TrialMo
     exp.trial_watcher = watcher
     record("trial_start",time=t)
   end
-
-  end_trial = moment(t -> gc_enable(true))
-
   enqueue!(exp.moments.data,start_trial)
-  for m in moments;enqueue!(exp.moments.data,m);end
-  enqueue!(exp.moments.data,end_trial)
+
+  foreach(m -> addmoment(exp,m),moments)
+  enqueue!(exp.moments.data,moment(t -> gc_enable(true)))
 end
 
-function addbreak(watcher::Function,moments::Vararg{TrialMoment})
+function addbreak(watcher::Function,moments...)
   addbreak(watcher,get_experiment(),moments...)
 end
 
-function addbreak(moments::Vararg{TrialMoment})
+function addbreak(moments...)
   addbreak(get_experiment(),moments...)
 end
 
-function addbreak(exp::ExperimentState,moments::Vararg{TrialMoment})
+function addbreak(exp::ExperimentState,moments...)
   addbreak(e -> nothing,exp,moments...)
 end
 
-function addbreak(watcher::Function,exp::ExperimentState,moments::Vararg{TrialMoment})
-  precompile(watcher,(SFMLEvent,))
-  precompile(watcher,(EndPauseEvent,))
-  precompile(watcher,(EmptyEvent,))
-
-  start_break = moment() do t
-    exp.trial_watcher = watcher
+function addbreak(watcher::Function,exp::ExperimentState,moments...)
+  for t in concrete_events
+    precompile(watcher,(t,))
   end
 
-  enqueue!(exp.moments.data,start_break)
-  for m in moments;enqueue!(exp.moments.data,m);end
+  enqueue!(exp.moments.data,moment(t -> exp.trial_watcher = watcher))
+  foreach(m -> addmoment(exp,m),moments)
 end
 
-function pause(exp,message)
+function pause(exp,message,time)
   push!(exp.running,false)
-  record_ifheader(exp,"paused")
-  clear(exp.window,SFML.black)
-  draw(exp.window,message)
-  display(exp.window)
+  record_ifheader(exp,"paused",time=time)
+  display(exp.win,render(message))
 end
 
-function unpause(exp)
-  record_ifheader(exp,"unpaused")
+function unpause(exp,time)
+  record_ifheader(exp,"unpaused",time=time)
   exp.mode = Running
-  clear(exp.window,SFML.black)
-  display(exp.window)
+  clear(exp.win)
+  display(exp.win)
   push!(exp.running,true)
-  push!(exp.pause_events,EndPauseEvent())
+  push!(exp.pause_events,EndPauseEvent(time))
 end
 
 const Running = 0
@@ -475,19 +516,19 @@ const Unfocused = 2
 const Error = 3
 
 function watch_pauses(exp,e)
-  if exp.mode == Running && iskeydown(e,KeyCode.ESCAPE)
-    pause(exp,"Exit? [Y for yes, or N for no]")
+  if exp.mode == Running && iskeydown(e,key":escape:")
+    pause(exp,"Exit? [Y for yes, or N for no]",time(e))
     exp.mode = ToExit
   elseif exp.mode == Running && isunfocused(e)
-    pause(exp,"Waiting for window focus...")
+    pause(exp,"Waiting for window focus...",time(e))
     exp.mode = Unfocused
   elseif exp.mode == ToExit && iskeydown(e,key"y")
     record_ifheader(exp,"terminated")
     exp.cleanup()
   elseif exp.mode == ToExit && iskeydown(e,key"n")
-    unpause(exp)
+    unpause(exp,time(e))
   elseif exp.mode == Unfocused && isfocused(e)
-    pause(exp,"Paused. [To exit hit Y, to resume hit N]")
+    pause(exp,"Paused. [To exit hit Y, to resume hit N]",time(e))
     exp.mode = ToExit
   end
 end
@@ -512,18 +553,18 @@ function moment(fn::Function)
 end
 
 function response(fn::Function)
-  precompile(fn,(SFMLEvent,))
-  precompile(fn,(EndPauseEvent,))
-  precompile(fn,(EmptyEvent,))
+  for t in concrete_events
+    precompile(fn,(t,))
+  end
 
   ResponseMoment(fn,(t) -> nothing,0)
 end
 
 function timeout(fn::Function,isresponse::Function,timeout)
   precompile(fn,(Float64,))
-  precompile(isresponse,(SFMLEvent,))
-  precompile(isresponse,(EndPauseEvent,))
-  precompile(isresponse,(EmptyEvent,))
+  for t in concrete_events
+    precompile(isresponse,(t,))
+  end
 
   ResponseMoment(isresponse,fn,timeout)
 end
