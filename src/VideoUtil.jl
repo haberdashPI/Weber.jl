@@ -41,7 +41,7 @@ const SDL_RENDERER_ACCELERATED = 0x00000002
 const SDL_RENDERER_PRESENTVSYNC = 0x00000004
 const SDL_RENDERER_TARGETTEXTURE = 0x00000008
 
-function window(width=1024,height=768;fullscreen=true,title="Experiment")
+function window(width=1024,height=768;fullscreen=true,title="Experiment",accel=true)
   if !ccall((:SDL_SetHint,_psycho_SDL2),Bool,(Cstring,Cstring),
             "SDL_RENDER_SCALE_QUALITY","1")
     warn("Linear texture filtering not enabled.")
@@ -69,15 +69,19 @@ function window(width=1024,height=768;fullscreen=true,title="Experiment")
   fallback_flags = SDL_RENDERER_SOFTWARE
 
   rend = ccall((:SDL_CreateRenderer,_psycho_SDL2),Ptr{Void},
-               (Ptr{Void},Cint,UInt32),win,-1,flags)
+               (Ptr{Void},Cint,UInt32),win,-1,(accel ? flags : fallback_flags))
   if rend == C_NULL
     accel_error = SDL_GetError()
-    rend = ccall((:SDL_CreateRenderer,_psycho_SDL2),Ptr{Void},
-                 (Ptr{Void},Cint,UInt32),win,-1,fallback_flags)
-    if rend == C_NULL
-      error("Failed to create a renderer: "*SDL_GetError())
+    if accel
+      rend = ccall((:SDL_CreateRenderer,_psycho_SDL2),Ptr{Void},
+                   (Ptr{Void},Cint,UInt32),win,-1,fallback_flags)
+      if rend == C_NULL
+        error("Failed to create a renderer: "*SDL_GetError())
+      end
+      warn("Failed to create accelerated graphics renderer: "*accel_error)
+    else
+      error("Failed to create a renderer: "*accel_error())
     end
-    warn("Failed to create accelerated graphics renderer: "*accel_error)
   end
 
   wh = Array{Cint}(2)
