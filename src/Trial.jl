@@ -10,11 +10,10 @@ export Experiment, run, addtrial, addbreak, moment, response, record, timeout,
   iskeydown, iskeyup, iskeypressed, isfocused, isunfocused, endofpause,
   @key_str
 
-const default_moment_resolution = 5 #1000
-const default_input_resolution = 2 #60
+const default_moment_resolution = 1000
+const default_input_resolution = 60
 const exp_width = 1024
 const exp_height = 768
-const exp_color_depth = 32
 
 abstract ExpEvent
 
