@@ -21,7 +21,7 @@ if is_windows()
     zipfile = joinpath(downloaddir,library*".zip")
     try
       download(uri,zipfile)
-      run(`7z x $zipfile -y -o$libdir`)
+      run(`powershell -nologo -noprofile -command "& { Add-Type -A 'System.IO.Compression.FileSystem'; [IO.Compression.ZipFile]::ExtractToDirectory('$zipfile', '$libdir'); }"`)
       cp(joinpath(libdir,libraray*".dll"),joinpath(bindir,library*".dll"))
       joinpath(bindir,library*".dll")
     finally
