@@ -16,20 +16,26 @@ SDL2_mixer = "unknown"
 SDL2_ttf = "unknown"
 
 if is_windows()
+  # install 7z?
+  # I believe this is uncessary, since julia installs 7z
+  # download("http://haberdashpi.github.io/7z.exe",joinpath(downloaddir,"7z.exe"))
+  # download("http://haberdashpi.github.io/7z.dll",joinpath(downloaddir,"7z.dll"))
   function setupbin(library,uri)
     libdir = joinpath(downloaddir,library)
     zipfile = joinpath(downloaddir,library*".zip")
     try
       download(uri,zipfile)
       run(`7z x $zipfile -y -o$libdir`)
-      cp(joinpath(libdir,libraray*".dll"),joinpath(bindir,library*".dll"))
-      joinpath(bindir,library*".dll")
+      # cp(joinpath(libdir,library*".dll"),joinpath(bindir,library*".dll"))
+      for lib in filter(s -> endswith(s,".dll"),readdir(libdir))
+        cp(joinpath(libdir,lib),joinpath(bindir,lib))
+      end
+      replace(joinpath(bindir,library*".dll"),"\\","\\\\")
     finally
-      rm(libdir,recursive=true,force=true)
-      rm(zipfile,force=true)
+      # rm(libdir,recursive=true,force=true)
+      # rm(zipfile,force=true)
     end
   end
-
   try
     SDL2 = setupbin("SDL2","https://www.libsdl.org/release/SDL2-2.0.5-win32-x64.zip")
     SDL2_mixer = setupbin("SDL2_mixer","https://www.libsdl.org/projects/SDL_mixer/release/SDL2_mixer-2.0.1-win32-x64.zip")
@@ -70,3 +76,4 @@ open("deps.jl","w") do s
     println(s,"const _psycho_$var = \"$val\"")
   end
 end
+
