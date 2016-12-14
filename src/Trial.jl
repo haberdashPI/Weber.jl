@@ -1,5 +1,5 @@
 # TODO: use the version indicated by Pkg
-const psych_version = v"0.0.4"
+const psych_version = v"0.0.5"
 
 using Reactive
 using Lazy: @>>, @>, @_
@@ -204,8 +204,18 @@ type ResponseMoment <: TrialMoment
   timeout_delta_t::Float64
 end
 
-type TimedMoment <: TrialMoment
+abstract AbstractTimedMoment <: TrialMoment
+
+type TimedMoment <: AbstractTimedMoment
   delta_t::Float64
+  run::Function
+end
+
+type OffsetStartMoment <: AbstractTimedMoment
+  run::Function
+end
+
+type FinalMoment <: AbstractTimedMoment
   run::Function
 end
 
@@ -215,7 +225,8 @@ type MomentQueue
 end
 
 type ExperimentState
-  trial::Int
+  offset::Int
+  skip_offsets::Int
   start::DateTime
   info::Array
   running::Reactive.Signal{Bool}
@@ -236,27 +247,20 @@ type ExperimentState
   pause_events::Reactive.Signal{ExpEvent}
 end
 
-function record_helper(exp::ExperimentState,kwds,onlyifheader=false)
+function record_helper(exp::ExperimentState,kwds,header)
   columns = map(x -> x[1],kwds)
 
-  if isempty(exp.header)
-    if onlyifheader
-      return
-    end
-    for column in columns
-      push!(exp.header,column)
-    end
-    open(x -> println(x,join(columns,",")),exp.file,"a")
-  elseif !isempty(columns) && !all(map(c -> c ∈ exp.header,columns))
-    missing = filter(c -> c ∉ exp.header,columns)
+  if !isempty(columns) && !all(map(c -> c ∈ header,columns))
+    missing = filter(c -> c ∉ header,columns)
 
-    error("Unexpected columns $(join(missing,", "," and ")). "*
-          "Make sure that the first call to record includes all "*
-          "columns you plan to use.")
+    error("Unexpected column$(length(missing) > 1 ? "s" : "")"*
+          "$(join(missing,", "," and ")). "*
+          "Make sure you specify all columns you plan to use "*
+          "during experiment initialization.")
   end
 
   open(exp.file,"a") do stream
-    @_ exp.header begin
+    @_ header begin
       map(c -> findkwd(kwds,c,""),_)
       join(_,",")
       println(stream,_)
@@ -264,21 +268,22 @@ function record_helper(exp::ExperimentState,kwds,onlyifheader=false)
   end
 end
 
+function record_header(exp)
+  extra_keys = [:psych_version,:start_date,:start_time,:offset_time,]
+  info_keys = map(x->x[1],exp.info)
+  columns = [extra_keys...,info_keys...,:code,exp.header...]
+   open(x -> println(x,join(columns,",")),exp.file,"w")
+end
+
 function record(exp::ExperimentState,code;kwds...)
   extra = [:psych_version => psych_version,
            :start_date => Dates.format(exp.start,"yyyy-mm-dd"),
            :start_time => Dates.format(exp.start,"HH:MM:SS"),
-           :trial => exp.trial]
-  record_helper(exp,tuple(extra...,exp.info...,:code => code,kwds...))
-end
-
-
-function record_ifheader(exp::ExperimentState,code;kwds...)
-  extra = [:psych_version => psych_version,
-           :start_date => Dates.format(exp.start,"yyyy-mm-dd"),
-           :start_time => Dates.format(exp.start,"HH:MM:SS"),
-           :trial => exp.trial]
-  record_helper(exp,tuple(extra...,exp.info...,:code => code,kwds...),true)
+           :offset => exp.offset]
+  info_keys = map(x->x[1],exp.info)
+  extra_keys = map(x->x[1],extra)
+  record_helper(exp,tuple(extra...,exp.info...,:code => code,kwds...),
+                [extra_keys...,info_keys...,:code,exp.header...])
 end
 
 function record(code;kwds...)
@@ -290,10 +295,13 @@ type Experiment
   runfn::Function
   state::ExperimentState
 
-  function Experiment(fn::Function;debug=false,kwds...)
+  function Experiment(fn::Function;skip=0,columns=Symbol[],debug=false,kwds...)
     global experiment_context
 
-    exp = ExperimentState(debug;kwds...)
+    exp = ExperimentState(debug,skip,columns;kwds...)
+    record_header(exp)
+
+    # create data file header
 
     clenup_run = Condition()
     function cleanup()
@@ -321,7 +329,7 @@ type Experiment
       experiment_context = Nullable{ExperimentState}()
 
       # the last moment run cleans up the experiment
-      enqueue!(exp.moments.data,moment(t -> cleanup()))
+      enqueue!(exp.moments.data,final_moment(t -> cleanup()))
     catch e
       close(exp.win)
       gc_enable(true)
@@ -371,7 +379,7 @@ function get_experiment()
   end
 end
 
-function ExperimentState(debug::Bool;
+function ExperimentState(debug::Bool,skip::Int,header::Array{Symbol};
                          moment_resolution = default_moment_resolution,
                          data_dir = "data",
                          input_resolution = default_input_resolution,
@@ -381,7 +389,7 @@ function ExperimentState(debug::Bool;
   timestr = Dates.format(exp_start,"yyyy-mm-dd__HH_MM_SS")
   data_file = joinpath(data_dir,findkwd(info,:sid,"file")*"_"*timestr*".csv")
 
-  win = window(width,height,fullscreen=!debug)
+  win = window(width,height,fullscreen=!debug,accel=!debug)
 
   running = Reactive.Signal(false)
   started = Reactive.Signal(false)
@@ -392,7 +400,7 @@ function ExperimentState(debug::Bool;
   events = Reactive.Signal(Any,EmptyEvent())
   state = Reactive.Signal(Bool,false)
 
-  exp = ExperimentState(0,exp_start,info,running,started,Array{Symbol}(0),events,
+  exp = ExperimentState(0,skip,exp_start,info,running,started,header,events,
                         e -> nothing,Reactive.Signal(false),Running,
                         MomentQueue(Queue(TrialMoment),0),state,data_file,win,
                         () -> error("no cleanup function available!"),
@@ -473,10 +481,9 @@ function addtrial(watcher::Function,exp::ExperimentState,moments...)
     precompile(watcher,(t,))
   end
 
-  start_trial = moment() do t
+  start_trial = start_moment() do t
     # make sure the trial doesn't lag due to memory allocation
     gc_enable(false)
-    exp.trial += 1
     exp.trial_watcher = watcher
     record("trial_start",time=t)
   end
@@ -503,18 +510,18 @@ function addbreak(watcher::Function,exp::ExperimentState,moments...)
     precompile(watcher,(t,))
   end
 
-  enqueue!(exp.moments.data,moment(t -> exp.trial_watcher = watcher))
+  enqueue!(exp.moments.data,start_moment(t -> exp.trial_watcher = watcher))
   foreach(m -> addmoment(exp,m),moments)
 end
 
 function pause(exp,message,time)
   push!(exp.running,false)
-  record_ifheader(exp,"paused",time=time)
+  record(exp,"paused",time=time)
   display(exp.win,render(message))
 end
 
 function unpause(exp,time)
-  record_ifheader(exp,"unpaused",time=time)
+  record(exp,"unpaused",time=time)
   exp.mode = Running
   clear(exp.win)
   display(exp.win)
@@ -535,7 +542,8 @@ function watch_pauses(exp,e)
     pause(exp,"Waiting for window focus...",time(e))
     exp.mode = Unfocused
   elseif exp.mode == ToExit && iskeydown(e,key"y")
-    record_ifheader(exp,"terminated")
+    record(exp,"terminated")
+    info("Experiment terminated at offset $(exp.offset).")
     exp.cleanup()
   elseif exp.mode == ToExit && iskeydown(e,key"n")
     unpause(exp,time(e))
@@ -564,6 +572,16 @@ function moment(fn::Function)
   TimedMoment(0,fn)
 end
 
+function start_moment(fn::Function)
+  precompile(fn,(Float64,))
+  OffsetStartMoment(fn)
+end
+
+function final_moment(fn::Function)
+  precompile(fn,(Float64,))
+  FinalMoment(fn)
+end
+
 function response(fn::Function)
   for t in concrete_events
     precompile(fn,(t,))
@@ -585,9 +603,25 @@ function delta_t(moment::TimedMoment)
   moment.delta_t
 end
 
-function handle(exp::ExperimentState,moment::TimedMoment,time::Float64)
+function delta_t(moment::OffsetStartMoment)
+  0
+end
+
+function delta_t(moment::FinalMoment)
+  0
+end
+
+function run(moment::TimedMoment,time::Float64)
+  moment.run(time)
+end
+
+function run(moment::OffsetStartMoment,time::Float64)
+  moment.run(time)
+end
+
+function handle(exp::ExperimentState,moment::AbstractTimedMoment,time::Float64)
   try
-    moment.run(time)
+    run(moment,time)
   catch e
     exp.exception = Nullable((e,catch_backtrace()))
     exp.mode = Error
@@ -596,7 +630,7 @@ function handle(exp::ExperimentState,moment::TimedMoment,time::Float64)
   true
 end
 
-function handle(exp::ExperimentState,moment::TimedMoment,event::ExpEvent)
+function handle(exp::ExperimentState,moment::AbstractTimedMoment,event::ExpEvent)
   false
 end
 
@@ -627,7 +661,22 @@ function handle(exp::ExperimentState,moment::ResponseMoment,event::ExpEvent)
   handled
 end
 
+keep_skipping(exp,moment::TrialMoment) = exp.offset < exp.skip_offsets
+function keep_skipping(exp,moment::OffsetStartMoment)
+  exp.offset += 1
+  exp.offset < exp.skip_offsets
+end
+keep_skipping(exp,moment::FinalMoment) = false
+
+function skip_offsets(exp,queue)
+  while keep_skipping(exp,front(queue.data)) && !isempty(queue.data)
+    dequeue!(queue.data)
+  end
+end
+
 function handle(exp::ExperimentState,queue::MomentQueue,event::ExpEvent)
+  skip_offsets(exp,queue)
+
   if !isempty(queue.data)
     moment = front(queue.data)
     handled = handle(exp,moment,event)
@@ -639,7 +688,10 @@ function handle(exp::ExperimentState,queue::MomentQueue,event::ExpEvent)
 end
 
 function handle(exp::ExperimentState,queue::MomentQueue,t::Float64)
+  skip_offsets(exp,queue)
+
   if !isempty(queue.data)
+    # println("Handling moment $(front(queue.data))")
     start_time = time()
     moment = front(queue.data)
     event_time = delta_t(moment) + queue.last
