@@ -6,20 +6,15 @@ for d in [downloaddir,bindir]
   mkpath(d)
 end
 
-# NOTE: I'm not using BinDeps.jl here because I have found that
-# the binaries from the various julia package managers can be
-# corrupt, leading to weird runtime errors (e.g. playing sound just plays random
-# chunks of memory).
+# NOTE: I'm not using BinDeps.jl here because I don't yet understand
+# it, and was having difficulty troubleshooting problems.
 
 SDL2 = "unknown"
 SDL2_mixer = "unknown"
 SDL2_ttf = "unknown"
 
 if is_windows()
-  # install 7z?
-  # I believe this is uncessary, since julia installs 7z
-  # download("http://haberdashpi.github.io/7z.exe",joinpath(downloaddir,"7z.exe"))
-  # download("http://haberdashpi.github.io/7z.dll",joinpath(downloaddir,"7z.dll"))
+  # do I need install 7z? (does this require julia bin directoy on PATH??)
   function setupbin(library,uri)
     libdir = joinpath(downloaddir,library)
     zipfile = joinpath(downloaddir,library*".zip")
