@@ -143,11 +143,6 @@ function setup_sound(;samplerate=44100,buffer_size=256)
   global sound_environment
   if sound_environment != nothing
     ccall((:Mix_CloseAudio,_psycho_SDL2_mixer),Void,())
-  else
-    init = ccall((:SDL_Init,_psycho_SDL2),Cint,(UInt32,),SDL_INIT_AUDIO)
-    if init < 0
-      error("Failed to initialize SDL: "*SDL_GetError())
-    end
   end
 
   mixer_init = ccall((:Mix_OpenAudio,_psycho_SDL2_mixer),
@@ -159,7 +154,6 @@ function setup_sound(;samplerate=44100,buffer_size=256)
 
   sound_environment = SoundEnvironment()
 end
-setup_sound()
 
 type PlayingSound
   channel::Int

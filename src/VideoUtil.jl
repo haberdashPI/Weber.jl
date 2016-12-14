@@ -42,10 +42,6 @@ const SDL_RENDERER_PRESENTVSYNC = 0x00000004
 const SDL_RENDERER_TARGETTEXTURE = 0x00000008
 
 function window(width=1024,height=768;fullscreen=true,title="Experiment")
-  if ccall((:SDL_Init,_psycho_SDL2),Cint,(UInt32,),SDL_INIT_VIDEO) < 0
-    error("Failed to initialize SDL: "*SDL_GetError())
-  end
-
   if !ccall((:SDL_SetHint,_psycho_SDL2),Bool,(Cstring,Cstring),
             "SDL_RENDER_SCALE_QUALITY","1")
     warn("Linear texture filtering not enabled.")
