@@ -1,6 +1,7 @@
 __precompile__()
 
 module Psychotask
+const psych_version = v"0.0.5"
 
 # load binary library dependencies
 depsjl = joinpath(dirname(@__FILE__), "..", "deps", "deps.jl")
@@ -20,14 +21,15 @@ TTF_GetError = SDL_GetError
 # this is a simple function for accessing aribtrary offsets in memory as any
 # bitstype you want... this is used to read from a c union by determining the
 # offset of various fields in the data using offsetof(struct,field) in c and
-# then using that offset to access the memory in julia. SDL makes
-# extensive use of c unions types in it's event API.
+# then using that offset to access the memory in julia. SDL's
+# core event type (SDL_Event) is a c union.
 function at{T}(x::Ptr{Void},::Type{T},offset)
   unsafe_wrap(Array,reinterpret(Ptr{T},x + offset),1)[1]
 end
 
 include(joinpath(dirname(@__FILE__),"VideoUtil.jl"))
 include(joinpath(dirname(@__FILE__),"SoundUtil.jl"))
+include(joinpath(dirname(@__FILE__),"Event.jl"))
 include(joinpath(dirname(@__FILE__),"Trial.jl"))
 
 function __init__()
