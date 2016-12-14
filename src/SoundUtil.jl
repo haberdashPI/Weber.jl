@@ -1,4 +1,4 @@
-using SampledSignals
+  using SampledSignals
 using DSP
 using LibSndFile
 using FixedPointNumbers
@@ -48,7 +48,7 @@ end
 
 # TODO: debug
 function harmonic_complex(f0,harmonics,amps,length_s;
-						  sample_rate_Hz=44100,phases=zeros(length(harmonics)))
+						              sample_rate_Hz=44100,phases=zeros(length(harmonics)))
 	n = maximum(harmonics)+1
 
   unit_length = 1/f0
@@ -162,8 +162,8 @@ end
 
 function play(x::Sound,async=true)
   channel = ccall((:Mix_PlayChannelTimed,_psycho_SDL2_mixer),Cint,
-                 (Cint,Ref{MixChunk},Cint,Cint),
-                 -1,x.chunk,0,-1)
+                  (Cint,Ref{MixChunk},Cint,Cint),
+                  -1,x.chunk,0,-1)
   if channel < 0
     error("Failed to play sound: "*Mix_GetError())
   end
