@@ -136,14 +136,18 @@ end
 type SoundEnvironment
 end
 
+const SDL_INIT_AUDIO = 0x00000010
+const AUDIO_S16 = 0x8010
 function init_sound(samplerate=44100)
-  init = @cxx SDL_Init(icxx"SDL_INIT_AUDIO;")
+  init = ccall((:SDL_Init,_psycho_SDL2),Cint,(UInt32,),SDL_INIT_AUDIO)
   if init < 0
     error("Failed to initialize SDL: "*SDL_GetError())
   end
 
   # we use a very small buffer, to minimize latency
-  mixer_init = @cxx Mix_OpenAudio(round(Cint,samplerate/2),icxx"AUDIO_S16LSB;",2,64)
+  mixer_init = ccall((:Mix_OpenAudio,_psycho_SDL2_mixer),
+                     Cint,(Cint,UInt16,Cint,Cint),
+                     round(Cint,samplerate/2),AUDIO_S16,2,64)
   if mixer_init < 0
     error("Failed to initialize sound: "*Mix_GetError())
   end
@@ -154,8 +158,8 @@ function init_sound(samplerate=44100)
 end
 
 function close_sound()
-  @cxx Mix_CloseAudio()
-  @cxx SDL_Quit()
+  ccall((:Mix_CloseAudio,_psycho_SDL2_mixer),Void,())
+  ccall((:SDL_Quit,_psycho_SDL2),Void,())
 end
 
 type PlayingSound
@@ -175,23 +179,24 @@ function play(x::Sound,async=true)
     PlayingSound(channel,x)
   else
     sleep(duration(x)-0.01)
-    while @cxx(Mix_Playing(channel)) > 0; end
+    while ccall((:Mix_Playing,_psycho_SDL2_mixer),Cint,(Cint,),channel) > 0
+    end
     nothing
   end
 end
 
 function play(x::PlayingSound)
-  @cxx Mix_Resume(x.channel)
+  ccall((:Mix_Resume,_psycho_SDL2_mixer),Void,(Cint,),x.channel)
   x
 end
 
 function pause(x::PlayingSound)
-  @cxx Mix_Pause(x.channel)
+  ccall((:Mix_Pause,_psycho_SDL2_mixer),Void,(Cint,),x.channel)
   x
 end
 
 function stop(x::PlayingSound)
-  @cxx Mix_HaltChannel(x.channel)
+  ccall((:Mix_HaltChannel,_psycho_SDL2_mixer),Void,(Cint,),x.channel)
   nothing
 end
 

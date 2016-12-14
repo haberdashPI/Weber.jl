@@ -1,16 +1,8 @@
 module Psychotask
 
-using Cxx
-
 depsjl = joinpath(dirname(@__FILE__), "..", "deps", "deps.jl")
 if isfile(depsjl)
   include(depsjl)
-  Libdl.dlopen(_psycho_SDL2)
-  Libdl.dlopen(_psycho_SDL2_mixer)
-  Libdl.dlopen(_psycho_SDL2_ttf)
-  cxxinclude(joinpath(dirname(@__FILE__),"..","deps","usr","include","SDL.h"))
-  cxxinclude(joinpath(dirname(@__FILE__),"..","deps","usr","include","SDL_mixer.h"))
-  cxxinclude(joinpath(dirname(@__FILE__),"..","deps","usr","include","SDL_ttf.h"))
 else
   error("Psychotask not properly installed. "*
         "Please run\nPkg.build(\"Psychotask\")")
@@ -19,6 +11,14 @@ end
 SDL_GetError() = unsafe_string(ccall((:SDL_GetError,_psycho_SDL2),Cstring,()))
 Mix_GetError() = unsafe_string(ccall((:SDL_GetError,_psycho_SDL2),Cstring,()))
 TTF_GetError() = unsafe_string(ccall((:SDL_GetError,_psycho_SDL2),Cstring,()))
+
+# this is a simple function for accessing aribtrary offsets in memory as any
+# bitstype you want... this is used to read from a c union by determining the
+# offset of various fields in the data using offsetof(struct,field) in c and
+# then using that offset to access the memory in julia.
+function at{T}(x::Ptr{Void},::Type{T},offset)
+  unsafe_wrap(Array,reinterpret(Ptr{T},x + offset),1)[1]
+end
 
 include(joinpath(dirname(@__FILE__),"VideoUtil.jl"))
 include(joinpath(dirname(@__FILE__),"SoundUtil.jl"))

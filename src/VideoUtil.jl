@@ -32,44 +32,52 @@ type SDLWindow
   closed::Bool
 end
 
+const SDL_INIT_VIDEO = 0x00000020
+const SDL_WINDOWPOS_CENTERED = 0x2fff0000
+const SDL_WINDOW_FULLSCREEN_DESKTOP = 0x00001001
+const SDL_WINDOW_INPUT_GRABBED = 0x00000100
+const SDL_RENDERER_SOFTWARE = 0x00000001
+const SDL_RENDERER_ACCELERATED = 0x00000002
+const SDL_RENDERER_PRESENTVSYNC = 0x00000004
+const SDL_RENDERER_TARGETTEXTURE = 0x00000008
+
 function window(width=1024,height=768;fullscreen=true,title="Experiment")
-  if icxx"SDL_Init(SDL_INIT_VIDEO);" < 0
+  if ccall((:SDL_Init,_psycho_SDL2),Cint,(UInt32,),SDL_INIT_VIDEO) < 0
     error("Failed to initialize SDL: "*SDL_GetError())
   end
 
-  if icxx"!SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY,\"1\");"
+  if !ccall((:SDL_SetHint,_psycho_SDL2),Bool,(Cstring,Cstring),
+            "SDL_RENDER_SCALE_QUALITY","1")
     warn("Linear texture filtering not enabled.")
   end
 
-  if @cxx(TTF_Init()) == -1
+  if ccall((:TTF_Init,_psycho_SDL2_ttf),Cint,()) == -1
     error("Failed to initialize SDL_ttf: "*TTF_GetError())
   end
 
-  x = y = icxx"SDL_WINDOWPOS_CENTERED;"
-  flags = if fullscreen
-    icxx"SDL_WINDOW_FULLSCREEN_DESKTOP | SDL_WINDOW_INPUT_GRABBED;"
-  else
-    icxx"SDL_WINDOW_INPUT_GRABBED;"
-  end
+  x = y = SDL_WINDOWPOS_CENTERED
+  flags = (fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : UInt32(0)) |
+    SDL_WINDOW_INPUT_GRABBED
 
-  win = @cxx(SDL_CreateWindow(pointer(title),x,y,width,height,flags))
+  win = ccall((:SDL_CreateWindow,_psycho_SDL2),Ptr{Void},
+              (Cstring,Cint,Cint,Cint,Cint,UInt32),
+              pointer(title),x,y,width,height,flags)
   if win == C_NULL
     error("Failed to create a window: "*SDL_GetError())
   end
 
-  flags = icxx"""
-    SDL_RENDERER_ACCELERATED |
+  flags = SDL_RENDERER_ACCELERATED |
     SDL_RENDERER_PRESENTVSYNC |
-    SDL_RENDERER_TARGETTEXTURE;
-  """
+    SDL_RENDERER_TARGETTEXTURE
 
-  fallback_flags = icxx"""
-    SDL_RENDERER_SOFTWARE;
-  """
-  rend = @cxx(SDL_CreateRenderer(win,-1,flags))
+  fallback_flags = SDL_RENDERER_SOFTWARE
+
+  rend = ccall((:SDL_CreateRenderer,_psycho_SDL2),Ptr{Void},
+               (Ptr{Void},Cint,UInt32),win,-1,flags)
   if rend == C_NULL
     accel_error = SDL_GetError()
-    rend = @cxx(SDL_CreateRenderer(win,-1,fallback_flags))
+    rend = ccall((:SDL_CreateRenderer,_psycho_SDL2),Ptr{Void},
+                 (Ptr{Void},Cint,UInt32),win,-1,fallback_flags)
     if rend == C_NULL
       error("Failed to create a renderer: "*SDL_GetError())
     end
@@ -77,9 +85,9 @@ function window(width=1024,height=768;fullscreen=true,title="Experiment")
   end
 
   wh = Array{Cint}(2)
-  @cxx SDL_GetWindowSize(win,pointer(wh,1),pointer(wh,2))
-
-  @cxx SDL_ShowCursor(0)
+  ccall((:SDL_GetWindowSize,_psycho_SDL2),Void,
+        (Ptr{Void},Ptr{Cint},Ptr{Cint}),win,pointer(wh,1),pointer(wh,2))
+  ccall((:SDL_ShowCursor,_psycho_SDL2),Void,(Cint,),0)
 
   x = SDLWindow(win,rend,wh[1],wh[2],false)
   finalizer(x,x -> (x.closed ? nothing : close(x)))
@@ -88,8 +96,8 @@ function window(width=1024,height=768;fullscreen=true,title="Experiment")
 end
 
 function close(win::SDLWindow)
-  icxx"SDL_DestroyRenderer((SDL_Renderer*)$:(win.renderer::Ptr{Void}));"
-  icxx"SDL_DestroyWindow((SDL_Window*)$:(win.data::Ptr{Void}));"
+  ccall((:SDL_DestroyRenderer,_psycho_SDL2),Void,(Ptr{Void},),win.renderer)
+  ccall((:SDL_DestroyWindow,_psycho_SDL2),Void,(Ptr{Void},),win.data)
   win.closed = true
 end
 
@@ -103,14 +111,10 @@ function clear(window::SDLWindow,color::Color)
 end
 
 function clear(window::SDLWindow,color::RGB{U8}=colorant"black")
-  r::UInt8 = reinterpret(UInt8,red(color))
-  g::UInt8 = reinterpret(UInt8,green(color))
-  b::UInt8 = reinterpret(UInt8,blue(color))
-  icxx"
-  SDL_SetRenderDrawColor((SDL_Renderer*)$:(window.renderer::Ptr{Void}),
-    $:(r::UInt8),$:(g::UInt8),$:(b::UInt8),255);
-  SDL_RenderClear((SDL_Renderer*)$:(window.renderer::Ptr{Void}));
-  1;"
+  ccall((:SDL_SetRenderDrawColor,_psycho_SDL2),Void,
+        (Ptr{Void},UInt8,UInt8,UInt8),window.renderer,
+        red(color),green(color),blue(color))
+  ccall((:SDL_RenderClear,_psycho_SDL2),Void,(Ptr{Void},),window.renderer)
   nothing
 end
 
@@ -122,13 +126,15 @@ end
 
 function font(name::String,size;dirs=font_dirs,color=colorant"white")
   file = find_font(name,dirs)
-  font = @cxx TTF_OpenFont(pointer(file),size)
+  font = ccall((:TTF_OpenFont,_psycho_SDL2_ttf),Ptr{Void},(Cstring,Cint),
+               pointer(file),size)
   if font == C_NULL
     error("Failed to load the font $file: "*TTF_GetError())
   end
 
   x = SDLFont(font,color)
-  finalizer(x,x -> icxx"TTF_CloseFont((TTF_Font*)$:(x.data::Ptr{Void}));")
+  finalizer(x,x -> ccall((:TTF_CloseFont,_psycho_SDL2_ttf),Void,
+                         (Ptr{Void},),x.data))
   x
 end
 
@@ -158,6 +164,9 @@ function render(window::SDLWindow,str::String;
          round(UInt32,window.w*max_width))
 end
 
+const w_ptr = 0x0000000000000010 # icxx"offsetof(SDL_Surface,w);"
+const h_ptr = 0x0000000000000014 # icxx"offsetof(SDL_Surface,h);"
+
 function render(window::SDLWindow,font::SDLFont,color::RGB{U8},str::String,
                 max_width::UInt32)
   surface = ccall((:TTF_RenderUTF8_Blended_Wrapped,_psycho_SDL2_ttf),Ptr{Void},
@@ -167,19 +176,18 @@ function render(window::SDLWindow,font::SDLFont,color::RGB{U8},str::String,
     error("Failed to render text: "*TTF_GetError())
   end
 
-  texture = icxx"SDL_CreateTextureFromSurface(
-    (SDL_Renderer*)$:(window.renderer::Ptr{Void}),
-    (SDL_Surface*)$:(surface::Ptr{Void}));"
+  texture = ccall((:SDL_CreateTextureFromSurface,_psycho_SDL2),Ptr{Void},
+                  (Ptr{Void},Ptr{Void}),window.renderer,surface)
   if texture == C_NULL
     error("Failed to create texture for render text: "*SDL_GetError())
   end
 
-  w = icxx"((SDL_Surface*)$:(surface::Ptr{Void}))->w;"
-  h = icxx"((SDL_Surface*)$:(surface::Ptr{Void}))->h;"
+  w = at(surface,Cint,w_ptr)
+  h = at(surface,Cint,h_ptr)
   x = SDLText(texture,w,h,color)
   finalizer(x,x ->
-            icxx"SDL_DestroyTexture((SDL_Texture*)$:(x.data::Ptr{Void}));")
-  icxx"SDL_FreeSurface((SDL_Surface*)$:(surface::Ptr{Void}));"
+            ccall((:SDL_DestroyTexture,_psycho_SDL2),Void,(Ptr{Void},),x.data))
+  ccall((:SDL_FreeSurface,_psycho_SDL2),Void,(Ptr{Void},),surface)
 
   x
 end
@@ -188,16 +196,21 @@ function draw(text::SDLText,x::Real=0,y::Real=0)
   draw(get_experiment().win,text,x,y)
 end
 
+immutable SDLRect
+  x::Cint
+  y::Cint
+  w::Cint
+  h::Cint
+end
+
 function draw(window::SDLWindow,text::SDLText,x::Real=0,y::Real=0)
   xint = round(Cint,window.w/2 + x*window.w/4 - text.w / 2)
   yint = round(Cint,window.h/2 + y*window.h/4 - text.h / 2)
 
-  icxx"""
-  SDL_Rect rect = {$:(xint::Cint),$:(yint::Cint),
-                   $:(text.w::Cint),$:(text.h::Cint)};
-  SDL_RenderCopy((SDL_Renderer*)$:(window.renderer),
-                 (SDL_Texture*)$:(text.data),NULL,&rect);
-  """
+  rect = [SDLRect(xint,yint,text.w,text.h)]
+  ccall((:SDL_RenderCopy,_psycho_SDL2),Void,
+        (Ptr{Void},Ptr{Void},Ptr{Void},Ptr{SDLRect}),
+        window.renderer,text.data,C_NULL,pointer(rect))
   nothing
 end
 
@@ -206,7 +219,7 @@ function display()
 end
 
 function display(window::SDLWindow)
-  icxx"SDL_RenderPresent((SDL_Renderer*)$:(window.renderer::Ptr{Void}));"
+  ccall((:SDL_RenderPresent,_psycho_SDL2),Void,(Ptr{Void},),window.renderer)
   nothing
 end
 

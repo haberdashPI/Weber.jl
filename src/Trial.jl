@@ -10,8 +10,8 @@ export Experiment, run, addtrial, addbreak, moment, response, record, timeout,
   iskeydown, iskeyup, iskeypressed, isfocused, isunfocused, endofpause,
   @key_str
 
-const default_moment_resolution = 1000
-const default_input_resolution = 60
+const default_moment_resolution = 5 #1000
+const default_input_resolution = 2 #60
 const exp_width = 1024
 const exp_height = 768
 const exp_color_depth = 32
@@ -68,49 +68,49 @@ isnull(e::ExpEvent) = false
 isnull(e::EmptyEvent) = true
 
 str_to_code = Dict(
-  "a" => reinterpret(Int32,icxx"SDLK_a;"),
-  "b" => reinterpret(Int32,icxx"SDLK_b;"),
-  "c" => reinterpret(Int32,icxx"SDLK_c;"),
-  "d" => reinterpret(Int32,icxx"SDLK_d;"),
-  "e" => reinterpret(Int32,icxx"SDLK_e;"),
-  "f" => reinterpret(Int32,icxx"SDLK_f;"),
-  "g" => reinterpret(Int32,icxx"SDLK_g;"),
-  "h" => reinterpret(Int32,icxx"SDLK_h;"),
-  "i" => reinterpret(Int32,icxx"SDLK_i;"),
-  "j" => reinterpret(Int32,icxx"SDLK_j;"),
-  "k" => reinterpret(Int32,icxx"SDLK_k;"),
-  "l" => reinterpret(Int32,icxx"SDLK_l;"),
-  "m" => reinterpret(Int32,icxx"SDLK_m;"),
-  "n" => reinterpret(Int32,icxx"SDLK_n;"),
-  "o" => reinterpret(Int32,icxx"SDLK_o;"),
-  "p" => reinterpret(Int32,icxx"SDLK_p;"),
-  "q" => reinterpret(Int32,icxx"SDLK_q;"),
-  "r" => reinterpret(Int32,icxx"SDLK_r;"),
-  "s" => reinterpret(Int32,icxx"SDLK_s;"),
-  "t" => reinterpret(Int32,icxx"SDLK_t;"),
-  "u" => reinterpret(Int32,icxx"SDLK_u;"),
-  "v" => reinterpret(Int32,icxx"SDLK_v;"),
-  "w" => reinterpret(Int32,icxx"SDLK_w;"),
-  "x" => reinterpret(Int32,icxx"SDLK_x;"),
-  "y" => reinterpret(Int32,icxx"SDLK_y;"),
-  "z" => reinterpret(Int32,icxx"SDLK_z;"),
-  "0" => reinterpret(Int32,icxx"SDLK_0;"),
-  "1" => reinterpret(Int32,icxx"SDLK_1;"),
-  "2" => reinterpret(Int32,icxx"SDLK_2;"),
-  "3" => reinterpret(Int32,icxx"SDLK_3;"),
-  "4" => reinterpret(Int32,icxx"SDLK_4;"),
-  "5" => reinterpret(Int32,icxx"SDLK_5;"),
-  "6" => reinterpret(Int32,icxx"SDLK_6;"),
-  "7" => reinterpret(Int32,icxx"SDLK_7;"),
-  "8" => reinterpret(Int32,icxx"SDLK_8;"),
-  "9" => reinterpret(Int32,icxx"SDLK_9;"),
-  " " => reinterpret(Int32,icxx"SDLK_SPACE;"),
-  ":space:" => reinterpret(Int32,icxx"SDLK_SPACE;"),
-  ":up:" => reinterpret(Int32,icxx"SDLK_UP;"),
-  ":down:" => reinterpret(Int32,icxx"SDLK_DOWN;"),
-  ":left:" => reinterpret(Int32,icxx"SDLK_LEFT;"),
-  ":right:" => reinterpret(Int32,icxx"SDLK_RIGHT;"),
-  ":escape:" => reinterpret(Int32,icxx"SDLK_ESCAPE;")
+  "a" => reinterpret(Int32,'a'),
+  "b" => reinterpret(Int32,'b'),
+  "c" => reinterpret(Int32,'c'),
+  "d" => reinterpret(Int32,'d'),
+  "e" => reinterpret(Int32,'e'),
+  "f" => reinterpret(Int32,'f'),
+  "g" => reinterpret(Int32,'g'),
+  "h" => reinterpret(Int32,'h'),
+  "i" => reinterpret(Int32,'i'),
+  "j" => reinterpret(Int32,'j'),
+  "k" => reinterpret(Int32,'k'),
+  "l" => reinterpret(Int32,'l'),
+  "m" => reinterpret(Int32,'m'),
+  "n" => reinterpret(Int32,'n'),
+  "o" => reinterpret(Int32,'o'),
+  "p" => reinterpret(Int32,'p'),
+  "q" => reinterpret(Int32,'q'),
+  "r" => reinterpret(Int32,'r'),
+  "s" => reinterpret(Int32,'s'),
+  "t" => reinterpret(Int32,'t'),
+  "u" => reinterpret(Int32,'u'),
+  "v" => reinterpret(Int32,'v'),
+  "w" => reinterpret(Int32,'w'),
+  "x" => reinterpret(Int32,'x'),
+  "y" => reinterpret(Int32,'y'),
+  "z" => reinterpret(Int32,'z'),
+  "0" => reinterpret(Int32,'0'),
+  "1" => reinterpret(Int32,'1'),
+  "2" => reinterpret(Int32,'2'),
+  "3" => reinterpret(Int32,'3'),
+  "4" => reinterpret(Int32,'4'),
+  "5" => reinterpret(Int32,'5'),
+  "6" => reinterpret(Int32,'6'),
+  "7" => reinterpret(Int32,'7'),
+  "8" => reinterpret(Int32,'8'),
+  "9" => reinterpret(Int32,'9'),
+  " " => reinterpret(Int32,' '),
+  ":space:" => reinterpret(Int32,' '),
+  ":up:" => reinterpret(Int32,0x40000052),
+  ":down:" => reinterpret(Int32,0x40000051),
+  ":left:" => reinterpret(Int32,0x40000050),
+  ":right:" => reinterpret(Int32,0x4000004f),
+  ":escape:" => reinterpret(Int32,0x0000001b)
 )
 
 macro key_str(key)
@@ -142,33 +142,44 @@ isfocused(event::WindowFocused) = true
 isunfocused(event::ExpEvent) = false
 isunfocused(event::WindowUnfocused) = true
 
-# the C++ SDL_Event* is very verbose expressed in Cxx.jl so
-# this macro makes the code to access fields of an SDL_event more
-# readable
-macro cxx_SDL_Event_str(str)
-  event_type_str = "Cxx.CppPtr{Cxx.CxxQualType{Cxx.CppBaseType{:SDL_Event},(false,false,false)},(false,false,false)}"
-  mstr = replace(str,"\$:(event)",
-                 "\$:(event::"*event_type_str*")")
-  :(@icxx_str($mstr))
-end
+const type_ptr = 0x0000000000000000
+const keysym_ptr = 0x0000000000000010 # icxx"offsetof(SDL_KeyboardEvent,keysym);"
+const sym_ptr = 0x0000000000000004 # icxx"offsetof(SDL_Keysym,sym);"
+const win_event_ptr = 0x000000000000000c # icxx"offsetof(SDL_WindowEvent,event);"
+const event_size = 0x0000000000000038 # icxx"sizeof(SDL_Event);"
 
-function event_streamer(win)
+const SDL_KEYDOWN = 0x00000300
+const SDL_KEYUP = 0x00000301
+const SDL_WINDOWEVENT = 0x00000200
+const SDL_QUIT = 0x00000100
+
+const SDL_WINDOWEVENT_FOCUS_GAINED = 0x0000000c
+const SDL_WINDOWEVENT_FOCUS_LOST = 0x0000000d
+
+function event_streamer(win,exp)
   function helper(time::Float64)
     events = Signal(ExpEvent,EmptyEvent())
-    event = icxx"new SDL_Event();"
-    while @cxx(SDL_PollEvent(event)) != 0
-      if cxx_SDL_Event"$:(event)->type == SDL_KEYDOWN;"
-        code = reinterpret(Int32,cxx_SDL_Event"$:(event)->key.keysym.sym;")
+
+    event_bytes = Array{Int8}(event_size)
+    event = reinterpret(Ptr{Void},pointer(event_bytes))
+
+    while ccall((:SDL_PollEvent,_psycho_SDL2),Cint,(Ptr{Void},),event) != 0
+      etype = at(event,UInt32,type_ptr)
+      if etype == SDL_KEYDOWN
+        code = at(event,Int32,keysym_ptr + sym_ptr)
         push!(events,KeyDownEvent(code,time))
-      elseif cxx_SDL_Event"$:(event)->type == SDL_KEYUP;"
-        code = reinterpret(Int32,cxx_SDL_Event"$:(event)->key.keysym.sym;")
+      elseif etype == SDL_KEYUP
+        code = at(event,Int32,keysym_ptr + sym_ptr)
         push!(events,KeyUpEvent(code,time))
-      elseif cxx_SDL_Event"$:(event)->type == SDL_WINDOWEVENT;"
-        if cxx_SDL_Event"$:(event)->window.event == SDL_WINDOWEVENT_FOCUS_GAINED;"
+      elseif etype == SDL_WINDOWEVENT
+        wevent = at(event,UInt8,win_event_ptr)
+        if wevent == SDL_WINDOWEVENT_FOCUS_GAINED
           push!(events,WindowFocused(time))
-        elseif cxx_SDL_Event"$:(event)->window.event == SDL_WINDOWEVENT_FOCUS_LOST;"
+        elseif wevent == SDL_WINDOWEVENT_FOCUS_LOST
           push!(events,WindowUnfocused(time))
         end
+      elseif etype == SDL_QUIT
+        exp.cleanup()
       end
     end
     events
@@ -295,7 +306,7 @@ type Experiment
       # a trial). Make sure it really does return to an enabled state.
       gc_enable(true)
 
-      # indicate that the expeirment is done running
+      # indicate that the experiment is done running
       notify(clenup_run)
     end
 
@@ -378,13 +389,8 @@ function ExperimentState(debug::Bool;
 
   timing = foldp(+,0.0,fpswhen(running,moment_resolution))
   pause_events = Reactive.Signal(ExpEvent,EmptyEvent())
-  events = @_ fpswhen(started,input_resolution) begin
-    sampleon(_,timing)
-    map(event_streamer(win),_)
-    flatten(_)
-    merge(_,pause_events)
-  end
 
+  events = Reactive.Signal(Any,EmptyEvent())
   state = Reactive.Signal(Bool,false)
 
   exp = ExperimentState(0,exp_start,info,running,started,Array{Symbol}(0),events,
@@ -393,6 +399,13 @@ function ExperimentState(debug::Bool;
                         () -> error("no cleanup function available!"),
                         Nullable{Tuple{Exception,Array{Ptr{Void}}}}(),
                         moment_resolution,Reactive.Signal(false),pause_events)
+
+  events = @_ fpswhen(started,input_resolution) begin
+    sampleon(_,timing)
+    map(event_streamer(win,exp),_)
+    flatten(_)
+    merge(_,pause_events)
+  end
 
   exp.state = map(filterwhen(running,EmptyEvent(),merge(timing,events))) do x
     if !isnull(x)
