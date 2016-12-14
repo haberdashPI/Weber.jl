@@ -5,7 +5,7 @@ using FixedPointNumbers
 
 export match_lengths, mix, mult, silence, noise, highpass, lowpass, bandpass,
 	tone, ramp, harmonic_complex, attenuate, sound, loadsound, play, pause, stop,
-	savesound, duration
+	savesound, duration, setup_sound
 
 const loadsound = LibSndFile.load
 const savesound = LibSndFile.save
@@ -138,36 +138,34 @@ end
 
 const SDL_INIT_AUDIO = 0x00000010
 const AUDIO_S16 = 0x8010
-function init_sound(samplerate=44100)
-  init = ccall((:SDL_Init,_psycho_SDL2),Cint,(UInt32,),SDL_INIT_AUDIO)
-  if init < 0
-    error("Failed to initialize SDL: "*SDL_GetError())
+sound_environment = nothing
+function setup_sound(;samplerate=44100,buffer_size=256)
+  global sound_environment
+  if sound_environment != nothing
+    ccall((:Mix_CloseAudio,_psycho_SDL2_mixer),Void,())
+  else
+    init = ccall((:SDL_Init,_psycho_SDL2),Cint,(UInt32,),SDL_INIT_AUDIO)
+    if init < 0
+      error("Failed to initialize SDL: "*SDL_GetError())
+    end
   end
 
-  # we use a very small buffer, to minimize latency
   mixer_init = ccall((:Mix_OpenAudio,_psycho_SDL2_mixer),
                      Cint,(Cint,UInt16,Cint,Cint),
-                     round(Cint,samplerate/2),AUDIO_S16,2,64)
+                     round(Cint,samplerate/2),AUDIO_S16,2,buffer_size)
   if mixer_init < 0
     error("Failed to initialize sound: "*Mix_GetError())
   end
 
-  result = SoundEnvironment()
-  finalizer(result,x -> close_sound())
-  result
+  sound_environment = SoundEnvironment()
 end
-
-function close_sound()
-  ccall((:Mix_CloseAudio,_psycho_SDL2_mixer),Void,())
-  ccall((:SDL_Quit,_psycho_SDL2),Void,())
-end
+setup_sound()
 
 type PlayingSound
   channel::Int
   sound::Sound
 end
 
-sound_environment = init_sound()
 function play(x::Sound,async=true)
   channel = ccall((:Mix_PlayChannelTimed,_psycho_SDL2_mixer),Cint,
                  (Cint,Ref{MixChunk},Cint,Cint),
