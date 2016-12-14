@@ -6,30 +6,31 @@ for d in [downloaddir,bindir]
   mkpath(d)
 end
 
-# NOTE: I'm not using BinDeps.jl here because I have found that
-# the binaries from the various julia package managers can be
-# corrupt, leading to weird runtime errors (e.g. playing sound just plays random
-# chunks of memory).
+# NOTE: I'm not using BinDeps.jl here because I don't yet understand
+# it, and was having difficulty troubleshooting problems.
 
 SDL2 = "unknown"
 SDL2_mixer = "unknown"
 SDL2_ttf = "unknown"
 
 if is_windows()
+  # do I need install 7z? (does this require julia bin directoy on PATH??)
   function setupbin(library,uri)
     libdir = joinpath(downloaddir,library)
     zipfile = joinpath(downloaddir,library*".zip")
     try
       download(uri,zipfile)
-      run(`powershell -nologo -noprofile -command "& { Add-Type -A 'System.IO.Compression.FileSystem'; [IO.Compression.ZipFile]::ExtractToDirectory('$zipfile', '$libdir'); }"`)
-      cp(joinpath(libdir,libraray*".dll"),joinpath(bindir,library*".dll"))
-      joinpath(bindir,library*".dll")
+      run(`7z x $zipfile -y -o$libdir`)
+      # cp(joinpath(libdir,library*".dll"),joinpath(bindir,library*".dll"))
+      for lib in filter(s -> endswith(s,".dll"),readdir(libdir))
+        cp(joinpath(libdir,lib),joinpath(bindir,lib))
+      end
+      replace(joinpath(bindir,library*".dll"),"\\","\\\\")
     finally
-      rm(libdir,recursive=true,force=true)
-      rm(zipfile,force=true)
+      # rm(libdir,recursive=true,force=true)
+      # rm(zipfile,force=true)
     end
   end
-
   try
     SDL2 = setupbin("SDL2","https://www.libsdl.org/release/SDL2-2.0.5-win32-x64.zip")
     SDL2_mixer = setupbin("SDL2_mixer","https://www.libsdl.org/projects/SDL_mixer/release/SDL2_mixer-2.0.1-win32-x64.zip")
