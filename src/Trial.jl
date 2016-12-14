@@ -211,7 +211,7 @@ type Experiment
 end
 
 function run(exp::Experiment)
-
+  focus(exp.state.win)
   exp.runfn()
   nothing
 end
@@ -383,7 +383,7 @@ function watch_pauses(exp,e)
   if exp.mode == Running && iskeydown(e,key":escape:")
     pause(exp,"Exit? [Y for yes, or N for no]",time(e))
     exp.mode = ToExit
-  elseif exp.mode == Running && isunfocused(e)
+  elseif exp.mode == Running && isunfocused(e) && value(exp.started)
     pause(exp,"Waiting for window focus...",time(e))
     exp.mode = Unfocused
   elseif exp.mode == ToExit && iskeydown(e,key"y")
@@ -393,8 +393,13 @@ function watch_pauses(exp,e)
   elseif exp.mode == ToExit && iskeydown(e,key"n")
     unpause(exp,time(e))
   elseif exp.mode == Unfocused && isfocused(e)
-    pause(exp,"Paused. [To exit hit Y, to resume hit N]",time(e))
-    exp.mode = ToExit
+    if value(exp.started)
+      pause(exp,"Paused. [To exit hit Y, to resume hit N]",time(e))
+      exp.mode = ToExit
+    else
+      exp.mode = Running
+      push!(exp.running,true)
+    end
   end
 end
 

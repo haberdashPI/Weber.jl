@@ -1,4 +1,6 @@
 using Colors
+using Reactive
+
 import Base: display, close
 
 export render, window, font, clear, display, draw, close
@@ -231,4 +233,8 @@ function display(window::SDLWindow,text::SDLText)
   clear(window)
   draw(window,text)
   display(window)
+end
+
+function focus(window::SDLWindow)
+  ccall((:SDL_RaiseWindow,_psycho_SDL2),Void,(Ptr{Void},),window.data)
 end
