@@ -362,14 +362,14 @@ end
 function pause(exp,message,time)
   push!(exp.running,false)
   record(exp,"paused",time=time)
+  save_display(exp.win)
   display(exp.win,render(message))
 end
 
 function unpause(exp,time)
   record(exp,"unpaused",time=time)
   exp.mode = Running
-  clear(exp.win)
-  display(exp.win)
+  restore_display(exp.win)
   push!(exp.running,true)
   push!(exp.pause_events,EndPauseEvent(time))
 end

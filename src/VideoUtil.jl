@@ -1,9 +1,11 @@
 using Colors
 using Reactive
+using DataStructures
 
 import Base: display, close
+import Colors: @colorant_str, RGB # importing solely to allow their use in user code
 
-export render, window, font, clear, display, draw, close
+export render, window, font, display, close, @colorant_str, RGB
 
 @static if is_windows()
   const font_dirs = [".",joinpath(ENV["WINDIR"],"fonts")]
@@ -34,7 +36,6 @@ type SDLWindow
   closed::Bool
 end
 
-const SDL_INIT_VIDEO = 0x00000020
 const SDL_WINDOWPOS_CENTERED = 0x2fff0000
 const SDL_WINDOW_FULLSCREEN_DESKTOP = 0x00001001
 const SDL_WINDOW_INPUT_GRABBED = 0x00000100
@@ -103,23 +104,19 @@ function close(win::SDLWindow)
   win.closed = true
 end
 
-
-function clear(color=colorant"black")
-  clear(get_experiment().win,color)
-end
-
 function clear(window::SDLWindow,color::Color)
-  clear_helper(window,convert(RGB{U8},color))
+  clear(window,convert(RGB{U8},color))
 end
 
 function clear(window::SDLWindow,color::RGB{U8}=colorant"black")
   ccall((:SDL_SetRenderDrawColor,_psycho_SDL2),Void,
         (Ptr{Void},UInt8,UInt8,UInt8),window.renderer,
-        red(color),green(color),blue(color))
+        reinterpret(UInt8,red(color)),
+        reinterpret(UInt8,green(color)),
+        reinterpret(UInt8,blue(color)))
   ccall((:SDL_RenderClear,_psycho_SDL2),Void,(Ptr{Void},),window.renderer)
   nothing
 end
-
 
 type SDLFont
   data::Ptr{Void}
@@ -140,13 +137,85 @@ function font(name::String,size;dirs=font_dirs,color=colorant"white")
   x
 end
 
-type SDLText
-  data::Ptr{Void}
+const forever = -1
+
+"""
+Duration determines how long an object will be displayed.  If the duration
+of the object is 0, the object will display until a new object is
+displayed. If the duration is Inf the object will be displayed forever.
+"""
+function display_duration
+end
+
+"""
+Objects are displayed according to their priority (drawing lower valued
+prioritys first, and higher values last). Objects with the same priority show in
+the order they were displayed.
+"""
+function display_priority
+end
+
+"""
+`SDLRendered` objects are those that can be displayed in an SDLWindow
+"""
+abstract SDLRendered
+
+function draw(r::SDLRendered)
+  draw(get_experiment().window,r)
+end
+
+type SDLClear <: SDLRendered
+  color::Color
+  duration::Float64
+  priority::Float64
+end
+display_duration(clear::SDLClear) = clear.duration
+display_priority(clear::SDLClear) = clear.priority
+render(color::Color;keys...) = render(get_experiment().win,color;keys...)
+draw(window::SDLWindow,cl::SDLClear) = clear(window,cl.color)
+
+function render(window::SDLWindow,color::Color;duration=0,priority=0)
+  SDLClear(color,duration,priority)
+end
+
+immutable SDLRect
+  x::Cint
+  y::Cint
   w::Cint
   h::Cint
+end
+
+type SDLText <: SDLRendered
+  data::Ptr{Void}
+  rect::SDLRect
+  duration::Float64
+  priority::Float64
   color::Color
 end
 
+display_duration(text::SDLText) = text.duration
+display_priority(text::SDLText) = text.priority
+
+"""
+render(str::String, [font_name="arial"], [size=32], [color=colorant"white"],
+       [max_width=0.8],[clean_whitespace=true],[x=0],[y=0],[duration=0],
+       [priority=0])
+
+Render the given string as an image that can be displayed.
+
+* font_name: name of font to use
+* size: font size
+* color: color to draw the text in
+* max_width: the maximum width as a proportion of the screen the text can
+*   take up before wrapping
+* clean_whitespace: replace all whitespace characters with a single space?
+* x: horizontal position (0 is center of screen, 1 far right, -1 far left)
+* y: vertical position (0 is center of screen, 1 topmost, -1 bottommost)
+* duration: how long the text should display for, 0 displays until call to
+*   display
+* priority: display priority, higher priority objects display in front of lower
+*   priority ones.
+"""
 function render(str::String;keys...)
   render(get_experiment().win,str;keys...)
 end
@@ -154,7 +223,8 @@ end
 fonts = Dict{Tuple{String,Int},SDLFont}()
 function render(window::SDLWindow,str::String;
                 font_name="arial",size=32,color::RGB{U8}=colorant"white",
-                max_width=0.8,clean_whitespace=true)
+                max_width=0.8,clean_whitespace=true,x=0,y=0,
+                duration=0,priority=0)
   if (font_name,size) ∉ keys(fonts)
     fonts[(font_name,size)] = font(font_name,size)
   end
@@ -162,15 +232,15 @@ function render(window::SDLWindow,str::String;
     str = replace(str,r"^\s+","")
     str = replace(str,r"\s+"," ")
   end
-  render(window,fonts[(font_name,size)],color,str,
-         round(UInt32,window.w*max_width))
+  render(window,x,y,fonts[(font_name,size)],color,
+         round(UInt32,window.w*max_width),str,duration,priority)
 end
 
 const w_ptr = 0x0000000000000010 # icxx"offsetof(SDL_Surface,w);"
 const h_ptr = 0x0000000000000014 # icxx"offsetof(SDL_Surface,h);"
 
-function render(window::SDLWindow,font::SDLFont,color::RGB{U8},str::String,
-                max_width::UInt32)
+function render(window::SDLWindow,x::Real,y::Real,font::SDLFont,color::RGB{U8},
+                max_width::UInt32,str::String,duration=0,priority=0)
   surface = ccall((:TTF_RenderUTF8_Blended_Wrapped,_psycho_SDL2_ttf),Ptr{Void},
                   (Ptr{Void},Cstring,RGBA{U8},UInt32),
                   font.data,pointer(str),color,max_width)
@@ -186,23 +256,28 @@ function render(window::SDLWindow,font::SDLFont,color::RGB{U8},str::String,
 
   w = at(surface,Cint,w_ptr)
   h = at(surface,Cint,h_ptr)
-  x = SDLText(texture,w,h,color)
-  finalizer(x,x ->
+
+  xint = max(0,min(window.w,round(Cint,window.w/2 + x*window.w/4 - w / 2)))
+  yint = max(0,min(window.h,round(Cint,window.h/2 - y*window.h/4 - h / 2)))
+
+  result = SDLText(texture,SDLRect(xint,yint,w,h),duration,priority,color)
+  finalizer(result,x ->
             ccall((:SDL_DestroyTexture,_psycho_SDL2),Void,(Ptr{Void},),x.data))
   ccall((:SDL_FreeSurface,_psycho_SDL2),Void,(Ptr{Void},),surface)
 
-  x
+  result
 end
 
-function draw(text::SDLText,x::Real=0,y::Real=0)
-  draw(get_experiment().win,text,x,y)
+function draw(window::SDLWindow,text::SDLText)
+  ccall((:SDL_RenderCopy,_psycho_SDL2),Void,
+        (Ptr{Void},Ptr{Void},Ptr{Void},Ptr{SDLRect}),
+        window.renderer,text.data,C_NULL,Ref(text.rect))
+  nothing
 end
 
-immutable SDLRect
-  x::Cint
-  y::Cint
-  w::Cint
-  h::Cint
+function show_drawn(window::SDLWindow)
+  ccall((:SDL_RenderPresent,_psycho_SDL2),Void,(Ptr{Void},),window.renderer)
+  nothing
 end
 
 # called in __init__() to create display_stacks global variable
@@ -217,23 +292,83 @@ function setup_display()
   end
 end
 
-function display()
-  display(get_experiment().win)
+function display(r::SDLRendered)
+  display(get_experiment().win,r)
 end
 
-function display(window::SDLWindow)
-  ccall((:SDL_RenderPresent,_psycho_SDL2),Void,(Ptr{Void},),window.renderer)
-  nothing
+type EmptyRendered <: SDLRendered; end
+update_display_helper(window,stack,r::EmptyRendered) = stack
+
+type DeleteRendered <: SDLRendered
+  x::SDLRendered
+end
+update_display_helper(window,stack,r::DeleteRendered) = delete!(stack,r.x)
+
+"""
+display(win::SDLWindow,r::SDLRendered)
+
+When called on an `SDLWindow`, display will display the `SDLRendered` object for
+its `display_duration`.
+"""
+function display(window::SDLWindow,r::SDLRendered)
+  global display_stacks
+  global display_signals
+
+  if window ∉ keys(display_stacks)
+    signal = display_signals[window] = Signal(SDLRendered,EmptyRendered())
+    display_stacks[window] = foldp(update_display(window),
+                                  OrderedSet{SDLRendered}(),signal)
+  else
+    signal = display_signals[window]
+  end
+
+  push!(signal,r)
+  if display_duration(r) > 0 && !isinf(display_duration(r))
+    Timer(t -> push!(signal,DeleteRendered(r)),display_duration(r))
+  end
 end
 
-function display(text::SDLText)
-  display(get_experiment().win,text)
+update_display(window::SDLWindow) = (s,r) -> update_display_helper(window,s,r)
+function update_display_helper(window,stack,r::SDLRendered)
+  stack = filter(r -> display_duration(r) > 0,stack)
+  push!(stack,r)
+  display_stack(window,stack)
+  stack
 end
 
-function display(window::SDLWindow,text::SDLText)
+function display_stack(window::SDLWindow,stack::OrderedSet{SDLRendered})
   clear(window)
-  draw(window,text)
-  display(window)
+  for r in sort(collect(stack),by=display_priority,alg=MergeSort)
+    draw(window,r)
+  end
+  show_drawn(window)
+end
+
+type RestoreDisplay <: SDLRendered
+  x::OrderedSet{SDLRendered}
+end
+function update_display_helper(window,stack,restore::RestoreDisplay)
+  display_stack(window,restore.x)
+  restore.x
+end
+
+global saved_display = OrderedSet{SDLRendered}()
+function save_display(window::SDLWindow)
+  global saved_display
+  if window ∈ keys(display_stacks)
+    saved_display = value(display_stacks[window])
+  else
+    saved_display = OrderedSet{SDLRendered}()
+  end
+end
+function restore_display(window::SDLWindow)
+  global display_signals
+  if window in keys(display_signals)
+    push!(display_signals[window],RestoreDisplay(saved_display))
+  else
+    clear(window)
+    show_drawn(window)
+  end
 end
 
 function focus(window::SDLWindow)
