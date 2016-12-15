@@ -1,6 +1,7 @@
 using Colors
 using Reactive
 using DataStructures
+using Lazy: @>>
 
 import Base: display, close
 import Colors: @colorant_str, RGB # importing solely to allow their use in user code
@@ -108,7 +109,7 @@ function clear(window::SDLWindow,color::Color)
   clear(window,convert(RGB{U8},color))
 end
 
-function clear(window::SDLWindow,color::RGB{U8}=colorant"black")
+function clear(window::SDLWindow,color::RGB{U8}=colorant"gray")
   ccall((:SDL_SetRenderDrawColor,_psycho_SDL2),Void,
         (Ptr{Void},UInt8,UInt8,UInt8),window.renderer,
         reinterpret(UInt8,red(color)),
@@ -297,12 +298,12 @@ function display(r::SDLRendered)
 end
 
 type EmptyRendered <: SDLRendered; end
-update_display_helper(window,stack,r::EmptyRendered) = stack
+update_stack_helper(window,stack,r::EmptyRendered) = stack
 
 type DeleteRendered <: SDLRendered
   x::SDLRendered
 end
-update_display_helper(window,stack,r::DeleteRendered) = delete!(stack,r.x)
+update_stack_helper(window,stack,r::DeleteRendered) = delete!(stack,r.x)
 
 """
 display(win::SDLWindow,r::SDLRendered)
@@ -316,8 +317,10 @@ function display(window::SDLWindow,r::SDLRendered)
 
   if window ∉ keys(display_stacks)
     signal = display_signals[window] = Signal(SDLRendered,EmptyRendered())
-    display_stacks[window] = foldp(update_display(window),
-                                  OrderedSet{SDLRendered}(),signal)
+    display_stacks[window] = @>> signal begin
+      foldp(update_stack(window),OrderedSet{SDLRendered}())
+      map(display_stack(window))
+    end
   else
     signal = display_signals[window]
   end
@@ -328,29 +331,28 @@ function display(window::SDLWindow,r::SDLRendered)
   end
 end
 
-update_display(window::SDLWindow) = (s,r) -> update_display_helper(window,s,r)
-function update_display_helper(window,stack,r::SDLRendered)
+update_stack(window::SDLWindow) = (s,r) -> update_stack_helper(window,s,r)
+function update_stack_helper(window,stack,r::SDLRendered)
   stack = filter(r -> display_duration(r) > 0,stack)
   push!(stack,r)
-  display_stack(window,stack)
-  stack
 end
 
-function display_stack(window::SDLWindow,stack::OrderedSet{SDLRendered})
-  clear(window)
-  for r in sort(collect(stack),by=display_priority,alg=MergeSort)
-    draw(window,r)
+function display_stack(window::SDLWindow)
+  (stack::OrderedSet{SDLRendered}) -> begin
+    clear(window)
+    for r in sort(collect(stack),by=display_priority,alg=MergeSort)
+      draw(window,r)
+    end
+    show_drawn(window)
+
+    stack
   end
-  show_drawn(window)
 end
 
 type RestoreDisplay <: SDLRendered
   x::OrderedSet{SDLRendered}
 end
-function update_display_helper(window,stack,restore::RestoreDisplay)
-  display_stack(window,restore.x)
-  restore.x
-end
+update_stack_helper(window,stack,restore::RestoreDisplay) = restore.x
 
 global saved_display = OrderedSet{SDLRendered}()
 function save_display(window::SDLWindow)
