@@ -211,8 +211,12 @@ type Experiment
 end
 
 function run(exp::Experiment)
-  focus(exp.state.win)
-  exp.runfn()
+  try
+    focus(exp.state.win)
+    exp.runfn()
+  finally
+    info("Experiment terminated at offset $(exp.state.offset).")
+  end
   nothing
 end
 
@@ -359,10 +363,12 @@ function addbreak(watcher::Function,exp::ExperimentState,moments...)
   foreach(m -> addmoment(exp,m),moments)
 end
 
-function pause(exp,message,time)
+function pause(exp,message,time,firstpause=true)
   push!(exp.running,false)
   record(exp,"paused",time=time)
-  save_display(exp.win)
+  if firstpause
+    save_display(exp.win)
+  end
   display(exp.win,render(message))
 end
 
@@ -388,13 +394,12 @@ function watch_pauses(exp,e)
     exp.mode = Unfocused
   elseif exp.mode == ToExit && iskeydown(e,key"y")
     record(exp,"terminated")
-    info("Experiment terminated at offset $(exp.offset).")
     exp.cleanup()
   elseif exp.mode == ToExit && iskeydown(e,key"n")
     unpause(exp,time(e))
   elseif exp.mode == Unfocused && isfocused(e)
     if value(exp.started)
-      pause(exp,"Paused. [To exit hit Y, to resume hit N]",time(e))
+      pause(exp,"Paused. [To exit hit Y, to resume hit N]",time(e),false)
       exp.mode = ToExit
     else
       exp.mode = Running
@@ -466,6 +471,10 @@ function run(moment::TimedMoment,time::Float64)
 end
 
 function run(moment::OffsetStartMoment,time::Float64)
+  moment.run(time)
+end
+
+function run(moment::FinalMoment,time::Float64)
   moment.run(time)
 end
 
