@@ -205,15 +205,16 @@ immutable SDLRect
   h::Cint
 end
 
-function draw(window::SDLWindow,text::SDLText,x::Real=0,y::Real=0)
-  xint = round(Cint,window.w/2 + x*window.w/4 - text.w / 2)
-  yint = round(Cint,window.h/2 + y*window.h/4 - text.h / 2)
+# called in __init__() to create display_stacks global variable
+const SDL_INIT_VIDEO = 0x00000020
+function setup_display()
+  global display_signals = Dict{SDLWindow,Signal{SDLRendered}}()
+  global display_stacks = Dict{SDLWindow,Signal{OrderedSet{SDLRendered}}}()
 
-  rect = [SDLRect(xint,yint,text.w,text.h)]
-  ccall((:SDL_RenderCopy,_psycho_SDL2),Void,
-        (Ptr{Void},Ptr{Void},Ptr{Void},Ptr{SDLRect}),
-        window.renderer,text.data,C_NULL,pointer(rect))
-  nothing
+  init = ccall((:SDL_Init,_psycho_SDL2),Cint,(UInt32,),SDL_INIT_VIDEO)
+  if init < 0
+    error("Failed to initialize SDL: "*SDL_GetError())
+  end
 end
 
 function display()

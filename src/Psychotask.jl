@@ -33,12 +33,7 @@ include(joinpath(dirname(@__FILE__),"Event.jl"))
 include(joinpath(dirname(@__FILE__),"Trial.jl"))
 
 function __init__()
-  init = ccall((:SDL_Init,_psycho_SDL2),Cint,(UInt32,),
-               SDL_INIT_AUDIO | SDL_INIT_VIDEO)
-  if init < 0
-    error("Failed to initialize SDL: "*SDL_GetError())
-  end
-
+  setup_display()
   setup_sound()
 end
 
