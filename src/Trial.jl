@@ -387,7 +387,8 @@ function pause(exp,message,time,firstpause=true)
   if firstpause
     save_display(exp.win)
   end
-  display(exp.win,render(message))
+  overlay = render(colorant"gray",priority=Inf) + render(message,priority=Inf)
+  display(exp.win,overlay)
 end
 
 function unpause(exp,time)

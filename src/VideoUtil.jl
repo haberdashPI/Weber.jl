@@ -4,6 +4,7 @@ using DataStructures
 using Lazy: @>>
 
 import Base: display, close
+import Base: +
 import Colors: @colorant_str, RGB # importing solely to allow their use in user code
 
 export render, window, font, display, close, @colorant_str, RGB
@@ -160,12 +161,13 @@ end
 `SDLRendered` objects are those that can be displayed in an SDLWindow
 """
 abstract SDLRendered
+abstract SDLConcreteRendered <: SDLRendered
 
 function draw(r::SDLRendered)
   draw(get_experiment().window,r)
 end
 
-type SDLClear <: SDLRendered
+type SDLClear <: SDLConcreteRendered
   color::Color
   duration::Float64
   priority::Float64
@@ -186,7 +188,7 @@ immutable SDLRect
   h::Cint
 end
 
-type SDLText <: SDLRendered
+type SDLText <: SDLConcreteRendered
   data::Ptr{Void}
   rect::SDLRect
   duration::Float64
@@ -326,14 +328,18 @@ function display(window::SDLWindow,r::SDLRendered)
   end
 
   push!(signal,r)
-  if display_duration(r) > 0 && !isinf(display_duration(r))
+  handle_remove(signal,r)
+end
+
+function handle_remove(signal,r::SDLRendered)
+  if display_duration(r) > 0.0 && !isinf(display_duration(r))
     Timer(t -> push!(signal,DeleteRendered(r)),display_duration(r))
   end
 end
 
 update_stack(window::SDLWindow) = (s,r) -> update_stack_helper(window,s,r)
 function update_stack_helper(window,stack,r::SDLRendered)
-  stack = filter(r -> display_duration(r) > 0,stack)
+  stack = filter(r -> display_duration(r) > 0.0,stack)
   push!(stack,r)
 end
 
@@ -349,10 +355,41 @@ function display_stack(window::SDLWindow)
   end
 end
 
+type SDLCompound <: SDLRendered
+  data::Array{SDLRendered}
+end
+function +(a::SDLConcreteRendered,b::SDLConcreteRendered)
+  SDLCompound([a,b])
+end
+function +(a::SDLCompound,b::SDLCompound)
+  SDLCompound(vcat(a.data,b.data))
+end
++(a::SDLRendered,b::SDLRendered) = +(promote(a,b)...)
+promote_rule(::Type{SDLConcreteRendered},::Type{SDLCompound}) = SDLCompound
+convert(::Type{SDLCompound},x::SDLConcreteRendered) = SDLCompound([x])
+function update_stack_helper(window,stack,rs::SDLCompound)
+  stack = filter(r -> display_duration(r) > 0.0,stack)
+  for r in rs.data
+    push!(stack,r)
+  end
+  stack
+end
+function handle_remove(signal,rs::SDLCompound)
+  for r in rs.data
+    handle_remove(signal,r)
+  end
+end
+
 type RestoreDisplay <: SDLRendered
   x::OrderedSet{SDLRendered}
 end
-update_stack_helper(window,stack,restore::RestoreDisplay) = restore.x
+function update_stack_helper(window,stack,restore::RestoreDisplay)
+  # only restore objects that aren't timed. Otherwise the timed objects will
+  # never get deleted. There is no well defined way to set their duration again
+  # and remove them, since some unknown amount of time has passed since they
+  # started being displayed.
+  filter(r -> display_duration(r) <= 0.0,restore.x)
+end
 
 global saved_display = OrderedSet{SDLRendered}()
 function save_display(window::SDLWindow)
