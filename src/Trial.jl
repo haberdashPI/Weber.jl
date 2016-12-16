@@ -4,8 +4,8 @@ using Lazy: @>>, @>, @_
 using DataStructures
 import Base: run, time
 
-export Experiment, run, addtrial, addbreak, moment, response, record, timeout,
-  endofpause
+export Experiment, run, addtrial, addbreak, addpractice, moment, await_response,
+  record, timeout, endofpause
 
 const default_moment_resolution = 1000
 const default_input_resolution = 60
@@ -57,6 +57,7 @@ end
 
 type OffsetStartMoment <: AbstractTimedMoment
   run::Function
+  count_trials::Bool
 end
 
 type FinalMoment <: AbstractTimedMoment
@@ -70,6 +71,7 @@ end
 
 type ExperimentState
   offset::Int
+  trial::Int
   skip_offsets::Int
   start::DateTime
   info::Array
@@ -113,17 +115,29 @@ function record_helper(exp::ExperimentState,kwds,header)
 end
 
 function record_header(exp)
-  extra_keys = [:psych_version,:start_date,:start_time,:offset_time,]
+  extra_keys = [:psych_version,:start_date,:start_time,:offset,:trial]
   info_keys = map(x->x[1],exp.info)
+
+  reserved_keys = Set([extra_keys...;info_keys...])
+  reserved = filter(x -> x ∈ reserved_keys,exp.header)
+  if length(reserved) > 0
+    plural = length(reserved) > 1
+    error("The column name$(plural ? "s" : "")"*
+          "$(join(missing,", "," and ")) $(plural ? "are" : "is") reserved."*
+          "Please use $(plural ? "" : "a ")different name$(plural ? "s" : "").")
+  end
+
   columns = [extra_keys...,info_keys...,:code,exp.header...]
-   open(x -> println(x,join(columns,",")),exp.file,"w")
+  open(x -> println(x,join(columns,",")),exp.file,"w")
 end
 
 function record(exp::ExperimentState,code;kwds...)
   extra = [:psych_version => psych_version,
            :start_date => Dates.format(exp.start,"yyyy-mm-dd"),
            :start_time => Dates.format(exp.start,"HH:MM:SS"),
-           :offset => exp.offset]
+           :offset => exp.offset,
+           :trial => exp.trial]
+
   info_keys = map(x->x[1],exp.info)
   extra_keys = map(x->x[1],extra)
   record_helper(exp,tuple(extra...,exp.info...,:code => code,kwds...),
@@ -249,8 +263,8 @@ function ExperimentState(debug::Bool,skip::Int,header::Array{Symbol};
   events = Reactive.Signal(Any,EmptyEvent())
   state = Reactive.Signal(Bool,false)
 
-  exp = ExperimentState(0,skip,exp_start,info,running,started,header,events,
-                        e -> nothing,Reactive.Signal(false),Running,
+  exp = ExperimentState(0,0,skip,exp_start,info,running,started,header,
+                        events,e -> nothing,Reactive.Signal(false),Running,
                         MomentQueue(Queue(TrialMoment),0),state,data_file,win,
                         () -> error("no cleanup function available!"),
                         Nullable{Tuple{Exception,Array{Ptr{Void}}}}(),
@@ -292,58 +306,70 @@ function ExperimentState(debug::Bool,skip::Int,header::Array{Symbol};
   exp
 end
 
-function addtrial(watcher::Function,moments...)
-  addtrial(watcher,get_experiment(),moments...)
-end
-
-function addtrial(moments...)
-  addtrial(get_experiment(),moments...)
-end
-
-function addtrial(exp::ExperimentState,moments...)
-  addtrial(e -> nothing,exp,moments...)
-end
-
 addmoment(exp::ExperimentState,m::TrialMoment) = enqueue!(exp.moments.data,m)
-function addmoment(exp::ExperimentState,ms)
-  try
-    for m in ms
-      # some types iterate over themselves (e.g. numbers);
-      # check for this to avoid infinite recursion
-      if m == ms
-        error("Expected a value of type `TrialMoment` but got a value of type "*
-              "$(typeof(ms)) instead.")
-      end
-      addmoment(exp,m)
-    end
-  catch e
-    if isa(e,MethodException)
-        error("Expected a value of type `TrialMoment` but got a value of type "*
-              "$(typeof(ms)) instead.")
-    end
-    rethrow(e)
-  end
-end
-
-function addtrial(watcher::Function,exp::ExperimentState,moments...)
+function addmoment(exp::ExperimentState,watcher::Function)
   for t in concrete_events
     precompile(watcher,(t,))
   end
-
-  start_trial = start_moment() do t
-    # make sure the trial doesn't lag due to memory allocation
-    gc_enable(false)
-    exp.trial_watcher = watcher
-    record("trial_start",time=t)
+  enqueue!(exp.moments.data,moment(t -> exp.trial_watcher = watcher))
+end
+function addmoment(exp::ExperimentState,ms)
+  emessage = "Expected a value of type `TrialMoment` of `Function` but got"*
+              " a value of type $(typeof(ms)) instead."
+  try
+    first(ms)
+  catch e
+    if isa(e,MethodError)
+      error(emessage)
+    end
+    rethrow(e)
   end
-  enqueue!(exp.moments.data,start_trial)
 
-  foreach(m -> addmoment(exp,m),moments)
-  enqueue!(exp.moments.data,moment(t -> gc_enable(true)))
+  for m in ms
+    # some types iterate over themselves (e.g. numbers);
+    # check for this to avoid infinite recursion
+    if m == ms
+      error(emessage)
+    end
+    addmoment(exp,m)
+  end
 end
 
-function addbreak(watcher::Function,moments...)
-  addbreak(watcher,get_experiment(),moments...)
+function addtrial_helper(exp::ExperimentState,trial_count,moments)
+
+  # make sure the trial doesn't lag due to memory allocation
+  start_trial = offset_start_moment(trial_count) do t
+    gc_enable(false)
+    if trial_count
+      record("trial_start",time=t)
+    else
+      record("practice_start",time=t)
+    end
+  end
+
+  end_trial = moment() do t
+    gc_enable(true)
+  end
+
+  addmoment(exp,start_trial)
+  foreach(m -> addmoment(exp,m),moments)
+  addmoment(exp,end_trial)
+end
+
+function addtrial(moments...)
+  addtrial_helper(get_experiment(),true,moments)
+end
+
+function addtrial(exp::ExperimentState,moments...)
+  addtrial_helper(exp,true,moments)
+end
+
+function addpractice(moments...)
+  addtrial_helper(get_experiment(),false,moments)
+end
+
+function addpractice(exp::ExperimentState,moments...)
+  addtrial_helper(exp,false,moments)
 end
 
 function addbreak(moments...)
@@ -351,15 +377,7 @@ function addbreak(moments...)
 end
 
 function addbreak(exp::ExperimentState,moments...)
-  addbreak(e -> nothing,exp,moments...)
-end
-
-function addbreak(watcher::Function,exp::ExperimentState,moments...)
-  for t in concrete_events
-    precompile(watcher,(t,))
-  end
-
-  enqueue!(exp.moments.data,start_moment(t -> exp.trial_watcher = watcher))
+  addmoment(exp,offset_start_moment())
   foreach(m -> addmoment(exp,m),moments)
 end
 
@@ -427,9 +445,9 @@ function moment(fn::Function)
   TimedMoment(0,fn)
 end
 
-function start_moment(fn::Function)
+function offset_start_moment(fn::Function=t->nothing,count_trials=false)
   precompile(fn,(Float64,))
-  OffsetStartMoment(fn)
+  OffsetStartMoment(fn,count_trials)
 end
 
 function final_moment(fn::Function)
@@ -437,7 +455,7 @@ function final_moment(fn::Function)
   FinalMoment(fn)
 end
 
-function response(fn::Function)
+function await_response(fn::Function)
   for t in concrete_events
     precompile(fn,(t,))
   end
@@ -523,6 +541,9 @@ end
 keep_skipping(exp,moment::TrialMoment) = exp.offset < exp.skip_offsets
 function keep_skipping(exp,moment::OffsetStartMoment)
   exp.offset += 1
+  if moment.count_trials
+    exp.trial += 1
+  end
   exp.offset < exp.skip_offsets
 end
 keep_skipping(exp,moment::FinalMoment) = false
@@ -541,6 +562,7 @@ function handle(exp::ExperimentState,queue::MomentQueue,event::ExpEvent)
     handled = handle(exp,moment,event)
     if handled
       dequeue!(queue.data)
+      queue.last = time(event)
     end
   end
   true

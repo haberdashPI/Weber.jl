@@ -31,6 +31,7 @@ include(joinpath(dirname(@__FILE__),"VideoUtil.jl"))
 include(joinpath(dirname(@__FILE__),"SoundUtil.jl"))
 include(joinpath(dirname(@__FILE__),"Event.jl"))
 include(joinpath(dirname(@__FILE__),"Trial.jl"))
+include(joinpath(dirname(@__FILE__),"primitives.jl"))
 
 function __init__()
   setup_display()
