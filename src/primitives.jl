@@ -41,3 +41,24 @@ function show_cross(delta_t::Number;render_options...)
   c = render("+";render_options...)
   moment(delta_t,t -> display(c))
 end
+
+macro read_args(description)
+  quote
+    begin
+      s = ArgParseSettings(description = $description)
+      @add_arg_table s begin
+        "sid"
+          $(esc(:help)) = "Subject id. Trials are randomized per subject."
+          $(esc(:required)) = true
+          $(esc(:arg_type)) = String
+        "skip"
+          $(esc(:help)) = "# of offsets to skip. Useful for restarting in middle of experiment."
+          $(esc(:required)) = false
+          $(esc(:arg_type)) = Int
+          $(esc(:default)) = 0
+      end
+      parsed = parse_args(ARGS,s)
+      parsed["sid"],parsed["skip"]
+    end
+  end
+end
