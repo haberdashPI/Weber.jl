@@ -44,7 +44,7 @@ end
 macro read_args(description)
   quote
     begin
-      s = ArgParseSettings(description = $description)
+      s = ArgParseSettings(description = $(esc(description)))
       @add_arg_table s begin
         "sid"
           $(esc(:help)) = "Subject id. Trials are randomized per subject."
