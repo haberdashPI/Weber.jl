@@ -1,4 +1,21 @@
 # TODO: use the version indicated by Pkg
+
+# TODO: define a trial generator, which uses a predefined set of
+# GeneratedMoments, that take an additional paraemter in their callback that
+# recieveds state from the generator. The generator can has a termination
+# condition on the state.
+
+# TODO: allow moments to skip the remainder of a trial
+
+# TODO: rewrite Trial.jl so that it is cleaner, probably using
+# a more Reactive style.
+
+# TODO: create a 2AFC adaptive abstraction
+
+# TODO: generate errors for any sounds or image generated during
+# a moment. Create a 'dynamic' moment and response object that allows
+# for this.
+
 using Reactive
 using Lazy: @>>, @>, @_
 using DataStructures
@@ -314,7 +331,7 @@ function addmoment(exp::ExperimentState,watcher::Function)
   enqueue!(exp.moments.data,moment(t -> exp.trial_watcher = watcher))
 end
 function addmoment(exp::ExperimentState,ms)
-  emessage = "Expected a value of type `TrialMoment` of `Function` but got"*
+  emessage = "Expected a value of type `TrialMoment` or `Function` but got"*
               " a value of type $(typeof(ms)) instead."
   try
     first(ms)
