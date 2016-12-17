@@ -87,6 +87,7 @@ type MomentQueue
 end
 
 type ExperimentState
+  meta::Dict{Symbol,Any}
   offset::Int
   trial::Int
   skip_offsets::Int
@@ -280,8 +281,9 @@ function ExperimentState(debug::Bool,skip::Int,header::Array{Symbol};
   events = Reactive.Signal(Any,EmptyEvent())
   state = Reactive.Signal(Bool,false)
 
-  exp = ExperimentState(0,0,skip,exp_start,info,running,started,header,
-                        events,e -> nothing,Reactive.Signal(false),Running,
+  exp = ExperimentState(Dict{Symbol,Any}(),0,0,skip,exp_start,info,running,
+                        started,header,events,e -> nothing,
+                        Reactive.Signal(false),Running,
                         MomentQueue(Queue(TrialMoment),0),state,data_file,win,
                         () -> error("no cleanup function available!"),
                         Nullable{Tuple{Exception,Array{Ptr{Void}}}}(),
