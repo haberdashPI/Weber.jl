@@ -1,4 +1,6 @@
-export instruct, response, addbreak_every, show_cross
+export instruct, response, addbreak_every, show_cross, @read_args
+
+using ArgParse
 
 function response(responses...;time_col=:time,info...)
   begin (event) ->
