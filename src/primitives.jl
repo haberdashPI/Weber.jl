@@ -21,21 +21,21 @@ function instruct(str;time_col=:time)
   [m,await_response(iskeydown(key":space:"))]
 end
 
-function addbreak_every(trial,n_break_after,trial_response)
-  # add a break after every n_break_after trials
-  if trial > 0 && trial % n_break_after == 0 && trial < n_trials
-    break_text = render("You can take a break. Hit"*
-                        " any key (other than P or Q) when you're "*
-                        "ready to resume..."*
-                        "\n$(div(trial,n_break_after)) of "*
-                        "$(div(n_trials,n_break_after)-1) breaks.")
-
+function addbreak_every(n,total,response=key":space:",
+                        response_str="the spacebar")
+  exp = get_experiment()
+  trial = exp.meta[:break_every_count] = get(exp.meta,:break_every_count,0) + 1
+  @show trial
+  if 1 < trial < total && n == 1 || trial % n == 1
+    println("adding break")
     message = moment() do t
       record("break")
-      display(break_text)
+      display(render("You can take a break. Hit "*
+                     "$response_str when you're ready to resume... "*
+                     "$(div(exp.trial,n)) of $(div(total,n)-1) breaks."))
     end
 
-    addbreak(message,await_response(e -> !trial_response(e) && iskeydown(e)))
+    addbreak(message,await_response(e -> iskeydown(e,response)))
   end
 end
 
