@@ -1,5 +1,4 @@
 export instruct, response, addbreak_every, show_cross, @read_args
-
 using ArgParse
 
 function response(responses...;time_col=:time,info...)
@@ -25,9 +24,7 @@ function addbreak_every(n,total,response=key":space:",
                         response_str="the spacebar")
   exp = get_experiment()
   trial = exp.meta[:break_every_count] = get(exp.meta,:break_every_count,0) + 1
-  @show trial
   if 1 < trial < total && n == 1 || trial % n == 1
-    println("adding break")
     message = moment() do t
       record("break")
       display(render("You can take a break. Hit "*
