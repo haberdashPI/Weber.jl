@@ -592,7 +592,6 @@ function handle(exp::ExperimentState,queue::MomentQueue,t::Float64)
   skip_offsets(exp,queue)
 
   if !isempty(queue.data)
-    # println("Handling moment $(front(queue.data))")
     start_time = time()
     moment = front(queue.data)
     event_time = delta_t(moment) + queue.last
