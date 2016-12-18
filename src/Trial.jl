@@ -2,8 +2,10 @@
 
 # TODO: define a trial generator, which uses a predefined set of
 # GeneratedMoments, that take an additional paraemter in their callback that
-# recieveds state from the generator. The generator can has a termination
-# condition on the state.
+# recieveds state from the generator. The generator then has a termination
+# condition that is a function of that state.
+
+# TODO: allow the creation of compound moments
 
 # TODO: allow moments to skip the remainder of a trial
 
