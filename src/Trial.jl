@@ -5,8 +5,6 @@
 # recieveds state from the generator. The generator then has a termination
 # condition that is a function of that state.
 
-# TODO: allow the creation of compound moments
-
 # TODO: allow moments to skip the remainder of a trial
 
 # TODO: rewrite Trial.jl so that it is cleaner, probably using
@@ -21,7 +19,7 @@
 using Reactive
 using Lazy: @>>, @>, @_
 using DataStructures
-import Base: run, time
+import Base: run, time, *
 
 export Experiment, run, addtrial, addbreak, addpractice, moment, await_response,
   record, timeout, endofpause
@@ -59,15 +57,16 @@ function findkwd(kwds,sym,default)
 end
 
 
-abstract TrialMoment
+abstract Moment
+abstract SimpleMoment <: Moment
 
-type ResponseMoment <: TrialMoment
+type ResponseMoment <: SimpleMoment
   respond::Function
   timeout::Function
   timeout_delta_t::Float64
 end
 
-abstract AbstractTimedMoment <: TrialMoment
+abstract AbstractTimedMoment <: SimpleMoment
 
 type TimedMoment <: AbstractTimedMoment
   delta_t::Float64
@@ -83,8 +82,18 @@ type FinalMoment <: AbstractTimedMoment
   run::Function
 end
 
+type CompoundMoment <: Moment
+  data::Array{Moment}
+end
+delta_t(m::CompoundMoment) = 0
+*(a::SimpleMoment,b::SimpleMoment) = CompoundMoment([a,b])
+*(a::CompoundMoment,b::CompoundMoment) = CompoundMoment(vcat(a.data,b.data))
+*(a::Moment,b::Moment) = *(promote(a,b)...)
+promote_rule(::Type{SimpleMoment},::Type{CompoundMoment}) = CompoundMoment
+convert(::Type{CompoundMoment},x::SimpleMoment) = CompoundMoment([x])
+
 type MomentQueue
-  data::Queue{TrialMoment}
+  data::Queue{Moment}
   last::Float64
 end
 
@@ -103,6 +112,7 @@ type ExperimentState
   watcher_state::Reactive.Signal{Bool}
   mode::Int
   moments::MomentQueue
+  submoments::Array{MomentQueue}
   state::Reactive.Signal{Bool}
   file::String
   win::SDLWindow
@@ -286,7 +296,8 @@ function ExperimentState(debug::Bool,skip::Int,header::Array{Symbol};
   exp = ExperimentState(Dict{Symbol,Any}(),0,0,skip,exp_start,info,running,
                         started,header,events,e -> nothing,
                         Reactive.Signal(false),Running,
-                        MomentQueue(Queue(TrialMoment),0),state,data_file,win,
+                        MomentQueue(Queue(Moment),0),Array{MomentQueue,1}(),
+                        state,data_file,win,
                         () -> error("no cleanup function available!"),
                         Nullable{Tuple{Exception,Array{Ptr{Void}}}}(),
                         moment_resolution,Reactive.Signal(false),pause_events)
@@ -300,7 +311,8 @@ function ExperimentState(debug::Bool,skip::Int,header::Array{Symbol};
 
   exp.state = map(filterwhen(running,EmptyEvent(),merge(timing,events))) do x
     if !isnull(x)
-      handle(exp,exp.moments,x)
+      process(exp,exp.moments,x)
+      process(exp,exp.submoments,x)
       true
     end
     false
@@ -327,7 +339,7 @@ function ExperimentState(debug::Bool,skip::Int,header::Array{Symbol};
   exp
 end
 
-addmoment(exp::ExperimentState,m::TrialMoment) = enqueue!(exp.moments.data,m)
+addmoment(exp::ExperimentState,m::Moment) = enqueue!(exp.moments.data,m)
 function addmoment(exp::ExperimentState,watcher::Function)
   for t in concrete_events
     precompile(watcher,(t,))
@@ -335,7 +347,7 @@ function addmoment(exp::ExperimentState,watcher::Function)
   enqueue!(exp.moments.data,moment(t -> exp.trial_watcher = watcher))
 end
 function addmoment(exp::ExperimentState,ms)
-  emessage = "Expected a value of type `TrialMoment` or `Function` but got"*
+  emessage = "Expected a value of type `Moment` or `Function` but got"*
               " a value of type $(typeof(ms)) instead."
   try
     first(ms)
@@ -560,7 +572,7 @@ function handle(exp::ExperimentState,moment::ResponseMoment,event::ExpEvent)
   handled
 end
 
-keep_skipping(exp,moment::TrialMoment) = exp.offset < exp.skip_offsets
+keep_skipping(exp,moment::Moment) = exp.offset < exp.skip_offsets
 function keep_skipping(exp,moment::OffsetStartMoment)
   exp.offset += 1
   if moment.count_trials
@@ -571,12 +583,27 @@ end
 keep_skipping(exp,moment::FinalMoment) = false
 
 function skip_offsets(exp,queue)
-  while keep_skipping(exp,front(queue.data)) && !isempty(queue.data)
+  while !isempty(queue.data) && keep_skipping(exp,front(queue.data))
     dequeue!(queue.data)
   end
 end
 
-function handle(exp::ExperimentState,queue::MomentQueue,event::ExpEvent)
+function handle(exp::ExperimentState,moments::CompoundMoment,x)
+  queue = Queue(Moment)
+  for moment in moments.data
+    enqueue!(queue,moment)
+  end
+  push!(exp.submoments,MomentQueue(queue,0))
+  true
+end
+
+function process(exp::ExperimentState,queues::Array{MomentQueue},x)
+  filter!(queues) do queue
+    !isempty(process(exp,queue,x).data)
+  end
+end
+
+function process(exp::ExperimentState,queue::MomentQueue,event::ExpEvent)
   skip_offsets(exp,queue)
 
   if !isempty(queue.data)
@@ -587,10 +614,11 @@ function handle(exp::ExperimentState,queue::MomentQueue,event::ExpEvent)
       queue.last = time(event)
     end
   end
-  true
+
+  queue
 end
 
-function handle(exp::ExperimentState,queue::MomentQueue,t::Float64)
+function process(exp::ExperimentState,queue::MomentQueue,t::Float64)
   skip_offsets(exp,queue)
 
   if !isempty(queue.data)
@@ -610,5 +638,6 @@ function handle(exp::ExperimentState,queue::MomentQueue,t::Float64)
       end
     end
   end
-  true
+
+  queue
 end
