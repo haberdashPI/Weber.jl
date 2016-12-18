@@ -36,7 +36,7 @@ function addbreak_every(n,total,response=key":space:",
   end
 end
 
-function show_cross(delta_t::Number;render_options...)
+function show_cross(delta_t::Number=0;render_options...)
   c = render("+";render_options...)
   moment(delta_t,t -> display(c))
 end
