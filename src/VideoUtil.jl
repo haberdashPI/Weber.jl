@@ -161,13 +161,13 @@ end
 `SDLRendered` objects are those that can be displayed in an SDLWindow
 """
 abstract SDLRendered
-abstract SDLConcreteRendered <: SDLRendered
+abstract SDLSimpleRendered <: SDLRendered
 
 function draw(r::SDLRendered)
   draw(get_experiment().window,r)
 end
 
-type SDLClear <: SDLConcreteRendered
+type SDLClear <: SDLSimpleRendered
   color::Color
   duration::Float64
   priority::Float64
@@ -188,7 +188,7 @@ immutable SDLRect
   h::Cint
 end
 
-type SDLText <: SDLConcreteRendered
+type SDLText <: SDLSimpleRendered
   data::Ptr{Void}
   rect::SDLRect
   duration::Float64
@@ -358,15 +358,15 @@ end
 type SDLCompound <: SDLRendered
   data::Array{SDLRendered}
 end
-function +(a::SDLConcreteRendered,b::SDLConcreteRendered)
+function +(a::SDLSimpleRendered,b::SDLSimpleRendered)
   SDLCompound([a,b])
 end
 function +(a::SDLCompound,b::SDLCompound)
   SDLCompound(vcat(a.data,b.data))
 end
 +(a::SDLRendered,b::SDLRendered) = +(promote(a,b)...)
-promote_rule(::Type{SDLConcreteRendered},::Type{SDLCompound}) = SDLCompound
-convert(::Type{SDLCompound},x::SDLConcreteRendered) = SDLCompound([x])
+promote_rule(::Type{SDLSimpleRendered},::Type{SDLCompound}) = SDLCompound
+convert(::Type{SDLCompound},x::SDLSimpleRendered) = SDLCompound([x])
 function update_stack_helper(window,stack,rs::SDLCompound)
   stack = filter(r -> display_duration(r) > 0.0,stack)
   for r in rs.data
