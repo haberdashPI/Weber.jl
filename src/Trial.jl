@@ -64,7 +64,10 @@ type ResponseMoment <: SimpleMoment
   respond::Function
   timeout::Function
   timeout_delta_t::Float64
+  update_last::Bool
 end
+update_last(m::ResponseMoment) = m.update_last
+update_last(m::Moment) = true
 
 abstract AbstractTimedMoment <: SimpleMoment
 
@@ -489,21 +492,21 @@ function final_moment(fn::Function)
   FinalMoment(fn)
 end
 
-function await_response(fn::Function)
+function await_response(fn::Function;delta_update=true)
   for t in concrete_events
     precompile(fn,(t,))
   end
 
-  ResponseMoment(fn,(t) -> nothing,0)
+  ResponseMoment(fn,(t) -> nothing,0,delta_update)
 end
 
-function timeout(fn::Function,isresponse::Function,timeout)
+function timeout(fn::Function,isresponse::Function,timeout;delta_update=true)
   precompile(fn,(Float64,))
   for t in concrete_events
     precompile(isresponse,(t,))
   end
 
-  ResponseMoment(isresponse,fn,timeout)
+  ResponseMoment(isresponse,fn,timeout,delta_update)
 end
 
 function delta_t(moment::TimedMoment)
@@ -611,7 +614,9 @@ function process(exp::ExperimentState,queue::MomentQueue,event::ExpEvent)
     handled = handle(exp,moment,event)
     if handled
       dequeue!(queue.data)
-      queue.last = time(event)
+      if update_last(moment)
+        queue.last = time(event)
+      end
     end
   end
 
@@ -634,7 +639,9 @@ function process(exp::ExperimentState,queue::MomentQueue,t::Float64)
       handled = handle(exp,moment,t)
       if handled
         dequeue!(queue.data)
-        queue.last = run_time
+        if update_last(moment)
+          queue.last = run_time
+        end
       end
     end
   end
