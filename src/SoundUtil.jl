@@ -4,11 +4,8 @@ using LibSndFile
 using FixedPointNumbers
 
 export match_lengths, mix, mult, silence, noise, highpass, lowpass, bandpass,
-	tone, ramp, harmonic_complex, attenuate, sound, loadsound, play, pause, stop,
-	savesound, duration, setup_sound
-
-const loadsound = LibSndFile.load
-const savesound = LibSndFile.save
+	tone, ramp, harmonic_complex, attenuate, sound, play, pause, stop,
+  savesound, duration, setup_sound
 
 function match_lengths(xs...)
 	max_length = maximum(map(x -> size(x,1), xs))

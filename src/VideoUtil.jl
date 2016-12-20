@@ -1,11 +1,12 @@
 using Colors
+using Images
 using Reactive
 using DataStructures
 using Lazy: @>>
+import Base: display, close, +, convert
 
-import Base: display, close
-import Base: +
-import Colors: @colorant_str, RGB # importing solely to allow their use in user code
+ # importing solely to allow their use in user code
+import Colors: @colorant_str, RGB
 
 export render, window, font, display, close, @colorant_str, RGB
 
@@ -46,6 +47,13 @@ const SDL_RENDERER_ACCELERATED = 0x00000002
 const SDL_RENDERER_PRESENTVSYNC = 0x00000004
 const SDL_RENDERER_TARGETTEXTURE = 0x00000008
 
+"""
+  window([width=1024],[height=768];[fullscreen=true],[title="Experiment"],
+         [accel=true])
+
+Create a window to which various objects can be rendered. See the `render`
+method.
+"""
 function window(width=1024,height=768;fullscreen=true,title="Experiment",accel=true)
   if !ccall((:SDL_SetHint,_psycho_SDL2),Bool,(Cstring,Cstring),
             "SDL_RENDER_SCALE_QUALITY","1")
@@ -142,20 +150,21 @@ end
 const forever = -1
 
 """
-Duration determines how long an object will be displayed.  If the duration
-of the object is 0, the object will display until a new object is
-displayed. If the duration is Inf the object will be displayed forever.
-"""
-function display_duration
-end
+render(obj,[duration=0],[priority=0],keys...)
 
+Render an object on the screen.
+
+duration - A positive duration means the object is
+displayed for the given duration, otherwise the object displays until a new
+object is displayed.
+
+priority - Higher priority objects are always visible above lower priority ones.
+Newer objects display over same-priority older objects.
+
+If coordinates are used they are in units of half screen widths (for x)
+and heights (for y), with (0,0) at the center of the screen.
 """
-Objects are displayed according to their priority (drawing lower valued
-prioritys first, and higher values last). Objects with the same priority show in
-the order they were displayed.
-"""
-function display_priority
-end
+render(x;keys...) = render(get_experiment().win,x;keys...)
 
 """
 `SDLRendered` objects are those that can be displayed in an SDLWindow
@@ -174,9 +183,13 @@ type SDLClear <: SDLSimpleRendered
 end
 display_duration(clear::SDLClear) = clear.duration
 display_priority(clear::SDLClear) = clear.priority
-render(color::Color;keys...) = render(get_experiment().win,color;keys...)
 draw(window::SDLWindow,cl::SDLClear) = clear(window,cl.color)
 
+"""
+  render(color,[duration=0],[priority=0])
+
+Render a color, across the entire screen, for a given duration and priority.
+"""
 function render(window::SDLWindow,color::Color;duration=0,priority=0)
   SDLClear(color,duration,priority)
 end
@@ -188,45 +201,38 @@ immutable SDLRect
   h::Cint
 end
 
-type SDLText <: SDLSimpleRendered
+abstract SDLTextured <: SDLSimpleRendered
+
+function draw(window::SDLWindow,texture::SDLTextured)
+  ccall((:SDL_RenderCopy,_psycho_SDL2),Void,
+        (Ptr{Void},Ptr{Void},Ptr{Void},Ptr{SDLRect}),
+        window.renderer,data(texture),C_NULL,Ref(rect(texture)))
+  nothing
+end
+
+type SDLText <: SDLTextured
   data::Ptr{Void}
   rect::SDLRect
   duration::Float64
   priority::Float64
   color::Color
 end
-
 display_duration(text::SDLText) = text.duration
 display_priority(text::SDLText) = text.priority
+data(text::SDLText) = text.data
+rect(text::SDLText) = text.rect
+fonts = Dict{Tuple{String,Int},SDLFont}()
 
 """
-render(str::String, [font_name="arial"], [size=32], [color=colorant"white"],
-       [max_width=0.8],[clean_whitespace=true],[x=0],[y=0],[duration=0],
-       [priority=0])
+  render(str::String, [font_name="arial"], [size=32], [color=colorant"white"],
+         [wrap_width=0.8],[clean_whitespace=true],[x=0],[y=0],[duration=0],
+         [priority=0])
 
 Render the given string as an image that can be displayed.
-
-* font_name: name of font to use
-* size: font size
-* color: color to draw the text in
-* max_width: the maximum width as a proportion of the screen the text can
-*   take up before wrapping
-* clean_whitespace: replace all whitespace characters with a single space?
-* x: horizontal position (0 is center of screen, 1 far right, -1 far left)
-* y: vertical position (0 is center of screen, 1 topmost, -1 bottommost)
-* duration: how long the text should display for, 0 displays until call to
-*   display
-* priority: display priority, higher priority objects display in front of lower
-*   priority ones.
 """
-function render(str::String;keys...)
-  render(get_experiment().win,str;keys...)
-end
-
-fonts = Dict{Tuple{String,Int},SDLFont}()
 function render(window::SDLWindow,str::String;
                 font_name="arial",size=32,color::RGB{U8}=colorant"white",
-                max_width=0.8,clean_whitespace=true,x=0,y=0,
+                wrap_width=0.8,clean_whitespace=true,x=0,y=0,
                 duration=0,priority=0)
   if (font_name,size) ∉ keys(fonts)
     fonts[(font_name,size)] = font(font_name,size)
@@ -236,17 +242,22 @@ function render(window::SDLWindow,str::String;
     str = replace(str,r"\s+"," ")
   end
   render(window,x,y,fonts[(font_name,size)],color,
-         round(UInt32,window.w*max_width),str,duration,priority)
+         round(UInt32,window.w*wrap_width),str,duration,priority)
 end
 
 const w_ptr = 0x0000000000000010 # icxx"offsetof(SDL_Surface,w);"
 const h_ptr = 0x0000000000000014 # icxx"offsetof(SDL_Surface,h);"
 
+function as_screen_coordinates(window,x,y,w,h)
+  max(0,min(window.w,round(Cint,window.w/2 + x*window.w/4 - w / 2))),
+  max(0,min(window.h,round(Cint,window.h/2 - y*window.h/4 - h / 2)))
+end
+
 function render(window::SDLWindow,x::Real,y::Real,font::SDLFont,color::RGB{U8},
-                max_width::UInt32,str::String,duration=0,priority=0)
+                wrap_width::UInt32,str::String,duration=0,priority=0)
   surface = ccall((:TTF_RenderUTF8_Blended_Wrapped,_psycho_SDL2_ttf),Ptr{Void},
                   (Ptr{Void},Cstring,RGBA{U8},UInt32),
-                  font.data,pointer(str),color,max_width)
+                  font.data,pointer(str),color,wrap_width)
   if surface == C_NULL
     error("Failed to render text: "*TTF_GetError())
   end
@@ -260,8 +271,7 @@ function render(window::SDLWindow,x::Real,y::Real,font::SDLFont,color::RGB{U8},
   w = at(surface,Cint,w_ptr)
   h = at(surface,Cint,h_ptr)
 
-  xint = max(0,min(window.w,round(Cint,window.w/2 + x*window.w/4 - w / 2)))
-  yint = max(0,min(window.h,round(Cint,window.h/2 - y*window.h/4 - h / 2)))
+  xint,yint = as_screen_coordinates(window,x,y,w,h)
 
   result = SDLText(texture,SDLRect(xint,yint,w,h),duration,priority,color)
   finalizer(result,x ->
@@ -271,12 +281,132 @@ function render(window::SDLWindow,x::Real,y::Real,font::SDLFont,color::RGB{U8},
   result
 end
 
-function draw(window::SDLWindow,text::SDLText)
-  ccall((:SDL_RenderCopy,_psycho_SDL2),Void,
-        (Ptr{Void},Ptr{Void},Ptr{Void},Ptr{SDLRect}),
-        window.renderer,text.data,C_NULL,Ref(text.rect))
-  nothing
+type SDLImage <: SDLTextured
+  data::Ptr{Void}
+  img::Any #Image{RGBA{U8}}
+  rect::SDLRect
+  duration::Float64
+  priority::Float64
 end
+display_duration(img::SDLImage) = img.duration
+display_priority(img::SDLImage) = img.priority
+data(img::SDLImage) = img.data
+rect(img::SDLImage) = img.rect
+
+"""
+  render(img::Image, [x=0],[y=0],[duration=0],[priority=0])
+  render(img::Array, [x=0],[y=0],[duration=0],[priority=0])
+
+Render the color or gray scale image to the screen.
+"""
+function render(window::SDLWindow,img::Array;keys...)
+  render(window,convert(Image{RGBA{U8}},img);keys...)
+end
+function render(window::SDLWindow,img::Image;keys...)
+  render(window,convert(Image{RGBA{U8}},img);keys...)
+end
+function render(window::SDLWindow,img::Image{RGBA{U8}};
+                x=0,y=0,duration=0,priority=0)
+  surface = ccall((:SDL_CreateRGBSurfaceFrom,_psycho_SDL2),Ptr{Void},
+                  (Ptr{Void},Cint,Cint,Cint,Cint,UInt32,UInt32,UInt32,UInt32),
+                  pointer(raw(img)),size(img,2),size(img,1),32,
+                  4size(img,2),0,0,0,0)
+  if surface == C_NULL
+    error("Failed to create image surface: "*SDL_GetError())
+  end
+
+  texture = ccall((:SDL_CreateTextureFromSurface,_psycho_SDL2),Ptr{Void},
+                  (Ptr{Void},Ptr{Void}),window.renderer,surface)
+  if texture == C_NULL
+    error("Failed to create texture from image surface: "*SDL_GetError())
+  end
+
+  h,w = size(img)
+  xint,yint = as_screen_coordinates(window,x,y,w,h)
+
+  result = SDLImage(texture,img,SDLRect(xint,yint,w,h),duration,priority)
+  finalizer(result,x ->
+            ccall((:SDL_DestroyTexture,_psycho_SDL2),Void,(Ptr{Void},),x.data))
+  ccall((:SDL_FreeSurface,_psycho_SDL2),Void,(Ptr{Void},),surface)
+
+  result
+end
+
+# TODO: implement Compose rendering. My implementation currently throws a
+# mysterious MacOS GUI error on my machine. I suspect there is some interaction
+# between Cairo and SDL that is causing the problem, but I haven't
+# narrowed it down yet.
+
+#=
+if Pkg.installed("Compose") != nothing && Pkg.installed("Cairo") != nothing
+  import Compose
+  import Cairo
+
+  const sdl_compose_implemented = true
+
+  type SDLComposed <: SDLTextured
+    data::Ptr{Void}
+    surface::Cairo.CairoSurface
+    rect::SDLRect
+    duration::Float64
+    priority::Float64
+  end
+  display_duration(img::SDLComposed) = img.duration
+  display_priority(img::SDLComposed) = img.priority
+  data(img::SDLComposed) = img.data
+  rect(img::SDLComposed) = img.rect
+
+"""
+  render(comp::Compose.Context,[x=0],[y=0],[w=1],[h=1],
+                           [dpi=72],[priority=0],[duration=0])
+
+Renders the given Compose.jl object so it can be displayed on screen.
+Width and height are specified as a proportion of the full width and height.
+"""
+  function render(comp::Compose.Context;keys...)
+    render(get_experiment().win,comp;keys...)
+  end
+  function render(win::SDLWindow,comp::Compose.Context;
+                  x=0,y=0,w=1,h=1,dpi=72)
+    w,h = round(Cint,w*win.w),round(Cint,h*win.h)
+    png = Compose.PNG(w,h,dpi)
+    Compose.draw(png,comp)
+    cairo_surface = png.surface
+
+    surface = ccall((:SDL_CreateRGBSurfaceFrom,_psycho_SDL2),Ptr{Void},
+                    (Ptr{Void},Cint,Cint,Cint,Cint,UInt32,UInt32,UInt32,UInt32),
+                    cairo_surface.ptr,w,h,8,4w,0,0,0,0)
+    if surface == C_NULL
+      error("Failed to create surface for Compose.Context: "*SDL_GetError())
+    end
+
+    texture = ccall((:SDL_CreateTextureFromSurface,_psycho_SDL2),Ptr{Void},
+                    (Ptr{Void},Ptr{Void}),window.renderer,surface)
+    if texture == C_NULL
+      error("Failed to create texture from Compose.Context surface: "*SDL_GetError())
+    end
+
+    xint,yint = as_screen_coordinates(window,x,y,w,h)
+
+    result = SDLComposed(texture,cairo_surface,SDLRect(xint,yint,w,h),
+                         duraiton,priority)
+    finalizer(result,x ->
+              ccall((:SDL_DestroyTexture,_psycho_SDL2),Void,(Ptr{Void},),x.data))
+
+    result
+  end
+elseif Pkg.installed("Compose") != nothing
+  import Compose
+
+  const sdl_compose_implemented = false
+  function render(win::SDLWindow,comp::Compose.Context;keys...)
+    error("To render Compose.jl objects you must have Cairo.jl installed!\n"*
+          "Please call Pkg.add(\"Cairo\") from the command line")
+  end
+else
+  const sdl_compose_implemented = false
+end
+=#
 
 function show_drawn(window::SDLWindow)
   ccall((:SDL_RenderPresent,_psycho_SDL2),Void,(Ptr{Void},),window.renderer)
@@ -293,6 +423,15 @@ function setup_display()
   if init < 0
     error("Failed to initialize SDL: "*SDL_GetError())
   end
+
+  #=
+  if !sdl_compose_implemented && Pkg.installed("Compose") != nothing
+    warn("The Compose package was installed after Psychotask. "*
+         "To render Compose objects using Psychotask you will need to run\n "*
+         "rm(Pkg.dir(\"Psychotask\"),recursive=true,force=true); "*
+         "Pkg.add(\"Psychotask\")\n before you call `using Psychotask`.")
+  end
+  =#
 end
 
 function display(r::SDLRendered)
@@ -329,6 +468,11 @@ function display(window::SDLWindow,r::SDLRendered)
 
   push!(signal,r)
   handle_remove(signal,r)
+end
+
+function display(w::SDLWindow,r)
+  warn("Rendering was not precomputed!")
+  display(w,render(w,r))
 end
 
 function handle_remove(signal,r::SDLRendered)

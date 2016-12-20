@@ -6,6 +6,10 @@ for d in [downloaddir,bindir]
   mkpath(d)
 end
 
+# install my revised version of LibSndFile to prevent errors when loading
+# images.
+Pkg.checkout("https://github.com/haberdashPI/LibSndFile.jl")
+
 # NOTE: I'm not using BinDeps.jl here because I don't yet understand
 # it, and was having difficulty troubleshooting problems.
 
@@ -15,20 +19,20 @@ SDL2_ttf = "unknown"
 
 if is_windows()
   # do I need install 7z? (does this require julia bin directoy on PATH??)
+  # I'm not using WinRPM here, because it doesn't include the SDL extensions
   function setupbin(library,uri)
     libdir = joinpath(downloaddir,library)
     zipfile = joinpath(downloaddir,library*".zip")
     try
       download(uri,zipfile)
       run(`7z x $zipfile -y -o$libdir`)
-      # cp(joinpath(libdir,library*".dll"),joinpath(bindir,library*".dll"))
       for lib in filter(s -> endswith(s,".dll"),readdir(libdir))
         cp(joinpath(libdir,lib),joinpath(bindir,lib))
       end
       replace(joinpath(bindir,library*".dll"),"\\","\\\\")
     finally
-      # rm(libdir,recursive=true,force=true)
-      # rm(zipfile,force=true)
+      rm(libdir,recursive=true,force=true)
+      rm(zipfile,force=true)
     end
   end
   try
@@ -41,7 +45,7 @@ if is_windows()
 elseif is_apple()
   # since the Homebrew.jl binaries don't work and the SDL website uses a
   # framework, which you can't easily link to via julia, I'm just downloading
-  # the binaries I generated using homebrew from my personal website.
+  # the binaries I generated in homebrew from my personal website.
   try
     tarfile = joinpath(downloaddir,"SDL2.tgz")
     download("http://haberdashpi.github.io/SDL2-2.0.5_macosx_binaries.tgz",tarfile)

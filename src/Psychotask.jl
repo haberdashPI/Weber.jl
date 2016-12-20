@@ -1,7 +1,7 @@
 __precompile__()
 
 module Psychotask
-const psych_version = v"0.1.3"
+const psych_version = v"0.1.4"
 
 # load binary library dependencies
 depsjl = joinpath(dirname(@__FILE__), "..", "deps", "deps.jl")
@@ -13,7 +13,7 @@ else
 end
 
 # setup error reporting functions (these are the only calls to SDL that occur
-# more than once, so they're the only calls I've wrapped.
+# more all that much, so they're the only calls I've wrapped).
 SDL_GetError() = unsafe_string(ccall((:SDL_GetError,_psycho_SDL2),Cstring,()))
 Mix_GetError = SDL_GetError
 TTF_GetError = SDL_GetError
@@ -26,6 +26,9 @@ TTF_GetError = SDL_GetError
 function at{T}(x::Ptr{Void},::Type{T},offset)
   unsafe_wrap(Array,reinterpret(Ptr{T},x + offset),1)[1]
 end
+
+import FileIO: load, save
+export load, save
 
 include(joinpath(dirname(@__FILE__),"VideoUtil.jl"))
 include(joinpath(dirname(@__FILE__),"SoundUtil.jl"))
