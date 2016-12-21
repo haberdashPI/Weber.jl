@@ -1,14 +1,15 @@
-# TODO: use the version indicated by Pkg
+# TODO: document the exported functions
+
+# TODO: define some tests to evaluate the documented effects of addtrial,
+# addbreak and addpractice on the offest and trial counts, to ensure reasonable
+# timing of individual moments, and the effects of the expanding moments.
 
 # TODO: rewrite Trial.jl so that it is cleaner, probably using
 # a more Reactive style.
 
-# TODO: generate errors for any sounds or image generated during
-# a moment. Create a 'dynamic' moment and response object that allows
-# for this.
+# TODO: submit the package to METADATA.jl
 
-# TODO: define some tests to ensure the trial generation is working
-# properly.
+# TODO: use the version number indicated by Pkg
 
 using Reactive
 using Lazy: @>>, @>, @_
@@ -28,6 +29,10 @@ type EndPauseEvent <: ExpEvent
   time::Float64
 end
 
+"""
+Evaluates to true if the event indicates the end of a pause requested by
+the user.
+"""
 endofpause(event::ExpEvent) = false
 endofpause(event::EndPauseEvent) = true
 time(event::EndPauseEvent) = event.time
@@ -197,6 +202,20 @@ function record(exp::ExperimentState,code;kwds...)
                 [extra_keys...,info_keys...,:code,exp.header...])
 end
 
+"""
+    record(code;column_values...)
+
+Record an event with the given `code` to the data file.
+
+Each event has a code which identifies it as being a particular type
+of event. Conventially the same code should have the same set of column
+values. Unspecified columns are left blank.
+
+All calls to record also result in many types of information being
+written to the data file. The start time and date, the trial and offset
+number, the subject id and the version of Psychotask are all stored.
+Additional information can be added during creation of the experiment.
+"""
 function record(code;kwds...)
   record(get_experiment(),code;kwds...)
 end
@@ -212,6 +231,15 @@ type Experiment
   end
 end
 
+"""
+    setup(fn,experiment)
+
+Setup the experiment, adding breaks, practice, and trials.
+
+Setup creats the context necessary to generate elements of an expeirment. All
+calls to `addtrial`, `addbreak` and `addpractice` must be called in side of
+`fn`. This function must be called before `run`.
+"""
 function setup(fn::Function,exp::Experiment)
   global experiment_context
 
@@ -427,6 +455,43 @@ function addtrial_helper(exp::ExperimentState,trial_count,moments;keys...)
   addmoments(exp,[start_trial,moments,end_trial];keys...)
 end
 
+"""
+   addtrial(moments...,[when=nothing],[loop=nothing])
+
+Adds a trial to the expeirment, consisting of the specified moments.
+
+Each trial increments a counter for the number of trials, and the offset,
+these two numbers are reported on ever line of the resulting data file
+(see `record`)
+
+If a `when` function (with no arguments) is specified the trial only occurs if
+the function evaluates to true. If a `loop` function is specified the trial
+repeats until the function (with no arguments) evaluates to false.
+
+Moments can be arbitrarily nested in iterable collections. Each individual
+moment is one of the following objects:
+
+1. function - immediately after the *start* of the preceeding moment (or at the
+start of the trial if it is the first argument), this function becomes the event
+watcher. Any time an event occurs this function will be called, until a new
+watcher replaces it. It shoudl take one argument (the event that occured).
+
+2. moment object - result of calling the `moment` function, this will
+trigger some time after the *start* of the previosu moment.
+
+3. timeout object - result of calling the `timeout` function, this
+will trigger an event if no response occurs from the *start* of the previous
+moment, until the specified timeout.
+
+4. await object - reuslt of calling `await_response` this moment will
+begin as soon as the specified response is provided by the subject.
+
+5. looping object - result of calling `looping`, this will repeat
+a series of moments based on some condition
+
+6. when object - result of call `when`, this will present as series
+of moments based on some condition.
+"""
 function addtrial(moments...;keys...)
   addtrial_helper(get_experiment(),true,moments;keys...)
 end
@@ -435,6 +500,11 @@ function addtrial(exp::ExperimentState,moments...;keys...)
   addtrial_helper(exp,true,moments;keys...)
 end
 
+"""
+   addpractice(moments...,[when=nothing],[loop=nothing])
+
+Identical to `addtrial`, except that it does not incriment the trial count.
+"""
 function addpractice(moments...;keys...)
   addtrial_helper(get_experiment(),false,moments;keys...)
 end
@@ -443,6 +513,14 @@ function addpractice(exp::ExperimentState,moments...;keys...)
   addtrial_helper(exp,false,moments;keys...)
 end
 
+"""
+   addbreak(moments...,[when=nothing],[loop=nothing])
+
+Identical to `addpractice` but there is no optimization to ensure that events
+occur in realtime. This will allow the program to safely recover memory through
+the presented moments. Otherwise memory is only refreshed between each trial,
+but not during.
+"""
 function addbreak(moments...;keys...)
   addbreak(get_experiment(),moments...;keys...)
 end
@@ -497,8 +575,18 @@ function watch_pauses(exp,e)
   end
 end
 
-function moment(delta_t::Number)
-  TimedMoment(delta_t,t->nothing)
+"""
+    moment([fn],[delta_t])
+    moment([delta_t],[fn])
+
+Create a moment that occurs `delta_t` (default 0) seconds after the *start*
+of the previous moment, running the specified function (doing nothing by
+default).
+
+The function `fn` will be passed one argument indicating the time
+in seconds since the start of the experiment.
+"""
+function moment(delta_t::Number) TimedMoment(delta_t,t->nothing)
 end
 
 function moment(fn::Function,delta_t::Number)
@@ -516,6 +604,10 @@ function moment(fn::Function)
   TimedMoment(0,fn)
 end
 
+function moment()
+  TimedMoment(0,()->nothing)
+end
+
 function offset_start_moment(fn::Function=t->nothing,count_trials=false)
   precompile(fn,(Float64,))
   OffsetStartMoment(fn,count_trials,false)
@@ -526,14 +618,31 @@ function final_moment(fn::Function)
   FinalMoment(fn)
 end
 
-function await_response(fn::Function;delta_update=true)
+"""
+   await_response(isresponse)
+
+This moment starts when the function evaluates to true.
+
+The `is response` function will be called anytime an event occurs. It should
+take one parameter (the event that just occured).
+"""
+function await_response(fn::Function)
   for t in concrete_events
     precompile(fn,(t,))
   end
 
-  ResponseMoment(fn,(t) -> nothing,0,delta_update)
+  ResponseMoment(fn,(t) -> nothing,0,true)
 end
 
+"""
+    timeout(fn,isresposne,timeout,[delta_update=true])
+
+This moment starts when either `isresponse` evaluates to true or
+timeout time (in seconds) passes.
+
+If the moment times out, the function `fn` will be called, recieving
+the current time in seconds.
+"""
 function timeout(fn::Function,isresponse::Function,timeout;delta_update=true)
   precompile(fn,(Float64,))
   for t in concrete_events
@@ -549,9 +658,25 @@ function flag_expanding(m::OffsetStartMoment)
 end
 
 
+"""
+    looping(when=fn,moments...)
+
+This moment will begin at the *start* of the previous moment, and
+repeats the listed moments (possibly in nested iterable objects)
+until fn (which takes no arguments) evaluates to false.
+"""
 function looping(moments...;when=() -> error("infinite loop!"))
   when(when,moments...;loop=true)
 end
+
+
+"""
+    when(condition,moments...)
+
+This moment will begin at the *start* of the previous moment, and
+presents the following moments (possibly in nested iterable objects)
+if fn (which takes no arguments) evaluates to true.
+"""
 function when(condition::Function,moments...;loop=false,update_offset=false)
   precompile(condition,())
   e = ExpandingMoment(condition,Stack(Moment),loop,update_offset)

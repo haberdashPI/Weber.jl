@@ -38,7 +38,7 @@ time(event::WindowUnfocused) = event.time
 isnull(e::ExpEvent) = false
 isnull(e::EmptyEvent) = true
 
-str_to_code = Dict(
+const str_to_code = Dict(
   "a" => reinterpret(Int32,'a'),
   "b" => reinterpret(Int32,'b'),
   "c" => reinterpret(Int32,'c'),
@@ -84,6 +84,12 @@ str_to_code = Dict(
   ":escape:" => reinterpret(Int32,0x0000001b)
 )
 
+"""
+Generate a key code, using a given lower case letter, or special key.
+
+Implemented special keys include ":space:", ":up:", ":down:", ":left", ":right:"
+and ":escape:".
+"""
 macro key_str(key)
   try
     str_to_code[key]
@@ -92,12 +98,33 @@ macro key_str(key)
   end
 end
 
+"""
+   iskeydown(event,[key])
+
+Evalutes to true if the event indicates that the given key (or any key) was
+pressed down. (See `@key_str`)
+
+   iskeydown(key)
+
+Returns a function which tests if an event indicates the given key was pressed
+down.
+"""
 iskeydown(event::ExpEvent) = false
 iskeydown(event::KeyDownEvent) = true
 iskeydown(keycode::Number) = e -> iskeydown(e,keycode::Number)
 iskeydown(event::ExpEvent,keycode::Number) = false
 iskeydown(event::KeyDownEvent,keycode::Number) = event.code == keycode
 
+"""
+   iskeyup(event,[key])
+
+Evalutes to true if the event indicates that the given key (or any key) was
+released.  (See `@key_str`)
+
+   iskeyup(key)
+
+Returns a function which tests if an event indicates the given key was released.
+"""
 iskeyup(event::ExpEvent) = false
 iskeyup(event::KeyUpEvent) = true
 iskeyup(keycode::Number) = e -> iskeyup(e,keycode::Number)
