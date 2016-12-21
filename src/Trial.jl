@@ -1,28 +1,23 @@
 # TODO: use the version indicated by Pkg
 
-# TODO: define a trial generator, which uses a predefined set of
-# GeneratedMoments, that take an additional parameter in their callback that
-# recieveds state from the generator. The generator then has a termination
-# condition that is a function of that state.
-
-# TODO: allow moments to skip the remainder of a trial
-
 # TODO: rewrite Trial.jl so that it is cleaner, probably using
 # a more Reactive style.
-
-# TODO: create a 2AFC adaptive abstraction
 
 # TODO: generate errors for any sounds or image generated during
 # a moment. Create a 'dynamic' moment and response object that allows
 # for this.
 
+# TODO: define some tests to ensure the trial generation is working
+# properly.
+
 using Reactive
 using Lazy: @>>, @>, @_
 using DataStructures
-import Base: run, time, *
+import DataStructures: front
+import Base: run, time, *, length, unshift!, isempty
 
 export Experiment, setup, run, addtrial, addbreak, addpractice, moment,
-  await_response, record, timeout, endofpause
+  await_response, record, timeout, when, looping, endofpause
 
 const default_moment_resolution = 1000
 const default_input_resolution = 60
@@ -79,6 +74,7 @@ end
 type OffsetStartMoment <: AbstractTimedMoment
   run::Function
   count_trials::Bool
+  expanding::Bool
 end
 
 type FinalMoment <: AbstractTimedMoment
@@ -95,9 +91,33 @@ delta_t(m::CompoundMoment) = 0
 promote_rule(::Type{SimpleMoment},::Type{CompoundMoment}) = CompoundMoment
 convert(::Type{CompoundMoment},x::SimpleMoment) = CompoundMoment([x])
 
+type ExpandingMoment <: Moment
+  condition::Function
+  data::Stack{Moment}
+  repeat::Bool
+  update_offset::Bool
+end
+delta_t(m::ExpandingMoment) = 0
+
 type MomentQueue
-  data::Queue{Moment}
+  data::Deque{Moment}
   last::Float64
+end
+isempty(m::MomentQueue) = isempty(m.data)
+length(m::MomentQueue) = length(m.data)
+enqueue!(m::MomentQueue,x) = push!(m.data,x)
+dequeue!(m::MomentQueue) = shift!(m.data)
+front(m::MomentQueue) = front(m.data)
+
+function expand(m::ExpandingMoment,q::MomentQueue)
+  if m.condition()
+    for x in m.data
+      unshift!(q.data,x)
+    end
+    if m.repeat
+      unshift!(q.data,m)
+    end
+  end
 end
 
 type ExperimentState
@@ -214,7 +234,7 @@ function setup(fn::Function,exp::Experiment)
   try
     # the first moment just waits a short time to ensure
     # notify(clean_run) runs after wait(cleanup_run)
-    enqueue!(exp.state.moments.data,moment(0.1))
+    enqueue!(exp.state.moments,moment(0.1))
     exp.state.cleanup = cleanup
 
     # setup all trial moments for this experiment
@@ -223,7 +243,7 @@ function setup(fn::Function,exp::Experiment)
     experiment_context = Nullable{ExperimentState}()
 
     # the last moment run cleans up the experiment
-    enqueue!(exp.state.moments.data,final_moment(t -> cleanup()))
+    enqueue!(exp.state.moments,final_moment(t -> cleanup()))
   catch e
     close(exp.state.win)
     gc_enable(true)
@@ -272,7 +292,7 @@ end
 
 function get_experiment()
   if isnull(experiment_context)
-    error("Unknown experiment context, call me inside run_experiment.")
+    error("Unknown experiment context, call me inside `setup`.")
   else
     get(experiment_context)
   end
@@ -302,7 +322,7 @@ function ExperimentState(debug::Bool,skip::Int,header::Array{Symbol};
   exp = ExperimentState(Dict{Symbol,Any}(),0,0,skip,exp_start,info,running,
                         started,header,events,e -> nothing,
                         Reactive.Signal(false),Running,
-                        MomentQueue(Queue(Moment),0),Array{MomentQueue,1}(),
+                        MomentQueue(Deque{Moment}(),0),Array{MomentQueue,1}(),
                         state,data_file,win,
                         () -> error("no cleanup function available!"),
                         Nullable{Tuple{Exception,Array{Ptr{Void}}}}(),
@@ -345,14 +365,16 @@ function ExperimentState(debug::Bool,skip::Int,header::Array{Symbol};
   exp
 end
 
-addmoment(exp::ExperimentState,m::Moment) = enqueue!(exp.moments.data,m)
-function addmoment(exp::ExperimentState,watcher::Function)
+addmoment(e::ExperimentState,m) = addmoment(e.moments,m)
+addmoment(q::ExpandingMoment,m::Moment) = push!(q.data,flag_expanding(m))
+addmoment(q::MomentQueue,m::Moment) = enqueue!(q,m)
+function addmoment(q::Union{ExpandingMoment,MomentQueue},watcher::Function)
   for t in concrete_events
     precompile(watcher,(t,))
   end
-  enqueue!(exp.moments.data,moment(t -> exp.trial_watcher = watcher))
+  addmoment(q,moment(t -> get_experiment().trial_watcher = watcher))
 end
-function addmoment(exp::ExperimentState,ms)
+function addmoment(q,ms)
   emessage = "Expected a value of type `Moment` or `Function` but got"*
               " a value of type $(typeof(ms)) instead."
   try
@@ -370,11 +392,23 @@ function addmoment(exp::ExperimentState,ms)
     if m == ms
       error(emessage)
     end
-    addmoment(exp,m)
+    addmoment(q,m)
   end
 end
 
-function addtrial_helper(exp::ExperimentState,trial_count,moments)
+function addmoments(exp,moments;when=nothing,loop=nothing)
+  if when == nothing && loop == nothing
+    foreach(m -> addmoment(exp,m),moments)
+  elseif when != nothing && loop != nothing
+    error("You can only define a `when` or a `loop` not both.")
+  elseif when != nothing
+    addmoment(exp,Psychotask.when(when,update_offset=true,moments...))
+  elseif loop != nothing
+    addmoment(exp,Psychotask.when(loop,loop=true,update_offset=true,moments...))
+  end
+end
+
+function addtrial_helper(exp::ExperimentState,trial_count,moments;keys...)
 
   # make sure the trial doesn't lag due to memory allocation
   start_trial = offset_start_moment(trial_count) do t
@@ -390,34 +424,31 @@ function addtrial_helper(exp::ExperimentState,trial_count,moments)
     gc_enable(true)
   end
 
-  addmoment(exp,start_trial)
-  foreach(m -> addmoment(exp,m),moments)
-  addmoment(exp,end_trial)
+  addmoments(exp,[start_trial,moments,end_trial];keys...)
 end
 
-function addtrial(moments...)
-  addtrial_helper(get_experiment(),true,moments)
+function addtrial(moments...;keys...)
+  addtrial_helper(get_experiment(),true,moments;keys...)
 end
 
-function addtrial(exp::ExperimentState,moments...)
-  addtrial_helper(exp,true,moments)
+function addtrial(exp::ExperimentState,moments...;keys...)
+  addtrial_helper(exp,true,moments;keys...)
 end
 
-function addpractice(moments...)
-  addtrial_helper(get_experiment(),false,moments)
+function addpractice(moments...;keys...)
+  addtrial_helper(get_experiment(),false,moments;keys...)
 end
 
-function addpractice(exp::ExperimentState,moments...)
-  addtrial_helper(exp,false,moments)
+function addpractice(exp::ExperimentState,moments...;keys...)
+  addtrial_helper(exp,false,moments;keys...)
 end
 
-function addbreak(moments...)
-  addbreak(get_experiment(),moments...)
+function addbreak(moments...;keys...)
+  addbreak(get_experiment(),moments...;keys...)
 end
 
-function addbreak(exp::ExperimentState,moments...)
-  addmoment(exp,offset_start_moment())
-  foreach(m -> addmoment(exp,m),moments)
+function addbreak(exp::ExperimentState,moments...;keys...)
+  addmoments(exp,[offset_start_moment(),moments];keys...)
 end
 
 function pause(exp,message,time,firstpause=true)
@@ -487,7 +518,7 @@ end
 
 function offset_start_moment(fn::Function=t->nothing,count_trials=false)
   precompile(fn,(Float64,))
-  OffsetStartMoment(fn,count_trials)
+  OffsetStartMoment(fn,count_trials,false)
 end
 
 function final_moment(fn::Function)
@@ -510,6 +541,22 @@ function timeout(fn::Function,isresponse::Function,timeout;delta_update=true)
   end
 
   ResponseMoment(isresponse,fn,timeout,delta_update)
+end
+
+flag_expanding(m::Moment) = m
+function flag_expanding(m::OffsetStartMoment)
+  OffsetStartMoment(m.run,m.count_trials,true)
+end
+
+
+function looping(moments...;when=() -> error("infinite loop!"))
+  when(when,moments...;loop=true)
+end
+function when(condition::Function,moments...;loop=false,update_offset=false)
+  precompile(condition,())
+  e = ExpandingMoment(condition,Stack(Moment),loop,update_offset)
+  foreach(m -> addmoment(e,m),moments)
+  e
 end
 
 function delta_t(moment::TimedMoment)
@@ -580,26 +627,45 @@ end
 
 keep_skipping(exp,moment::Moment) = exp.offset < exp.skip_offsets
 function keep_skipping(exp,moment::OffsetStartMoment)
-  exp.offset += 1
+  # start moments that originate from an expanding moment do not increment the
+  # offset. This is because expanding moments can generate an aribtrary number
+  # of such offset moments, so we can not determine a priori how many moments
+  # will occur. Thus, there is no good way to skip past part of an expanding
+  # moment. However, we still increment the trial count, if appropriate so the
+  # reported data correctly shows where trials begin and end.
+  if !moment.expanding
+    exp.offset += 1
+  end
   if moment.count_trials
     exp.trial += 1
+  end
+  exp.offset < exp.skip_offsets
+end
+function keep_skipping(exp,moment::ExpandingMoment)
+  if moment.update_offset
+    exp.offset += 1
   end
   exp.offset < exp.skip_offsets
 end
 keep_skipping(exp,moment::FinalMoment) = false
 
 function skip_offsets(exp,queue)
-  while !isempty(queue.data) && keep_skipping(exp,front(queue.data))
-    dequeue!(queue.data)
+  while !isempty(queue) && keep_skipping(exp,front(queue))
+    dequeue!(queue)
   end
 end
 
 function handle(exp::ExperimentState,moments::CompoundMoment,x)
-  queue = Queue(Moment)
+  queue = Deque{Moment}()
   for moment in moments.data
-    enqueue!(queue,moment)
+    push!(queue,moment)
   end
   push!(exp.submoments,MomentQueue(queue,0))
+  true
+end
+
+function handle(exp::ExperimentState,m::ExpandingMoment,x)
+  expand(m,exp.moments)
   true
 end
 
@@ -612,11 +678,11 @@ end
 function process(exp::ExperimentState,queue::MomentQueue,event::ExpEvent)
   skip_offsets(exp,queue)
 
-  if !isempty(queue.data)
-    moment = front(queue.data)
+  if !isempty(queue)
+    moment = front(queue)
     handled = handle(exp,moment,event)
     if handled
-      dequeue!(queue.data)
+      dequeue!(queue)
       if update_last(moment)
         queue.last = time(event)
       end
@@ -629,9 +695,9 @@ end
 function process(exp::ExperimentState,queue::MomentQueue,t::Float64)
   skip_offsets(exp,queue)
 
-  if !isempty(queue.data)
+  if !isempty(queue)
     start_time = time()
-    moment = front(queue.data)
+    moment = front(queue)
     event_time = delta_t(moment) + queue.last
     if event_time - t <= 1/exp.moment_resolution
       offset = t - start_time
@@ -641,7 +707,7 @@ function process(exp::ExperimentState,queue::MomentQueue,t::Float64)
       end
       handled = handle(exp,moment,t)
       if handled
-        dequeue!(queue.data)
+        dequeue!(queue)
         if update_last(moment)
           queue.last = run_time
         end
