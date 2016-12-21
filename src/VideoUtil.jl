@@ -48,8 +48,8 @@ const SDL_RENDERER_PRESENTVSYNC = 0x00000004
 const SDL_RENDERER_TARGETTEXTURE = 0x00000008
 
 """
-  window([width=1024],[height=768];[fullscreen=true],[title="Experiment"],
-         [accel=true])
+    window([width=1024],[height=768];[fullscreen=true],[title="Experiment"],
+           [accel=true])
 
 Create a window to which various objects can be rendered. See the `render`
 method.
@@ -108,6 +108,11 @@ function window(width=1024,height=768;fullscreen=true,title="Experiment",accel=t
   x
 end
 
+"""
+    close(win::SDLWindow)
+
+Closes a visible SDLWindow window.
+"""
 function close(win::SDLWindow)
   ccall((:SDL_DestroyRenderer,_psycho_SDL2),Void,(Ptr{Void},),win.renderer)
   ccall((:SDL_DestroyWindow,_psycho_SDL2),Void,(Ptr{Void},),win.data)
@@ -133,6 +138,11 @@ type SDLFont
   color::RGBA{U8}
 end
 
+"""
+    font(name,size,[dirs=os_default],[color=colorant"white"])
+
+Creates an `SDLFont` object to be used for for rendering text as an image.
+"""
 function font(name::String,size;dirs=font_dirs,color=colorant"white")
   file = find_font(name,dirs)
   font = ccall((:TTF_OpenFont,_psycho_SDL2_ttf),Ptr{Void},(Cstring,Cint),
@@ -150,9 +160,10 @@ end
 const forever = -1
 
 """
-render(obj,[duration=0],[priority=0],keys...)
+    render(obj,[duration=0],[priority=0],keys...)
 
-Render an object on the screen.
+Render an object, allowing `display` to show the object in current experiment's
+window.
 
 duration - A positive duration means the object is
 displayed for the given duration, otherwise the object displays until a new
@@ -166,9 +177,6 @@ and heights (for y), with (0,0) at the center of the screen.
 """
 render(x;keys...) = render(get_experiment().win,x;keys...)
 
-"""
-`SDLRendered` objects are those that can be displayed in an SDLWindow
-"""
 abstract SDLRendered
 abstract SDLSimpleRendered <: SDLRendered
 
@@ -186,7 +194,7 @@ display_priority(clear::SDLClear) = clear.priority
 draw(window::SDLWindow,cl::SDLClear) = clear(window,cl.color)
 
 """
-  render(color,[duration=0],[priority=0])
+    render(color,[duration=0],[priority=0])
 
 Render a color, across the entire screen, for a given duration and priority.
 """
@@ -224,7 +232,7 @@ rect(text::SDLText) = text.rect
 fonts = Dict{Tuple{String,Int},SDLFont}()
 
 """
-  render(str::String, [font_name="arial"], [size=32], [color=colorant"white"],
+    render(str::String, [font_name="arial"], [size=32], [color=colorant"white"],
          [wrap_width=0.8],[clean_whitespace=true],[x=0],[y=0],[duration=0],
          [priority=0])
 
@@ -294,8 +302,8 @@ data(img::SDLImage) = img.data
 rect(img::SDLImage) = img.rect
 
 """
-  render(img::Image, [x=0],[y=0],[duration=0],[priority=0])
-  render(img::Array, [x=0],[y=0],[duration=0],[priority=0])
+    render(img::Image, [x=0],[y=0],[duration=0],[priority=0])
+    render(img::Array, [x=0],[y=0],[duration=0],[priority=0])
 
 Render the color or gray scale image to the screen.
 """
@@ -433,11 +441,6 @@ function setup_display()
   end
   =#
 end
-
-function display(r::SDLRendered)
-  display(get_experiment().win,r)
-end
-
 type EmptyRendered <: SDLRendered; end
 update_stack_helper(window,stack,r::EmptyRendered) = stack
 
@@ -447,11 +450,14 @@ end
 update_stack_helper(window,stack,r::DeleteRendered) = delete!(stack,r.x)
 
 """
-display(win::SDLWindow,r::SDLRendered)
+    display(r::SDLRendered)
 
-When called on an `SDLWindow`, display will display the `SDLRendered` object for
-its `display_duration`.
+Displays a rendered object on the current experiment window.
 """
+function display(r::SDLRendered)
+  display(get_experiment().win,r)
+end
+
 function display(window::SDLWindow,r::SDLRendered)
   global display_stacks
   global display_signals
