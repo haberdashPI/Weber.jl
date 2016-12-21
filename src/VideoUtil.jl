@@ -47,6 +47,8 @@ const SDL_RENDERER_ACCELERATED = 0x00000002
 const SDL_RENDERER_PRESENTVSYNC = 0x00000004
 const SDL_RENDERER_TARGETTEXTURE = 0x00000008
 
+const display_is_setup = Array{Bool}()
+display_is_setup[] = false
 """
     window([width=1024],[height=768];[fullscreen=true],[title="Experiment"],
            [accel=true])
@@ -54,7 +56,13 @@ const SDL_RENDERER_TARGETTEXTURE = 0x00000008
 Create a window to which various objects can be rendered. See the `render`
 method.
 """
-function window(width=1024,height=768;fullscreen=true,title="Experiment",accel=true)
+function window(width=1024,height=768;fullscreen=true,
+                title="Experiment",accel=true)
+  if !display_is_setup[]
+    setup_display()
+    display_is_setup[] = true
+  end
+
   if !ccall((:SDL_SetHint,_psycho_SDL2),Bool,(Cstring,Cstring),
             "SDL_RENDER_SCALE_QUALITY","1")
     warn("Linear texture filtering not enabled.")
@@ -116,6 +124,7 @@ Closes a visible SDLWindow window.
 function close(win::SDLWindow)
   ccall((:SDL_DestroyRenderer,_psycho_SDL2),Void,(Ptr{Void},),win.renderer)
   ccall((:SDL_DestroyWindow,_psycho_SDL2),Void,(Ptr{Void},),win.data)
+
   win.closed = true
 end
 
@@ -423,10 +432,9 @@ end
 
 # called in __init__() to create display_stacks global variable
 const SDL_INIT_VIDEO = 0x00000020
+const display_signals = Dict{SDLWindow,Signal{SDLRendered}}()
+const display_stacks = Dict{SDLWindow,Signal{OrderedSet{SDLRendered}}}()
 function setup_display()
-  global display_signals = Dict{SDLWindow,Signal{SDLRendered}}()
-  global display_stacks = Dict{SDLWindow,Signal{OrderedSet{SDLRendered}}}()
-
   init = ccall((:SDL_Init,_psycho_SDL2),Cint,(UInt32,),SDL_INIT_VIDEO)
   if init < 0
     error("Failed to initialize SDL: "*SDL_GetError())
@@ -459,9 +467,6 @@ function display(r::SDLRendered)
 end
 
 function display(window::SDLWindow,r::SDLRendered)
-  global display_stacks
-  global display_signals
-
   if window ∉ keys(display_stacks)
     signal = display_signals[window] = Signal(SDLRendered,EmptyRendered())
     display_stacks[window] = @>> signal begin
@@ -541,19 +546,18 @@ function update_stack_helper(window,stack,restore::RestoreDisplay)
   filter(r -> display_duration(r) <= 0.0,restore.x)
 end
 
-global saved_display = OrderedSet{SDLRendered}()
+const saved_display = Array{OrderedSet{SDLRendered}}()
+saved_display[] = OrderedSet{SDLRendered}()
 function save_display(window::SDLWindow)
-  global saved_display
   if window ∈ keys(display_stacks)
-    saved_display = value(display_stacks[window])
+    saved_display[] = value(display_stacks[window])
   else
-    saved_display = OrderedSet{SDLRendered}()
+    saved_display[] = OrderedSet{SDLRendered}()
   end
 end
 function restore_display(window::SDLWindow)
-  global display_signals
   if window in keys(display_signals)
-    push!(display_signals[window],RestoreDisplay(saved_display))
+    push!(display_signals[window],RestoreDisplay(saved_display[]))
   else
     clear(window)
     show_drawn(window)
