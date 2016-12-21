@@ -2,6 +2,7 @@ using SampledSignals
 using DSP
 using LibSndFile
 using FixedPointNumbers
+import SampledSignals: samplerate
 
 export match_lengths, mix, mult, silence, noise, highpass, lowpass, bandpass,
 	tone, ramp, harmonic_complex, attenuate, sound, play, pause, stop,
@@ -51,7 +52,7 @@ end
 
 Creates period of silence of the given length (in seconds).
 """
-function silence(length_s;sample_rate_Hz=44100)
+function silence(length_s;sample_rate_Hz=samplerate(sound_setup_state))
 	SampleBuf(zeros(floor(Int,sample_rate_Hz * length_s)),sample_rate_Hz)
 end
 
@@ -60,7 +61,7 @@ end
 
 Creats a period of white noise of the given length (in seconds).
 """
-function noise(length_s;sample_rate_Hz=44100)
+function noise(length_s;sample_rate_Hz=samplerate(sound_setup_state))
 	return SampleBuf(1-2rand(floor(Int,length_s*sample_rate_Hz)),sample_rate_Hz)
 end
 
@@ -69,7 +70,8 @@ end
 
 Creats a pure tone of the given frequency and length (in seconds).
 """
-function tone(freq_Hz,length_s;sample_rate_Hz=44100,phase=0)
+function tone(freq_Hz,length_s;sample_rate_Hz=samplerate(sound_setup_state),
+              phase=0)
 	t = linspace(0,length_s,round(Int,length_s*sample_rate_Hz))
 	return SampleBuf(sin(2π*t * freq_Hz + phase),sample_rate_Hz)
 end
@@ -83,7 +85,8 @@ Creates a haromic complex of the given length, with the specified harmonics
 at the given amplitudes.
 """
 function harmonic_complex(f0,harmonics,amps,length_s;
-						              sample_rate_Hz=44100,phases=zeros(length(harmonics)))
+						              sample_rate_Hz=samplerate(sound_setup_state),
+                          phases=zeros(length(harmonics)))
 	n = maximum(harmonics)+1
 
   unit_length = 1/f0
@@ -176,13 +179,15 @@ function attenuate(x,atten_dB=20)
 end
 
 """
-    sound(x,[sample_rate_Hz])
+    sound(x,[sample_rate_Hz=44100])
 
 Converts an aribitray array to a sound.
 
-For real numbers, assumes 1 is the loudest and -1 the softest.
+For real numbers, assumes 1 is the loudest and -1 the softest. Assumes 16-bit
+PCM for integers.
 """
-function sound{T <: Number}(x::Array{T};sample_rate_Hz=44100)
+function sound{T <: Number}(x::Array{T};
+                            sample_rate_Hz=samplerate(sound_setup_state))
   bounded = max(min(x,typemax(Fixed{Int16,15})),typemin(Fixed{Int16,15}))
   sound(SampleBuf(Fixed{Int16,15}.(bounded),sample_rate_Hz))
 end
@@ -193,9 +198,9 @@ function sound(x::SampleBuf)
 end
 
 """
-    play(x,[async=true])
+    play(x,[async])
 
-Play the sound, returning immediately (if `async == true`) or waiting for the
+Play the sound and return immediately (by default), or wait for the
 sound to finish playing (if `async == false`).
 
 If `aysnc==true`, this returns a `PlayingSound` object which can be used
@@ -215,6 +220,12 @@ end
 immutable Sound
   chunk::MixChunk
   buffer::SampleBuf
+  function Sound(c::MixChunk,b::SampleBuf)
+    if !isready(sound_setup_state)
+      setup_sound()
+    end
+    new(c,b)
+  end
 end
 
 function sound(x::SampleBuf{Fixed{Int16,15}})
@@ -223,33 +234,62 @@ end
 
 const SDL_INIT_AUDIO = 0x00000010
 const AUDIO_S16 = 0x8010
-sound_setup = false
+
+const default_sample_rate = 44100
+type SoundSetupState
+  samplerate::Int
+end
+SoundSetupState() = SoundSetupState(0)
+function samplerate(s::SoundSetupState)
+  if s.samplerate == 0
+    default_sample_rate
+  else
+    s.samplerate
+  end
+end
+isready(s::SoundSetupState) = s.samplerate != 0
+const sound_setup_state = SoundSetupState()
 """
-    setup_sound([samplerate=44100],[buffer_size=256])
+    setup_sound([sample_rate_Hz=44100],[buffer_size=256])
 
-Initialize audio playback format.
+Initialize format for audio playback.
 
-This function is called on module initialization, and need not normally be
-called, unless you wish to change the play-back sample rate or buffer size. The
-buffer size determincy audio latency, so the shorter this is the
-better. However, when this size is to small audio playback will be corrupted.
+This function is called automatically the first time a `Sound` object is created
+(normally by using the `sound` function). It need not normally be called, unless
+you wish to change the play-back sample rate or buffer size. Sample rate
+determines the maximum playable frequency (max freq is ≈ sample_rate/2). The
+buffer size determines audio latency, so the shorter this is the
+better. However, when this size is too small, audio playback will be corrupted.
+
+Changing the sample rate from the default 44100 to a new value will also change
+the default sample rate sounds will be creataed at, to match this new sample
+rate. Upon playback, there is no check to ensure that the sample rate of a given
+sound is the same as that setup here, and no resampling of the sound is made.
 """
-function setup_sound(;samplerate=44100,buffer_size=256)
-  global sound_setup
+function setup_sound(;sample_rate_Hz=samplerate(sound_setup_state),
+                     buffer_size=256)
+  global sound_setup_state
 
-  if sound_setup
+  if isready(sound_setup_state)
     ccall((:Mix_CloseAudio,_psycho_SDL2_mixer),Void,())
   else
     init = ccall((:SDL_Init,_psycho_SDL2),Cint,(UInt32,),SDL_INIT_AUDIO)
     if init < 0
       error("Failed to initialize SDL: "*SDL_GetError())
     end
-    sound_setup = true
   end
+  if samplerate(sound_setup_state) != sample_rate_Hz
+    warn("The sample rate is being changed from "*
+         "$(samplerate(sound_setup_state))Hz to $(sample_rate_Hz)Hz. "*
+         "Sounds you've created that do not share this new sample rate will "*
+         "not play correctly.")
+  end
+
+  sound_setup_state.samplerate = sample_rate_Hz
 
   mixer_init = ccall((:Mix_OpenAudio,_psycho_SDL2_mixer),
                      Cint,(Cint,UInt16,Cint,Cint),
-                     round(Cint,samplerate/2),AUDIO_S16,2,buffer_size)
+                     round(Cint,sample_rate_Hz/2),AUDIO_S16,2,buffer_size)
   if mixer_init < 0
     error("Failed to initialize sound: "*Mix_GetError())
   end
@@ -298,6 +338,9 @@ function stop(x::PlayingSound)
   nothing
 end
 
+# TODO: add function to wait for the end of sound playback
+# TODO: add function to get offset of playback
+
 "
 Get the duration of the sound.
 "
@@ -305,12 +348,11 @@ function duration(s::Sound)
   duration(s.buffer)
 end
 
-# TODO: add function to wait for the end of sound playback
-
 function duration(s::SampleBuf)
   length(s) / samplerate(s)
 end
 
-function duration(s::Array{Float64};sample_rate_Hz=44100)
+function duration(s::Array{Float64};
+                  sample_rate_Hz=samplerate(sound_setup_state))
   length(s) / sample_rate_Hz
 end
