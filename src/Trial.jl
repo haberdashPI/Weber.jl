@@ -1,7 +1,7 @@
 # TODO: use the version indicated by Pkg
 
 # TODO: define a trial generator, which uses a predefined set of
-# GeneratedMoments, that take an additional paraemter in their callback that
+# GeneratedMoments, that take an additional parameter in their callback that
 # recieveds state from the generator. The generator then has a termination
 # condition that is a function of that state.
 
@@ -21,8 +21,8 @@ using Lazy: @>>, @>, @_
 using DataStructures
 import Base: run, time, *
 
-export Experiment, run, addtrial, addbreak, addpractice, moment, await_response,
-  record, timeout, endofpause
+export Experiment, setup, run, addtrial, addbreak, addpractice, moment,
+  await_response, record, timeout, endofpause
 
 const default_moment_resolution = 1000
 const default_input_resolution = 60
@@ -186,75 +186,78 @@ type Experiment
   runfn::Function
   state::ExperimentState
 
-  function Experiment(fn::Function;skip=0,columns=Symbol[],debug=false,kwds...)
-    global experiment_context
-
+  function Experiment(;skip=0,columns=Symbol[],debug=false,kwds...)
     exp = ExperimentState(debug,skip,columns;kwds...)
-    record_header(exp)
+    new(() -> error("Call `setup` on the expeirment before running it."),exp)
+  end
+end
 
-    # create data file header
+function setup(fn::Function,exp::Experiment)
+  global experiment_context
 
-    clenup_run = Condition()
-    function cleanup()
-      push!(exp.running,false)
-      push!(exp.started,false)
-      close(exp.win)
+  # create data file header
+  record_header(exp.state)
+  clenup_run = Condition()
+  function cleanup()
+    push!(exp.state.running,false)
+    push!(exp.state.started,false)
+    close(exp.state.win)
 
-      # gc is disabled during individual trials (and enabled at the end of
-      # a trial). Make sure it really does return to an enabled state.
-      gc_enable(true)
+    # gc is disabled during individual trials (and enabled at the end of
+    # a trial). Make sure it really does return to an enabled state.
+    gc_enable(true)
 
-      # indicate that the experiment is done running
-      notify(clenup_run)
-    end
+    # indicate that the experiment is done running
+    notify(clenup_run)
+  end
+
+  try
+    # the first moment just waits a short time to ensure
+    # notify(clean_run) runs after wait(cleanup_run)
+    enqueue!(exp.state.moments.data,moment(0.1))
+    exp.state.cleanup = cleanup
+
+    # setup all trial moments for this experiment
+    experiment_context = Nullable(exp.state)
+    fn()
+    experiment_context = Nullable{ExperimentState}()
+
+    # the last moment run cleans up the experiment
+    enqueue!(exp.state.moments.data,final_moment(t -> cleanup()))
+  catch e
+    close(exp.state.win)
+    gc_enable(true)
+    rethrow(e)
+  end
+
+  function runfn()
+    global experiment_context
+    experiment_context = Nullable(exp.state)
+    exp.state.mode = Running
+    push!(exp.state.started,true)
+    push!(exp.state.running,true)
 
     try
-      # the first moment just waits a short time to ensure
-      # notify(clean_run) runs after wait(cleanup_run)
-      enqueue!(exp.moments.data,moment(0.1))
-      exp.cleanup = cleanup
-
-      # setup all trial moments for this experiment
-      experiment_context = Nullable(exp)
-      fn()
-      experiment_context = Nullable{ExperimentState}()
-
-      # the last moment run cleans up the experiment
-      enqueue!(exp.moments.data,final_moment(t -> cleanup()))
-    catch e
-      close(exp.win)
+      wait(clenup_run)
+    catch
+      close(exp.state.win)
       gc_enable(true)
-      rethrow(e)
+      rethrow()
     end
 
-    function runfn()
-      global experiment_context
-      experiment_context = Nullable(exp)
-      exp.mode = Running
-      push!(exp.started,true)
-      push!(exp.running,true)
-
-      try
-        wait(clenup_run)
-      catch
-        close(exp.win)
-        gc_enable(true)
-        rethrow()
-      end
-
-      # if an exception occuring during the experiment, it is handled here
-      if !isnull(exp.exception)
-        record(exp,"program_error")
-        println("Stacktrace in experiment: ")
-        map(println,stacktrace(get(exp.exception)[2]))
-        rethrow(get(exp.exception)[1])
-      end
-
-      experiment_context = Nullable{ExperimentState}()
+    # if an exception occured during the experiment, it is handled here
+    if !isnull(exp.state.exception)
+      record(exp.state,"program_error")
+      println("Stacktrace in experiment: ")
+      map(println,stacktrace(get(exp.state.exception)[2]))
+      rethrow(get(exp.state.exception)[1])
     end
 
-    new(runfn,exp)
+    experiment_context = Nullable{ExperimentState}()
   end
+
+  exp.runfn = runfn
+  nothing
 end
 
 function run(exp::Experiment)
