@@ -36,9 +36,4 @@ include(joinpath(dirname(@__FILE__),"Event.jl"))
 include(joinpath(dirname(@__FILE__),"Trial.jl"))
 include(joinpath(dirname(@__FILE__),"primitives.jl"))
 
-function __init__()
-  setup_display()
-  setup_sound()
-end
-
 end
