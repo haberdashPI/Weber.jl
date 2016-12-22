@@ -1,7 +1,7 @@
 __precompile__()
 
 module Psychotask
-const psych_version = v"0.1.5"
+const psych_version = v"0.1.6"
 
 # load binary library dependencies
 depsjl = joinpath(dirname(@__FILE__), "..", "deps", "deps.jl")
@@ -36,8 +36,10 @@ include(joinpath(dirname(@__FILE__),"Event.jl"))
 include(joinpath(dirname(@__FILE__),"Trial.jl"))
 include(joinpath(dirname(@__FILE__),"primitives.jl"))
 
+include(joinpath(dirname(@__FILE__),"precompile.jl"))
+
 function __init__()
-  init_trials()
+  init_events()
 end
 
 end

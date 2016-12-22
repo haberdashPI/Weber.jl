@@ -54,20 +54,20 @@ for typ in [Deque,MomentQueue]
   precompile(dequeue!,(typ,))
   precompile(front,(typ,))
 end
-for moment in [Moment,TimedMoment,OffsetStartMoment,FinalMoment]
-  precompile(delta_t,(moment,))
+for m in [Moment,TimedMoment,OffsetStartMoment,FinalMoment]
+  precompile(delta_t,(m,))
 end
-for moment in [Moment,TimedMoment,OffsetStartMoment,FinalMoment]
-  precompile(run,(moment,Float64))
+for m in [Moment,TimedMoment,OffsetStartMoment,FinalMoment]
+  precompile(run,(m,Float64))
 end
 precompile(keep_skipping,(ExperimentState,Moment))
 precompile(keep_skipping,(ExperimentState,OffsetStartMoment))
 precompile(keep_skipping,(ExperimentState,ExpandingMoment))
 precompile(keep_skipping,(ExperimentState,FinalMoment))
 precompile(skip_offsets,(ExperimentState,MomentQueue))
-for moment in [ExpandingMoment,CompoundMoment,ResponseMoment,AbstractTimedMoment]
+for m in [ExpandingMoment,CompoundMoment,ResponseMoment,AbstractTimedMoment]
   for typ in [Float64,ExpEvent]
-    precompile(handle,(ExperimentState,moment,typ))
+    precompile(handle,(ExperimentState,m,typ))
   end
 end
 precompile(process,(ExperimentState,MomentQueue,Float64))
