@@ -1,5 +1,6 @@
-# TODO: clean up ExperimentState
-# TODO: make expeirment context a 0-dim array
+# TODO: document moment composition
+# TODO: document experiment construction
+
 # TODO: use SnoopPrecompile.jl to precompile more functions
 
 # TODO: create a online check to ensure the timing of trials is going well.
@@ -7,9 +8,6 @@
 # TODO: define some tests to evaluate the documented effects of addtrial,
 # addbreak and addpractice on the offest and trial counts, to ensure reasonable
 # timing of individual moments, and the effects of the expanding moments.
-
-# TODO: rewrite Trial.jl so that it is cleaner, probably using
-# a more Reactive style.
 
 # TODO: submit the package to METADATA.jl
 
@@ -243,7 +241,7 @@ function record(code;kwds...)
   record(get_experiment(),code;kwds...)
 end
 
-experiment_context = Nullable{ExperimentState}()
+const experiment_context = Array{Nullable{ExperimentState}}()
 type Experiment
   runfn::Function
   state::ExperimentState
@@ -264,8 +262,6 @@ calls to `addtrial`, `addbreak` and `addpractice` must be called in side of
 `fn`. This function must be called before `run`.
 """
 function setup(fn::Function,exp::Experiment)
-  global experiment_context
-
   # create data file header
   record_header(exp.state)
   clenup_run = Condition()
@@ -289,9 +285,9 @@ function setup(fn::Function,exp::Experiment)
     exp.state.data.cleanup = cleanup
 
     # setup all trial moments for this experiment
-    experiment_context = Nullable(exp.state)
+    experiment_context[] = Nullable(exp.state)
     fn()
-    experiment_context = Nullable{ExperimentState}()
+    experiment_context[] = Nullable{ExperimentState}()
 
     # the last moment run cleans up the experiment
     enqueue!(exp.state.data.moments,final_moment(t -> cleanup()))
@@ -302,8 +298,7 @@ function setup(fn::Function,exp::Experiment)
   end
 
   function runfn()
-    global experiment_context
-    experiment_context = Nullable(exp.state)
+    experiment_context[] = Nullable(exp.state)
     exp.state.data.mode = Running
     push!(exp.state.signals.started,true)
     push!(exp.state.signals.running,true)
@@ -324,7 +319,7 @@ function setup(fn::Function,exp::Experiment)
       rethrow(get(exp.state.data.exception)[1])
     end
 
-    experiment_context = Nullable{ExperimentState}()
+    experiment_context[] = Nullable{ExperimentState}()
   end
 
   exp.runfn = runfn
@@ -342,10 +337,11 @@ function run(exp::Experiment)
 end
 
 function get_experiment()
-  if isnull(experiment_context)
-    error("Unknown experiment context, call me inside `setup`.")
+  if isnull(experiment_context[])
+    error("Unknown experiment context, call me inside `setup` or during an"*
+          " experiment.")
   else
-    get(experiment_context)
+    get(experiment_context[])
   end
 end
 
@@ -491,16 +487,20 @@ end
 """
    addtrial(moments...,[when=nothing],[loop=nothing])
 
-Adds a trial to the expeirment, consisting of the specified moments.
+Adds a trial to the experiment, consisting of the specified moments.
 
-Each trial increments a counter for the number of trials, and the offset.
-These two numbers are reported on every line of the resulting data file
-(see `record`).
+Each trial increments a counter tracking the number of trials, and (normally) an
+offset counter. These two numbers are reported on every line of the resulting
+data file (see `record`).
 
 If a `when` function (with no arguments) is specified the trial only occurs if
 the function evaluates to true. If a `loop` function is specified the trial
 repeats until the function (with no arguments) evaluates to false. The offset
-counter is not updated if `when` or `loop` are != `nothing`.
+counter is not updated if `when` or `loop` are != `nothing`. Offsets
+are used to restart an experiment at some well defined time point. Since
+`when` and `loop` lead to trials being run some aribtrary number of times
+the number of offsets that they increment would vary from run to run, and
+so this would prevent the `offset` from being well defined from run to run.
 
 Moments can be arbitrarily nested in iterable collections. Each individual
 moment is one of the following objects.
