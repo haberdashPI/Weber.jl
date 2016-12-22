@@ -8,3 +8,5 @@ DataStructures
 Colors
 ArgParse
 FileIO
+PyCall
+Conda

@@ -1,5 +1,18 @@
+# TODO: test responding to Cedrus XID devices
+# TODO: allow resetting of response timer
+# TODO: setup calls to stim tracker
+# TODO: port XID python code to julia
+
+using PyCall
 import Base: isnull, time
 export iskeydown, iskeyup, iskeypressed, isfocused, isunfocused, @key_str
+
+
+function init_events()
+  global concrete_events
+  global const pyxid = pyimport(:pyxid)
+  global const pyxid_devices = pyxid[:get_xid_devices]()
+end
 
 abstract ExpEvent
 
@@ -24,12 +37,41 @@ end
 type EmptyEvent <: ExpEvent
 end
 
+type XID_DownEvent <: ExpEvent
+  key::Int
+  port::Int
+  rt::Float64
+  time::Float64
+end
+
+
+type XID_UpEvent <: ExpEvent
+  key::Int
+  port::Int
+  rt::Float64
+  time::Float64
+end
+
+"""
+    response_time(e::ExpEvent)
+
+Get the response time an event occured at. Only meaningful for response pad
+events (returns NaN in other cases). The response time is measured from the
+start of a trial.
+"""
+response_time(e::ExpEvent) = NaN
+response_time(e::XID_UpEvent) = e.rt
+response_time(e::XID_DownEvent) = e.rt
+
 """
     time(e::ExpEvent)
 
 Get the time an event occured relative to the start of the experiment.
+Resolution is limited by an expeirment's input_resolution (which can be
+specified upon initialization), and the response rate of the device. For
+instance, keyboards usually have a latency on the order of 20-30ms.
 """
-time(event::ExpEvent) = 0
+time(event::ExpEvent) = NaN
 time(event::KeyUpEvent) = event.time
 time(event::KeyDownEvent) = event.time
 time(event::WindowFocused) = event.time
@@ -101,8 +143,8 @@ end
 """
    iskeydown(event,[key])
 
-Evalutes to true if the event indicates that the given key (or any key) was
-pressed down. (See `@key_str`)
+Evalutes to true if the event indicates that the given keyboard key (or any key)
+was pressed down. (See `@key_str`)
 
    iskeydown(key)
 
@@ -118,8 +160,8 @@ iskeydown(event::KeyDownEvent,keycode::Number) = event.code == keycode
 """
    iskeyup(event,[key])
 
-Evalutes to true if the event indicates that the given key (or any key) was
-released.  (See `@key_str`)
+Evalutes to true if the event indicates that the given keyboard key (or any key)
+was released.  (See `@key_str`)
 
    iskeyup(key)
 
@@ -127,9 +169,43 @@ Returns a function which tests if an event indicates the given key was released.
 """
 iskeyup(event::ExpEvent) = false
 iskeyup(event::KeyUpEvent) = true
-iskeyup(keycode::Number) = e -> iskeyup(e,keycode::Number)
+iskeyup(keycode::Number) = e -> iskeyup(e,keycode)
 iskeyup(event::ExpEvent,keycode::Number) = false
 iskeyup(event::KeyUpEvent,keycode::Number) = event.code == keycode
+
+"""
+    ispad_down(event,[key])
+
+Evalutes to true if the event indicates that the given response pad key
+(or any key) was pressed.
+
+    ispad_down(key)
+
+Returns a fucntion which tests if an event indicates that a given response pad
+key was pressed
+"""
+ispad_down(event::ExpEvent) = false
+ispad_down(event::XID_DownEvent) = true
+ispad_down(keycode::Number) = e -> ispad_down(e,keycode)
+ispad_down(event::ExpEvent,keycode::Number) = false
+ispad_down(event::XID_DownEvent,keycode::Number) = event.code == keycode
+
+"""
+    ispad_up(event,[key])
+
+Evalutes to true if the event indicates that the given response pad key
+(or any key) was relased.
+
+    ispad_up(key)
+
+Returns a fucntion which tests if an event indicates that a given response pad
+key was released
+"""
+ispad_up(event::ExpEvent) = false
+ispad_up(event::XID_UpEvent) = true
+ispad_up(keycode::Number) = e -> ispad_up(e,keycode)
+ispad_up(event::ExpEvent,keycode::Number) = false
+ispad_up(event::XID_UpEvent,keycode::Number) = event.code == keycode
 
 isfocused(event::ExpEvent) = false
 isfocused(event::WindowFocused) = true
@@ -150,6 +226,15 @@ const keysym_ptr = 0x0000000000000010     # offsetof(SDL_KeyboardEvent,keysym)
 const sym_ptr = 0x0000000000000004        # offsetof(SDL_Keysym,sym)
 const win_event_ptr = 0x000000000000000c  # offsetof(SDL_WindowEvent,event)
 const event_size = 0x0000000000000038     # sizeof(SDL_Event)
+
+function reset_response()
+  for dev in pyxid_devices
+    if dev[:is_response_device]()
+      dev[:reset_base_timer]()
+      dev[:reset_rt_timer]()
+    end
+  end
+end
 
 function event_streamer(win,quit_callback)
   function helper(time::Float64)
@@ -177,6 +262,21 @@ function event_streamer(win,quit_callback)
         quit_callback()
       end
     end
+
+    for dev in pyxid_devices
+      if dev[:is_response_device]()
+        dev[:poll_for_response]()
+        while dev[:response_queue_size]() > 0
+          resp = dev[:get_next_response]
+          if res[:pressed]
+            push!(events,XID_DownEvent(resp[:key],resp[:port],resp[:time],time))
+          else
+            push!(events,XID_UpEvent(resp[:key],resp[:port],resp[:time],time))
+          end
+        end
+      end
+    end
+
     events
   end
 end

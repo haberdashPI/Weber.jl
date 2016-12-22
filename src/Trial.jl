@@ -43,7 +43,9 @@ const concrete_events = [
   WindowFocused,
   WindowUnfocused,
   EndPauseEvent,
-  EmptyEvent
+  EmptyEvent,
+  XID_DownEvent,
+  XID_UpEvent
 ]
 
 function findkwd(kwds,sym,default)
@@ -446,6 +448,7 @@ function addtrial_helper(exp::ExperimentState,trial_count,moments;keys...)
     else
       record("practice_start",time=t)
     end
+    reset_response()
   end
 
   end_trial = moment() do t

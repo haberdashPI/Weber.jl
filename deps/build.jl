@@ -1,3 +1,5 @@
+using Conda
+
 downloaddir = joinpath(dirname(@__FILE__),"downloads")
 bindir = joinpath(dirname(@__FILE__),"usr","lib")
 
@@ -75,3 +77,7 @@ open("deps.jl","w") do s
     println(s,"const _psycho_$var = \"$val\"")
   end
 end
+
+# install PyXID package
+Conda.add_channel("https://conda.anaconda.org/erik")
+Conda.add("pyxid")

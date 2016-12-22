@@ -36,4 +36,8 @@ include(joinpath(dirname(@__FILE__),"Event.jl"))
 include(joinpath(dirname(@__FILE__),"Trial.jl"))
 include(joinpath(dirname(@__FILE__),"primitives.jl"))
 
+function __init__()
+  init_trials()
+end
+
 end
