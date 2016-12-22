@@ -25,7 +25,7 @@ end
 function addbreak_every(n,total,response=key":space:",
                         response_str="the spacebar")
   exp = get_experiment()
-  trial = exp.meta[:break_every_count] = get(exp.meta,:break_every_count,0) + 1
+  trial = exp.info.meta[:break_every_count] = get(exp.info.meta,:break_every_count,0) + 1
   if n <= trial < total && (n == 1 || trial % n == 1)
     message = moment() do t
       record("break")
