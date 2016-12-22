@@ -294,8 +294,6 @@ function setup(fn::Function,exp::Experiment)
     push!(exp.state.started,true)
     push!(exp.state.running,true)
 
-    exp.moments.last = value(exp.timing)
-
     try
       wait(clenup_run)
     catch
