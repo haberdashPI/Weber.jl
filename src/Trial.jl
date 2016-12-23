@@ -3,8 +3,6 @@
 
 # TODO: use SnoopPrecompile.jl to precompile more functions
 
-# TODO: create a online check to ensure the timing of trials is going well.
-
 # TODO: define some tests to evaluate the documented effects of addtrial,
 # addbreak and addpractice on the offest and trial counts, to ensure reasonable
 # timing of individual moments, and the effects of the expanding moments.
@@ -156,9 +154,10 @@ end
 # accessed frequently are stored directly.  The others are stored mostly to keep
 # them from being garbaged collected.
 immutable ExperimentSignals
-  running::Reactive.Signal{Bool}
-  started::Reactive.Signal{Bool}
-  pause_events::Reactive.Signal{ExpEvent}
+  running::Signal{Bool}
+  started::Signal{Bool}
+  pause_events::Signal{ExpEvent}
+  delta_error::Signal{Float64}
   other::Dict{Symbol,Signal}
 end
 
@@ -356,7 +355,7 @@ function ExperimentState(debug::Bool,skip::Int,header::Array{Symbol};
   start_date = now()
   timestr = Dates.format(start_date,"yyyy-mm-dd__HH_MM_SS")
   filename = joinpath(data_dir,findkwd(info_values,:sid,"file")*"_"*timestr*".csv")
-  info = ExperimentInfo(info_values,meta,moment_resolution,start_date,
+  einfo = ExperimentInfo(info_values,meta,moment_resolution,start_date,
                         header,filename)
 
   offset = 0
@@ -373,12 +372,13 @@ function ExperimentState(debug::Bool,skip::Int,header::Array{Symbol};
   running = Signal(false)
   started = Signal(false)
   pause_events = Signal(ExpEvent,EmptyEvent())
+  delta_error = Signal(0.0)
   other = Dict{Symbol,Signal}()
-  signals = ExperimentSignals(running,started,pause_events,other)
+  signals = ExperimentSignals(running,started,pause_events,delta_error,other)
 
   win = window(width,height,fullscreen=!debug,accel=!debug)
 
-  exp = ExperimentState(info,data,signals,win)
+  exp = ExperimentState(einfo,data,signals,win)
 
   timing = foldp(+,0.0,fpswhen(running,moment_resolution))
   exp.signals.other[:timing] = timing
@@ -405,7 +405,8 @@ function ExperimentState(debug::Bool,skip::Int,header::Array{Symbol};
     false
   end
 
-  exp.signals.other[:watcher_processing] = map(filterwhen(running,EmptyEvent(),events)) do e
+  filt_events = filterwhen(running,EmptyEvent(),events)
+  exp.signals.other[:watcher_processing] = map(filt_events) do e
     if !isnull(e)
       try
         exp.data.trial_watcher(e)
@@ -416,6 +417,31 @@ function ExperimentState(debug::Bool,skip::Int,header::Array{Symbol};
       end
     end
     false
+  end
+
+  bad_times = throttle(1,filter(x -> x > timing_tolerance,0.0,delta_error))
+  good_times = throttle(1,filter(x -> x < timing_tolerance,0.0,delta_error))
+  exp.signals.other[:timing_warn] = map(bad_times) do err
+    if err != 0.0
+      warn("The latency of trial moments has exceeded desirable levels "*
+           " ($err seconds). This normally occurs when the experiment first "*
+           "starts up, but if unacceptable levels continue throughout the "*
+           "experiment, consider closing some programs on your computer or"*
+           " running this program on a faster machine.")
+      record(exp,"bad_delta_latency",time=err)
+    end
+  end
+  exp.signals.other[:timing_info] = map(good_times) do err
+    if err != 0.0
+      info("The latency of trial moments has fallen to an acceptable level "*
+           "($err seconds). It may fall further, but unless it exceedes a"*
+           " tolerable level, you will not be notified. Note that this "*
+           "measure of latency only verifies that the commands to generate "*
+           "stimuli occur when they should. Emprical verification of "*
+           "stimulus timing requires that you monitor the output of your "*
+           "machine using light sensors, microphones, etc...")
+      record(exp,"good_delta_latency",time=err)
+    end
   end
 
   exp
@@ -879,6 +905,21 @@ function process(exp::ExperimentState,queue::MomentQueue,event::ExpEvent)
   queue
 end
 
+const timing_tolerance = 0.002
+function check_timing(exp::ExperimentState,moment::Moment,
+                      run_t::Float64,last::Float64)
+  if delta_t(moment) > 0
+    empirical_delta = run_t - last
+    desired_delta = delta_t(moment)
+    error = abs(empirical_delta - desired_delta)
+    if error > timing_tolerance
+      push!(exp.signals.delta_error,error)
+    elseif value(exp.signals.delta_error) > timing_tolerance
+      push!(exp.signals.delta_error,error)
+    end
+  end
+end
+
 function process(exp::ExperimentState,queue::MomentQueue,t::Float64)
   skip_offsets(exp,queue)
 
@@ -892,6 +933,7 @@ function process(exp::ExperimentState,queue::MomentQueue,t::Float64)
       while event_time > run_time
         run_time = offset + time()
       end
+      check_timing(exp,moment,t,queue.last)
       handled = handle(exp,moment,t)
       if handled
         dequeue!(queue)
