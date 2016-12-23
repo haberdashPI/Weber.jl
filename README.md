@@ -9,10 +9,16 @@
 # About
 
 This package is a relatively recent effort to create a simple framework for
-creating psychophysical experiments that present stimuli and record responses in
-realtime. It is similar in concept to the likes of Presentation or ePrime. It
-runs on Windows and Mac OS X, and supports keyboard input or Cendrus
-response-pad input.
+running psychology experiments that present stimuli and record responses in
+real-time. It is similar in concept to the likes of Presentation or ePrime. It
+currently runs on Windows and Mac OS X[^1], and supports keyboard input or
+Cendrus response-pad input.
+
+[1]: It should be very easy to part this to a unix system. It would only require
+modifying deps/build.jl to correctly install SDL2 and SDL2 plugins. A few
+standard calls to BinDeps.jl using AptGet or Yum should do the trick. I just
+don't have a linux install avaiable at the moment to troubleshoot any problems
+that might come up. Pull-requests welcomed.
 
 ## Status
 
