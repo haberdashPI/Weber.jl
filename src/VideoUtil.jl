@@ -1,14 +1,17 @@
+# TODO: document object composition
+
 using Colors
 using Images
 using Reactive
 using DataStructures
 using Lazy: @>>
+
 import Base: display, close, +, convert
 
  # importing solely to allow their use in user code
 import Colors: @colorant_str, RGB
 
-export render, window, font, display, close, @colorant_str, RGB
+export visual, window, font, display, close, @colorant_str, RGB
 
 @static if is_windows()
   const font_dirs = [".",joinpath(ENV["WINDIR"],"fonts")]
@@ -53,7 +56,7 @@ display_is_setup[] = false
     window([width=1024],[height=768];[fullscreen=true],[title="Experiment"],
            [accel=true])
 
-Create a window to which various objects can be rendered. See the `render`
+Create a window to which various objects can be rendered. See the `visual`
 method.
 """
 function window(width=1024,height=768;fullscreen=true,
@@ -169,7 +172,7 @@ end
 const forever = -1
 
 """
-    render(obj,[duration=0],[priority=0],keys...)
+    visual(obj,[duration=0],[priority=0],keys...)
 
 Render an object, allowing `display` to show the object in current experiment's
 window.
@@ -184,7 +187,7 @@ Newer objects display over same-priority older objects.
 If coordinates are used they are in units of half screen widths (for x)
 and heights (for y), with (0,0) at the center of the screen.
 """
-render(x;keys...) = render(get_experiment().win,x;keys...)
+visual(x;keys...) = visual(get_experiment().win,x;keys...)
 
 abstract SDLRendered
 abstract SDLSimpleRendered <: SDLRendered
@@ -203,11 +206,11 @@ display_priority(clear::SDLClear) = clear.priority
 draw(window::SDLWindow,cl::SDLClear) = clear(window,cl.color)
 
 """
-    render(color,[duration=0],[priority=0])
+    visual(color,[duration=0],[priority=0])
 
 Render a color, across the entire screen, for a given duration and priority.
 """
-function render(window::SDLWindow,color::Color;duration=0,priority=0)
+function visual(window::SDLWindow,color::Color;duration=0,priority=0)
   SDLClear(color,duration,priority)
 end
 
@@ -241,13 +244,13 @@ rect(text::SDLText) = text.rect
 fonts = Dict{Tuple{String,Int},SDLFont}()
 
 """
-    render(str::String, [font_name="arial"], [size=32], [color=colorant"white"],
+    visual(str::String, [font_name="arial"], [size=32], [color=colorant"white"],
          [wrap_width=0.8],[clean_whitespace=true],[x=0],[y=0],[duration=0],
          [priority=0])
 
 Render the given string as an image that can be displayed.
 """
-function render(window::SDLWindow,str::String;
+function visual(window::SDLWindow,str::String;
                 font_name="arial",size=32,color::RGB{U8}=colorant"white",
                 wrap_width=0.8,clean_whitespace=true,x=0,y=0,
                 duration=0,priority=0)
@@ -258,7 +261,7 @@ function render(window::SDLWindow,str::String;
     str = replace(str,r"^\s+","")
     str = replace(str,r"\s+"," ")
   end
-  render(window,x,y,fonts[(font_name,size)],color,
+  visual(window,x,y,fonts[(font_name,size)],color,
          round(UInt32,window.w*wrap_width),str,duration,priority)
 end
 
@@ -270,7 +273,7 @@ function as_screen_coordinates(window,x,y,w,h)
   max(0,min(window.h,round(Cint,window.h/2 - y*window.h/4 - h / 2)))
 end
 
-function render(window::SDLWindow,x::Real,y::Real,font::SDLFont,color::RGB{U8},
+function visual(window::SDLWindow,x::Real,y::Real,font::SDLFont,color::RGB{U8},
                 wrap_width::UInt32,str::String,duration=0,priority=0)
   surface = ccall((:TTF_RenderUTF8_Blended_Wrapped,_psycho_SDL2_ttf),Ptr{Void},
                   (Ptr{Void},Cstring,RGBA{U8},UInt32),
@@ -311,18 +314,18 @@ data(img::SDLImage) = img.data
 rect(img::SDLImage) = img.rect
 
 """
-    render(img::Image, [x=0],[y=0],[duration=0],[priority=0])
-    render(img::Array, [x=0],[y=0],[duration=0],[priority=0])
+    visual(img::Image, [x=0],[y=0],[duration=0],[priority=0])
+    visual(img::Array, [x=0],[y=0],[duration=0],[priority=0])
 
 Render the color or gray scale image to the screen.
 """
-function render(window::SDLWindow,img::Array;keys...)
-  render(window,convert(Image{RGBA{U8}},img);keys...)
+function visual(window::SDLWindow,img::Array;keys...)
+  visual(window,convert(Image{RGBA{U8}},img);keys...)
 end
-function render(window::SDLWindow,img::Image;keys...)
-  render(window,convert(Image{RGBA{U8}},img);keys...)
+function visual(window::SDLWindow,img::Image;keys...)
+  visual(window,convert(Image{RGBA{U8}},img);keys...)
 end
-function render(window::SDLWindow,img::Image{RGBA{U8}};
+function visual(window::SDLWindow,img::Image{RGBA{U8}};
                 x=0,y=0,duration=0,priority=0)
   surface = ccall((:SDL_CreateRGBSurfaceFrom,_psycho_SDL2),Ptr{Void},
                   (Ptr{Void},Cint,Cint,Cint,Cint,UInt32,UInt32,UInt32,UInt32),
@@ -374,16 +377,16 @@ if Pkg.installed("Compose") != nothing && Pkg.installed("Cairo") != nothing
   rect(img::SDLComposed) = img.rect
 
 """
-  render(comp::Compose.Context,[x=0],[y=0],[w=1],[h=1],
+  visual(comp::Compose.Context,[x=0],[y=0],[w=1],[h=1],
                            [dpi=72],[priority=0],[duration=0])
 
 Renders the given Compose.jl object so it can be displayed on screen.
 Width and height are specified as a proportion of the full width and height.
 """
-  function render(comp::Compose.Context;keys...)
-    render(get_experiment().win,comp;keys...)
+  function visual(comp::Compose.Context;keys...)
+    visual(get_experiment().win,comp;keys...)
   end
-  function render(win::SDLWindow,comp::Compose.Context;
+  function visual(win::SDLWindow,comp::Compose.Context;
                   x=0,y=0,w=1,h=1,dpi=72)
     w,h = round(Cint,w*win.w),round(Cint,h*win.h)
     png = Compose.PNG(w,h,dpi)
@@ -416,7 +419,7 @@ elseif Pkg.installed("Compose") != nothing
   import Compose
 
   const sdl_compose_implemented = false
-  function render(win::SDLWindow,comp::Compose.Context;keys...)
+  function visual(win::SDLWindow,comp::Compose.Context;keys...)
     error("To render Compose.jl objects you must have Cairo.jl installed!\n"*
           "Please call Pkg.add(\"Cairo\") from the command line")
   end
@@ -483,7 +486,7 @@ end
 
 function display(w::SDLWindow,r)
   warn("Rendering was not precomputed!")
-  display(w,render(w,r))
+  display(w,visual(w,r))
 end
 
 function handle_remove(signal,r::SDLRendered)

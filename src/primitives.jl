@@ -14,7 +14,7 @@ function response(responses...;time_col=:time,info...)
 end
 
 function instruct(str;time_col=:time)
-  text = render(str*" (Hit spacebar to continue...)")
+  text = visual(str*" (Hit spacebar to continue...)")
   m = moment() do t
     record("instructions";[time_col => t]...)
     display(text)
@@ -29,7 +29,7 @@ function addbreak_every(n,total,response=key":space:",
   if n <= trial < total && (n == 1 || trial % n == 1)
     message = moment() do t
       record("break")
-      display(render("You can take a break. Hit "*
+      display(visual("You can take a break. Hit "*
                      "$response_str when you're ready to resume... "*
                      "$(div(exp.trial,n)) of $(div(total,n)-1) breaks."))
     end
@@ -39,7 +39,7 @@ function addbreak_every(n,total,response=key":space:",
 end
 
 function show_cross(delta_t::Number=0;render_options...)
-  c = render("+";render_options...)
+  c = visual("+";render_options...)
   moment(delta_t,t -> display(c))
 end
 
