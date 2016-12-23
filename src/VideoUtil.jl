@@ -357,6 +357,10 @@ end
 # between Cairo and SDL that is causing the problem, but I haven't
 # narrowed it down yet.
 
+# Also note that this currently wont' work well because Pkg.installed isn't a
+# good way to handle conditional code. Julia doesn't yet have a better
+# solution for this that I know of.
+
 #=
 if Pkg.installed("Compose") != nothing && Pkg.installed("Cairo") != nothing
   import Compose
