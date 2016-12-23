@@ -1,7 +1,7 @@
 __precompile__()
 
 module Psychotask
-const psych_version = v"0.1.7"
+const psych_version = v"0.1.8"
 
 # load binary library dependencies
 depsjl = joinpath(dirname(@__FILE__), "..", "deps", "deps.jl")
