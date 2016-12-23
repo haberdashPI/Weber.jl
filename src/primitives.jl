@@ -2,6 +2,8 @@
 
 export instruct, response, addbreak_every, show_cross, @read_args
 using ArgParse
+using Juno: input, selector
+import Juno
 
 function response(responses...;time_col=:time,info...)
   begin (event) ->
@@ -113,7 +115,7 @@ macro read_args(description,keys...)
   end
   arg_expr.args = vcat(arg_expr.args,skip_expr.args)
 
-  body = quote
+  arg_body = quote
     s = ArgParseSettings(description = $(esc(description)))
 
     @add_arg_table s begin
@@ -123,15 +125,65 @@ macro read_args(description,keys...)
     parsed = parse_args(ARGS,s)
   end
 
+
   for line in map(as_arg_checker,keys)
-    push!(body.args,line)
+    push!(arg_body.args,line)
   end
 
   result_tuple = :((parsed["sid"],parsed["skip"]))
   for result = map(as_arg_result,keys)
     push!(result_tuple.args,result)
   end
-  push!(body.args,result_tuple)
+  push!(arg_body.args,result_tuple)
 
-  body
+  readline_call = :(readline_args())
+  for k in keys
+    push!(readline_call.args,k)
+  end
+
+  quote
+    cd(dirname(@__FILE__))
+    if length(ARGS) > 0
+      $arg_body
+    else
+      $readline_call
+    end
+  end
+end
+
+function readline_args(;keys...)
+  print("Enter subject id: ")
+  sid = input()
+  args = Array{Any}(length(keys))
+  for (i,(kw,value)) in enumerate(keys)
+    if isa(value,Type)
+      if Juno.isactive()
+        println("Enter $kw: ")
+      else
+        print("Enter $kw: ")
+      end
+      args[i] = parse(value,input())
+    else
+      if Juno.isactive()
+        println("Enter $kw: ")
+        args[i] = selector(value)
+      else
+        print("Enter $kw ($(join(map(string,value),", "," or "))): ")
+        args[i] = chomp(readline())
+        if Symbol(args[i]) ∉ value
+          error("Expected $kw to be $(join(map(string,value),", "," or ")) "*
+                "but got $(args[i]).")
+        end
+      end
+    end
+  end
+  print("Offset to start at? (0 by default): ")
+  str = input()
+  if isempty(chomp(str))
+    skip = 0
+  else
+    skip = parse(Int,str)
+  end
+  println("Running...")
+  (sid,skip,args...)
 end
