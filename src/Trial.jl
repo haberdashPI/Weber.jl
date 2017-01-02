@@ -1,8 +1,6 @@
 # TODO: document moment composition
 # TODO: document experiment construction
 
-# TODO: use SnoopPrecompile.jl to precompile more functions
-
 # TODO: define some tests to evaluate the documented effects of addtrial,
 # addbreak and addpractice on the offest and trial counts, to ensure reasonable
 # timing of individual moments, and the effects of the expanding moments.
