@@ -154,6 +154,11 @@ end
     font(name,size,[dirs=os_default],[color=colorant"white"])
 
 Creates an `SDLFont` object to be used for for rendering text as an image.
+
+By default this function looks in the current directory and then an os specific
+default font directory for a font with the given name (case insensitive). You
+can specify a different list of directories using the `dirs` parameter.
+
 """
 function font(name::String,size;dirs=font_dirs,color=colorant"white")
   file = find_font(name,dirs)
@@ -208,7 +213,7 @@ draw(window::SDLWindow,cl::SDLClear) = clear(window,cl.color)
 """
     visual(color,[duration=0],[priority=0])
 
-Render a color, across the entire screen, for a given duration and priority.
+Render a color, across the entire screen.
 """
 function visual(window::SDLWindow,color::Color;duration=0,priority=0)
   SDLClear(color,duration,priority)
@@ -244,25 +249,32 @@ rect(text::SDLText) = text.rect
 fonts = Dict{Tuple{String,Int},SDLFont}()
 
 """
-    visual(str::String, [font_name="arial"], [size=32], [color=colorant"white"],
-         [wrap_width=0.8],[clean_whitespace=true],[x=0],[y=0],[duration=0],
-         [priority=0])
+    visual(str::String, [font], [font_name="arial"], [size=32],
+           [color=colorant"white"],
+           [wrap_width=0.8],[clean_whitespace=true],[x=0],[y=0],[duration=0],
+           [priority=0])
 
-Render the given string as an image that can be displayed.
+Render the given string as an image that can be displayed. An optional
+second argument can specify a font, loaded using the `font` function.
 """
 function visual(window::SDLWindow,str::String;
-                font_name="arial",size=32,color::RGB{U8}=colorant"white",
+                font_name="arial",size=32,info...)
+  f = get!(fonts,(font_name,size)) do
+    font(font_name,size)
+  end
+  visual(window,str,f;info...)
+end
+
+function visual(window::SDLWindow,str::String,font::SDLFont;
+                color::RGB{U8}=colorant"white",
                 wrap_width=0.8,clean_whitespace=true,x=0,y=0,
                 duration=0,priority=0)
-  if (font_name,size) ∉ keys(fonts)
-    fonts[(font_name,size)] = font(font_name,size)
-  end
   if clean_whitespace
     str = replace(str,r"^\s+","")
     str = replace(str,r"\s+"," ")
   end
-  visual(window,x,y,fonts[(font_name,size)],color,
-         round(UInt32,window.w*wrap_width),str,duration,priority)
+  visual(window,x,y,font,color,round(UInt32,window.w*wrap_width),str,
+         duration,priority)
 end
 
 const w_ptr = 0x0000000000000010 # icxx"offsetof(SDL_Surface,w);"
