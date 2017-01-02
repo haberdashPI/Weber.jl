@@ -18,7 +18,8 @@ import DataStructures: front
 import Base: run, time, *, length, unshift!, isempty
 
 export Experiment, setup, run, addtrial, addbreak, addpractice, moment,
-  await_response, record, timeout, when, looping, endofpause
+  await_response, record, timeout, when, looping, endofpause, experiment_trial,
+  experiment_metadata
 
 const default_moment_resolution = 1000
 const default_input_resolution = 60
@@ -477,6 +478,12 @@ function addmoment(q,ms)
     addmoment(q,m)
   end
 end
+
+experiment_trial(exp) = exp.data.trial
+experiment_trial() = trial(get_experiment())
+
+experiment_metadata(exp) = exp.info.meta
+experiment_metadata() = experiment_metadata(get_experiment())
 
 function addmoments(exp,moments;when=nothing,loop=nothing)
   if when == nothing && loop == nothing

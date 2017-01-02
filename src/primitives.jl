@@ -26,14 +26,14 @@ end
 
 function addbreak_every(n,total,response=key":space:",
                         response_str="the spacebar")
-  exp = get_experiment()
-  trial = exp.info.meta[:break_every_count] = get(exp.info.meta,:break_every_count,0) + 1
-  if n <= trial < total && (n == 1 || trial % n == 1)
+  meta = experiment_metadata()
+  index = meta[:break_every_index] = get(meta,:break_every_index,0) + 1
+  if n <= index < total && (n == 1 || index % n == 1)
     message = moment() do t
       record("break")
       display(visual("You can take a break. Hit "*
                      "$response_str when you're ready to resume... "*
-                     "$(div(exp.trial,n)) of $(div(total,n)-1) breaks."))
+                     "$(div(index,n)) of $(div(total,n)-1) breaks."))
     end
 
     addbreak(message,await_response(e -> iskeydown(e,response)))
