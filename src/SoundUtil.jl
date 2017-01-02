@@ -357,7 +357,9 @@ function stop(x::PlayingSound;wait=false)
 end
 
 "
-Get the duration of the sound.
+    duration(x)
+
+Get the duration of the given sound.
 "
 function duration(s::Sound)
   duration(s.buffer)

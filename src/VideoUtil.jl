@@ -180,15 +180,20 @@ const forever = -1
 Render an object, allowing `display` to show the object in current experiment's
 window.
 
-duration - A positive duration means the object is
-displayed for the given duration, otherwise the object displays until a new
-object is displayed.
-
-priority - Higher priority objects are always visible above lower priority ones.
-Newer objects display over same-priority older objects.
+# Arguments
+* duration: A positive duration means the object is
+  displayed for the given duration, otherwise the object displays until a new
+  object is displayed.
+* priority: Higher priority objects are always visible above lower priority ones.
+  Newer objects display over same-priority older objects.
 
 If coordinates are used they are in units of half screen widths (for x)
 and heights (for y), with (0,0) at the center of the screen.
+
+!!! note
+
+    By using using the `+` operator, multiple visual objects can be composed
+    into one object, so that they are displayed together
 """
 visual(x;keys...) = visual(get_experiment().win,x;keys...)
 

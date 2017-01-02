@@ -18,6 +18,8 @@ type EndPauseEvent <: ExpEvent
 end
 
 """
+    endofpause(event)
+
 Evaluates to true if the event indicates the end of a pause requested by
 the user.
 """
@@ -229,6 +231,30 @@ function record(code;kwds...)
 end
 
 const experiment_context = Array{Nullable{ExperimentState}}()
+
+"""
+   Experiment([skip=0],[columns=[symbols...]],[debug=false],
+              [moment_resolution=1000],[input_resolution=60],[data_dir="data"],
+              [width=1024],[height=768],kwds...)
+
+Prepares a new experiment to be run.
+
+# Keyword Arguments
+* skip: the number of offsets to skip. Allows restarting of an experiment.
+* columns: the names (as symbols) of columns that will be recorded during
+the experiment (using `record`).
+* debug: if true experiment will show in a windowed view
+* moment_resolution: the precision (in ticks per second) that moments
+should be presented at
+* input_resolution: the precision (in ticks per second) that input events should
+be queried.
+* data_dir: the directory where data files should be stored
+* width and height: specified the screen resolution during the experiment
+
+Additional keyword arguments can be specified to store extra information to the
+recorded data file, e.g. the experimental condition or the version of the
+experiment being run.
+"""
 type Experiment
   runfn::Function
   state::ExperimentState
@@ -313,6 +339,11 @@ function setup(fn::Function,exp::Experiment)
   nothing
 end
 
+"""
+    run(experiment)
+
+Runs an experiment. You must call `setup` first.
+"""
 function run(exp::Experiment)
   try
     focus(exp.state.win)
@@ -466,9 +497,20 @@ function addmoment(q,ms)
   end
 end
 
+"""
+    experiment_trial()
+
+Returns the current trial of the experiment.
+"""
 experiment_trial(exp) = exp.data.trial
 experiment_trial() = trial(get_experiment())
 
+"""
+   experiment_metadata() = Dict{Symbol,Any}()
+
+Returns metadata for this experiment. You can store
+global state, specific to this experiment, in this dictionary.
+"""
 experiment_metadata(exp) = exp.info.meta
 experiment_metadata() = experiment_metadata(get_experiment())
 
@@ -505,13 +547,15 @@ function addtrial_helper(exp::ExperimentState,trial_count,moments;keys...)
 end
 
 """
-   addtrial(moments...,[when=nothing],[loop=nothing])
+    addtrial(moments...,[when=nothing],[loop=nothing])
 
 Adds a trial to the experiment, consisting of the specified moments.
 
 Each trial increments a counter tracking the number of trials, and (normally) an
 offset counter. These two numbers are reported on every line of the resulting
 data file (see `record`).
+
+# Conditional Trials
 
 If a `when` function (with no arguments) is specified the trial only occurs if
 the function evaluates to true. If a `loop` function is specified the trial
@@ -522,29 +566,57 @@ are used to restart an experiment at some well defined time point. Since
 the number of offsets that they increment would vary from run to run, and
 so this would prevent the `offset` from being well defined from run to run.
 
+# How to create moments
+
 Moments can be arbitrarily nested in iterable collections. Each individual
 moment is one of the following objects.
 
-1. function - immediately after the *start* of the preceeding moment (or at the
+1. function
+
+Immediately after the *start* of the preceeding moment (or at the
 start of the trial if it is the first argument), this function becomes the event
 watcher. Any time an event occurs this function will be called, until a new
 watcher replaces it. It shoudl take one argument (the event that occured).
 
-2. moment object - result of calling the `moment` function, this will
+2. moment object
+
+Result of calling the `moment` function, this will
 trigger some time after the *start* of the previosu moment.
 
-3. timeout object - result of calling the `timeout` function, this
+3. timeout object
+
+Result of calling the `timeout` function, this
 will trigger an event if no response occurs from the *start* of the previous
 moment, until the specified timeout.
 
-4. await object - reuslt of calling `await_response` this moment will
+4. await object
+
+Reuslt of calling `await_response` this moment will
 begin as soon as the specified response is provided by the subject.
 
-5. looping object - result of calling `looping`, this will repeat
+5. looping object
+
+Result of calling `looping`, this will repeat
 a series of moments based on some condition
 
-6. when object - result of call `when`, this will present as series
+6. when object
+
+Result of call `when`, this will present as series
 of moments based on some condition.
+
+
+!!! note
+
+    By using the `*` operator you can concatenate multiple moments into
+    a single moment. A concatenation of moments starts immediately,
+    and then proceedes through all of the concanetated moments in order.
+    This is sometime useful for playing moments in parallel. The following
+    example will present two sounds, one at 100ms, the other at 200ms after
+    the start of the trial. It will also display "Too Late!" on the screen
+    if no keyboard key is pressed 150ms after the start of the trial.
+
+        addtrial(moment(0.1,t -> play(soundA)) * moment(0.1,t -> play(soundB)),
+                 timeout(0.15,iskeydown,x -> display("Too Late!")))
 
 # Guidlines for low-latency trials
 
@@ -662,14 +734,23 @@ experiment.
 
 The timing resolution is limited only by the processing speed of the computer,
 so the latency of moments, and the error in reported times should be quite low,
-assuming the only thing that occurs in each moment are:
+if the only the following oeprations are perormed:
 
-- playing sounds that have been pregenerated (using `sound`)
-- presenting graphical objects that have been pre-rendered (using `visual`)
+- calling `play` on sounds that have been pre-generated using `sound`
+- calling `display` on graphical objects that have been pre-rendered
+  using `visual`
+- calling `record`
 - simple programming logic
 
 It is recommended that any calls to `record` be made at the end of a moment,
 to keep the latency of any multimedia events low.
+
+!!! warning
+
+    Long running moment functions will lead to latency issues. Make
+    sure all moment function run relatively quickly. For instance, normally `play`
+    and `display` return immediately, before the sound or visual is finished
+    being presented to the participant.
 """
 function moment(delta_t::Number) TimedMoment(delta_t,t->nothing)
 end
@@ -706,9 +787,9 @@ end
 """
    await_response(isresponse)
 
-This moment starts when the function evaluates to true.
+This moment starts when the `isresponse` function evaluates to true.
 
-The `is response` function will be called anytime an event occurs. It should
+The `isresponse` function will be called anytime an event occurs. It should
 take one parameter (the event that just occured).
 """
 function await_response(fn::Function)
@@ -742,25 +823,23 @@ function flag_expanding(m::OffsetStartMoment)
   OffsetStartMoment(m.run,m.count_trials,true)
 end
 
-
 """
     looping(when=fn,moments...)
 
-This moment will begin at the *start* of the previous moment, and
-repeats the listed moments (possibly in nested iterable objects)
-until fn (which takes no arguments) evaluates to false.
+This moment will begin at the *start* of the previous moment, and repeats the
+listed moments (possibly in nested iterable objects) until the `when` function
+(which takes no arguments) evaluates to false.
 """
 function looping(moments...;when=() -> error("infinite loop!"))
   when(when,moments...;loop=true)
 end
 
-
 """
     when(condition,moments...)
 
-This moment will begin at the *start* of the previous moment, and
-presents the following moments (possibly in nested iterable objects)
-if fn (which takes no arguments) evaluates to true.
+This moment will begin at the *start* of the previous moment, and presents the
+following moments (possibly in nested iterable objects) if the `condition`
+function (which takes no arguments) evaluates to true.
 """
 function when(condition::Function,moments...;loop=false,update_offset=false)
   precompile(condition,())

@@ -36,9 +36,9 @@ julia> Pkg.build("Psychotask")
 # Roadmap
 
 For the 0.2.0 release
-- [ ] document object composition
-- [ ] document moment composition
-- [ ] document experiment construction
+- [x] document object composition
+- [x] document moment composition
+- [x] document experiment construction
 - [ ] create a basic user manual
 
 - [ ] test responses to Cedrus XID devices (create example for reading buttons)

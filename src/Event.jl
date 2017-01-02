@@ -122,6 +122,8 @@ const str_to_code = Dict(
 )
 
 """
+    key"keyname"
+
 Generate a key code, using a given lower case letter, or special key.
 
 Implemented special keys include ":space:", ":up:", ":down:", ":left", ":right:"
