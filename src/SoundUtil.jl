@@ -297,6 +297,8 @@ end
 
 type PlayingSound
   channel::Int
+  start::Float64
+  paused::Float64
   sound::Sound
 end
 
@@ -308,7 +310,7 @@ function play(x::Sound,async=true)
     error("Failed to play sound: "*Mix_GetError())
   end
   if async
-    PlayingSound(channel,x)
+    PlayingSound(channel,time(),NaN,x)
   else
     sleep(duration(x)-0.01)
     while ccall((:Mix_Playing,_psycho_SDL2_mixer),Cint,(Cint,),channel) > 0
@@ -318,8 +320,14 @@ function play(x::Sound,async=true)
 end
 
 function play(x::PlayingSound)
-  ccall((:Mix_Resume,_psycho_SDL2_mixer),Void,(Cint,),x.channel)
-  x
+  if !isnan(x.paused)
+    ccall((:Mix_Resume,_psycho_SDL2_mixer),Void,(Cint,),x.channel)
+    x.start = time() - (x.paused - x.start)
+    x.paused = NaN
+    x
+  else
+    error("Already playing sound")
+  end
 end
 
 """
@@ -327,19 +335,27 @@ Pause playback of the sound. Resume by calling `play` on the sound.
 """
 function pause(x::PlayingSound)
   ccall((:Mix_Pause,_psycho_SDL2_mixer),Void,(Cint,),x.channel)
+  x.paused = time()
   x
 end
 
 """
-Stop black of the sound.
-"""
-function stop(x::PlayingSound)
-  ccall((:Mix_HaltChannel,_psycho_SDL2_mixer),Void,(Cint,),x.channel)
-  nothing
-end
+     stop(x,[wait=false])
 
-# TODO: add function to wait for the end of sound playback
-# TODO: add function to get offset of playback
+Stop playback of the sound, or wait for the sound to
+stop playing (if wait == true).
+"""
+function stop(x::PlayingSound;wait=false)
+  if !wait
+    ccall((:Mix_HaltChannel,_psycho_SDL2_mixer),Void,(Cint,),x.channel)
+    nothing
+  else
+    sleep_time = duration(x.sound) - (time() - x.start)
+    if sleep_time > 0
+      sleep(sleep_time)
+    end
+  end
+end
 
 "
 Get the duration of the sound.
