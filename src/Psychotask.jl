@@ -39,6 +39,7 @@ include(joinpath(dirname(@__FILE__),"primitives.jl"))
 include(joinpath(dirname(@__FILE__),"precompile.jl"))
 
 function __init__()
+  _precompile_()
   init_events()
 end
 
