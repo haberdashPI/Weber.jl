@@ -76,7 +76,6 @@ function tone(freq_Hz,length_s;sample_rate_Hz=samplerate(sound_setup_state),
 	return SampleBuf(sin(2π*t * freq_Hz + phase),sample_rate_Hz)
 end
 
-# TODO: debug
 """
     harmonic_complex(f0,harmonics,amps,length,
                      [sample_rate_Hz=44100],[phases=zeros(length(harmonics))])

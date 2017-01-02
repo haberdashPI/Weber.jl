@@ -1,8 +1,3 @@
-# TODO: test responding to Cedrus XID devices
-# TODO: allow resetting of response timer
-# TODO: setup calls to stim tracker
-# TODO: port XID python code to julia
-
 using PyCall
 import Base: isnull, time
 export iskeydown, iskeyup, iskeypressed, isfocused, isunfocused, @key_str

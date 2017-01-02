@@ -1,5 +1,3 @@
-# TODO: document object composition
-
 using Colors
 using Images
 using Reactive
@@ -364,10 +362,10 @@ function visual(window::SDLWindow,img::Image{RGBA{U8}};
   result
 end
 
-# TODO: implement Compose rendering. My implementation currently throws a
-# mysterious MacOS GUI error on my machine. I suspect there is some interaction
-# between Cairo and SDL that is causing the problem, but I haven't
-# narrowed it down yet.
+# Below is a scratch implementation that uses Compose rendering. My
+# implementation currently throws a mysterious MacOS GUI error on my machine. I
+# suspect there is some interaction between Cairo and SDL that is causing the
+# problem, but I haven't narrowed it down yet.
 
 # Also note that this currently wont' work well because Pkg.installed isn't a
 # good way to handle conditional code. Julia doesn't yet have a better

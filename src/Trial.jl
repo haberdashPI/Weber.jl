@@ -1,14 +1,3 @@
-# TODO: document moment composition
-# TODO: document experiment construction
-
-# TODO: define some tests to evaluate the documented effects of addtrial,
-# addbreak and addpractice on the offest and trial counts, to ensure reasonable
-# timing of individual moments, and the effects of the expanding moments.
-
-# TODO: submit the package to METADATA.jl
-
-# TODO: use the version number indicated by Pkg
-
 using Reactive
 using Lazy: @>>, @>, @_
 using DataStructures
