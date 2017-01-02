@@ -22,8 +22,7 @@ haven't gotten around to this.
 
 This is working for my own purposes, and I am running pilot experiments in it
 now. It has not been throughly tested yet however, but will be as I finalize
-those studies. Many of the individual functions are documented but there is
-useful functionality that has not yet been documented, and there is no user
+those studies. Individual functions are documented but there is is no user
 manual. Please feel free to use it, but use at your own risk.
 
 # Installation
