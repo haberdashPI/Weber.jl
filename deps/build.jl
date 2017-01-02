@@ -62,7 +62,7 @@ elseif is_apple()
 elseif is_linux()
   # TODO: use BinDeps.jl to install on linux???
   error("I don't have access to an available linux distro to troubleshoot"*
-       " installation, so I have left it unimplemented.")
+       " this program, so I have left it unimplemented.")
 else
   error("Unsupported operating system.")
 end
