@@ -12,9 +12,9 @@ This package is a relatively recent effort to create a simple framework for
 running psychology experiments that present stimuli and record responses in
 real-time. It is similar in concept to the likes of Presentation or ePrime. It
 currently runs on Windows and Mac OS X, and supports keyboard input or
-Cendrus response-pad input.
+Cedrus response-pad input.
 
-It should be easy to port this to a unix system, I just don't have a
+It should be easy to port this to linux, I just don't have
 linux currently installed to test for proper installation of SDL2, and so I
 haven't gotten around to this.
 
