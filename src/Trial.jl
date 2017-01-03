@@ -381,9 +381,10 @@ function ExperimentState(debug::Bool,skip::Int,header::Array{Symbol};
   meta = Dict{Symbol,Any}()
   start_date = now()
   timestr = Dates.format(start_date,"yyyy-mm-dd__HH_MM_SS")
-  filename = joinpath(data_dir,findkwd(info_values,:sid,"file")*"_"*timestr*".csv")
+  info_str = join(map(x -> x[2],info_values),"_")
+  filename = joinpath(data_dir,info_str*"_"*timestr*".csv")
   einfo = ExperimentInfo(info_values,meta,moment_resolution,start_date,
-                        header,filename)
+                         header,filename)
 
   offset = 0
   trial = 0
