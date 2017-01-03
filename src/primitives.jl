@@ -5,6 +5,15 @@ using ArgParse
 using Juno: input, selector
 import Juno
 
+"""
+    response(key1 => code1,key2 => code2,...,[time_col=:time],kwds...)
+
+Create a watcher moment that record responses to `key[n]` as `response[n]`.
+
+By default this records the time of the response in the column `:time`,
+but this can be changed using `time_col`. Further columns and their
+values can be specified as additional keyword arguments.
+"""
 function response(responses...;time_col=:time,info...)
   begin (event) ->
     for (key,response) in responses
@@ -15,6 +24,15 @@ function response(responses...;time_col=:time,info...)
   end
 end
 
+"""
+    instruct(str,[time_col=:time])
+
+Presents some instructions to the participant.
+
+This adds "(Hit spacebar to continue...)" to the end of the text, and waits for
+the participant to press spacebar to move on.
+
+"""
 function instruct(str;time_col=:time)
   text = visual(str*" (Hit spacebar to continue...)")
   m = moment() do t
@@ -24,6 +42,15 @@ function instruct(str;time_col=:time)
   [m,await_response(iskeydown(key":space:"))]
 end
 
+"""
+    addbreak_every(n,total,
+                   [response=key":space:"],[response_str="the spacebar"])
+
+Adds a break every `n` times this event is added given a known number of
+total such events.
+
+By default this waits for the user to hit spacebar to move on.
+"""
 function addbreak_every(n,total,response=key":space:",
                         response_str="the spacebar")
   meta = experiment_metadata()
@@ -40,6 +67,12 @@ function addbreak_every(n,total,response=key":space:",
   end
 end
 
+"""
+    show_cross([delta_t])
+
+Creates a moment that shows a cross hair `delta_t` seconds after the start
+of the previous moment (defaults to 0 seconds).
+"""
 function show_cross(delta_t::Number=0;render_options...)
   c = visual("+";render_options...)
   moment(delta_t,t -> display(c))
@@ -92,6 +125,36 @@ function as_arg_result(expr)
   end
 end
 
+"""
+   @read_args(description,[keyword args...])
+
+Reads experimental parameters from the user.
+
+With no additional keyword arguments this requests the subject id, and an
+optional `skip` parameter (defaults to 0) from the user, and then returns them
+both in a tuple. The skip can be used to restart an experiment by passing it as
+the `skip` keyword argument to the `Experiment` constructor. The optional
+skip argument is always provided as the final value in the tuple (so if there
+are additional keyword arguments, skip will come after these)
+
+You can specify additional keyword arguments to request additional
+values from the user. Arguments that are a type will yield a request for
+textual input, and will verify that that input can be parased as the given type.
+Arguments whose values are a list of symbols yield a request that the user select
+one of the specified values.
+
+Arguments are requested from the user either as command-line arguments,
+or, if no command-line arguments were specified, interactively. Interactive
+arguments work both in the terminal or in Juno. This macro also
+generates useful help text that will be displayed to the user
+when they give a single command-line "-h" argument. This help text
+will print out the `desecription` string.
+
+# Example
+
+    subject_id,condition,block,skip = @read_args("A simple experiment",
+      condition=[:red,:green,:blue],block=Int)
+"""
 macro read_args(description,keys...)
   arg_expr = quote
     "sid"
@@ -177,7 +240,7 @@ function readline_args(;keys...)
       end
     end
   end
-  print("Offset to start at? (0 by default): ")
+  print("Offset to start at? (default = 0): ")
   str = input()
   if isempty(chomp(str))
     skip = 0

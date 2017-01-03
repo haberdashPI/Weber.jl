@@ -38,6 +38,7 @@ For the 0.2.0 release
 - [x] document object composition
 - [x] document moment composition
 - [x] document experiment construction
+- [x] document primitives.jl
 - [ ] create a basic user manual
 
 - [ ] test responses to Cedrus XID devices (create example for reading buttons)
