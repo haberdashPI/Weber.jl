@@ -188,11 +188,13 @@ function record_header(exp)
 
   reserved_keys = Set([extra_keys...;info_keys...])
   reserved = filter(x -> x ∈ reserved_keys,exp.info.header)
-  if length(reserved) > 0
-    plural = length(reserved) > 1
-    error("The column name$(plural ? "s" : "")"*
-          "$(join(missing,", "," and ")) $(plural ? "are" : "is") reserved."*
-          "Please use $(plural ? "" : "a ")different name$(plural ? "s" : "").")
+  if length(reserved) == 1
+    error("The column name \"$(reserved[1])\" is reserved. Please use "*
+          " a different name.")
+  elseif length(reserved) > 1
+    error("The column names "*
+          join(map(x -> "\""*x*"\"",reserved),", "," and ")*
+          " are reserved. Please use different names.")
   end
 
   columns = [extra_keys...,info_keys...,:code,exp.info.header...]
