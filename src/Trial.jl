@@ -231,7 +231,8 @@ last moment started are all stored.  Additional information can be added during
 creation of the experiment (see `Experiment`).
 
 Each call opens and closes the data file used for the experiment, so there
-should be no loss of data if the program is terminated for some reason.
+should be no loss of data if the program is terminated prematurely for some
+reason.
 """
 function record(code;kwds...)
   record(get_experiment(),code;kwds...)
