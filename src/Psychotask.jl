@@ -1,7 +1,15 @@
 __precompile__()
 
 module Psychotask
-const psych_version = v"0.1.9"
+try
+  old = pwd()
+  cd(dirname(@__FILE__))
+  global const version = convert(VersionNumber,
+                                 readstring(`git describe --tags`))
+  cd(old)
+catch
+  global const version = Pkg.installed("Psychotask")
+end
 
 # load binary library dependencies
 depsjl = joinpath(dirname(@__FILE__), "..", "deps", "deps.jl")

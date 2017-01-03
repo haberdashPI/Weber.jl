@@ -197,7 +197,7 @@ function record_header(exp)
 end
 
 function record(exp::ExperimentState,code;kwds...)
-  extra = [:psych_version => psych_version,
+  extra = [:psych_version => Psychotask.version,
            :start_date => Dates.format(exp.info.start,"yyyy-mm-dd"),
            :start_time => Dates.format(exp.info.start,"HH:MM:SS"),
            :offset => exp.data.offset,
