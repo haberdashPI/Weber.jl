@@ -81,7 +81,7 @@ end
 type CompoundMoment <: Moment
   data::Array{Moment}
 end
-delta_t(m::CompoundMoment) = 0
+delta_t(m::CompoundMoment) = 0.0
 *(a::SimpleMoment,b::SimpleMoment) = CompoundMoment([a,b])
 *(a::CompoundMoment,b::CompoundMoment) = CompoundMoment(vcat(a.data,b.data))
 *(a::Moment,b::Moment) = *(promote(a,b)...)
@@ -94,7 +94,7 @@ type ExpandingMoment <: Moment
   repeat::Bool
   update_offset::Bool
 end
-delta_t(m::ExpandingMoment) = 0
+delta_t(m::ExpandingMoment) = 0.0
 
 type MomentQueue
   data::Deque{Moment}
@@ -852,13 +852,8 @@ function delta_t(moment::TimedMoment)
   moment.delta_t
 end
 
-function delta_t(moment::OffsetStartMoment)
-  0
-end
-
-function delta_t(moment::FinalMoment)
-  0
-end
+delta_t(moment::OffsetStartMoment) = 0.0
+delta_t(moment::FinalMoment) = 0.0
 
 function run(moment::TimedMoment,time::Float64)
   moment.run(time)
@@ -888,7 +883,7 @@ function handle(exp::ExperimentState,moment::AbstractTimedMoment,event::ExpEvent
 end
 
 function delta_t(moment::ResponseMoment)
-  (moment.timeout_delta_t > 0 ? moment.timeout_delta_t : Inf)
+  (moment.timeout_delta_t > 0.0 ? moment.timeout_delta_t : Inf)
 end
 
 function handle(exp::ExperimentState,moment::ResponseMoment,time::Float64)
@@ -984,10 +979,10 @@ end
 const timing_tolerance = 0.002
 function check_timing(exp::ExperimentState,moment::Moment,
                       run_t::Float64,last::Float64)
-  if delta_t(moment) > 0
+  d = delta_t(moment)
+  if 0.0 < d < Inf
     empirical_delta = run_t - last
-    desired_delta = delta_t(moment)
-    error = abs(empirical_delta - desired_delta)
+    error = abs(empirical_delta - d)
     if error > timing_tolerance
       push!(exp.signals.delta_error,error)
     elseif value(exp.signals.delta_error) > timing_tolerance
