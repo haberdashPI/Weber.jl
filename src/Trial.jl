@@ -163,9 +163,9 @@ function record_helper(exp::ExperimentState,kwds,header)
   columns = map(x -> x[1],kwds)
 
   if !isempty(columns) && !all(map(c -> c ∈ header,columns))
-    missing = filter(c -> c ∉ header,columns)
+    missing = collect(filter(c -> c ∉ header,columns))
 
-    error("Unexpected column$(length(missing) > 1 ? "s" : "")"*
+    error("Unexpected column $(length(missing) > 1 ? "s" : "")"*
           "$(join(missing,", "," and ")). "*
           "Make sure you specify all columns you plan to use "*
           "during experiment initialization.")
