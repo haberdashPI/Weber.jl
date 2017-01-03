@@ -259,6 +259,12 @@ fonts = Dict{Tuple{String,Int},SDLFont}()
 
 Render the given string as an image that can be displayed. An optional
 second argument can specify a font, loaded using the `font` function.
+
+# Arguments
+* wrap_width: the proporition of the screen that the text can utilize
+before wrapping.
+* clean_whitespace: if true, replace all consecutive white space with a single
+  space.
 """
 function visual(window::SDLWindow,str::String;
                 font_name="arial",size=32,info...)
