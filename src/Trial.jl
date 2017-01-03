@@ -171,6 +171,8 @@ function record_helper(exp::ExperimentState,kwds,header)
           "during experiment initialization.")
   end
 
+  kwds = reverse(kwds) # this ensures that if the user overwrites a value
+                       # it will be honored
   open(exp.info.file,"a") do stream
     @_ header begin
       map(c -> findkwd(kwds,c,""),_)
