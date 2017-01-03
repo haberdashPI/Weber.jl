@@ -132,6 +132,7 @@ type ExperimentData
   offset::Int
   trial::Int
   skip_offsets::Int
+  last_time::Float64
   trial_watcher::Function
   mode::Int
   moments::MomentQueue
@@ -180,7 +181,7 @@ function record_helper(exp::ExperimentState,kwds,header)
 end
 
 function record_header(exp)
-  extra_keys = [:psych_version,:start_date,:start_time,:offset,:trial]
+  extra_keys = [:psych_version,:start_date,:start_time,:offset,:trial,:time]
   info_keys = map(x->x[1],exp.info.values)
 
   reserved_keys = Set([extra_keys...;info_keys...])
@@ -201,7 +202,8 @@ function record(exp::ExperimentState,code;kwds...)
            :start_date => Dates.format(exp.info.start,"yyyy-mm-dd"),
            :start_time => Dates.format(exp.info.start,"HH:MM:SS"),
            :offset => exp.data.offset,
-           :trial => exp.data.trial]
+           :trial => exp.data.trial,
+           :time => exp.data.last_time]
 
   info_keys = map(x->x[1],exp.info.values)
   extra_keys = map(x->x[1],extra)
@@ -215,13 +217,14 @@ end
 Record an event with the given `code` to the data file.
 
 Each event has a code which identifies it as being a particular type
-of event. Conventially the same code should have the same set of column
-values. Unspecified columns are left blank.
+of event. By convention when you record something with the same code
+you should specify the same set of `column_values`.
 
-All calls to record also result in many types of information being
-written to the data file. The start time and date, the trial and offset
-number, the subject id and the version of Psychotask are all stored.
-Additional information can be added during creation of the experiment.
+All calls to record also result in many additiaonl values being written to
+the data file. The start time and date of the experiment, the trial and offset
+number, the subject id, the version of Psychotask, and the time at which the
+last moment started are all stored.  Additional information can be added during
+creation of the experiment (see `Experiment`).
 
 Each call opens and closes the data file used for the experiment, so there
 should be no loss of data if the program is terminated for some reason.
@@ -380,13 +383,14 @@ function ExperimentState(debug::Bool,skip::Int,header::Array{Symbol};
   offset = 0
   trial = 0
   trial_watcher = (e) -> nothing
+  last_time = 0.0
   mode = Running
   moments = MomentQueue(Deque{Moment}(),0)
   submoments = Array{MomentQueue,1}()
   exception = Nullable{Tuple{Exception,Array{Ptr{Void}}}}()
   cleanup = () -> error("no cleanup function available!")
-  data = ExperimentData(offset,trial,skip,trial_watcher,mode,moments,submoments,
-                        exception,cleanup)
+  data = ExperimentData(offset,trial,skip,last_time,trial_watcher,mode,moments,
+                        submoments,exception,cleanup)
 
   running = Signal(false)
   started = Signal(false)
@@ -428,6 +432,7 @@ function ExperimentState(debug::Bool,skip::Int,header::Array{Symbol};
   exp.signals.other[:watcher_processing] = map(filt_events) do e
     if !isnull(e)
       try
+        exp.data.last_time = time(e)
         exp.data.trial_watcher(e)
       catch e
         exp.data.exception = Nullable((e,catch_backtrace()))
@@ -447,7 +452,7 @@ function ExperimentState(debug::Bool,skip::Int,header::Array{Symbol};
            "starts up, but if unacceptable levels continue throughout the "*
            "experiment, consider closing some programs on your computer or"*
            " running this program on a faster machine.")
-      record(exp,"bad_delta_latency",time=err)
+      record(exp,"bad_delta_latency($err)")
     end
   end
   exp.signals.other[:timing_info] = map(good_times) do err
@@ -459,7 +464,7 @@ function ExperimentState(debug::Bool,skip::Int,header::Array{Symbol};
            "stimuli occur when they should. Emprical verification of "*
            "stimulus timing requires that you monitor the output of your "*
            "machine using light sensors, microphones, etc...")
-      record(exp,"good_delta_latency",time=err)
+      record(exp,"good_delta_latency($err)")
     end
   end
 
@@ -532,9 +537,9 @@ function addtrial_helper(exp::ExperimentState,trial_count,moments;keys...)
   start_trial = offset_start_moment(trial_count) do t
     gc_enable(false)
     if trial_count
-      record("trial_start",time=t)
+      record("trial_start")
     else
-      record("practice_start",time=t)
+      record("practice_start")
     end
     reset_response()
   end
@@ -679,7 +684,7 @@ end
 
 function pause(exp,message,time,firstpause=true)
   push!(exp.signals.running,false)
-  record(exp,"paused",time=time)
+  record(exp,"paused")
   if firstpause
     save_display(exp.win)
   end
@@ -688,7 +693,7 @@ function pause(exp,message,time,firstpause=true)
 end
 
 function unpause(exp,time)
-  record(exp,"unpaused",time=time)
+  record(exp,"unpaused")
   exp.data.mode = Running
   restore_display(exp.win)
   push!(exp.signals.running,true)
@@ -855,20 +860,13 @@ end
 delta_t(moment::OffsetStartMoment) = 0.0
 delta_t(moment::FinalMoment) = 0.0
 
-function run(moment::TimedMoment,time::Float64)
-  moment.run(time)
-end
-
-function run(moment::OffsetStartMoment,time::Float64)
-  moment.run(time)
-end
-
-function run(moment::FinalMoment,time::Float64)
-  moment.run(time)
-end
+run(moment::TimedMoment,time::Float64) = moment.run(time)
+run(moment::OffsetStartMoment,time::Float64) = moment.run(time)
+run(moment::FinalMoment,time::Float64) = moment.run(time)
 
 function handle(exp::ExperimentState,moment::AbstractTimedMoment,time::Float64)
   try
+    exp.data.last_time = time
     run(moment,time)
   catch e
     exp.data.exception = Nullable((e,catch_backtrace()))
@@ -888,6 +886,7 @@ end
 
 function handle(exp::ExperimentState,moment::ResponseMoment,time::Float64)
   try
+    exp.data.last_time = time
     moment.timeout(time)
   catch e
     exp.data.exception = Nullable((e,catch_backtrace()))

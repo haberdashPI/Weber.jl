@@ -6,26 +6,25 @@ using Juno: input, selector
 import Juno
 
 """
-    response(key1 => code1,key2 => code2,...,[time_col=:time],kwds...)
+    response(key1 => code1,key2 => code2,...;kwds...)
 
 Create a watcher moment that record responses to `key[n]` as `response[n]`.
 
-By default this records the time of the response in the column `:time`,
-but this can be changed using `time_col`. Further columns and their
-values can be specified as additional keyword arguments.
+Additional columns to record and their values can be specified as additional
+keyword arguments.
 """
-function response(responses...;time_col=:time,info...)
+function response(responses...;info...)
   begin (event) ->
     for (key,response) in responses
       if iskeydown(event,key)
-        record(response;[time_col => time(event),info...]...)
+        record(response;info...)
       end
     end
   end
 end
 
 """
-    instruct(str,[time_col=:time])
+    instruct(str)
 
 Presents some instructions to the participant.
 
@@ -33,10 +32,10 @@ This adds "(Hit spacebar to continue...)" to the end of the text, and waits for
 the participant to press spacebar to move on.
 
 """
-function instruct(str;time_col=:time)
+function instruct(str)
   text = visual(str*" (Hit spacebar to continue...)")
   m = moment() do t
-    record("instructions";[time_col => t]...)
+    record("instructions")
     display(text)
   end
   [m,await_response(iskeydown(key":space:"))]
