@@ -81,28 +81,36 @@ end
                      [sample_rate_Hz=44100],[phases=zeros(length(harmonics))])
 
 Creates a haromic complex of the given length, with the specified harmonics
-at the given amplitudes.
+at the given amplitudes. This implementation is somewhat superior
+to simply summing a number of pure tones generated using `tone`, because
+it avoids beating in the sound that may occur due floating point errors.
 """
 function harmonic_complex(f0,harmonics,amps,length_s;
 						              sample_rate_Hz=samplerate(sound_setup_state),
                           phases=zeros(length(harmonics)))
+  @assert 0 .<= phases .< 2π
 	n = maximum(harmonics)+1
 
-  unit_length = 1/f0
-  max_length = floor(Int,sample_rate_Hz*unit_length)
-  unit = zeros(n*max_length)
+  # generate single cycle of complex
+  unit_length_s = 1/f0
+  unit_length = floor(Int,sample_rate_Hz*unit_length_s)
+  unit = zeros(unit_length)
 
-	extra = sample_rate_Hz*n / f0
-	highest_freq = tone(f0,n*unit_length + extra;sample_rate_Hz=sample_rate_Hz)
+	highest_freq = tone(f0,2n*unit_length_s;sample_rate_Hz=sample_rate_Hz)
 
 	for (amp,harm,phase) in zip(amps,harmonics,phases)
 		phase_offset = round(Int,n*phase/2π*sample_rate_Hz/f0)
-		unit += amp*highest_freq[(1:max_length) * (n-harm) + phase_offset]
+    wave = highest_freq[(1:unit_length) * (n-harm) + phase_offset]
+		unit += amp*wave[1:length(unit)]
 	end
 
-  int_length = ceil(Int,length_s / unit_length)
-  full_length = round(Int,length_s*sample_rate)
-  full_sound = reduce(vcat,repeating(unit,int_length))[1:full_length]
+  # repeate the cycle as many times as necessary
+  full_length = round(Int,length_s*sample_rate_Hz)
+  full_sound = zeros(full_length)
+  for i0 in 1:unit_length:full_length
+    i1 = min(i0+unit_length-1,full_length)
+    full_sound[i0:i1] = unit[1:i1-i0+1]
+  end
 
 	SampleBuf(full_sound,sample_rate_Hz)
 end
