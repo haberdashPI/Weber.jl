@@ -6,7 +6,7 @@ import SampledSignals: samplerate
 
 export match_lengths, mix, mult, silence, noise, highpass, lowpass, bandpass,
 	tone, ramp, harmonic_complex, attenuate, sound, play, pause, stop,
-  savesound, duration, setup_sound
+  savesound, duration, setup_sound, current_sound_latency
 
 """
    match_lengths(x,y,...)
@@ -245,8 +245,9 @@ const AUDIO_S16 = 0x8010
 const default_sample_rate = 44100
 type SoundSetupState
   samplerate::Int
+  buffer_size::Int
 end
-SoundSetupState() = SoundSetupState(0)
+SoundSetupState() = SoundSetupState(0,256)
 function samplerate(s::SoundSetupState)
   if s.samplerate == 0
     default_sample_rate
@@ -256,17 +257,36 @@ function samplerate(s::SoundSetupState)
 end
 isready(s::SoundSetupState) = s.samplerate != 0
 const sound_setup_state = SoundSetupState()
+
+"""
+    current_sound_latency()
+
+Reports the current latency of audio playback. This is the minimum expected
+error in playback timing that could possibly be achieved with the given sound
+settings. If you wish to have a lower latency you can call `setup_sound` and use
+a smaller buffer size. Note however that a buffer size that is too small for
+your hardware will corrupt the sound.
+"""
+function current_sound_latency()
+  if sound_setup_state.samplerate > 0
+    sound_setup_state.buffer_size / sound_setup_state.samplerate
+  else
+    sound_setup_state.buffer_size / 44100
+  end
+end
+
 """
     setup_sound([sample_rate_Hz=44100],[buffer_size=256])
 
 Initialize format for audio playback.
 
 This function is called automatically the first time a `Sound` object is created
-(normally by using the `sound` function). It need not normally be called, unless
-you wish to change the play-back sample rate or buffer size. Sample rate
-determines the maximum playable frequency (max freq is ≈ sample_rate/2). The
-buffer size determines audio latency, so the shorter this is the
-better. However, when this size is too small, audio playback will be corrupted.
+(normally by using the `sound` function). It need not normally be called
+explicitly, unless you wish to change the play-back sample rate or buffer
+size. Sample rate determines the maximum playable frequency (max freq is ≈
+sample_rate/2). The buffer size determines audio latency, so the shorter this is
+the better. However, when this size is too small, audio playback will be
+corrupted.
 
 Changing the sample rate from the default 44100 to a new value will also change
 the default sample rate sounds will be creataed at, to match this new sample
@@ -293,6 +313,7 @@ function setup_sound(;sample_rate_Hz=samplerate(sound_setup_state),
   end
 
   sound_setup_state.samplerate = sample_rate_Hz
+  sound_setup_state.buffer_size = buffer_size
 
   mixer_init = ccall((:Mix_OpenAudio,_psycho_SDL2_mixer),
                      Cint,(Cint,UInt16,Cint,Cint),
