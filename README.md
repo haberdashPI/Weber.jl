@@ -27,7 +27,7 @@ manual. Please feel free to use it, but use at your own risk.
 
 ## Real-time Performance
 
-The timing of audio-playback is close to optimal. Below is a graph of the onset
+The timing of audio playback is close to optimal. Below is a graph of the onset
 errors. Note that playback latency places a hard limit on timing errors. By
 default the buffer size for playback is 256 samples, leading to a minimum
 expected error of ~5.80ms, very close to the emprical latency of onsets of
@@ -63,16 +63,18 @@ For the 0.2.0 release
       functions to prevent regressions.
 
 - [ ] submit the package to METADATA.jl
-- [ ] use the version number of Psychotask.jl indicated by Pkg
+- [x] use the version number of Psychotask.jl indicated by Pkg
 
 For the 0.3.0 release
-- [ ] refine the user manual
+- [ ] edit/refine the user manual
 - [ ] create 2AFC abstraction
 - [ ] create examples to demonstrate all package features
 - [ ] allow calls to Cedrus stim tracker??
+- [ ] replace interactive text input with simple Gtk window??
 - [ ] support linux (get BinDeps working for installation)
 
 For the 0.4.0 release?
-- [ ] port XID python code to julia (to minimize memory footprint)
 - [ ] implement support for Compose.jl
-- [ ] create an interface for playing mp4 videos.
+- [ ] create an interface for playing videos using VLC and SDL2???  (get VLC c
+      tutorial working, add audio playback to the tutorial, convert 
+      to julia, then create simple video playback interface)
