@@ -18,7 +18,15 @@ It should be easy to port this to linux, I just don't have
 linux currently installed to test for proper installation of SDL2, and so I
 haven't gotten around to this.
 
-## Status
+
+# Installation
+
+```julia
+julia> Pkg.clone("https://github.com/haberdashPI/Psychotask.jl")
+julia> Pkg.build("Psychotask")
+```
+
+# Status
 
 This is working for my own purposes, and I am running pilot experiments in it
 now. It has not been throughly tested yet, but will be as I finalize
@@ -30,7 +38,7 @@ manual. Please feel free to use it, but use at your own risk.
 The timing of audio playback is close to optimal. Below is a graph of the onset
 errors. Note that playback latency places a hard limit on timing errors. By
 default the buffer size for playback is 256 samples, leading to a minimum
-expected error of ~5.80ms, very close to the emprical latency of onsets of
+expected error of ~5.80ms, very close to the emprical error of onsets of
 ~6.48ms. 
 
 ![Audio-playback Onset Histogram](audio_onset_error.png)
@@ -38,14 +46,7 @@ expected error of ~5.80ms, very close to the emprical latency of onsets of
 You can re-run this same test and generate a new graph for your computer, using
 test/audiotiming.jl and test/analyze_audiotiming.jl. 
 
-# Installation
-
-```julia
-julia> Pkg.clone("https://github.com/haberdashPI/Psychotask.jl")
-julia> Pkg.build("Psychotask")
-```
-
-# Roadmap
+## Roadmap
 
 For the 0.2.0 release
 - [x] document object composition
