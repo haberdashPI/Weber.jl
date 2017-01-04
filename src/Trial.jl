@@ -239,7 +239,7 @@ function record(code;kwds...)
 end
 
 const experiment_context = Array{Nullable{ExperimentState}}()
-
+experiment_context[] = Nullable()
 """
    Experiment([skip=0],[columns=[symbols...]],[debug=false],
               [moment_resolution=1000],[input_resolution=60],[data_dir="data"],
