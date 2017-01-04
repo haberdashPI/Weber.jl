@@ -453,23 +453,31 @@ function ExperimentState(debug::Bool,skip::Int,header::Array{Symbol};
   good_times = throttle(1,filter(x -> x < timing_tolerance,0.0,delta_error))
   exp.signals.other[:timing_warn] = map(bad_times) do err
     if err != 0.0
-      warn("The latency of trial moments has exceeded desirable levels "*
-           " ($err seconds). This normally occurs when the experiment first "*
-           "starts up, but if unacceptable levels continue throughout the "*
-           "experiment, consider closing some programs on your computer or"*
-           " running this program on a faster machine.")
+      warn("""
+
+The latency of trial moments has exceeded desirable levels ($err seconds). This
+normally occurs when the experiment first starts up, but if unacceptable levels
+continue throughout the experiment, consider closing some programs on your
+computer or running this program on a faster machine.
+
+           """)
       record(exp,"bad_delta_latency($err)")
     end
   end
   exp.signals.other[:timing_info] = map(good_times) do err
     if err != 0.0
-      info("The latency of trial moments has fallen to an acceptable level "*
-           "($err seconds). It may fall further, but unless it exceedes a"*
-           " tolerable level, you will not be notified. Note that this "*
-           "measure of latency only verifies that the commands to generate "*
-           "stimuli occur when they should. Emprical verification of "*
-           "stimulus timing requires that you monitor the output of your "*
-           "machine using light sensors, microphones, etc...")
+      info("""
+
+The latency of trial moments has fallen to an acceptable level ($err
+seconds). It may fall further, but unless it exceedes a tolerable level, you
+will not be notified. Note that this measure of latency only verifies that the
+commands to generate stimuli occur when they should. Emprical verification of
+stimulus timing requires that you monitor the output of your machine using light
+sensors and microphones. You can use the scripts available in
+$(Pkg.dir("Psychotask","test")) to test the timing of auditory and visual
+stimuli presented with Psychotask.
+
+           """)
       record(exp,"good_delta_latency($err)")
     end
   end
