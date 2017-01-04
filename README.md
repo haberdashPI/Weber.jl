@@ -21,9 +21,22 @@ haven't gotten around to this.
 ## Status
 
 This is working for my own purposes, and I am running pilot experiments in it
-now. It has not been throughly tested yet however, but will be as I finalize
-those studies. Individual functions are documented but there is is no user
+now. It has not been throughly tested yet, but will be as I finalize
+those studies. All exported functions are documented but there is no user
 manual. Please feel free to use it, but use at your own risk.
+
+## Real-time Performance
+
+The timing of audio-playback is close to optimal. Below is a graph of the onset
+errors. Note that playback latency places a hard limit on timing errors. By
+default the buffer size for playback is 256 samples, leading to a minimum
+expected error of ~5.80ms, very close to the emprical latency of onsets of
+~6.48ms. 
+
+![Audio-playback Onset Histogram](audio_onset_error.png)
+
+You can re-run this same test and generate a new graph for your computer, using
+test/audiotiming.jl and test/analyze_audiotiming.jl. 
 
 # Installation
 
@@ -41,10 +54,13 @@ For the 0.2.0 release
 - [x] document primitives.jl
 - [ ] create a basic user manual
 
+- [x] allow resetting of Cedrus response timer
+- [x] debug (or remove) harmonic_complex
 - [ ] test responses to Cedrus XID devices (create example for reading buttons)
-- [ ] allow resetting of Cedrus response timer
-- [ ] debug (or remove) harmonic_complex
-- [ ] define some tests to evaluate the documented effects of the trial timing functions.
+- [x] test `play` timing (using a microphone)
+- [ ] test `display` timing (using a video camera)
+- [ ] create tests to check on reported timing and effects of all trial
+      functions to prevent regressions.
 
 - [ ] submit the package to METADATA.jl
 - [ ] use the version number of Psychotask.jl indicated by Pkg
