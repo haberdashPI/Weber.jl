@@ -703,7 +703,7 @@ function unpause(exp,time)
   exp.data.mode = Running
   restore_display(exp.win)
   push!(exp.signals.running,true)
-  push!(exp.pause_events,EndPauseEvent(time))
+  push!(exp.signals.pause_events,EndPauseEvent(time))
 end
 
 const Running = 0
