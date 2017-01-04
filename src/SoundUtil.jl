@@ -167,7 +167,7 @@ function ramp(x,ramp_s=0.005)
 
 	ramp_t = (1.0:ramp_len) / ramp_len
 	up = -0.5cos(π*ramp_t)+0.5
-	down = 0.5cos(π*ramp_t)+0.5
+	down = -0.5cos(π*ramp_t+π)+0.5
 	envelope = [up; ones(size(x,1) - 2*ramp_len); down]
 	mult(x,envelope)
 end
