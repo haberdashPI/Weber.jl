@@ -38,17 +38,6 @@ const concrete_events = [
   XID_UpEvent
 ]
 
-function findkwd(kwds,sym,default)
-  for (k,v) in kwds
-    if k == sym
-      return v
-    end
-  end
-
-  default
-end
-
-
 abstract Moment
 abstract SimpleMoment <: Moment
 
@@ -158,6 +147,16 @@ immutable ExperimentState
   data::ExperimentData
   signals::ExperimentSignals
   win::SDLWindow
+end
+
+function findkwd(kwds,sym,default)
+  for (k,v) in kwds
+    if k == sym
+      return v
+    end
+  end
+
+  default
 end
 
 function record_helper(exp::ExperimentState,kwds,header)
