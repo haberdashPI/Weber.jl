@@ -6,12 +6,10 @@ using Juno: input, selector
 import Juno
 
 """
-    response(key1 => code1,key2 => code2,...;kwds...)
+    response(key1 => response1,key2 => response2,...;kwds...)
 
-Create a watcher moment that record responses to `key[n]` as `response[n]`.
-
-Additional columns to record and their values can be specified as additional
-keyword arguments.
+Create a watcher moment that records press of `key[n]` as
+`record(response[n];kwds...)`.
 """
 function response(responses...;info...)
   begin (event) ->
