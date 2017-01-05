@@ -14,25 +14,13 @@ export match_lengths, mix, mult, silence, noise, highpass, lowpass, bandpass,
 Ensure that all sounds have exactly the same length by adding silence
 to the end of shorter sounds.
 """
-function match_lengths(xs::Vararg{SampleBuf})
+function match_lengths(xs...)
 	max_length = maximum(map(x -> size(x,1), xs))
 
   map(xs) do x
     if size(x,1) < max_length
       vcat(x,SampleBuf(zeros(eltype(x),
                              max_length - size(x,1),size(x,2)),samplerate(x)))
-    else
-      x
-    end
-  end
-end
-
-function match_lengths(xs...)
-	max_length = maximum(map(x -> size(x,1), xs))
-
-  map(xs) do x
-    if size(x,1) < max_length
-      vcat(x,zeros(eltype(x),max_length - size(x,1),size(x,2)))
     else
       x
     end
@@ -282,6 +270,8 @@ function samplerate(s::SoundSetupState)
 end
 isready(s::SoundSetupState) = s.samplerate != 0
 const sound_setup_state = SoundSetupState()
+samplerate(x::Vector) = samplerate(sound_setup_state)
+samplerate(x::Matrix) = samplerate(sound_setup_state)
 
 """
     current_sound_latency()
@@ -293,11 +283,7 @@ a smaller buffer size. Note however that a buffer size that is too small for
 your hardware will corrupt the sound.
 """
 function current_sound_latency()
-  if sound_setup_state.samplerate > 0
-    sound_setup_state.buffer_size / sound_setup_state.samplerate
-  else
-    sound_setup_state.buffer_size / 44100
-  end
+  sound_setup_state.buffer_size / samplerate(sound_setup_state)
 end
 
 """
