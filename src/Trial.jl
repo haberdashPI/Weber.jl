@@ -458,7 +458,9 @@ function ExperimentState(debug::Bool,skip::Int,header::Array{Symbol};
 The latency of trial moments has exceeded desirable levels ($err seconds). This
 normally occurs when the experiment first starts up, but if unacceptable levels
 continue throughout the experiment, consider closing some programs on your
-computer or running this program on a faster machine.
+computer or running this program on a faster machine. Aparaent poor latency can
+also occur sometimes when you pause an experiment, but this is usually a false
+alarm.
 
            """)
       record(exp,"bad_delta_latency($err)")
