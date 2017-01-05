@@ -212,6 +212,10 @@ end
 display_duration(clear::SDLClear) = clear.duration
 display_priority(clear::SDLClear) = clear.priority
 draw(window::SDLWindow,cl::SDLClear) = clear(window,cl.color)
+function update_arguments(cl::SDLClear;duration=cl.duration,
+                          priority=cl.priority,kwds...)
+  SDLClear(cl.color,duration,priority)
+end
 
 """
     visual(color,[duration=0],[priority=0])
@@ -228,6 +232,46 @@ immutable SDLRect
   w::Cint
   h::Cint
 end
+
+function as_screen_coordinates(window,x,y,w,h)
+  max(0,min(window.w,round(Cint,window.w/2 + x*window.w/4 - w / 2))),
+  max(0,min(window.h,round(Cint,window.h/2 - y*window.h/4 - h / 2)))
+end
+
+function as_screen_coordinate_x(window,x,w)
+  max(0,min(window.w,round(Cint,window.w/2 + x*window.w/4 - w / 2)))
+end
+function as_screen_coordinate_y(window,y,w)
+  max(0,min(window.h,round(Cint,window.h/2 - y*window.h/4 - h / 2)))
+end
+
+function update_arguments(rect::SDLRect;w=NaN,h=NaN,x=NaN,y=NaN,kwds...)
+  if !isnan(x) || !isnan(y) || !isnan(w) || !isnan(h)
+    if isnan(w)
+      w = rect.w
+    end
+    if isnan(h)
+      h = rect.h
+    end
+
+    if !isnan(x)
+      newx = as_screen_coordinate_x(window,x,w)
+    else
+      newx = rect.x
+    end
+
+    if !isnan(y)
+      newy = as_screen_coordinate_y(window,y,h)
+    else
+      newy = rect.y
+    end
+
+    SDLRect(x,y,w,h)
+  else
+    rect
+  end
+end
+
 
 abstract SDLTextured <: SDLSimpleRendered
 
@@ -249,6 +293,24 @@ display_duration(text::SDLText) = text.duration
 display_priority(text::SDLText) = text.priority
 data(text::SDLText) = text.data
 rect(text::SDLText) = text.rect
+function update_arguments(text::SDLText;w=NaN,h=NaN,color=nothing,
+                          duration=text.duration,priority=text.priority,
+                          kwds...)
+  if !isnan(w) || !isnan(h)
+    error("Cannot update the height or width of text on display. These",
+          "properties are automatically determiend by the original string",
+          " used to render the text")
+  end
+
+  if color != nothing
+    error("You cannot change the color of text on display. Create"*
+          " a new text object using the desired color.")
+  end
+
+  rect = update_arguments(text.rect;kwds...)
+  SDLText(text.data,rect,duration,priority,text.color)
+end
+
 fonts = Dict{Tuple{String,Int},SDLFont}()
 
 """
@@ -289,11 +351,6 @@ end
 const w_ptr = 0x0000000000000010 # icxx"offsetof(SDL_Surface,w);"
 const h_ptr = 0x0000000000000014 # icxx"offsetof(SDL_Surface,h);"
 
-function as_screen_coordinates(window,x,y,w,h)
-  max(0,min(window.w,round(Cint,window.w/2 + x*window.w/4 - w / 2))),
-  max(0,min(window.h,round(Cint,window.h/2 - y*window.h/4 - h / 2)))
-end
-
 function visual(window::SDLWindow,x::Real,y::Real,font::SDLFont,color::RGB{U8},
                 wrap_width::UInt32,str::String,duration=0,priority=0)
   surface = ccall((:TTF_RenderUTF8_Blended_Wrapped,_psycho_SDL2_ttf),Ptr{Void},
@@ -324,7 +381,7 @@ end
 
 type SDLImage <: SDLTextured
   data::Ptr{Void}
-  img::Any #Image{RGBA{U8}}
+  img::Image{RGBA{U8}}
   rect::SDLRect
   duration::Float64
   priority::Float64
@@ -333,12 +390,25 @@ display_duration(img::SDLImage) = img.duration
 display_priority(img::SDLImage) = img.priority
 data(img::SDLImage) = img.data
 rect(img::SDLImage) = img.rect
+function update_arguments(img::SDLImage;w=NaN,h=NaN,duration=img.duration,
+                          priority=img.priority,kwds...)
+  if !isnan(w) || !isnan(h)
+    error("Cannot update the height or width of an image on display. These",
+          "properties are automatically determiend by the original image.")
+  end
+
+  rect = update_arguments(img.rect;kwds...)
+  SDLImage(img.dat,img.img,rect,duration,priority)
+end
 
 """
     visual(img::Image, [x=0],[y=0],[duration=0],[priority=0])
     visual(img::Array, [x=0],[y=0],[duration=0],[priority=0])
 
-Render the color or gray scale image to the screen.
+Prepare the color or gray scale image to be displayed to the screen.
+
+This works with standard multi-dimensional arrays `Image` objects from
+the Images package.
 """
 function visual(window::SDLWindow,img::Array;keys...)
   visual(window,convert(Image{RGBA{U8}},img);keys...)
@@ -486,15 +556,20 @@ end
 update_stack_helper(window,stack,r::DeleteRendered) = delete!(stack,r.x)
 
 """
-    display(r::SDLRendered)
+    display(r::SDLRendered;kwds...)
 
-Displays a rendered object on the current experiment window.
+Displays an rendered by `visual` onto the current experiment window.
+
+Any keyword arguments, available from `visual` are also available here.  They
+overload the arguments as specified during visual (but do not change them).
 """
-function display(r::SDLRendered)
-  display(get_experiment().win,r)
+function display(r::SDLRendered;kwds...)
+  display(get_experiment().win,r;kwds...)
 end
 
-function display(window::SDLWindow,r::SDLRendered)
+update_arguments(r) = r
+function display(window::SDLWindow,r::SDLRendered;kwds...)
+  r = update_arguments(r;kwds...)
   if window ∉ keys(display_stacks)
     signal = display_signals[window] = Signal(SDLRendered,EmptyRendered())
     display_stacks[window] = @>> signal begin
@@ -561,6 +636,9 @@ function handle_remove(signal,rs::SDLCompound)
   for r in rs.data
     handle_remove(signal,r)
   end
+end
+function update_arguments(rs::SDLCompound;kwds...)
+  SDLCompound(map(r -> update_arguments(r;kwds...),rs.data))
 end
 
 type RestoreDisplay <: SDLRendered
