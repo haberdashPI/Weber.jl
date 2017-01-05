@@ -1,6 +1,7 @@
 #!/usr/bin/env julia
 
 using Psychotask
+using Lazy: @>
 
 version = v"0.0.3"
 sid,trial_skip =
@@ -30,13 +31,18 @@ function aba(step)
   A = ramp(tone(A_freq,tone_len))
   B = ramp(tone(A_freq * 2^step,tone_len))
   gap = silence(tone_SOA-tone_len)
-  [A;gap;B;gap;A]
+  sound([A;gap;B;gap;A])
 end
 
 stimuli = Dict(:low => aba(3st),:medium => aba(6st),:high => aba(12st))
 
 # randomize context order
-contexts = keys(stimuli) |> cycle |> x -> take(x,n_trials) |> collect |> shuffle
+contexts = @> keys(stimuli) begin
+  cycle
+  take(n_trials)
+  collect
+  shuffle
+end
 
 isresponse(e) = iskeydown(e,key"p") || iskeydown(e,key"q")
 
@@ -44,7 +50,7 @@ function create_aba(stimulus;info...)
   sound = stimuli[stimulus]
   moment() do t
     play(sound)
-    record("stimulus",time=t,stimulus=stimulus;info...)
+    record("stimulus",stimulus=stimulus;info...)
   end
 end
 
@@ -55,33 +61,33 @@ function practice_trial(stimulus;limit=response_spacing,info...)
   go_faster = visual("Faster!",size=50,duration=500ms,y=0.15,priority=1)
   waitlen = aba_SOA*stimuli_per_response+limit
   await = timeout(isresponse,waitlen,delta_update=false) do time
-    record("response_timeout",time=time;info...)
+    record("response_timeout";info...)
     display(go_faster)
   end
 
-  stim = create_aba(stimulus;info...) * moment(aba_SOA)
+  stim = create_aba(stimulus;info...) >> moment(aba_SOA)
 
   x = [resp,show_cross(),
-       prod(repeated(stim,stimuli_per_response)),
+       moment(repeated(stim,stimuli_per_response)),
        await,moment(aba_SOA*stimuli_per_response+response_spacing)]
   repeat(x,outer=responses_per_phase)
 end
 
 function real_trial(stimulus;limit=response_spacing,info...)
   resp = response(key"q" => "stream_1",key"p" => "stream_2";info...)
-  stim = create_aba(stimulus;info...) * moment(aba_SOA)
+  stim = create_aba(stimulus;info...) >> moment(aba_SOA)
 
   x = [resp,show_cross(),
-       prod(repeated(stim,stimuli_per_response)),
+       moment(repeated(stim,stimuli_per_response)),
        moment(aba_SOA*stimuli_per_response + limit)]
   repeat(x,outer=responses_per_phase)
 end
 
-exp = Experiment(condition = "pilot",sid = sid,version = version,
-                 skip=trial_skip,columns = [:time,:stimulus,:phase])
+exp = Experiment(sid = sid,condition = "pilot",version = version,
+                 skip=trial_skip,columns = [:stimulus,:phase])
 
 setup(exp) do
-  start = moment(t -> record("start",time=t))
+  start = moment(t -> record("start"))
 
   addbreak(
     instruct("""
