@@ -213,7 +213,7 @@ end
 
 function readline_args(;keys...)
   print("Enter subject id: ")
-  sid = input()
+  sid = chomp(input())
   args = Array{Any}(length(keys))
   for (i,(kw,value)) in enumerate(keys)
     if isa(value,Type)
