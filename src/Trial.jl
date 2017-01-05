@@ -2,7 +2,7 @@ using Reactive
 using Lazy: @>>, @>, @_
 using DataStructures
 import DataStructures: front
-import Base: run, time, *, length, unshift!, isempty
+import Base: run, time, >>, length, unshift!, isempty
 
 export Experiment, setup, run, addtrial, addbreak, addpractice, moment,
   await_response, record, timeout, when, looping, endofpause, experiment_trial,
@@ -79,12 +79,13 @@ type FinalMoment <: AbstractTimedMoment
 end
 
 type CompoundMoment <: Moment
-  data::Array{Moment}
+  data::Array{SimpleMoment}
 end
 delta_t(m::CompoundMoment) = 0.0
-*(a::SimpleMoment,b::SimpleMoment) = CompoundMoment([a,b])
-*(a::CompoundMoment,b::CompoundMoment) = CompoundMoment(vcat(a.data,b.data))
-*(a::Moment,b::Moment) = *(promote(a,b)...)
+>>(a::SimpleMoment,b::SimpleMoment) = CompoundMoment([a,b])
+>>(a::CompoundMoment,b::CompoundMoment) = CompoundMoment(vcat(a.data,b.data))
+>>(a::Moment,b::Moment) = >>(promote(a,b)...)
+>>(a::Moment,b::Moment,c::Moment,d::Vararg{Moment}) = moment(a,b,c,d...)
 promote_rule(::Type{SimpleMoment},::Type{CompoundMoment}) = CompoundMoment
 convert(::Type{CompoundMoment},x::SimpleMoment) = CompoundMoment([x])
 
@@ -626,16 +627,10 @@ of moments based on some condition.
 
 !!! note
 
-    By using the `*` operator you can concatenate multiple moments into
-    a single moment. A concatenation of moments starts immediately,
-    and then proceedes through all of the concanetated moments in order.
-    This is sometime useful for playing moments in parallel. The following
-    example will present two sounds, one at 100ms, the other at 200ms after
-    the start of the trial. It will also display "Too Late!" on the screen
-    if no keyboard key is pressed 150ms after the start of the trial.
-
-        addtrial(moment(0.1,t -> play(soundA)) * moment(0.1,t -> play(soundB)),
-                 timeout(0.15,iskeydown,x -> display("Too Late!")))
+    In addition to these types of moments you can create more complicated
+    moments by concatenating simpler moments togehter using the `>>` operator or
+    `moment(momoment1,moment2,...)` . See the documentation of `moment` for more
+    details.
 
 # Guidlines for low-latency trials
 
@@ -751,28 +746,16 @@ the previous moment, running the specified function. The function `fn` is called
 with one argument indicating the time in seconds since the start of the
 experiment.
 
-The timing resolution is limited only by the processing speed of the computer,
-so the latency of moments, and the error in reported times should be quite low,
-if the only the following oeprations are perormed:
-
-- calling `play` on sounds that have been pre-generated using `sound`
-- calling `display` on graphical objects that have been pre-rendered
-  using `visual`
-- calling `record`
-- simple programming logic
-
-It is recommended that any calls to `record` be made at the end of a moment,
-to keep the latency of any multimedia events low.
-
 !!! warning
 
-    Long running moment functions will lead to latency issues. Make
-    sure all moment function run relatively quickly. For instance, normally `play`
-    and `display` return immediately, before the sound or visual is finished
-    being presented to the participant.
+    Long running moment functions will lead to latency issues. Make sure all
+    moment functions run relatively quickly. For instance, normally `play` and
+    `display` return immediately, before the sound or visual is finished being
+    presented to the participant. Please refer to the `addtrial` documentation
+    for more details.
 """
-function moment(delta_t::Number) TimedMoment(delta_t,t->nothing)
-end
+moment(delta_t::Number) = TimedMoment(delta_t,t->nothing)
+moment() = TimedMoment(0,()->nothing)
 
 function moment(fn::Function,delta_t::Number)
   precompile(fn,(Float64,))
@@ -789,8 +772,40 @@ function moment(fn::Function)
   TimedMoment(0,fn)
 end
 
-function moment()
-  TimedMoment(0,()->nothing)
+"""
+    moment(moments...)
+    moment(moments::Array)
+
+Create a single moment by concatentating several moments togethor.
+
+A concatenation of moments starts immediately, proceeding through each
+of the moments in order. This is useful playing several moments in parallel. For
+example, the following code will present two sounds, one at 100ms, the other at
+200ms after the start of the trial. It will also display "Too Late!" on the
+screen if no keyboard key is pressed 150ms after the start of the trial.
+
+        addtrial(moment(moment(0.1,t -> play(soundA)),
+                        moment(0.1,t -> play(soundB))),
+                 timeout(0.15,iskeydown,x -> display("Too Late!")))
+!!! note
+
+    You can also use `moment1 >> moment2 >> moment3 >> ...` to concatenate
+    moments.
+
+"""
+moment(moments::Vararg{Moment}) = moment(collect(moments))
+moment(moments::Vararg{SimpleMoment}) = moment(collect(moments))
+moment(moments::Array{Moment}) = reduce(>>,moments)
+moment(moments::Array{SimpleMoment}) = CompoundMoment(moments)
+moment(moments::Array{CompoundMoment}) = reduce(>>,moments)
+moment(moments::Array) = throw(MethodError(moments,typeof(moments)))
+function moment(moments)
+  try
+    start(moments)
+  catch
+    throw(MethodError(moment,typeof(moments)))
+  end
+  moment(collect(moments)::Array)
 end
 
 function offset_start_moment(fn::Function=t->nothing,count_trials=false)
