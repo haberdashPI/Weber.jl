@@ -6,7 +6,7 @@ import SampledSignals: samplerate
 
 export match_lengths, mix, mult, silence, noise, highpass, lowpass, bandpass,
 	tone, ramp, harmonic_complex, attenuate, sound, play, pause, stop,
-  savesound, duration, setup_sound, current_sound_latency
+  savesound, duration, setup_sound, current_sound_latency, buffer
 
 """
    match_lengths(x,y,...)
@@ -14,13 +14,25 @@ export match_lengths, mix, mult, silence, noise, highpass, lowpass, bandpass,
 Ensure that all sounds have exactly the same length by adding silence
 to the end of shorter sounds.
 """
-function match_lengths(xs...)
+function match_lengths(xs::Vararg{SampleBuf})
 	max_length = maximum(map(x -> size(x,1), xs))
 
   map(xs) do x
     if size(x,1) < max_length
       vcat(x,SampleBuf(zeros(eltype(x),
                              max_length - size(x,1),size(x,2)),samplerate(x)))
+    else
+      x
+    end
+  end
+end
+
+function match_lengths(xs...)
+	max_length = maximum(map(x -> size(x,1), xs))
+
+  map(xs) do x
+    if size(x,1) < max_length
+      vcat(x,zeros(eltype(x),max_length - size(x,1),size(x,2)))
     else
       x
     end
@@ -116,53 +128,53 @@ function harmonic_complex(f0,harmonics,amps,length_s;
 end
 
 """
-   bandpass(x,low,high,[order=5])
+   bandpass(x,low,high,[order=5],[sample_rate_Hz=samplerate(x)])
 
-Band pass the sound at the specified frequencies.
+Band-pass filter the sound at the specified frequencies.
 
 Filtering uses a butterworth filter of the given order.
 """
-function bandpass(x,low,high;order=5)
-	ftype = Bandpass(float(low),float(high),fs=samplerate(x))
+function bandpass(x,low,high;order=5,sample_rate_Hz=samplerate(x))
+	ftype = Bandpass(float(low),float(high),fs=sample_rate_Hz)
 	f = digitalfilter(ftype,Butterworth(order))
-	SampleBuf(filt(f,x),samplerate(x))
+	SampleBuf(filt(f,x),sample_rate_Hz)
 end
 
 
 """
-   lowpass(x,low,high,[order=5])
+   lowpass(x,low,[order=5],[sample_rate_Hz=samplerate(x)])
 
-Low pass the sound at the specified frequency.
-
-Filtering uses a butterworth filter of the given order.
-"""
-function lowpass(x,low;order=5)
-	ftype = Lowpass(float(low),fs=samplerate(x))
-	f = digitalfilter(ftype,Butterworth(order))
-	SampleBuf(filt(f,x),samplerate(x))
-end
-
-"""
-   highpass(x,low,high,[order=5])
-
-Low pass the sound at the specified frequency.
+Low-pass filter the sound at the specified frequency.
 
 Filtering uses a butterworth filter of the given order.
 """
-function highpass(x,high;order=5)
-	ftype = Highpass(float(high),fs=samplerate(x))
+function lowpass(x,low;order=5,sample_rate_Hz=samplerate(x))
+	ftype = Lowpass(float(low),fs=sample_rate_Hz)
 	f = digitalfilter(ftype,Butterworth(order))
-	SampleBuf(filt(f,x),samplerate(x))
+	SampleBuf(filt(f,x),sample_rate_Hz)
 end
 
 """
-   ramp(x,[ramp_s=0.005])
+   highpass(x,high,[order=5],[sample_rate_Hz=samplerate(x)])
+
+High-pass filter the sound at the specified frequency.
+
+Filtering uses a butterworth filter of the given order.
+"""
+function highpass(x,high;order=5,sample_rate_Hz=samplerate(x))
+	ftype = Highpass(float(high),fs=sample_rate_Hz)
+	f = digitalfilter(ftype,Butterworth(order))
+	SampleBuf(filt(f,x),sample_rate_Hz)
+end
+
+"""
+   ramp(x,[ramp_s=0.005];[sample_rate_Hz=samplerate(x)])
 
 Applies a half cosine ramp to the sound. Prevents click sounds at the start of
 tones.
 """
-function ramp(x,ramp_s=0.005)
-	ramp_len = floor(Int,samplerate(x) * ramp_s)
+function ramp(x,ramp_s=0.005;sample_rate_Hz=samplerate(x))
+	ramp_len = floor(Int,sample_rate_Hz * ramp_s)
 	@assert size(x,1) > 2ramp_len
 
 	ramp_t = (1.0:ramp_len) / ramp_len
@@ -186,12 +198,13 @@ function attenuate(x,atten_dB=20)
 end
 
 """
-    sound(x,[sample_rate_Hz=44100])
+    sound(x::Array,[sample_rate_Hz=44100])
 
-Converts an aribitray array to a sound.
+Creates a `Sound` from an aribtrary array.
 
 For real numbers, assumes 1 is the loudest and -1 the softest. Assumes 16-bit
-PCM for integers.
+PCM for integers. The array should be 1d for mono signals, or an array of size
+(N,2) for stereo sounds.
 """
 function sound{T <: Number}(x::Array{T};
                             sample_rate_Hz=samplerate(sound_setup_state))
@@ -199,6 +212,11 @@ function sound{T <: Number}(x::Array{T};
   sound(SampleBuf(Fixed{Int16,15}.(bounded),sample_rate_Hz))
 end
 
+"""
+   sound(x::SampleBuff)
+
+Creates a `Sounds from a `SampleBuf` (from the SampledSignals package).
+"""
 function sound(x::SampleBuf)
   bounded = max(min(x.data,typemax(Fixed{Int16,15})),typemin(Fixed{Int16,15}))
   sound(SampleBuf(Fixed{Int16,15}.(bounded),samplerate(x)))
@@ -238,6 +256,13 @@ end
 function sound(x::SampleBuf{Fixed{Int16,15}})
   Sound(MixChunk(0,pointer(x.data),sizeof(x.data),128),x)
 end
+
+"""
+   buffer(s::Sound)
+
+Gets the `SampleBuf` associated with this sound.
+"""
+buffer(x::Sound) = x.buffer
 
 const SDL_INIT_AUDIO = 0x00000010
 const AUDIO_S16 = 0x8010
