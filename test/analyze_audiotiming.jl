@@ -1,6 +1,4 @@
 using Psychotask
-using SampledSignals
-using Lazy
 using Gadfly
 using Compose
 using DataFrames: readtable
@@ -41,7 +39,7 @@ function findpeaks(x,relt)
   peaks
 end
 
-envelope = @> beeps max(0) SampleBuf(44100.0) lowpass(100)
+envelope = lowpass(max(beeps,0),100)
 atimes = findpeaks(diff(envelope),relt)/44100
 
 # you can use this plot to troubleshoot the threshold
@@ -51,7 +49,7 @@ atimes = findpeaks(diff(envelope),relt)/44100
 # b = 44100
 
 # plot(x=(a:b)/44100,
-#      y=grad[a:b],
+#      y=diff(envelope)[a:b],
 #      yintercept=[relt*maximum(diff(envelope))],
 #      xintercept=atimes[a/44100 .< atimes .< b/44100],
 #      Geom.line,Geom.hline(color=colorant"red",size=0.5mm),
