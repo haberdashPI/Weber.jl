@@ -1,6 +1,6 @@
 __precompile__()
 
-module Psychotask
+module Weber
 try
   old = pwd()
   cd(dirname(@__FILE__))
@@ -8,7 +8,7 @@ try
                                  readstring(`git describe --tags`))
   cd(old)
 catch
-  global const version = Pkg.installed("Psychotask")
+  global const version = Pkg.installed("Weber")
 end
 
 # load binary library dependencies
@@ -16,8 +16,8 @@ depsjl = joinpath(dirname(@__FILE__), "..", "deps", "deps.jl")
 if isfile(depsjl)
   include(depsjl)
 else
-  error("Psychotask not properly installed. "*
-        "Please run\nPkg.build(\"Psychotask\")")
+  error("Weber not properly installed. "*
+        "Please run\nPkg.build(\"Weber\")")
 end
 
 # setup error reporting functions (these are the only calls to SDL that occur

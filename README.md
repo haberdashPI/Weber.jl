@@ -1,10 +1,10 @@
-# Psychotask
+# Weber
 
-[![Build Status](https://travis-ci.org/haberdashPI/Psychotask.jl.svg?branch=master)](https://travis-ci.org/haberdashPI/Psychotask.jl)
+[![Build Status](https://travis-ci.org/haberdashPI/Weber.jl.svg?branch=master)](https://travis-ci.org/haberdashPI/Weber.jl)
 
-[![Coverage Status](https://coveralls.io/repos/haberdashPI/Psychotask.jl/badge.svg?branch=master&service=github)](https://coveralls.io/github/haberdashPI/Psychotask.jl?branch=master)
+[![Coverage Status](https://coveralls.io/repos/haberdashPI/Weber.jl/badge.svg?branch=master&service=github)](https://coveralls.io/github/haberdashPI/Weber.jl?branch=master)
 
-[![codecov.io](http://codecov.io/github/haberdashPI/Psychotask.jl/coverage.svg?branch=master)](http://codecov.io/github/haberdashPI/Psychotask.jl?branch=master)
+[![codecov.io](http://codecov.io/github/haberdashPI/Weber.jl/coverage.svg?branch=master)](http://codecov.io/github/haberdashPI/Weber.jl?branch=master)
 
 # About
 
@@ -22,13 +22,13 @@ haven't gotten around to this.
 # Installation
 
 ```julia
-julia> Pkg.clone("https://github.com/haberdashPI/Psychotask.jl")
-julia> Pkg.build("Psychotask")
+julia> Pkg.clone("https://github.com/haberdashPI/Weber.jl")
+julia> Pkg.build("Weber")
 ```
 
 # Usage
 
-Psychotask can be used to generate simple pscyhology experiments that present
+Weber can be used to generate simple pscyhology experiments that present
 visual and auditory stimuli at precise times. The emphasis is currently on
 auditory psychophysics, but the package has the features necessary to generate
 most visual stimuli one would desire as well.
@@ -38,7 +38,7 @@ package. Refer to the examples directory for several, more realistic, real-world
 examples.
 
 ```julia
-using Psychotask
+using Weber
 sid,skip = @read_args("A simple frequency discrimination experiment.")
 
 low = sound(ramp(tone(1000,0.5)))
@@ -81,11 +81,11 @@ high tone. There's no feedback, ever.
 Let's step through the code:
 
 ```julia
-using Psychotask
+using Weber
 sid,skip = @read_args("A simple frequency discrimination experiment.")
 ```
 
-This loads Psychotask, and reads two important parameters from the user, the
+This loads Weber, and reads two important parameters from the user, the
 subject id, and how many _offsets_ to skip. You don't have to worry about
 offsets right now. If you wish to learn about them refer to the documentation
 for `@read_args`, `addtrial` and `Experiment`.
@@ -104,11 +104,11 @@ can do to a sound stimiulus. You can also load sounds from a wav file using
 `load`. Refer to the documentation of these individual functions for
 details. Generally you should create the sounds prior to running an experiment,
 as shown here, to minimize latency. If these functions are insufficient you may
-also want to take a look at the `SampledSignals` and `DSP` packages which Psychotask
+also want to take a look at the `SampledSignals` and `DSP` packages which Weber
 draws from. 
 
 Once you are done generating a stimulus, you need to call `sound` (as shown above) so
-that it can be presented to the subject by Psychotask using the `play`
+that it can be presented to the subject by Weber using the `play`
 function. The play function will return an object that you can call `pause` or
 `stop` on.
 
@@ -146,7 +146,7 @@ This call creates the actual experiment, indicating that the subject id and
 condition should be recorded on each line of the data file. Refer to the
 documentation of `Experiment` for more options when creating an experiment.
 
-The `columns=[:actual]` tells Psychotask that the data file should have a column
+The `columns=[:actual]` tells Weber that the data file should have a column
 called "actual". The call to record `response`, during the function `one_trial`,
 sets this column to "low" or "high" depending on which tone was actually played
 to the subject. If `:actual` was not specified here, this call would result in
@@ -170,7 +170,7 @@ end
 This section of the program is the where all trials of the experiment are
 actually created. It adds several breaks, which can be used to give the subject
 useful information or let them rest. Then it adds 5 practice trials, and a total
-of 60 actual trials. Psychotask will automatically record the trial number for
+of 60 actual trials. Weber will automatically record the trial number for
 each trial (added using `addtrial`) on each line of the resulting data
 file. Both trials and practice trials also increment a second number
 recorded to the data file, called the offset.
@@ -227,7 +227,7 @@ error.
 ![Audio-playback Onset Histogram](audio_onset_error.png)
 
 Note that this level of accuracy is only achieved when moments (e.g. as created
-by `moment`) occur when they are intended to occur. Psychotask will notify you
+by `moment`) occur when they are intended to occur. Weber will notify you
 when it is failing to accurately present moments. Such accuracy is probably only
 possible if you follow the guidelines provided in `addtrial` for generating well
 timed events. Note that timing is usually poor when the experiment first starts.
@@ -260,7 +260,7 @@ For the 0.2.0 release
       as reported by record events.
 
 - [ ] submit the package to METADATA.jl
-- [x] use the version number of Psychotask.jl indicated by Pkg
+- [x] use the version number of Weber.jl indicated by Pkg
 
 For the 0.3.0 release
 - [ ] edit/refine the user manual

@@ -1,4 +1,4 @@
-The Psychotask.jl package is licensed under the MIT "Expat" License:
+The Weber.jl package is licensed under the MIT "Expat" License:
 
 > Copyright (c) 2016: David Little.
 > 

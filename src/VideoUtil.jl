@@ -540,10 +540,10 @@ function setup_display()
 
   #=
   if !sdl_compose_implemented && Pkg.installed("Compose") != nothing
-    warn("The Compose package was installed after Psychotask. "*
-         "To render Compose objects using Psychotask you will need to run\n "*
-         "rm(Pkg.dir(\"Psychotask\"),recursive=true,force=true); "*
-         "Pkg.add(\"Psychotask\")\n before you call `using Psychotask`.")
+    warn("The Compose package was installed after Weber. "*
+         "To render Compose objects using Weber you will need to run\n "*
+         "rm(Pkg.dir(\"Weber\"),recursive=true,force=true); "*
+         "Pkg.add(\"Weber\")\n before you call `using Weber`.")
   end
   =#
 end

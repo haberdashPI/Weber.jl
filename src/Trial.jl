@@ -202,7 +202,7 @@ function record_header(exp)
 end
 
 function record(exp::ExperimentState,code;kwds...)
-  extra = [:psych_version => Psychotask.version,
+  extra = [:psych_version => Weber.version,
            :start_date => Dates.format(exp.info.start,"yyyy-mm-dd"),
            :start_time => Dates.format(exp.info.start,"HH:MM:SS"),
            :offset => exp.data.offset,
@@ -226,7 +226,7 @@ you should specify the same set of `column_values`.
 
 All calls to record also result in many additiaonl values being written to
 the data file. The start time and date of the experiment, the trial and offset
-number, the subject id, the version of Psychotask, and the time at which the
+number, the subject id, the version of Weber, and the time at which the
 last moment started are all stored.  Additional information can be added during
 creation of the experiment (see `Experiment`).
 
@@ -476,8 +476,8 @@ will not be notified. Note that this measure of latency only verifies that the
 commands to generate stimuli occur when they should. Emprical verification of
 stimulus timing requires that you monitor the output of your machine using light
 sensors and microphones. You can use the scripts available in
-$(Pkg.dir("Psychotask","test")) to test the timing of auditory and visual
-stimuli presented with Psychotask.
+$(Pkg.dir("Weber","test")) to test the timing of auditory and visual
+stimuli presented with Weber.
 
            """)
       record(exp,"good_delta_latency($err)")
@@ -541,9 +541,9 @@ function addmoments(exp,moments;when=nothing,loop=nothing)
   elseif when != nothing && loop != nothing
     error("You can only define a `when` or a `loop` not both.")
   elseif when != nothing
-    addmoment(exp,Psychotask.when(when,update_offset=true,moments...))
+    addmoment(exp,Weber.when(when,update_offset=true,moments...))
   elseif loop != nothing
-    addmoment(exp,Psychotask.when(loop,loop=true,update_offset=true,moments...))
+    addmoment(exp,Weber.when(loop,loop=true,update_offset=true,moments...))
   end
 end
 
@@ -635,7 +635,7 @@ of moments based on some condition.
 
 # Guidlines for low-latency trials
 
-Psychotask aims to present trials at low latencies for accurate experiments.
+Weber aims to present trials at low latencies for accurate experiments.
 
 To maintain low latency, as much of the experimental logic as possible
 should be precomputed, outside of trial moments. The following operations are
@@ -651,7 +651,7 @@ generally safe to perform during a moment:
 Note that Julia compiles functions on demand (known as JIT compilation), which
 can lead to very slow runtimes the first time a function runs.  To minimize JIT
 compilation during an experiment, any functions called directly by a moment are
-first precompiled. Futher, many methods in Psychotask and other dependent
+first precompiled. Futher, many methods in Weber and other dependent
 modules are precompiled before the experiment begins.
 """
 

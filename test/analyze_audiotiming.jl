@@ -1,4 +1,4 @@
-using Psychotask
+using Weber
 using Gadfly
 using Compose
 using DataFrames: readtable

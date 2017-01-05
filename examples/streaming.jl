@@ -1,6 +1,6 @@
 #!/usr/bin/env julia
 
-using Psychotask
+using Weber
 using Lazy: @>
 
 version = v"0.0.3"

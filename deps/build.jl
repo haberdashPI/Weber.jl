@@ -8,10 +8,6 @@ for d in [downloaddir,bindir]
   mkpath(d)
 end
 
-# install my revised version of LibSndFile to prevent errors when loading
-# images.
-Pkg.checkout("https://github.com/haberdashPI/LibSndFile.jl")
-
 # NOTE: I'm not using BinDeps.jl here because I don't yet understand
 # it, and was having difficulty troubleshooting problems.
 

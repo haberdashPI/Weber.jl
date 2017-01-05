@@ -1,4 +1,4 @@
-using Psychotask
+using Weber
 using DataFrames: DataFrame, writetable
 
 # HOW TO USE: Run this script, while recording its sound (e.g. using your phone,

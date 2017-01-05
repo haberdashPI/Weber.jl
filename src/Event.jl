@@ -3,6 +3,7 @@ import Base: isnull, time
 export iskeydown, iskeyup, iskeypressed, isfocused, isunfocused, @key_str
 
 
+# called by __init__ in Psychotask.jl
 function init_events()
   global concrete_events
   global const pyxid = pyimport(:pyxid)

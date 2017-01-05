@@ -1,5 +1,5 @@
 using SnoopCompile
-using Psychotask
+using Weber
 
 # run build_precompile_csv.jl to generate this csv file
 # currently requires that I manually delete one line that casues a parse

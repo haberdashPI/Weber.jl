@@ -2,7 +2,7 @@
 # the practices demosntrated here!!! Instead refer to some of the
 # other examples for best practices.
 
-using Psychotask
+using Weber
 sid,skip = @read_args("A simple frequency discrimination experiment.")
 
 low = sound(ramp(tone(1000,0.5)))
