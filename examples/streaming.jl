@@ -5,7 +5,7 @@ using Lazy: @>
 
 version = v"0.0.3"
 sid,trial_skip =
-  @read_args("Runs an intermittent aba context experiment, version $version.")
+  @read_args("Runs an intermittent aba experiment, version $version.")
 
 const ms = 1/1000
 const st = 1/12
