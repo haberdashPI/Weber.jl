@@ -43,6 +43,7 @@ include(joinpath(dirname(@__FILE__),"SoundUtil.jl"))
 include(joinpath(dirname(@__FILE__),"Event.jl"))
 include(joinpath(dirname(@__FILE__),"Trial.jl"))
 include(joinpath(dirname(@__FILE__),"primitives.jl"))
+include(joinpath(dirname(@__FILE__),"helpers.jl"))
 
 include(joinpath(dirname(@__FILE__),"precompile.jl"))
 
