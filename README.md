@@ -74,7 +74,7 @@ run(exp)
 
 This experiment records responses to a simple frequency discrimination
 experiment. After 500ms from the start of each trial, a low or high tone is
-played that lasts 1 second. At some point after the start of the tone the
+played that lasts 500ms. At some point after the start of the tone the
 listener needs to hit 'q' if they hear the low tone and 'p' if they hear the
 high tone. There's no feedback, ever.
 
@@ -88,7 +88,7 @@ sid,skip = @read_args("A simple frequency discrimination experiment.")
 This loads Psychotask, and reads two important parameters from the user, the
 subject id, and how many _offsets_ to skip. You don't have to worry about
 offsets right now. If you wish to learn about them refer to the documentation
-for `@read_args` and `addtrial`.
+for `@read_args`, `addtrial` and `Experiment`.
 
 ```julia
 low = sound(ramp(tone(1000,0.5)))
@@ -143,13 +143,14 @@ exp = Experiment(sid = sid,condition = "ConditionA",skip=skip,columns=[:actual])
 ```
 
 This call creates the actual experiment, indicating that the subject id and
-condition should be recorded on each line of the data file. The
-`columns=[:actual]` tells Psychotask that the data file should have a column
-called "actual". Refer to the documentation of `Experiment` for more options.
-Note that in the call to `response` during the function `one_trial` this column
-is set to be equal to "low" or "high" depending on which tone was actually
-played to the subject. If `:actual` was not specified here, the call to
-`response` in `one_trail` would result in an error during the experiment.
+condition should be recorded on each line of the data file. Refer to the
+documentation of `Experiment` for more options when creating an experiment.
+
+The `columns=[:actual]` tells Psychotask that the data file should have a column
+called "actual". The call to record `response`, during the function `one_trial`,
+sets this column to "low" or "high" depending on which tone was actually played
+to the subject. If `:actual` was not specified here, this call would result in
+an error during the experiment.
 
 ```julia
 setup(exp) do
@@ -171,7 +172,7 @@ actually created. It adds several breaks, which can be used to give the subject
 useful information or let them rest. Then it adds 5 practice trials, and a total
 of 60 actual trials. Psychotask will automatically record the trial number for
 each trial (added using `addtrial`) on each line of the resulting data
-file. Both trials and practice trials also all increment a second number
+file. Both trials and practice trials also increment a second number
 recorded to the data file, called the offset.
 
 Note that the experiment has not actually been run after this code has completed
@@ -185,21 +186,22 @@ run(exp)
 ```
 
 Once you have created the experiment you need to actually run it by calling
-`run`. This sort of organization helps ensure that as much as possible is
-computed before the program is actually run. The only code that executes
+`run`. This organization helps ensure that as much as possible is
+computed before the experiment is actually run. The only code that executes
 during `run` are the functions called inside the moments, such as the call to
 `play(low)` in `one_trial`. Everything else happens during the setup.
 
 There are several features this experiment does not demonstrate, visual stimuli
 and higher level primitives.
 
-You can create visual stimuli by using `load` to open images or create an a 2d
-array (for grayscale) or 3d (for color) array representing pixel data. You can
-then use `visual` to preapre them for display and `display` to show them to the
-subject. The function `visual` can also be used to render text to the screen.
+You can create visual stimuli by using `load` to open images or create a 2d
+array (for grayscale) or 3d array (for color) representing pixel data. You can
+then use `visual` to preapre them for display (analogous to `sound`) and
+`display` to show them to the subject. The function `visual` can also be used to
+render text to the screen.
 
-There is also an `addbreak_every` primitive not demonstrated here that add a
-break ever N trials. Refer to its documentation for details. Future Pyschotask
+There is also an `addbreak_every` primitive not demonstrated here that adds a
+break every N trials. Refer to its documentation for details. Future Pyschotask
 versions will probably include many more such primitives to simplify the
 creation of experiments.
 
@@ -217,23 +219,18 @@ absolute differences), is close to the theoretically minimal error rate of
 minimum is determiend by the buffer size of audio playback, because this buffer
 introduces playback latency. By default the buffer size is 256 samples, leading
 to a latency of up to ~5.80ms (= 256/44100). I chose this default value because
-it seems to playback sound without corruption across a variety of hardware and
+it seems to play sound without corruption across a variety of hardware and
 operating systems.  You can reduce the buffer size for playback up to the limits
-of your hardware using `setup_sound`. This would also reduce the emprical timing
+of your hardware using `setup_sound`. This can reduce the emprical timing
 error.
 
-Below is a graph of the auditory event onset errors.
 ![Audio-playback Onset Histogram](audio_onset_error.png)
 
 Note that this level of accuracy is only achieved when moments (e.g. as created
 by `moment`) occur when they are intended to occur. Psychotask will notify you
 when it is failing to accurately present moments. Such accuracy is probably only
 possible if you follow the guidelines provided in `addtrial` for generating well
-timed events. Note that timing is usually poor when the experiment first starts,
-becuase program must be loaded into memory your script JIT compiled. However
-since the first few trials of an expeirment are normally just practice trials
-this greater startup latency will not interfer with the experimental trials
-themselves.
+timed events. Note that timing is usually poor when the experiment first starts.
 
 This error estimate is only relevent when you *start* playing a
 sound. If you want more precise timing between two sounds you can simply create
