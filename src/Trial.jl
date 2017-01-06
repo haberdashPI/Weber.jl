@@ -436,7 +436,7 @@ function ExperimentState(debug::Bool,skip::Int,header::Array{Symbol};
 
   filt_events = filterwhen(running,EmptyEvent(),events)
   exp.signals.other[:watcher_processing] = map(filt_events) do e
-    if !isnull(e)
+    if !isnull(e) && !iskeydown(e,key":esc:")
       try
         exp.data.last_time = time(e)
         exp.data.trial_watcher(e)
