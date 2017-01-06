@@ -128,7 +128,7 @@ type ExperimentData
   mode::Int
   moments::MomentQueue
   submoments::Array{MomentQueue}
-  exception::Nullable{Tuple{Exception,Array{Ptr{Void}}}}
+  exception::Nullable{Tuple{Exception,Array{StackFrame}}}
   cleanup::Function
 end
 
@@ -337,7 +337,7 @@ function setup(fn::Function,exp::Experiment)
     if !isnull(exp.state.data.exception)
       record(exp.state,"program_error")
       println("Stacktrace in experiment: ")
-      map(println,stacktrace(get(exp.state.data.exception)[2]))
+      map(println,get(exp.state.data.exception)[2])
       rethrow(get(exp.state.data.exception)[1])
     end
 
@@ -372,6 +372,12 @@ function get_experiment()
   else
     get(experiment_context[])
   end
+end
+
+function handle_error(exp,e)
+  exp.data.exception = Nullable((e,catch_stacktrace()))
+  exp.data.mode = Error
+  exp.data.cleanup()
 end
 
 function ExperimentState(debug::Bool,skip::Int,header::Array{Symbol};
@@ -446,9 +452,7 @@ function ExperimentState(debug::Bool,skip::Int,header::Array{Symbol};
         exp.data.last_time = time(e)
         exp.data.trial_watcher(e)
       catch e
-        exp.data.exception = Nullable((e,catch_backtrace()))
-        exp.data.mode = Error
-        exp.data.cleanup()
+        handle_error(exp,e)
       end
     end
     false
@@ -906,9 +910,7 @@ function handle(exp::ExperimentState,moment::AbstractTimedMoment,time::Float64)
     exp.data.last_time = time
     run(moment,time)
   catch e
-    exp.data.exception = Nullable((e,catch_backtrace()))
-    exp.data.mode = Error
-    exp.data.cleanup()
+    handle_error(exp,e)
   end
   true
 end
@@ -926,9 +928,7 @@ function handle(exp::ExperimentState,moment::ResponseMoment,time::Float64)
     exp.data.last_time = time
     moment.timeout(time)
   catch e
-    exp.data.exception = Nullable((e,catch_backtrace()))
-    exp.data.mode = Error
-    exp.data.cleanup()
+    handle_error(exp,e)
   end
   true
 end
@@ -938,9 +938,7 @@ function handle(exp::ExperimentState,moment::ResponseMoment,event::ExpEvent)
   try
     handled = moment.respond(event)
   catch e
-    exp.data.exception = Nullable((e,catch_backtrace()))
-    exp.data.mode = Error
-    exp.data.cleanup()
+    handle_error(exp,e)
   end
   handled
 end
