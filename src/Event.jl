@@ -1,11 +1,10 @@
 using PyCall
-import Base: isnull, time
-export iskeydown, iskeyup, iskeypressed, isfocused, isunfocused, @key_str
+import Base: isnull, time, show
+export iskeydown, iskeyup, iskeypressed, isfocused, isunfocused, keycode,
+  @key_str, time, response_time, reset_response, keycode
 
-
-# called by __init__ in Psychotask.jl
+# called by __init__ in Weber.jl
 function init_events()
-  global concrete_events
   global const pyxid = pyimport(:pyxid)
   global const pyxid_devices = pyxid[:get_xid_devices]()
 end
@@ -33,40 +32,41 @@ end
 type EmptyEvent <: ExpEvent
 end
 
-type XID_DownEvent <: ExpEvent
-  key::Int
+type CedrusDownEvent <: ExpEvent
+  code::Int
   port::Int
   rt::Float64
   time::Float64
 end
 
 
-type XID_UpEvent <: ExpEvent
-  key::Int
+type CedrusUpEvent <: ExpEvent
+  code::Int
   port::Int
   rt::Float64
   time::Float64
 end
 
 """
-    response_time(e::ExpEvent)
+      response_time(e::ExpEvent)
 
-Get the response time an event occured at. Only meaningful for response pad
-events (returns NaN in other cases). The response time is measured from the
-start of a trial.
-"""
+  Get the response time an event occured at. Only meaningful for response pad
+  events (returns NaN in other cases). The response time is normally measured from
+  the start of a trial (see `reset_response`).
+
+  """
 response_time(e::ExpEvent) = NaN
-response_time(e::XID_UpEvent) = e.rt
-response_time(e::XID_DownEvent) = e.rt
+response_time(e::CedrusUpEvent) = e.rt
+response_time(e::CedrusDownEvent) = e.rt
 
 """
-    time(e::ExpEvent)
+      time(e::ExpEvent)
 
-Get the time an event occured relative to the start of the experiment.
-Resolution is limited by an expeirment's input_resolution (which can be
-specified upon initialization), and the response rate of the device. For
-instance, keyboards usually have a latency on the order of 20-30ms.
-"""
+  Get the time an event occured relative to the start of the experiment.
+  Resolution is limited by an expeirment's input_resolution (which can be
+  specified upon initialization), and the response rate of the device. For
+  instance, keyboards usually have a latency on the order of 20-30ms.
+  """
 time(event::ExpEvent) = NaN
 time(event::KeyUpEvent) = event.time
 time(event::KeyDownEvent) = event.time
@@ -76,60 +76,137 @@ time(event::WindowUnfocused) = event.time
 isnull(e::ExpEvent) = false
 isnull(e::EmptyEvent) = true
 
+abstract Key
+
+type KeyboardKey <: Key
+  code::Int32
+end
+
+type CedrusKey <: Key
+  code::Int
+end
+
 const str_to_code = Dict(
-  "a" => reinterpret(Int32,'a'),
-  "b" => reinterpret(Int32,'b'),
-  "c" => reinterpret(Int32,'c'),
-  "d" => reinterpret(Int32,'d'),
-  "e" => reinterpret(Int32,'e'),
-  "f" => reinterpret(Int32,'f'),
-  "g" => reinterpret(Int32,'g'),
-  "h" => reinterpret(Int32,'h'),
-  "i" => reinterpret(Int32,'i'),
-  "j" => reinterpret(Int32,'j'),
-  "k" => reinterpret(Int32,'k'),
-  "l" => reinterpret(Int32,'l'),
-  "m" => reinterpret(Int32,'m'),
-  "n" => reinterpret(Int32,'n'),
-  "o" => reinterpret(Int32,'o'),
-  "p" => reinterpret(Int32,'p'),
-  "q" => reinterpret(Int32,'q'),
-  "r" => reinterpret(Int32,'r'),
-  "s" => reinterpret(Int32,'s'),
-  "t" => reinterpret(Int32,'t'),
-  "u" => reinterpret(Int32,'u'),
-  "v" => reinterpret(Int32,'v'),
-  "w" => reinterpret(Int32,'w'),
-  "x" => reinterpret(Int32,'x'),
-  "y" => reinterpret(Int32,'y'),
-  "z" => reinterpret(Int32,'z'),
-  "0" => reinterpret(Int32,'0'),
-  "1" => reinterpret(Int32,'1'),
-  "2" => reinterpret(Int32,'2'),
-  "3" => reinterpret(Int32,'3'),
-  "4" => reinterpret(Int32,'4'),
-  "5" => reinterpret(Int32,'5'),
-  "6" => reinterpret(Int32,'6'),
-  "7" => reinterpret(Int32,'7'),
-  "8" => reinterpret(Int32,'8'),
-  "9" => reinterpret(Int32,'9'),
-  " " => reinterpret(Int32,' '),
-  ":space:" => reinterpret(Int32,' '),
-  ":up:" => reinterpret(Int32,0x40000052),
-  ":down:" => reinterpret(Int32,0x40000051),
-  ":left:" => reinterpret(Int32,0x40000050),
-  ":right:" => reinterpret(Int32,0x4000004f),
-  ":escape:" => reinterpret(Int32,0x0000001b)
+  "a" => KeyboardKey(reinterpret(Int32,'a')),
+  "b" => KeyboardKey(reinterpret(Int32,'b')),
+  "c" => KeyboardKey(reinterpret(Int32,'c')),
+  "d" => KeyboardKey(reinterpret(Int32,'d')),
+  "e" => KeyboardKey(reinterpret(Int32,'e')),
+  "f" => KeyboardKey(reinterpret(Int32,'f')),
+  "g" => KeyboardKey(reinterpret(Int32,'g')),
+  "h" => KeyboardKey(reinterpret(Int32,'h')),
+  "i" => KeyboardKey(reinterpret(Int32,'i')),
+  "j" => KeyboardKey(reinterpret(Int32,'j')),
+  "k" => KeyboardKey(reinterpret(Int32,'k')),
+  "l" => KeyboardKey(reinterpret(Int32,'l')),
+  "m" => KeyboardKey(reinterpret(Int32,'m')),
+  "n" => KeyboardKey(reinterpret(Int32,'n')),
+  "o" => KeyboardKey(reinterpret(Int32,'o')),
+  "p" => KeyboardKey(reinterpret(Int32,'p')),
+  "q" => KeyboardKey(reinterpret(Int32,'q')),
+  "r" => KeyboardKey(reinterpret(Int32,'r')),
+  "s" => KeyboardKey(reinterpret(Int32,'s')),
+  "t" => KeyboardKey(reinterpret(Int32,'t')),
+  "u" => KeyboardKey(reinterpret(Int32,'u')),
+  "v" => KeyboardKey(reinterpret(Int32,'v')),
+  "w" => KeyboardKey(reinterpret(Int32,'w')),
+  "x" => KeyboardKey(reinterpret(Int32,'x')),
+  "y" => KeyboardKey(reinterpret(Int32,'y')),
+  "z" => KeyboardKey(reinterpret(Int32,'z')),
+  "0" => KeyboardKey(reinterpret(Int32,'0')),
+  "1" => KeyboardKey(reinterpret(Int32,'1')),
+  "2" => KeyboardKey(reinterpret(Int32,'2')),
+  "3" => KeyboardKey(reinterpret(Int32,'3')),
+  "4" => KeyboardKey(reinterpret(Int32,'4')),
+  "5" => KeyboardKey(reinterpret(Int32,'5')),
+  "6" => KeyboardKey(reinterpret(Int32,'6')),
+  "7" => KeyboardKey(reinterpret(Int32,'7')),
+  "8" => KeyboardKey(reinterpret(Int32,'8')),
+  "9" => KeyboardKey(reinterpret(Int32,'9')),
+  "-" => KeyboardKey(reinterpret(Int32,'-')),
+  "=" => KeyboardKey(reinterpret(Int32,'=')),
+  "[" => KeyboardKey(reinterpret(Int32,'[')),
+  "]" => KeyboardKey(reinterpret(Int32,']')),
+  "\\" => KeyboardKey(reinterpret(Int32,'\\')),
+  ":backslash:" => KeyboardKey(reinterpret(Int32,'\\')),
+  ";" => KeyboardKey(reinterpret(Int32,';')),
+  "'" => KeyboardKey(reinterpret(Int32,''')),
+  "," => KeyboardKey(reinterpret(Int32,',')),
+  "." => KeyboardKey(reinterpret(Int32,'.')),
+  "/" => KeyboardKey(reinterpret(Int32,'/')),
+  "`" => KeyboardKey(reinterpret(Int32,'`')),
+  ":space:" => KeyboardKey(reinterpret(Int32,' ')),
+  " " => KeyboardKey(reinterpret(Int32,' ')),
+  ":up:" => KeyboardKey(reinterpret(Int32,0x40000052)),
+  ":down:" => KeyboardKey(reinterpret(Int32,0x40000051)),
+  ":left:" => KeyboardKey(reinterpret(Int32,0x40000050)),
+  ":right:" => KeyboardKey(reinterpret(Int32,0x4000004f)),
+  ":escape:" => KeyboardKey(reinterpret(Int32,0x0000001b)),
+  ":esc:" => KeyboardKey(reinterpret(Int32,0x0000001b)),
+  ":cedrus0:" => CedrusKey(0),
+  ":cedrus1:" => CedrusKey(1),
+  ":cedrus2:" => CedrusKey(2),
+  ":cedrus3:" => CedrusKey(3),
+  ":cedrus4:" => CedrusKey(4),
+  ":cedrus5:" => CedrusKey(5),
+  ":cedrus6:" => CedrusKey(6),
+  ":cedrus7:" => CedrusKey(7),
+  ":cedrus8:" => CedrusKey(8),
+  ":cedrus9:" => CedrusKey(9),
+  ":cedrus10:" => CedrusKey(10),
+  ":cedrus11:" => CedrusKey(11),
+  ":cedrus12:" => CedrusKey(12),
+  ":cedrus13:" => CedrusKey(13),
+  ":cedrus14:" => CedrusKey(14),
+  ":cedrus15:" => CedrusKey(15),
+  ":cedrus16:" => CedrusKey(16),
+  ":cedrus17:" => CedrusKey(17),
+  ":cedrus18:" => CedrusKey(18),
+  ":cedrus19:" => CedrusKey(19)
 )
+
+function show(io::IO,x::CedrusKey)
+  if 0 <= x.code <= 19
+    write(io,"key\":cedrus$(x.code):\"")
+  else
+    write(io,"Weber.CedrusKey($(x.code))")
+  end
+end
+
+function show(io::IO,key::KeyboardKey)
+  found = filter((_,akey) -> isa(akey,KeyboardKey) && akey.code == key.code,
+                 str_to_code)
+  if !isempty(found)
+    found = collect(found)
+    _,j = findmax(map(x -> length(x[1]),found))
+    name = found[j][1]
+    write(io,"key\"$name\"")
+  else
+    write(io,"Weber.KeyboardKey($(key.code))")
+  end
+end
 
 """
     key"keyname"
 
-Generate a key code, using a given lower case letter, or special key.
+Generate a key code, using a single character (e.g. key"q" or key"]"), a
+special-key name, or Cedrus response-pad key.
 
-Implemented special keys include ":space:", ":up:", ":down:", ":left", ":right:"
-and ":escape:".
+Implemented special keys include:
+- ":space:"
+- ":up:"
+- ":down:"
+- ":left"
+- ":right:"
+- ":escape:"
+
+Cedrus response-pad keys are indicated as ":cedrusN:" where N >= 0
+
+If you want to quickly see the name for a given button you can use
+`display_key_codes()`.
+
 """
+
 macro key_str(key)
   try
     str_to_code[key]
@@ -139,71 +216,54 @@ macro key_str(key)
 end
 
 """
-   iskeydown(event,[key])
+     keycode(e::ExpEvent)
 
-Evalutes to true if the event indicates that the given keyboard key (or any key)
-was pressed down. (See `@key_str`)
-
-   iskeydown(key)
-
-Returns a function which tests if an event indicates the given key was pressed
-down.
+  Report the key code for this event, if there is one.
 """
+keycode(e::ExpEvent) = nothing
+keycode(e::CedrusDownEvent) = CedrusKey(e.code)
+keycode(e::CedrusUpEvent) = CedrusKey(e.code)
+keycode(e::KeyDownEvent) = KeyboardKey(e.code)
+keycode(e::KeyUpEvent) = KeyboardKey(e.code)
+
+"""
+     iskeydown(event,[key])
+
+  Evalutes to true if the event indicates that the given key (or any key)
+  was pressed down. (See `@key_str`)
+
+     iskeydown(key)
+
+  Returns a function which tests if an event indicates the given key was pressed
+  down.
+  """
 iskeydown(event::ExpEvent) = false
 iskeydown(event::KeyDownEvent) = true
-iskeydown(keycode::Number) = e -> iskeydown(e,keycode::Number)
-iskeydown(event::ExpEvent,keycode::Number) = false
-iskeydown(event::KeyDownEvent,keycode::Number) = event.code == keycode
+iskeydown(event::CedrusDownEvent) = true
+iskeydown(key::KeyboardKey) = e -> iskeydown(e,key::KeyboardKey)
+iskeydown(key::CedrusKey) = e -> iskeydown(e,key::CedrusKey)
+iskeydown(event::ExpEvent,keycode::Key) = false
+iskeydown(event::KeyDownEvent,key::KeyboardKey) = event.code == key.code
+iskeydown(event::CedrusDownEvent,key::CedrusKey) = event.code == key.code
 
 """
-   iskeyup(event,[key])
+     iskeyup(event,[key])
 
-Evalutes to true if the event indicates that the given keyboard key (or any key)
-was released.  (See `@key_str`)
+  Evalutes to true if the event indicates that the given keyboard key (or any key)
+  was released.  (See `@key_str`)
 
-   iskeyup(key)
+     iskeyup(key)
 
-Returns a function which tests if an event indicates the given key was released.
-"""
+  Returns a function which tests if an event indicates the given key was released.
+  """
 iskeyup(event::ExpEvent) = false
 iskeyup(event::KeyUpEvent) = true
-iskeyup(keycode::Number) = e -> iskeyup(e,keycode)
-iskeyup(event::ExpEvent,keycode::Number) = false
-iskeyup(event::KeyUpEvent,keycode::Number) = event.code == keycode
-
-"""
-    ispad_down(event,[key])
-
-Evalutes to true if the event indicates that the given response pad key
-(or any key) was pressed.
-
-    ispad_down(key)
-
-Returns a fucntion which tests if an event indicates that a given response pad
-key was pressed
-"""
-ispad_down(event::ExpEvent) = false
-ispad_down(event::XID_DownEvent) = true
-ispad_down(keycode::Number) = e -> ispad_down(e,keycode)
-ispad_down(event::ExpEvent,keycode::Number) = false
-ispad_down(event::XID_DownEvent,keycode::Number) = event.code == keycode
-
-"""
-    ispad_up(event,[key])
-
-Evalutes to true if the event indicates that the given response pad key
-(or any key) was relased.
-
-    ispad_up(key)
-
-Returns a fucntion which tests if an event indicates that a given response pad
-key was released
-"""
-ispad_up(event::ExpEvent) = false
-ispad_up(event::XID_UpEvent) = true
-ispad_up(keycode::Number) = e -> ispad_up(e,keycode)
-ispad_up(event::ExpEvent,keycode::Number) = false
-ispad_up(event::XID_UpEvent,keycode::Number) = event.code == keycode
+iskeyup(event::CedrusUpEvent) = true
+iskeyup(key::KeyboardKey) = e -> iskeydown(e,key)
+iskeyup(key::CedrusKey) = e -> iskeydown(e,key)
+iskeyup(event::ExpEvent,keycode::Key) = false
+iskeyup(event::KeyUpEvent,key::KeyboardKey) = event.code == key.code
+iskeyup(event::CedrusUpEvent,key::CedrusKey) = event.code == key.code
 
 isfocused(event::ExpEvent) = false
 isfocused(event::WindowFocused) = true
@@ -225,6 +285,14 @@ const sym_ptr = 0x0000000000000004        # offsetof(SDL_Keysym,sym)
 const win_event_ptr = 0x000000000000000c  # offsetof(SDL_WindowEvent,event)
 const event_size = 0x0000000000000038     # sizeof(SDL_Event)
 
+"""
+      reset_resposne()
+
+  Reset the response timer for all Cedrus response-pad devices.
+
+  This function will rarely need to be explicitly called. The response timer is
+  automatically reset at the start of each trial.
+  """
 function reset_response()
   for dev in pyxid_devices
     if dev[:is_response_device]()
@@ -265,11 +333,13 @@ function event_streamer(win,quit_callback)
       if dev[:is_response_device]()
         dev[:poll_for_response]()
         while dev[:response_queue_size]() > 0
-          resp = dev[:get_next_response]
-          if res[:pressed]
-            push!(events,XID_DownEvent(resp[:key],resp[:port],resp[:time],time))
+          resp = dev[:get_next_response]()
+          if resp["pressed"]
+            push!(events,CedrusDownEvent(resp["key"],resp["port"],
+                                         resp["time"],time))
           else
-            push!(events,XID_UpEvent(resp[:key],resp[:port],resp[:time],time))
+            push!(events,CedrusUpEvent(resp["key"],resp["port"],
+                                       resp["time"],time))
           end
         end
       end

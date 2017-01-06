@@ -34,8 +34,8 @@ const concrete_events = [
   WindowUnfocused,
   EndPauseEvent,
   EmptyEvent,
-  XID_DownEvent,
-  XID_UpEvent
+  CedrusDownEvent,
+  CedrusUpEvent
 ]
 
 abstract Moment
