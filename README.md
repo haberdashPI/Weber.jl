@@ -200,11 +200,11 @@ and higher level primitives.
 You can create visual stimuli by using `load` to open images or create a 2d
 array (for grayscale) or 3d array (for color) representing pixel data. You can
 then use `visual` to preapre them for display (analogous to `sound`) and
-`display` to show them to the subject. The function `visual` can also be used to
-render text to the screen.
+`display` (analogous to `play`) to show them to the subject. The function
+`visual` can also be used to render text to the screen.
 
 There is also an `addbreak_every` primitive not demonstrated here that adds a
-break every N trials. Refer to its documentation for details. Future Pyschotask
+break every N trials. Refer to its documentation for details. Future Weber
 versions will probably include many more such primitives to simplify the
 creation of experiments.
 
