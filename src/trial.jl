@@ -6,7 +6,7 @@ import Base: run, time, >>, length, unshift!, isempty
 
 export Experiment, setup, run, addtrial, addbreak, addpractice, moment,
   await_response, record, timeout, when, looping, endofpause, experiment_trial,
-  experiment_metadata
+  experiment_offset
 
 const default_moment_resolution = 2000
 const default_input_resolution = 60
@@ -536,6 +536,9 @@ Returns the current trial of the experiment.
 """
 experiment_trial(exp) = exp.data.trial
 experiment_trial() = experiment_trial(get_experiment())
+experiment_offset(exp) = exp.data.offset
+experiment_offset() = experiment_offset(get_experiment())
+
 
 """
    experiment_metadata() = Dict{Symbol,Any}()
@@ -585,7 +588,8 @@ Adds a trial to the experiment, consisting of the specified moments.
 
 Each trial increments a counter tracking the number of trials, and (normally) an
 offset counter. These two numbers are reported on every line of the resulting
-data file (see `record`).
+data file (see `record`). They can be retrieved using `experiment_trial`
+and `experiment_offset`.
 
 # Conditional Trials
 
