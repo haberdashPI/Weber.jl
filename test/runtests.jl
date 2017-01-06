@@ -41,6 +41,6 @@ seq_trial_events,seq_trial_index = find_timing() do record
 end
 
 @test seq_events == [:a,:b,:c]
-@test all(abs(diff(seq_times) - 0.01) .< 0.002)
+@test all(abs(diff(seq_times) - 0.01) .< Weber.timing_tolerance)
 @test seq_trial_events == [:a,:b,:c,:a,:b,:c,:a,:b,:c]
 @test seq_trial_index == [1,1,1,2,2,2,3,3,3]
