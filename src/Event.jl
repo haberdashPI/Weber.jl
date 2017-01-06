@@ -302,7 +302,11 @@ function reset_response()
   end
 end
 
-function event_streamer(win,quit_callback)
+function event_streamer(win::NullWindow,quit_callback)
+  helper(time::Float64) = Signal(ExpEvent,EmptyEvent())
+end
+
+function event_streamer(win::SDLWindow,quit_callback)
   function helper(time::Float64)
     events = Signal(ExpEvent,EmptyEvent())
 

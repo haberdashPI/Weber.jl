@@ -115,6 +115,7 @@ immutable ExperimentInfo
   start::DateTime
   header::Array{Symbol}
   file::String
+  hide_output::Bool
 end
 
 # ongoing state about an experiment that changes moment to moment
@@ -146,7 +147,7 @@ immutable ExperimentState
   info::ExperimentInfo
   data::ExperimentData
   signals::ExperimentSignals
-  win::SDLWindow
+  win::ExperimentWindow
 end
 
 function findkwd(kwds,sym,default)
@@ -357,7 +358,9 @@ function run(exp::Experiment)
     focus(exp.state.win)
     exp.runfn()
   finally
-    info("Experiment terminated at offset $(exp.state.data.offset).")
+    if !exp.state.info.hide_output
+      info("Experiment terminated at offset $(exp.state.data.offset).")
+    end
   end
   nothing
 end
@@ -374,6 +377,8 @@ end
 function ExperimentState(debug::Bool,skip::Int,header::Array{Symbol};
                          moment_resolution = default_moment_resolution,
                          data_dir = "data",
+                         null_window = false,
+                         hide_output = false,
                          input_resolution = default_input_resolution,
                          width=exp_width,height=exp_height,info_values...)
   mkpath(data_dir)
@@ -384,7 +389,7 @@ function ExperimentState(debug::Bool,skip::Int,header::Array{Symbol};
   info_str = join(map(x -> x[2],info_values),"_")
   filename = joinpath(data_dir,info_str*"_"*timestr*".csv")
   einfo = ExperimentInfo(info_values,meta,moment_resolution,start_date,
-                         header,filename)
+                         header,filename,hide_output)
 
   offset = 0
   trial = 0
@@ -405,7 +410,7 @@ function ExperimentState(debug::Bool,skip::Int,header::Array{Symbol};
   other = Dict{Symbol,Signal}()
   signals = ExperimentSignals(running,started,pause_events,delta_error,other)
 
-  win = window(width,height,fullscreen=!debug,accel=!debug)
+  win = window(width,height,fullscreen=!debug,accel=!debug,null=null_window)
 
   exp = ExperimentState(einfo,data,signals,win)
 
@@ -449,11 +454,12 @@ function ExperimentState(debug::Bool,skip::Int,header::Array{Symbol};
     false
   end
 
-  bad_times = throttle(1,filter(x -> x > timing_tolerance,0.0,delta_error))
-  good_times = throttle(1,filter(x -> x < timing_tolerance,0.0,delta_error))
-  exp.signals.other[:timing_warn] = map(bad_times) do err
-    if err != 0.0
-      warn("""
+  if !hide_output
+    bad_times = throttle(1,filter(x -> x > timing_tolerance,0.0,delta_error))
+    good_times = throttle(1,filter(x -> x < timing_tolerance,0.0,delta_error))
+    exp.signals.other[:timing_warn] = map(bad_times) do err
+      if err != 0.0
+        warn("""
 
 The latency of trial moments has exceeded desirable levels ($err seconds). This
 normally occurs when the experiment first starts up, but if unacceptable levels
@@ -462,13 +468,13 @@ computer or running this program on a faster machine. Aparaent poor latency can
 also occur sometimes when you pause an experiment, but this is usually a false
 alarm.
 
-           """)
-      record(exp,"bad_delta_latency($err)")
+             """)
+        record(exp,"bad_delta_latency($err)")
+      end
     end
-  end
-  exp.signals.other[:timing_info] = map(good_times) do err
-    if err != 0.0
-      info("""
+    exp.signals.other[:timing_info] = map(good_times) do err
+      if err != 0.0
+        info("""
 
 The latency of trial moments has fallen to an acceptable level ($err
 seconds). It may fall further, but unless it exceedes a tolerable level, you
@@ -479,8 +485,9 @@ sensors and microphones. You can use the scripts available in
 $(Pkg.dir("Weber","test")) to test the timing of auditory and visual
 stimuli presented with Weber.
 
-           """)
-      record(exp,"good_delta_latency($err)")
+             """)
+        record(exp,"good_delta_latency($err)")
+      end
     end
   end
 
@@ -524,7 +531,7 @@ end
 Returns the current trial of the experiment.
 """
 experiment_trial(exp) = exp.data.trial
-experiment_trial() = trial(get_experiment())
+experiment_trial() = experiment_trial(get_experiment())
 
 """
    experiment_metadata() = Dict{Symbol,Any}()

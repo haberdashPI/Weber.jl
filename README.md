@@ -171,7 +171,7 @@ end
 ```
 
 This section of the program is the where all trials of the experiment are
-actually created. It adds several breaks, which can be used to give the subject
+created. It adds several breaks, which can be used to give the subject
 useful information or let them rest. Then it adds 5 practice trials, and a total
 of 60 actual trials. Weber will automatically record the trial number for
 each trial (added using `addtrial`) on each line of the resulting data
@@ -258,12 +258,15 @@ For the 0.2.0 release
 - [x] debug (or remove) harmonic_complex
 - [x] test responses to Cedrus XID devices (create example for reading buttons)
 - [x] test `play` timing (using a microphone)
-- [ ] test `display` timing (using a video camera)
-- [ ] to help prevent regressions, create tests to check on timing
-      as reported by record events.
-
-- [ ] submit the package to METADATA.jl
+- [x] create some tests
+- [x] submit the package to METADATA.jl
 - [x] use the version number of Weber.jl indicated by Pkg
+
+For the 0.2.x releases
+- [ ] test `display` timing (using a video camera)
+- [ ] rename `display_key_codes`
+- [ ] create a calibration program
+- [ ] add remaining special keys to @key_str
 
 For the 0.3.0 release
 - [ ] edit/refine the user manual
@@ -271,7 +274,9 @@ For the 0.3.0 release
 - [ ] create examples to demonstrate all package features
 - [ ] allow calls to Cedrus stim tracker??
 - [ ] replace interactive text input with simple Gtk window or SDL based GUI??
-- [ ] support linux (get BinDeps working for installation)
+- [ ] port to linux
 
 For the 0.4.0 release?
 - [ ] video playback
+- [ ] track audio buffer timing so we can zero-pad sounds to get sub-buffer-size timing
+  acuracy.

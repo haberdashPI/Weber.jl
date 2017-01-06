@@ -32,7 +32,16 @@ function find_font(name,dirs)
         join(dirs,", "," and ")*".")
 end
 
-type SDLWindow
+abstract ExperimentWindow
+type NullWindow <: ExperimentWindow
+  w::Cint
+  h::Cint
+  closed::Bool
+end
+visual(win::NullWindow,args...;kwds...) = nothing
+display(win::NullWindow,r;kwds...) = nothing
+
+type SDLWindow <: ExperimentWindow
   data::Ptr{Void}
   renderer::Ptr{Void}
   w::Cint
@@ -58,10 +67,13 @@ Create a window to which various objects can be rendered. See the `visual`
 method.
 """
 function window(width=1024,height=768;fullscreen=true,
-                title="Experiment",accel=true)
-  if !display_is_setup[]
+                title="Experiment",accel=true,null=false)
+
+  if !display_is_setup[] && !null
     setup_display()
     display_is_setup[] = true
+  elseif null
+    return NullWindow(width,height,false)
   end
 
   if !ccall((:SDL_SetHint,_psycho_SDL2),Bool,(Cstring,Cstring),
@@ -128,8 +140,9 @@ function close(win::SDLWindow)
 
   win.closed = true
 end
+close(win::NullWindow) = win.closed = true
 
-function clear(window::SDLWindow,color::Color)
+function clear(window,color::Color)
   clear(window,convert(RGB{U8},color))
 end
 
@@ -142,6 +155,7 @@ function clear(window::SDLWindow,color::RGB{U8}=colorant"gray")
   ccall((:SDL_RenderClear,_psycho_SDL2),Void,(Ptr{Void},),window.renderer)
   nothing
 end
+clear(win::NullWindow,color) = nothing
 
 type SDLFont
   data::Ptr{Void}
@@ -195,7 +209,7 @@ and heights (for y), with (0,0) at the center of the screen.
     By using using the `+` operator, multiple visual objects can be composed
     into one object, so that they are displayed together
 """
-visual(x;keys...) = visual(get_experiment().win,x;keys...)
+visual(x,args...;keys...) = visual(get_experiment().win,x,args...;keys...)
 
 abstract SDLRendered
 abstract SDLSimpleRendered <: SDLRendered
@@ -527,6 +541,7 @@ function show_drawn(window::SDLWindow)
   ccall((:SDL_RenderPresent,_psycho_SDL2),Void,(Ptr{Void},),window.renderer)
   nothing
 end
+show_drawn(win::NullWindow) = nothing
 
 # called in __init__() to create display_stacks global variable
 const SDL_INIT_VIDEO = 0x00000020
@@ -661,6 +676,8 @@ function save_display(window::SDLWindow)
     saved_display[] = OrderedSet{SDLRendered}()
   end
 end
+save_display(win::NullWindow) = nothing
+
 function restore_display(window::SDLWindow)
   if window in keys(display_signals)
     push!(display_signals[window],RestoreDisplay(saved_display[]))
@@ -669,7 +686,9 @@ function restore_display(window::SDLWindow)
     show_drawn(window)
   end
 end
+restore_display(win::NullWindow) = nothing
 
 function focus(window::SDLWindow)
   ccall((:SDL_RaiseWindow,_psycho_SDL2),Void,(Ptr{Void},),window.data)
 end
+focus(win::NullWindow) = nothing
