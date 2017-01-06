@@ -30,7 +30,7 @@ else
 end
 
 # setup error reporting functions (these are the only calls to SDL that occur
-# more all that much, so they're the only calls I've wrapped).
+# all that often, so they're the only calls I've wrapped directly).
 SDL_GetError() = unsafe_string(ccall((:SDL_GetError,_psycho_SDL2),Cstring,()))
 Mix_GetError = SDL_GetError
 TTF_GetError = SDL_GetError
@@ -46,6 +46,9 @@ end
 
 import FileIO: load, save
 export load, save
+
+const sdl_is_setup = Array{Bool}()
+sdl_is_setup[] = false
 
 include(joinpath(dirname(@__FILE__),"video.jl"))
 include(joinpath(dirname(@__FILE__),"sound.jl"))

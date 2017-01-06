@@ -552,6 +552,10 @@ function setup_display()
   if init < 0
     error("Failed to initialize SDL: "*SDL_GetError())
   end
+  if !sdl_is_setup[]
+    sdl_is_setup[] = true
+    atexit(() -> ccall((:SDL_Quit,_psycho_SDL2),Void,()))
+  end
 
   #=
   if !sdl_compose_implemented && Pkg.installed("Compose") != nothing

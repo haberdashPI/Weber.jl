@@ -315,6 +315,10 @@ function setup_sound(;sample_rate_Hz=samplerate(sound_setup_state),
     if init < 0
       error("Failed to initialize SDL: "*SDL_GetError())
     end
+    if !sdl_is_setup[]
+      sdl_is_setup[] = true
+      atexit(() -> ccall((:SDL_Quit,_psycho_SDL2),Void,()))
+    end
   end
   if samplerate(sound_setup_state) != sample_rate_Hz
     warn("The sample rate is being changed from "*
@@ -332,6 +336,7 @@ function setup_sound(;sample_rate_Hz=samplerate(sound_setup_state),
   if mixer_init < 0
     error("Failed to initialize sound: "*Mix_GetError())
   end
+  atexit(() -> ccall((:Mix_CloseAudio,_psycho_SDL2_mixer),Void,()))
 end
 
 type PlayingSound
