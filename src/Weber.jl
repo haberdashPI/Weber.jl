@@ -1,14 +1,15 @@
 __precompile__()
 
 module Weber
+old = pwd()
 try
-  old = pwd()
   cd(dirname(@__FILE__))
   global const version = convert(VersionNumber,
                                  readstring(`git describe --tags`))
-  cd(old)
 catch
   global const version = Pkg.installed("Weber")
+finally
+  cd(old)
 end
 
 # load binary library dependencies
