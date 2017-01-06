@@ -8,7 +8,7 @@ export Experiment, setup, run, addtrial, addbreak, addpractice, moment,
   await_response, record, timeout, when, looping, endofpause, experiment_trial,
   experiment_metadata
 
-const default_moment_resolution = 1000
+const default_moment_resolution = 2000
 const default_input_resolution = 60
 const exp_width = 1024
 const exp_height = 768
@@ -1010,7 +1010,7 @@ function process(exp::ExperimentState,queue::MomentQueue,event::ExpEvent)
   queue
 end
 
-const timing_tolerance = 0.002
+const timing_tolerance = 0.001
 function check_timing(exp::ExperimentState,moment::Moment,
                       run_t::Float64,last::Float64)
   d = delta_t(moment)
