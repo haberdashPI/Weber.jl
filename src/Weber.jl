@@ -38,10 +38,10 @@ end
 import FileIO: load, save
 export load, save
 
-include(joinpath(dirname(@__FILE__),"VideoUtil.jl"))
-include(joinpath(dirname(@__FILE__),"SoundUtil.jl"))
-include(joinpath(dirname(@__FILE__),"Event.jl"))
-include(joinpath(dirname(@__FILE__),"Trial.jl"))
+include(joinpath(dirname(@__FILE__),"video.jl"))
+include(joinpath(dirname(@__FILE__),"sound.jl"))
+include(joinpath(dirname(@__FILE__),"event.jl"))
+include(joinpath(dirname(@__FILE__),"trial.jl"))
 include(joinpath(dirname(@__FILE__),"primitives.jl"))
 include(joinpath(dirname(@__FILE__),"helpers.jl"))
 
