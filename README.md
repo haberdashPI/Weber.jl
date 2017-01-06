@@ -8,13 +8,14 @@
 
 # About
 
-This package is a relatively recent effort to create a simple framework for
-running psychology experiments that present stimuli and record responses in
-real-time. It is similar in concept to the likes of Presentation or ePrime. It
-currently runs on Windows and Mac OS X, and supports keyboard input or
-Cedrus response-pad input.
+Weber can be used to generate simple pscyhology experiments that present visual
+and auditory stimuli at precise times. The emphasis is currently on auditory
+psychophysics, but the package has the features necessary to generate most
+visual stimuli one would desire as well. It is named after Ernst Weber. Weber
+runs on Windows and Mac OS X, and supports keyboard input or Cedrus response-pad
+input.
 
-It should be easy to port this to linux, I just don't have
+It should be very easy to port this to linux, I just don't have
 linux currently installed to test for proper installation of SDL2, and so I
 haven't gotten around to this.
 
@@ -27,11 +28,6 @@ julia> Pkg.build("Weber")
 ```
 
 # Usage
-
-Weber can be used to generate simple pscyhology experiments that present
-visual and auditory stimuli at precise times. The emphasis is currently on
-auditory psychophysics, but the package has the features necessary to generate
-most visual stimuli one would desire as well.
 
 The following is a simple example to help demonstrate the basic features of the
 package. Refer to the examples directory for several, more realistic, real-world
@@ -137,6 +133,13 @@ moment. The call to `moment` is used to present the tone (e.g. `play(low)`). The
 the a subdirectory called data. The `await_response` moment waits until the user
 presses any key before moving on to the next moment (in this case, the end of
 the trail).
+
+The `response` function uses the macro `key"str"` to reference keyboard keys.
+Look up the documentation for `@key_str` for more details. There are
+several lower-level functions for working with user input as well. Look at the
+description of watchers in the documentation of  `addtrial`, and refer
+to the event processing methods `time`, `response_time`, `keycode`, `iskeydown`
+`iskeyup`, `reset_response`, `isfocused` and `isunfocused`.
 
 ```julia
 exp = Experiment(sid = sid,condition = "ConditionA",skip=skip,columns=[:actual])
@@ -253,7 +256,7 @@ For the 0.2.0 release
 
 - [x] allow resetting of Cedrus response timer
 - [x] debug (or remove) harmonic_complex
-- [ ] test responses to Cedrus XID devices (create example for reading buttons)
+- [x] test responses to Cedrus XID devices (create example for reading buttons)
 - [x] test `play` timing (using a microphone)
 - [ ] test `display` timing (using a video camera)
 - [ ] to help prevent regressions, create tests to check on timing
