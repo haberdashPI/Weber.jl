@@ -1,6 +1,14 @@
 __precompile__()
 
 module Weber
+
+try
+  @assert sizeof(Int) == 8
+catch
+  error("Weber can only be run as a 64-bit program. Please use a 64-bit ",
+        "implementation of Julia.")
+end
+
 old = pwd()
 try
   cd(dirname(@__FILE__))
