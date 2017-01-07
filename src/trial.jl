@@ -205,7 +205,12 @@ function record_header(exp)
   open(x -> println(x,join(columns,",")),exp.info.file,"w")
 end
 
-function record(exp::ExperimentState,code;kwds...)
+function record(exp::ExperimentState,win,code;kwds...)
+  nothing
+end
+
+function record(exp::ExperimentState,win::SDLWindow,code;kwds...)
+
   extra = [:psych_version => Weber.version,
            :start_date => Dates.format(exp.info.start,"yyyy-mm-dd"),
            :start_time => Dates.format(exp.info.start,"HH:MM:SS"),
@@ -239,7 +244,9 @@ should be no loss of data if the program is terminated prematurely for some
 reason.
 """
 function record(code;kwds...)
-  record(get_experiment(),code;kwds...)
+  exp = get_experiment()
+  win = exp.win
+  record(exp,win,code;kwds...)
 end
 
 const experiment_context = Array{Nullable{ExperimentState}}()
