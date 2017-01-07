@@ -63,7 +63,7 @@ type OffsetStartMoment <: AbstractTimedMoment
   expanding::Bool
 end
 
-type FinalMoment <: AbstractTimedMoment
+type FinalMoment <: SimpleMoment
   run::Function
 end
 
@@ -98,12 +98,15 @@ front(m::MomentQueue) = front(m.data)
 
 function expand(m::ExpandingMoment,q::MomentQueue)
   if m.condition()
+    if !m.repeat
+      dequeue!(q)
+    end
+
     for x in m.data
       unshift!(q.data,x)
     end
-    if m.repeat
-      unshift!(q.data,m)
-    end
+
+    unshift!(q.data,m)
   end
 end
 
@@ -312,7 +315,7 @@ function setup(fn::Function,exp::Experiment)
     experiment_context[] = Nullable{ExperimentState}()
 
     # the last moment run cleans up the experiment
-    enqueue!(exp.state.data.moments,final_moment(t -> cleanup()))
+    enqueue!(exp.state.data.moments,final_moment(() -> cleanup()))
   catch e
     close(exp.state.win)
     gc_enable(true)
@@ -591,16 +594,23 @@ offset counter. These two numbers are reported on every line of the resulting
 data file (see `record`). They can be retrieved using `experiment_trial`
 and `experiment_offset`.
 
-# Conditional Trials
+# Conditional and Looping Trials
 
 If a `when` function (with no arguments) is specified the trial only occurs if
 the function evaluates to true. If a `loop` function is specified the trial
 repeats until the function (with no arguments) evaluates to false. The offset
-counter is not updated if `when` or `loop` are != `nothing`. Offsets
-are used to restart an experiment at some well defined time point. Since
-`when` and `loop` lead to trials being run some aribtrary number of times
-the number of offsets that they increment would vary from run to run, and
-so this would prevent the `offset` from being well defined from run to run.
+counter is only udpated once by a looping trial, even if many trial occur
+because of the loop.  This is because the loop may result in an aribtrary number
+of trials, and an offset number must refer to a well defined event in the
+experiment, that will occur every single time the expeirment runs. If the loop
+function does not depend on some state that updates during the experiment
+(e.g. by changing a variable loop depends on inside of a moment), then it is
+recommended that you don't use a loop function and instead simply add multiple
+trials, like so:
+
+    for i in 1:N
+      addtrial(...)
+    end
 
 # How to create moments
 
@@ -830,7 +840,7 @@ function offset_start_moment(fn::Function=t->nothing,count_trials=false)
 end
 
 function final_moment(fn::Function)
-  precompile(fn,(Float64,))
+  precompile(fn,())
   FinalMoment(fn)
 end
 
@@ -881,7 +891,7 @@ listed moments (possibly in nested iterable objects) until the `when` function
 (which takes no arguments) evaluates to false.
 """
 function looping(moments...;when=() -> error("infinite loop!"))
-  when(when,moments...;loop=true)
+  Weber.when(when,moments...;loop=true)
 end
 
 """
@@ -905,11 +915,24 @@ end
 delta_t(moment::OffsetStartMoment) = 0.0
 delta_t(moment::FinalMoment) = 0.0
 
+function handle(exp::ExperimentState,q::MomentQueue,moment::FinalMoment,x)
+  # if there's a non-empty moment queue...
+  qs = filter(x -> x != q && !isempty(x),exp.data.submoments)
+  if !isempty(qs)
+    # ...add the final moment to one of the non-empty queues
+    enqueue!(first(qs),moment)
+  else # if there are no remaining non-empty moment queues...
+    # ...end the experiment
+    moment.run()
+  end
+  true
+end
+
 run(moment::TimedMoment,time::Float64) = moment.run(time)
 run(moment::OffsetStartMoment,time::Float64) = moment.run(time)
-run(moment::FinalMoment,time::Float64) = moment.run(time)
 
-function handle(exp::ExperimentState,moment::AbstractTimedMoment,time::Float64)
+function handle(exp::ExperimentState,q::MomentQueue,
+                moment::AbstractTimedMoment,time::Float64)
   try
     exp.data.last_time = time
     run(moment,time)
@@ -919,7 +942,8 @@ function handle(exp::ExperimentState,moment::AbstractTimedMoment,time::Float64)
   true
 end
 
-function handle(exp::ExperimentState,moment::AbstractTimedMoment,event::ExpEvent)
+function handle(exp::ExperimentState,q::MomentQueue,
+                moment::AbstractTimedMoment,event::ExpEvent)
   false
 end
 
@@ -927,7 +951,8 @@ function delta_t(moment::ResponseMoment)
   (moment.timeout_delta_t > 0.0 ? moment.timeout_delta_t : Inf)
 end
 
-function handle(exp::ExperimentState,moment::ResponseMoment,time::Float64)
+function handle(exp::ExperimentState,q::MomentQueue,
+                moment::ResponseMoment,time::Float64)
   try
     exp.data.last_time = time
     moment.timeout(time)
@@ -937,7 +962,8 @@ function handle(exp::ExperimentState,moment::ResponseMoment,time::Float64)
   true
 end
 
-function handle(exp::ExperimentState,moment::ResponseMoment,event::ExpEvent)
+function handle(exp::ExperimentState,q::MomentQueue,
+                moment::ResponseMoment,event::ExpEvent)
   handled = true
   try
     handled = moment.respond(event)
@@ -966,6 +992,9 @@ end
 function keep_skipping(exp,moment::ExpandingMoment)
   if moment.update_offset
     exp.data.offset += 1
+    # each expanding moment only ever incriments the offset
+    # counter once, event if it creates a loop.
+    moment.update_offset = false
   end
   exp.data.offset < exp.data.skip_offsets
 end
@@ -977,17 +1006,17 @@ function skip_offsets(exp,queue)
   end
 end
 
-function handle(exp::ExperimentState,moments::CompoundMoment,x)
+function handle(exp::ExperimentState,q::MomentQueue,moments::CompoundMoment,x)
   queue = Deque{Moment}()
   for moment in moments.data
     push!(queue,moment)
   end
-  push!(exp.data.submoments,MomentQueue(queue,0))
+  push!(exp.data.submoments,MomentQueue(queue,q.last))
   true
 end
 
-function handle(exp::ExperimentState,m::ExpandingMoment,x)
-  expand(m,exp.data.moments)
+function handle(exp::ExperimentState,queue::MomentQueue,m::ExpandingMoment,x)
+  expand(m,queue)
   true
 end
 
@@ -1002,7 +1031,7 @@ function process(exp::ExperimentState,queue::MomentQueue,event::ExpEvent)
 
   if !isempty(queue)
     moment = front(queue)
-    handled = handle(exp,moment,event)
+    handled = handle(exp,queue,moment,event)
     if handled
       dequeue!(queue)
       if update_last(moment)
@@ -1043,7 +1072,7 @@ function process(exp::ExperimentState,queue::MomentQueue,t::Float64)
         run_time = offset + time()
       end
       check_timing(exp,moment,t,queue.last)
-      handled = handle(exp,moment,t)
+      handled = handle(exp,queue,moment,t)
       if handled
         dequeue!(queue)
         if update_last(moment)
