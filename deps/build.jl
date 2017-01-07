@@ -1,21 +1,19 @@
 using Conda
+using PyCall
 
 downloaddir = joinpath(dirname(@__FILE__),"downloads")
 bindir = joinpath(dirname(@__FILE__),"usr","lib")
 
+# remove any old build files
 for d in [downloaddir,bindir]
   rm(d,recursive=true,force=true)
   mkpath(d)
 end
 
-# NOTE: I'm not using BinDeps.jl here because I don't yet understand
-# it, and was having difficulty troubleshooting problems.
+################################################################################
+# install SDL2 and plugins
 
-SDL2 = "unknown"
-SDL2_mixer = "unknown"
-SDL2_ttf = "unknown"
-
-if is_windows()
+@static if is_windows()
   # do I need install 7z? (does this require julia bin directoy on PATH??)
   # I'm not using WinRPM here, because it doesn't include the SDL extensions
   function setupbin(library,uri)
@@ -40,6 +38,13 @@ if is_windows()
   finally
     rm(downloaddir,recursive=true,force=true)
   end
+
+  deps = joinpath(dirname(@__FILE__),"deps.jl")
+  open(deps,"w") do s
+    for (var,val) in [:SDL2 => SDL2, :SDL2_mixer => SDL2_mixer,:SDL2_ttf => SDL2_ttf]
+      println(s,"const _psycho_$var = \"$val\"")
+    end
+  end
 elseif is_apple()
   # since the Homebrew.jl binaries don't work and the SDL website uses a
   # framework, which you can't easily link to via julia, I'm just downloading
@@ -55,24 +60,67 @@ elseif is_apple()
   finally
     rm(downloaddir,recursive=true,force=true)
   end
+
+  deps = joinpath(dirname(@__FILE__),"deps.jl")
+  open(deps,"w") do s
+    for (var,val) in [:SDL2 => SDL2, :SDL2_mixer => SDL2_mixer,:SDL2_ttf => SDL2_ttf]
+      println(s,"const _psycho_$var = \"$val\"")
+    end
+  end
 elseif is_linux()
+  # using BinDeps
+  # @BinDeps.setup
+
+  # SDL2 = library_dependency("libSDL", aliases = ["libSDL", "SDL"])
+  # SDL2_mixer = library_dependency("libSDL_mixer", aliases = ["libSDL_mixer"], depends = [libSDL], os = :Unix)
+  # SDL2_ttf = library_dependency("libSDL_ttf", aliases = ["libSDL_ttf"], depends = [libSDL], os = :Unix)
+
+  # provides(AptGet,
+	#     	{"libsdl1.2-dev" => libSDL,
+	#     	 "libsdl-mixer1.2-dev" => SDLmixer,
+	#     	 "libsdl-ttf2.0-dev" => SDLttf})
+
+  # provides(Yum,
+  #   		   {"SDL-devel" => libSDL,
+  #   		    "SDL_mixer-devel" => SDLmixer,
+  #   		    "SDL_ttf-devel" => SDLttf})
+
+  # @BinDeps.install [:SDL2 => :SDL2]
+
   error("I don't have access to an available linux distro to troubleshoot"*
-       " this program, so I have left it unimplemented.")
+        " this program, so I have left the linux install unimplemented.")
 else
   error("Unsupported operating system.")
 end
 
-@assert SDL2 != "unknown"
-@assert SDL2_mixer != "unknown"
-@assert SDL2_ttf != "unknown"
-
-deps = joinpath(dirname(@__FILE__),"deps.jl")
-open("deps.jl","w") do s
-  for (var,val) in [:SDL2 => SDL2, :SDL2_mixer => SDL2_mixer,:SDL2_ttf => SDL2_ttf]
-    println(s,"const _psycho_$var = \"$val\"")
-  end
-end
-
+################################################################################
 # install PyXID package
-Conda.add_channel("https://conda.anaconda.org/erik")
-Conda.add("pyxid")
+
+try
+  # try using conda
+  Conda.add_channel("https://conda.anaconda.org/erik")
+  Conda.add("pyxid")
+catch
+  # try using pip
+  try
+    pip = pyimport("pip")
+  catch
+    # If it is not found, install it
+    get_pip = joinpath(dirname(@__FILE__), "get-pip.py")
+    download("https://bootstrap.pypa.io/get-pip.py", get_pip)
+    run(`$(PyCall.python) $get_pip --user`)
+  end
+
+  pip = pyimport("pip")
+
+  args = UTF8String[]
+  if haskey(ENV, "http_proxy")
+    push!(args, "--proxy")
+    push!(args, ENV["http_proxy"])
+  end
+  push!(args, "install")
+  push!(args, "--user")
+  push!(args, "pyxid")
+
+  pip[:main](args)
+end
