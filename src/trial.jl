@@ -1053,7 +1053,7 @@ function process(exp::ExperimentState,queue::MomentQueue,event::ExpEvent)
   queue
 end
 
-const timing_tolerance = 0.001
+const timing_tolerance = 0.002
 function check_timing(exp::ExperimentState,moment::Moment,
                       run_t::Float64,last::Float64)
   d = delta_t(moment)
