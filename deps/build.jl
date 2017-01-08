@@ -96,31 +96,6 @@ end
 ################################################################################
 # install PyXID package
 
-try
-  # try using conda
-  Conda.add_channel("https://conda.anaconda.org/erik")
-  Conda.add("pyxid")
-catch
-  # try using pip
-  try
-    pip = pyimport("pip")
-  catch
-    # If it is not found, install it
-    get_pip = joinpath(dirname(@__FILE__), "get-pip.py")
-    download("https://bootstrap.pypa.io/get-pip.py", get_pip)
-    run(`$(PyCall.python) $get_pip --user`)
-  end
-
-  pip = pyimport("pip")
-
-  args = UTF8String[]
-  if haskey(ENV, "http_proxy")
-    push!(args, "--proxy")
-    push!(args, ENV["http_proxy"])
-  end
-  push!(args, "install")
-  push!(args, "--user")
-  push!(args, "pyxid")
-
-  pip[:main](args)
-end
+# try using conda
+Conda.add_channel("https://conda.anaconda.org/haberdashPI")
+Conda.add("pyxid")
