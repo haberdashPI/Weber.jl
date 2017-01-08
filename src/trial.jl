@@ -244,7 +244,10 @@ should be no loss of data if the program is terminated prematurely for some
 reason.
 """
 function record(code;kwds...)
-  exp = get_experiment()
+  record(get_experiment(),code;kwds...)
+end
+
+function record(exp::ExperimentState,code;kwds...)
   win = exp.win
   record(exp,win,code;kwds...)
 end
