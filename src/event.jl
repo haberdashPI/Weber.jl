@@ -5,7 +5,7 @@ export iskeydown, iskeyup, iskeypressed, isfocused, isunfocused, keycode,
 
 # called by __init__ in Weber.jl
 function init_events()
-  global const pyxid = pyimport(:pyxid)
+  global const pyxid = pyimport_conda("pyxid","pyxid","haberdashPI")
   global const pyxid_devices = pyxid[:get_xid_devices]()
 end
 

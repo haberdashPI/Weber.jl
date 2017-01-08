@@ -1,6 +1,3 @@
-using Conda
-using PyCall
-
 downloaddir = joinpath(dirname(@__FILE__),"downloads")
 bindir = joinpath(dirname(@__FILE__),"usr","lib")
 
@@ -93,9 +90,3 @@ else
   error("Unsupported operating system.")
 end
 
-################################################################################
-# install PyXID package
-
-# try using conda
-Conda.add_channel("https://conda.anaconda.org/haberdashPI")
-Conda.add("pyxid")
