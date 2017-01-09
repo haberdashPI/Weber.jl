@@ -295,7 +295,7 @@ For the 0.2.0 release
 - [x] get windows install of pyxid working
 
 For the 0.2.x releases
-- [ ] warm up JIT compilation by running a windowless, soundless experiment
+- [x] warm up JIT compilation by running a windowless, soundless experiment
 during `run`.
 - [ ] get CI working.
 - [ ] create a calibration program

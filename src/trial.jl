@@ -368,6 +368,24 @@ Runs an experiment. You must call `setup` first.
 """
 function run(exp::Experiment)
   try
+    # warm up JIT compilation
+    if !isa(exp.state.win,NullWindow)
+      warm_up = Experiment(null_window=true,hide_output=true)
+      x = 0
+      i = 0
+      setup(warm_up) do
+        addtrial(repeated(moment(t -> x += 1),10))
+        addtrial(moment(t -> x += 1),
+                 moment(t -> x += 1) >> moment(t -> x += 1),
+                 moment(t -> x += 1))
+        addtrial(loop=() -> (i+=1; i <= 3),
+           moment(t -> x += 1),
+           moment(t -> x += 1),
+                 moment(t -> x += 1))
+      end
+      run(warm_up)
+    end
+
     focus(exp.state.win)
     exp.runfn()
   finally
