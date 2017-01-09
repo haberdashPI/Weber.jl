@@ -372,7 +372,8 @@ function run(exp::Experiment)
     exp.runfn()
   finally
     if !exp.state.info.hide_output
-      info("Experiment terminated at offset $(exp.state.data.offset).")
+      info("Experiment terminated at offset $(exp.state.data.offset). You can",
+           "find the collected data in $(exp.state.info.file).")
     end
   end
   nothing
