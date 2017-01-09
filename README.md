@@ -12,8 +12,8 @@
 
 * [About](#about)
 * [Installation](#installation)
-* [Troubleshooting](#usage)
 * [Usage](#usage)
+* [Troubleshooting](#troubleshooting)
 * [Status](#status)
 
 # About
