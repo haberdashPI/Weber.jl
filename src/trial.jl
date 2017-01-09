@@ -68,7 +68,7 @@ type FinalMoment <: SimpleMoment
 end
 
 type CompoundMoment <: Moment
-  data::Array{SimpleMoment}
+  data::Array{Moment}
 end
 delta_t(m::CompoundMoment) = 0.0
 >>(a::SimpleMoment,b::SimpleMoment) = CompoundMoment([a,b])
@@ -515,7 +515,8 @@ end
 addmoment(e::ExperimentState,m) = addmoment(e.data.moments,m)
 addmoment(q::ExpandingMoment,m::Moment) = push!(q.data,flag_expanding(m))
 addmoment(q::MomentQueue,m::Moment) = enqueue!(q,m)
-function addmoment(q::Union{ExpandingMoment,MomentQueue},watcher::Function)
+addmoment(q::Array{Moment,1},m::Moment) = push!(q,m)
+function addmoment(q::Union{ExpandingMoment,MomentQueue,Array},watcher::Function)
   for t in concrete_events
     precompile(watcher,(t,))
   end
@@ -549,6 +550,7 @@ function addmoment(q,ms)
     end
     addmoment(q,m)
   end
+  q
 end
 
 """
@@ -823,8 +825,8 @@ end
 
 Create a single moment by concatentating several moments togethor.
 
-A concatenation of moments starts immediately, proceeding through each
-of the moments in order. This is useful playing several moments in parallel. For
+A concatenation of moments starts immediately, proceeding through each of the
+moments in order. This is useful for playing several moments in parallel. For
 example, the following code will present two sounds, one at 100ms, the other at
 200ms after the start of the trial. It will also display "Too Late!" on the
 screen if no keyboard key is pressed 150ms after the start of the trial.
@@ -838,19 +840,15 @@ screen if no keyboard key is pressed 150ms after the start of the trial.
     moments.
 
 """
-moment(moments::Vararg{Moment}) = moment(collect(moments))
-moment(moments::Vararg{SimpleMoment}) = moment(collect(moments))
-moment(moments::Array{Moment}) = reduce(>>,moments)
-moment(moments::Array{SimpleMoment}) = CompoundMoment(moments)
-moment(moments::Array{CompoundMoment}) = reduce(>>,moments)
-moment(moments::Array) = throw(MethodError(moments,typeof(moments)))
+moment(moments...) = moment(collect(moments))
+moment(moments::Array) = CompoundMoment(addmoment(Array{Moment,1}(),moments))
 function moment(moments)
   try
     start(moments)
   catch
     throw(MethodError(moment,typeof(moments)))
   end
-  moment(collect(moments)::Array)
+  moment(collect(Any,moments))
 end
 
 function offset_start_moment(fn::Function=t->nothing,count_trials=false)
