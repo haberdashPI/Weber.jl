@@ -1,10 +1,20 @@
 # Weber
 
-[![Build Status](https://travis-ci.org/haberdashPI/Weber.jl.svg?branch=master)](https://travis-ci.org/haberdashPI/Weber.jl)
+[![AppVeyor Status](https://ci.appveyor.com/api/projects/status/bqn2lte5kscystaw/branch/master?svg=true)](https://ci.appveyor.com/project/haberdashPI/weber-jl/branch/master)
 
-[![Coverage Status](https://coveralls.io/repos/haberdashPI/Weber.jl/badge.svg?branch=master&service=github)](https://coveralls.io/github/haberdashPI/Weber.jl?branch=master)
+[![TravisCI Status](https://travis-ci.org/haberdashPI/Weber.jl.svg?branch=master)](https://travis-ci.org/haberdashPI/Weber.jl)
 
-[![codecov.io](http://codecov.io/github/haberdashPI/Weber.jl/coverage.svg?branch=master)](http://codecov.io/github/haberdashPI/Weber.jl?branch=master)
+<!-- [![Coverage Status](https://coveralls.io/repos/haberdashPI/Weber.jl/badge.svg?branch=master&service=github)](https://coveralls.io/github/haberdashPI/Weber.jl?branch=master) -->
+
+<!-- [![codecov.io](http://codecov.io/github/haberdashPI/Weber.jl/coverage.svg?branch=master)](http://codecov.io/github/haberdashPI/Weber.jl?branch=master) -->
+
+# Index
+
+* [About](#about)
+* [Installation](#installation)
+* [Troubleshooting](#usage)
+* [Usage](#usage)
+* [Status](#status)
 
 # About
 
@@ -22,9 +32,11 @@ haven't gotten around to this.
 
 # Installation
 
+You must first [install julia](http://junolab.org/). Then, at the julia command
+prompt, run this code.
+
 ```julia
-julia> Pkg.clone("https://github.com/haberdashPI/Weber.jl")
-julia> Pkg.build("Weber")
+julia> Pkg.add("Weber")
 ```
 
 # Usage
@@ -208,10 +220,29 @@ break every N trials. Refer to its documentation for details. Future Weber
 versions will probably include many more such primitives to simplify the
 creation of experiments.
 
+# Troubleshooting
+
+The first time you call `using Weber` or `import Weber` in julia you may see the
+following error.
+
+```julia
+ImportError('No module named pyxid',)
+```
+
+This error only matters if you want to make use of Cedrus response-pad
+input. You can safely use Weber in the presence of this error if you don't plan
+on using a Cedrus device.
+
+If you do want to use a Cedrus device, follow any instructions the error may
+give. Restart julia, and try `using Weber` again. The error will likely not show
+up again. Weber has to install `pyxid` the first time it is run, if it is not
+already present. In some cases, after installation, a restart of Julia is
+required. 
+
 # Status
 
 This is working for my own purposes, and I am running pilot experiments in it
-now. I am in the processing of validating the timing of experiments, and
+now. I am in the process of validating the timing of experiments, and
 implementing tests to avoid regressions.
 
 ## Timing Accuracy
@@ -261,20 +292,27 @@ For the 0.2.0 release
 - [x] create some tests
 - [x] submit the package to METADATA.jl
 - [x] use the version number of Weber.jl indicated by Pkg
+- [x] get windows install of pyxid working
 
 For the 0.2.x releases
+- [ ] warm up JIT compilation by running a windowless, soundless experiment
+during `run`.
+- [ ] get CI working.
+- [ ] create a calibration program
 - [ ] test `display` timing (using a video camera)
 - [ ] rename `display_key_codes`
-- [ ] create a calibration program
 - [ ] add remaining special keys to @key_str
+- [ ] port to linux
 
 For the 0.3.0 release
-- [ ] edit/refine the user manual
+- [ ] implement a loop and conditional that works across multiple trials
 - [ ] create 2AFC abstraction
+- [ ] replace interactive text input with simple Gtk window or SDL based GUI??
+
+For the 0.3.x release
+- [ ] edit/refine the user manual
 - [ ] create examples to demonstrate all package features
 - [ ] allow calls to Cedrus stim tracker??
-- [ ] replace interactive text input with simple Gtk window or SDL based GUI??
-- [ ] port to linux
 
 For the 0.4.0 release?
 - [ ] video playback
