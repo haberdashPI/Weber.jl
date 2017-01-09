@@ -522,15 +522,23 @@ function addmoment(q::Union{ExpandingMoment,MomentQueue},watcher::Function)
   addmoment(q,moment(t -> get_experiment().data.trial_watcher = watcher))
 end
 function addmoment(q,ms)
-  emessage = "Expected a value of type `Moment` or `Function` but got"*
-              " a value of type $(typeof(ms)) instead."
+  function handle_error()
+    if !(typeof(ms) <: Moment || typeof(ms) <: Function)
+      error("Expected some kind of moment, but got a value of type",
+            " $(typeof(ms)) instead.")
+    else
+      error("Cannot add moment to an object of type $(typeof(q))")
+    end
+  end
+
   try
     first(ms)
   catch e
     if isa(e,MethodError)
-      error(emessage)
+      handle_error()
+    else
+      rethrow(e)
     end
-    rethrow(e)
   end
 
   for m in ms
