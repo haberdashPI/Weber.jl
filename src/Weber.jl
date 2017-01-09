@@ -11,9 +11,15 @@ end
 
 old = pwd()
 try
-  cd(dirname(@__FILE__))
-  global const version = convert(VersionNumber,
-                                 readstring(`git describe --tags`))
+  cd(Pkg.dir("Weber"))
+
+  suffix = (success(`git diff-index HEAD --quiet`) ? "" : "-dirty")
+  if !isempty(suffix)
+    warn("Source files in $(Pkg.dir("Weber")) have been modified without being ",
+         "committed to git. Your experiment will not be reproduceable.")
+  end
+  global const version =
+    convert(VersionNumber,chomp(readstring(`git describe --tags`))*suffix)
 catch
   global const version = Pkg.installed("Weber")
 finally
