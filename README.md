@@ -1,6 +1,6 @@
 # Weber
 
-[![AppVeyor Status](https://ci.appveyor.com/api/projects/status/bqn2lte5kscystaw/branch/master?svg=true)](https://ci.appveyor.com/project/haberdashPI/weber-jl/branch/master)
+[![Build status](https://ci.appveyor.com/api/projects/status/uvxq5mqlq0p2ap02/branch/master?svg=true)](https://ci.appveyor.com/project/haberdashPI/weber-jl/branch/master)
 
 [![TravisCI Status](https://travis-ci.org/haberdashPI/Weber.jl.svg?branch=master)](https://travis-ci.org/haberdashPI/Weber.jl)
 
@@ -274,7 +274,8 @@ sampling rate (1/44100 s).
 
 You can re-run this same test of auditory playback timing and generate a new
 graph for your computer, using test/audiotiming.jl and
-test/analyze_audiotiming.jl.
+test/analyze_audiotiming.jl. Please refer to the comments of these scripts for
+details.
 
 ## Roadmap
 
@@ -297,7 +298,7 @@ For the 0.2.0 release
 For the 0.2.x releases
 - [x] warm up JIT compilation by running a windowless, soundless experiment
 during `run`.
-- [ ] get CI working.
+- [x] get CI working.
 - [ ] create a calibration program
 - [ ] test `display` timing (using a video camera)
 - [ ] rename `display_key_codes`
