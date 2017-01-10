@@ -1,7 +1,7 @@
 using PyCall
 
-downloaddir = joinpath(dirname(@__FILE__),"downloads")
-bindir = joinpath(dirname(@__FILE__),"usr","lib")
+downloaddir = Pkg.dir("Weber","deps","downloads")
+bindir = Pkg.dir("Weber","deps","usr","lib")
 
 # remove any old build files
 for d in [downloaddir,bindir]
@@ -38,7 +38,7 @@ end
     rm(downloaddir,recursive=true,force=true)
   end
 
-  deps = joinpath(dirname(@__FILE__),"deps.jl")
+  deps = Pkg.dir("Weber","deps","deps.jl")
   open(deps,"w") do s
     for (var,val) in [:SDL2 => SDL2, :SDL2_mixer => SDL2_mixer,:SDL2_ttf => SDL2_ttf]
       println(s,"const _psycho_$var = \"$val\"")
@@ -60,7 +60,7 @@ elseif is_apple()
     rm(downloaddir,recursive=true,force=true)
   end
 
-  deps = joinpath(dirname(@__FILE__),"deps.jl")
+  deps = Pkg.dir("Weber","deps","deps.jl")
   open(deps,"w") do s
     for (var,val) in [:SDL2 => SDL2, :SDL2_mixer => SDL2_mixer,:SDL2_ttf => SDL2_ttf]
       println(s,"const _psycho_$var = \"$val\"")
