@@ -303,6 +303,8 @@ during `run`.
 - [ ] rename `display_key_codes`
 - [ ] add remaining special keys to @key_str
 - [ ] port to linux
+- [ ] create hepler to generate template experiment (including run, setup and
+      README.md files)
 
 For the 0.3.0 release
 - [ ] implement a loop and conditional that works across multiple trials

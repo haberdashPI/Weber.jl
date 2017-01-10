@@ -28,4 +28,4 @@ build_script:
       ENV[\"PYTHON\"] = \"\"; Pkg.clone(pwd(), \"Weber\"); Pkg.build(\"Weber\")"
 
 test_script:
-  - C:\projects\julia\bin\julia -e "Pkg.test(\"Weber\")"
+  - C:\projects\julia\bin\julia -e "ENV[\"WEBER_TIMING_TESTS\"] = \"No\"; Pkg.test(\"Weber\")"
