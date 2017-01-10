@@ -59,8 +59,8 @@ df = readtable(timing_file)
 times = df[:times]
 times += atimes[end] - times[end]
 
-# you can use this plot to compare the actual and measured times
-# across absolute times
+# # you can use this plot to compare the actual and measured times
+# # across absolute times
 # a = maximum(times) - 10
 # b = maximum(times) - 5
 # des = times[a .< times .< b]
@@ -79,18 +79,19 @@ m_delta = diff(-reverse(atimes[3:end]))
 
 d_delta = d_delta[1:length(m_delta)]
 
-# you can use this plot to visually inspect the error
-# without collapsing the measured and desired dimensions
+# # you can use this plot to visually inspect the error
+# # without collapsing the measured and desired dimensions
 # plot(layer(x=d_delta,y=m_delta,Geom.point),
 #      layer(x=[minimum([d_delta;m_delta]),
 #               maximum([d_delta;m_delta])],
 #            y=[minimum([d_delta;m_delta]),
 #               maximum([d_delta;m_delta])],
 #            Geom.line),
+#      Coord.cartesian(xmin=0.1,xmax=0.2,ymin=0.1,ymax=0.2)
 #      Guide.xlabel("desired delta"),
 #      Guide.ylabel("measured delta"))
 
-# Histrogram without abs
+# # Histrogram without abs
 # plot(x=1000(d_delta-m_delta),
 #      Geom.histogram(bincount=15,density=true),
 #      Theme(bar_highlight=colorant"black"),
