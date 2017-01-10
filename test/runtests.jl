@@ -71,12 +71,18 @@ when_events,_ = find_timing() do record
   addtrial(when=() -> test,moment(t -> record(:b,0)))
 end
 
+check_timing = get(ENV,"WEBER_TIMING_TESTS","Yes") != "No"
+
 @test seq_events == [:a,:b,:c]
-@test all(abs(diff(seq_times) - 0.01) .< 3Weber.timing_tolerance)
+if check_timing
+  @test all(abs(diff(seq_times) - 0.01) .< 3Weber.timing_tolerance)
+end
 @test seq_trial_events == [:a,:b,:c,:a,:b,:c,:a,:b,:c]
 @test seq_trial_index == [1,1,1,2,2,2,3,3,3]
 @test comp_events == [:a,:b,:c,:d]
-@test all(abs(diff(comp_times) - 0.05) .< 3Weber.timing_tolerance)
+if check_timing
+  @test all(abs(diff(comp_times) - 0.05) .< 3Weber.timing_tolerance)
+end
 @test loop_events == [:a,:b,:c,:a,:b,:c,:a,:b,:c]
 @test loop_index == [(1,1),(1,1),(1,1),(2,1),(2,1),(2,1),(3,1),(3,1),(3,1)]
 @test when_events == [:a]
