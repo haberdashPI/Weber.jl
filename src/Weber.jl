@@ -58,8 +58,12 @@ sdl_is_setup[] = false
 
 include(joinpath(dirname(@__FILE__),"video.jl"))
 include(joinpath(dirname(@__FILE__),"sound.jl"))
+
+include(joinpath(dirname(@__FILE__),"types.jl"))
 include(joinpath(dirname(@__FILE__),"event.jl"))
 include(joinpath(dirname(@__FILE__),"trial.jl"))
+include(joinpath(dirname(@__FILE__),"experiment.jl"))
+
 include(joinpath(dirname(@__FILE__),"primitives.jl"))
 include(joinpath(dirname(@__FILE__),"helpers.jl"))
 

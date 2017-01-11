@@ -18,7 +18,7 @@ setup(exp) do
   moments = map(timing) do delta
     moment(delta,t -> play(beep))
   end
-  addtrial(moments)
+  addtrial(show_cross(),moments)
 end
 
 run(exp)
