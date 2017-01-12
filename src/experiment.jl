@@ -86,6 +86,7 @@ function Experiment(;skip=0,columns=Symbol[],debug=false,
   trial = 0
   trial_watcher = (e) -> nothing
   last_time = 0.0
+  next_moment = 0.0
   pause_mode = Running
   moments = MomentQueue(Deque{Moment}(),0)
   submoments = Array{MomentQueue,1}()
@@ -287,6 +288,7 @@ function run(exp::Experiment)
     start = time()
     tick = exp.data.last_time = last_input = last_delta = 0.0
     while exp.flags.processing
+      tick = exp.data.last_time = time() - start
       # notify all moments about the new time
       if exp.flags.running
         process(exp,exp.data.moments,tick)
@@ -304,11 +306,6 @@ function run(exp::Experiment)
         report_deltas(exp)
         last_delta = tick
       end
-      # calculate next moment
-      nexts = map(next_moment_time,exp.data.submoments)
-      push!(nexts,next_moment_time(exp.data.moments))
-      next_moment = minimum(nexts)
-
       # refresh screen
       refresh_display(exp.win)
 
@@ -356,6 +353,7 @@ function process(exp::Experiment,queue::MomentQueue,event::ExpEvent)
       if update_last(moment)
         queue.last = time(event)
       end
+      exp.data.next_moment = min(exp.data.next_moment,next_moment_time(queue))
     end
   end
 
@@ -407,6 +405,7 @@ function process(exp::Experiment,queue::MomentQueue,t::Float64)
         if update_last(moment)
           queue.last = run_time
         end
+        exp.data.next_moment = min(exp.data.next_moment,next_moment_time(queue))
       end
     end
   end
