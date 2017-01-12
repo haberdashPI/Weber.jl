@@ -310,11 +310,11 @@ function run(exp::Experiment)
       refresh_display(exp.win)
 
       # if after all this processing there's still plenty of time left
-      # then sleep for a while. (pausing also sleeps the loop)
-      tick = exp.data.last_time = time() - start
-      if ((tick - last_delta) > sleep_resolution &&
-          (tick - last_input) > sleep_resolution &&
-          (tick - next_moment) > sleep_resolution) ||
+      # then sleep for a little while. (pausing also sleeps the loop)
+      new_tick = time() - start
+      if ((new_tick - last_delta) > sleep_resolution &&
+          (new_tick - last_input) > sleep_resolution &&
+          (new_tick - exp.data.next_moment) > sleep_resolution) ||
           !exp.flags.running
 
         sleep(sleep_amount)
