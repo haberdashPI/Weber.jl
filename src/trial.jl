@@ -454,15 +454,13 @@ delta_t(moment::OffsetStartMoment) = 0.0
 delta_t(moment::FinalMoment) = 0.0
 
 function handle(exp::Experiment,q::MomentQueue,moment::FinalMoment,x)
-  # if there's a non-empty moment queue...
-  qs = filter(x -> x != q && !isempty(x),exp.data.submoments)
-  if !isempty(qs)
-    # ...add the final moment to one of the non-empty queues
-    enqueue!(first(qs),moment)
-  else # if there are no remaining non-empty moment queues...
-    # ...end the experiment
-    moment.run()
+  for sq in exp.data.moments
+    if sq != q && !isempty(sq)
+      enqueue!(sq,moment)
+      return true
+    end
   end
+  moment.run()
   true
 end
 
