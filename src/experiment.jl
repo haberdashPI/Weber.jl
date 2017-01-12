@@ -266,7 +266,7 @@ stimuli presented with Weber.
 end
 
 const sleep_resolution = 0.01
-const sleep_amount = 0.005
+const sleep_amount = 0.002
 
 """
     run(experiment)
