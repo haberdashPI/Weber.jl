@@ -1,7 +1,6 @@
 # Weber
 
 [![Build status](https://ci.appveyor.com/api/projects/status/uvxq5mqlq0p2ap02/branch/master?svg=true)](https://ci.appveyor.com/project/haberdashPI/weber-jl/branch/master)
-
 [![TravisCI Status](https://travis-ci.org/haberdashPI/Weber.jl.svg?branch=master)](https://travis-ci.org/haberdashPI/Weber.jl)
 
 <!-- [![Coverage Status](https://coveralls.io/repos/haberdashPI/Weber.jl/badge.svg?branch=master&service=github)](https://coveralls.io/github/haberdashPI/Weber.jl?branch=master) -->
@@ -13,8 +12,7 @@
 * [About](#about)
 * [Installation](#installation)
 * [Usage](#usage)
-* [Troubleshooting](#troubleshooting)
-* [Status](#status)
+* [Roadmap](#roadmap)
 
 # About
 
@@ -220,64 +218,7 @@ break every N trials. Refer to its documentation for details. Future Weber
 versions will probably include many more such primitives to simplify the
 creation of experiments.
 
-# Troubleshooting
-
-The first time you call `using Weber` or `import Weber` in julia you may see the
-following error.
-
-```julia
-ImportError('No module named pyxid',)
-```
-
-This error only matters if you want to make use of Cedrus response-pad
-input. You can safely use Weber in the presence of this error if you don't plan
-on using a Cedrus device.
-
-If you do want to use a Cedrus device, follow any instructions the error may
-give. Restart julia, and try `using Weber` again. The error will likely not show
-up again. Weber has to install `pyxid` the first time it is run, if it is not
-already present. In some cases, after installation, a restart of Julia is
-required. 
-
-# Status
-
-This is working for my own purposes, and I am running pilot experiments in it
-now. I am in the process of validating the timing of experiments, and
-implementing tests to avoid regressions.
-
-## Timing Accuracy
-
-The empirical timing error of audio playback, at ~6.48ms (= 75th percentile of
-absolute differences), is close to the theoretically minimal error rate of
-~5.80ms. A histrogram of event onset errors is displayed below. The theortical
-minimum is determiend by the buffer size of audio playback, because this buffer
-introduces playback latency. By default the buffer size is 256 samples, leading
-to a latency of up to ~5.80ms (= 256/44100). I chose this default value because
-it seems to play sound without corruption across a variety of hardware and
-operating systems.  You can reduce the buffer size for playback up to the limits
-of your hardware using `setup_sound`. This can reduce the emprical timing
-error.
-
-![Audio-playback Onset Histogram](audio_onset_error.png)
-
-Note that this level of accuracy is only achieved when moments (e.g. as created
-by `moment`) occur when they are intended to occur. Weber will notify you
-when it is failing to accurately present moments. Such accuracy is probably only
-possible if you follow the guidelines provided in `addtrial` for generating well
-timed events. Note that timing is usually poor when the experiment first starts.
-
-This error estimate is only relevent when you *start* playing a
-sound. If you want more precise timing between two sounds you can simply create
-a single sound composed of those two sounds with an appropriate silence between
-them. Then the timing error will be rouhgly equal to the recipricol of the
-sampling rate (1/44100 s).
-
-You can re-run this same test of auditory playback timing and generate a new
-graph for your computer, using test/audiotiming.jl and
-test/analyze_audiotiming.jl. Please refer to the comments of these scripts for
-details.
-
-## Roadmap
+# Roadmap
 
 For the 0.2.0 release
 - [x] document object composition
@@ -303,9 +244,11 @@ during `run`.
 - [x] make sure all dependent libraries installed on mac os x (retry Homebrew.jl
   ??)
 - [x] simplify moments and submoments to moments in ExperimentData
+- [ ] fix false mis-timing warnings when using `update_delta = false` (do we
+  need this anymore?)
 - [ ] create a calibration program
-- [ ] test `display` timing (using a video camera)
 - [ ] rename `display_key_codes`
+- [ ] test `display` timing (using an oscilloscope)
 - [ ] add remaining special keys to @key_str
 - [ ] port to linux
 - [ ] create hepler to generate template experiment (including run, setup and
