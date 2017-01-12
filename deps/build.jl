@@ -13,8 +13,8 @@ end
 # install SDL2 and plugins
 
 @static if is_windows()
-  # do I need install 7z? (does this require julia bin directoy on PATH??)
-  # I'm not using WinRPM here, because it doesn't include the SDL extensions
+  # WinRPM lacks SDL2_ttf and SDL2_mixer binaries, so I'm just directly
+  # downloading them from the SDL website.
   function setupbin(library,uri)
     libdir = joinpath(downloaddir,library)
     zipfile = joinpath(downloaddir,library*".zip")
