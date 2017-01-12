@@ -320,6 +320,8 @@ function run(exp::Experiment)
         sleep(sleep_amount)
       end
     end
+
+    experiment_context[] = Nullable()
   finally
     close(exp.win)
     gc_enable(true)
