@@ -299,6 +299,10 @@ For the 0.2.x releases
 - [x] warm up JIT compilation by running a windowless, soundless experiment
 during `run`.
 - [x] get CI working.
+- [x] improve trial timing
+- [x] make sure all dependent libraries installed on mac os x (retry Homebrew.jl
+  ??)
+- [x] simplify moments and submoments to moments in ExperimentData
 - [ ] create a calibration program
 - [ ] test `display` timing (using a video camera)
 - [ ] rename `display_key_codes`
