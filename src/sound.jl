@@ -377,6 +377,14 @@ type PlayingSound
   times::Int
 end
 
+function play(x;keys...)
+  if experiment_running()
+    warn("Sound was not precomputed! To minimize latency, call ",
+         "`x = sound(obj)` before running an experiment, then call `play(x)` ",
+         "during the experiment.")
+  end
+  play(sound(x);keys...)
+end
 
 """
     play(x;[wait=false],[times=1])

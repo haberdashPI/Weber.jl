@@ -19,6 +19,11 @@ function get_experiment()
   end
 end
 
+# internal function used to determine if there is an experiment running
+function experiment_running()
+  !isnull(experiment_context[])
+end
+
 """
     experiment_trial()
 
