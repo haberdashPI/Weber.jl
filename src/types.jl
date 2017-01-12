@@ -394,6 +394,7 @@ type ExperimentData
   trial::Int
   skip_offsets::Int
   last_time::Float64
+  next_moment::Float64
   trial_watcher::Function
   pause_mode::Int
   moments::Array{MomentQueue,1}
