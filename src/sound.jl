@@ -6,7 +6,8 @@ import SampledSignals: samplerate
 
 export match_lengths, mix, mult, silence, noise, highpass, lowpass, bandpass,
 	tone, ramp, harmonic_complex, attenuate, sound, play, pause, stop,
-  savesound, duration, setup_sound, current_sound_latency, buffer
+  savesound, duration, setup_sound, current_sound_latency, buffer,
+  resume_sounds, pause_sounds
 
 """
    match_lengths(x,y,...)
@@ -211,16 +212,18 @@ function sound(x::SampleBuf)
 end
 
 """
-    play(x,[async])
+    play(x;[wait=false],[times=1])
 
-Play the sound and return immediately (by default), or wait for the
-sound to finish playing (if `async == false`).
+Plays a sound.
 
-If `aysnc==true`, this returns a `PlayingSound` object which can be used
-to pause, stop or resume playing the sound.
+
+If `wait` == false, returns an object that can be used to `stop`, or `pause` the
+sound. One can also call play(x,wait=true) on this object to wait for the sound
+to finish. The sound will normally play only once, but can be repeated
+multiple times using `times`.
 """
-function play(x,async=true)
-  play(sound(x),async)
+function play(x;keys...)
+  play(sound(x);keys...)
 end
 
 immutable MixChunk
@@ -386,38 +389,46 @@ type PlayingSound
   start::Float64
   paused::Float64
   sound::Sound
+  times::Int
 end
 
-function play(x::Sound,async=true)
+function play(x::Sound;wait=false,times=1)
   channel = ccall((:Mix_PlayChannelTimed,_psycho_SDL2_mixer),Cint,
                   (Cint,Ref{MixChunk},Cint,Cint),
-                  -1,x.chunk,0,-1)
+                  -1,x.chunk,times-1,-1)
   if channel < 0
     error("Failed to play sound: "*Mix_GetError())
   end
-  if async
-    PlayingSound(channel,time(),NaN,x)
+
+  if !wait
+    PlayingSound(channel,time(),NaN,x,times)
   else
-    sleep(duration(x)-0.01)
+    sleep(times*duration(x)-0.01)
     while ccall((:Mix_Playing,_psycho_SDL2_mixer),Cint,(Cint,),channel) > 0
     end
     nothing
   end
 end
 
-function play(x::PlayingSound)
+function play(x::PlayingSound;wait=false)
   if !isnan(x.paused)
     ccall((:Mix_Resume,_psycho_SDL2_mixer),Void,(Cint,),x.channel)
     x.start = time() - (x.paused - x.start)
     x.paused = NaN
+  end
+
+  if !wait
     x
   else
-    error("Already playing sound")
+    sleep(duration(x) - (time() - x.start) - 0.01)
+    while ccall((:Mix_Playing,_psycho_SDL2_mixer),Cint,(Cint,),x.channel) > 0
+    end
+    nothing
   end
 end
 
 """
-Pause playback of the sound. Resume by calling `play` on the sound.
+Pause playback of the sound. Resume by calling `play` on the sound again.
 """
 function pause(x::PlayingSound)
   ccall((:Mix_Pause,_psycho_SDL2_mixer),Void,(Cint,),x.channel)
@@ -426,36 +437,42 @@ function pause(x::PlayingSound)
 end
 
 """
-     stop(x,[wait=false])
+     stop(x)
 
-Stop playback of the sound, or wait for the sound to
-stop playing (if wait == true).
+Stop playback of the sound.
 """
-function stop(x::PlayingSound;wait=false)
-  if !wait
-    ccall((:Mix_HaltChannel,_psycho_SDL2_mixer),Void,(Cint,),x.channel)
-    nothing
-  else
-    sleep_time = duration(x.sound) - (time() - x.start)
-    if sleep_time > 0
-      sleep(sleep_time)
-    end
-  end
+function stop(x::PlayingSound)
+  ccall((:Mix_HaltChannel,_psycho_SDL2_mixer),Void,(Cint,),x.channel)
+  nothing
 end
 
-"
+"""
+    pause_sounds()
+
+Pause all sounds that are playing.
+"""
+function pause_sounds()
+  ccall((:Mix_Pause,_psycho_SDL2_mixer),Void,(Cint,),-1)
+end
+
+"""
+    resume_sounds()
+
+Resume all sounds that have been paused.
+"""
+function resume_sounds()
+  ccall((:Mix_Resume,_psycho_SDL2_mixer),Void,(Cint,),-1)
+end
+
+
+"""
     duration(x)
 
 Get the duration of the given sound.
-"
-function duration(s::Sound)
-  duration(s.buffer)
-end
-
-function duration(s::SampleBuf)
-  length(s) / samplerate(s)
-end
-
+"""
+duration(s::Sound) = duration(s.buffer)
+duration(s::PlayingSound) = duration(s.sound)*s.times
+duration(s::SampleBuf) = length(s) / samplerate(s)
 function duration(s::Array{Float64};
                   sample_rate_Hz=samplerate(sound_setup_state))
   length(s) / sample_rate_Hz
