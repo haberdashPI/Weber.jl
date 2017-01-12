@@ -578,7 +578,7 @@ end
 """
     display(r::SDLRendered;kwds...)
 
-Displays an rendered by `visual` onto the current experiment window.
+Displays anything rendered by `visual` onto the current experiment window.
 
 Any keyword arguments, available from `visual` are also available here.  They
 overload the arguments as specified during visual (but do not change them).
