@@ -396,9 +396,7 @@ type ExperimentData
   last_time::Float64
   trial_watcher::Function
   pause_mode::Int
-  moments::MomentQueue
-  submoments::Array{MomentQueue}
-  exception::Nullable{Tuple{Exception,Array{StackFrame}}}
+  moments::Array{MomentQueue,1}
   cleanup::Function
   last_good_delta::Float64
   last_bad_delta::Float64

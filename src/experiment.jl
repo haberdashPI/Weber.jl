@@ -88,14 +88,12 @@ function Experiment(;skip=0,columns=Symbol[],debug=false,
   last_time = 0.0
   next_moment = 0.0
   pause_mode = Running
-  moments = MomentQueue(Deque{Moment}(),0)
-  submoments = Array{MomentQueue,1}()
-  exception = Nullable{Tuple{Exception,Array{Ptr{Void}}}}()
+  moments = [MomentQueue(Deque{Moment}(),0.0)]
   cleanup = () -> error("no cleanup function available!")
-  last_good_delta = -1
-  last_bad_delta = -1
-  data = ExperimentData(offset,trial,skip,last_time,trial_watcher,pause_mode,moments,
-                        submoments,exception,cleanup,last_good_delta,
+  last_good_delta = -1.0
+  last_bad_delta = -1.0
+  data = ExperimentData(offset,trial,skip,last_time,next_moment,trial_watcher,
+                        pause_mode,moments,cleanup,last_good_delta,
                         last_bad_delta)
 
   flags = ExperimentFlags(false,false)
@@ -139,7 +137,7 @@ function setup(fn::Function,exp::Experiment)
     experiment_context[] = Nullable{Experiment}()
 
     # the last moment run cleans up the experiment
-    enqueue!(exp.data.moments,final_moment(() -> cleanup()))
+    enqueue!(first(exp.data.moments),final_moment(() -> cleanup()))
   catch e
     close(exp.win)
     gc_enable(true)
@@ -220,7 +218,6 @@ function process_event(exp::Experiment,event)
   if exp.flags.running
     exp.data.trial_watcher(event)
     process(exp,exp.data.moments,event)
-    process(exp,exp.data.submoments,event)
   end
   if exp.flags.processing
     watch_pauses(exp,event)
@@ -292,7 +289,6 @@ function run(exp::Experiment)
       # notify all moments about the new time
       if exp.flags.running
         process(exp,exp.data.moments,tick)
-        process(exp,exp.data.submoments,tick)
       end
 
       # handle all events (handles pauses, and notifys moments)

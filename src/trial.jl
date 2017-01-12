@@ -100,6 +100,7 @@ end
 
 addmoment(e::Experiment,m) = addmoment(e.data.moments,m)
 addmoment(q::ExpandingMoment,m::Moment) = push!(q.data,flag_expanding(m))
+addmoment(q::Array{MomentQueue},m::Moment) = addmoment(first(q),m)
 addmoment(q::MomentQueue,m::Moment) = enqueue!(q,m)
 addmoment(q::Array{Moment,1},m::Moment) = push!(q,m)
 function addmoment(q::Union{ExpandingMoment,MomentQueue,Array},watcher::Function)
@@ -535,7 +536,7 @@ function handle(exp::Experiment,q::MomentQueue,moments::CompoundMoment,x)
   for moment in moments.data
     push!(queue,moment)
   end
-  push!(exp.data.submoments,MomentQueue(queue,q.last))
+  push!(exp.data.moments,MomentQueue(queue,q.last))
   true
 end
 
