@@ -25,7 +25,7 @@ catch
     global const version = Pkg.installed("Weber")
   catch
     warn("The Weber version number could not be determined. ",
-         "Your experiment will not be reporducable. ",
+         "Your experiment will not be reproducable. ",
          "It is recommended that you install Weber via Pkg.add(\"Weber\").")
   end
 finally
