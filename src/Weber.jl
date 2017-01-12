@@ -21,7 +21,13 @@ try
   global const version =
     convert(VersionNumber,chomp(readstring(`git describe --tags`))*suffix)
 catch
-  global const version = Pkg.installed("Weber")
+  try
+    global const version = Pkg.installed("Weber")
+  catch
+    warn("The Weber version number could not be determined. ",
+         "Your experiment will not be reporducable. ",
+         "It is recommended that you install Weber via Pkg.add(\"Weber\").")
+  end
 finally
   cd(old)
 end
