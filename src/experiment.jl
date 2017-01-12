@@ -114,7 +114,7 @@ end
 
 Setup the experiment, adding breaks, practice, and trials.
 
-Setup creats the context necessary to generate elements of an expeirment. All
+Setup creats the context necessary to generate elements of an experiment. All
 calls to `addtrial`, `addbreak` and `addpractice` must be called in side of
 `fn`. This function must be called before `run`.
 """
