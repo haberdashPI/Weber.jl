@@ -17,12 +17,11 @@ function find_timing(fn)
   getindex.(recording,1),getindex.(recording,2)
 end
 
-# warm up JIT compilation
-find_timing() do record
-  addtrial(repeated(moment(0.001,t -> record(:a,t)),100))
+_,many_times = find_timing() do record
+  addtrial(repeated(moment(0.0005,t -> record(:a,t)),1000))
 end
 
-seq_events,seq_times = find_timing() do record
+seq_events,_ = find_timing() do record
   addtrial(moment(0.01,t -> record(:a,t)),
            moment(0.01,t -> record(:b,t)),
            moment(0.01,t -> record(:c,t)))
@@ -40,11 +39,7 @@ seq_trial_events,seq_trial_index = find_timing() do record
            moment(t -> record(:c,experiment_trial())))
 end
 
-# warm up JIT... not sure why this is necessary... again.
-# I need to look through precompile.jl and determine
-# if I need to find some other way to avoid timing errors
-# early in an experiment run (maybe by doing something
-# similar to what I'm doing here *within* the run method.)
+# warm up JIT...
 find_timing() do record
   addtrial(moment(0.05,t -> record(:a,t)),
            moment(0.1,t -> record(:b,t)) >> moment(0.1,t -> record(:d,t)),
@@ -73,16 +68,40 @@ end
 
 check_timing = get(ENV,"WEBER_TIMING_TESTS","Yes") != "No"
 
-@test seq_events == [:a,:b,:c]
-if check_timing
-  @test all(abs(diff(seq_times) - 0.01) .< 3Weber.timing_tolerance)
+const moment_eps = 1e-3
+
+@testset "Trial Sequencing" begin
+  if check_timing
+    @testset "Timing" begin
+      diffs = abs(0.0005 - diff(many_times))
+      middle99 = diffs[quantile(diffs,0.005) .< diffs .< quantile(diffs,0.995)]
+      @test mean(middle99) < moment_eps
+    end
+  end
+
+  @testset "Moment Sequencing" begin
+    @test seq_events == [:a,:b,:c]
+  end
+
+  @testset "Moment Indexing" begin
+    @test seq_trial_events == [:a,:b,:c,:a,:b,:c,:a,:b,:c]
+    @test seq_trial_index == [1,1,1,2,2,2,3,3,3]
+  end
+
+  @testset "Compound Moments" begin
+    @test comp_events == [:a,:b,:c,:d]
+    if check_timing
+      comp_diff = maximum(diff(comp_times) - 0.05)
+      @test comp_diff < moment_eps
+    end
+  end
+
+  @testset "Looping Moments" begin
+    @test loop_events == [:a,:b,:c,:a,:b,:c,:a,:b,:c]
+    @test loop_index == [(1,1),(1,1),(1,1),(2,1),(2,1),(2,1),(3,1),(3,1),(3,1)]
+  end
+
+  @testset "Conditional Moments" begin
+    @test when_events == [:a]
+  end
 end
-@test seq_trial_events == [:a,:b,:c,:a,:b,:c,:a,:b,:c]
-@test seq_trial_index == [1,1,1,2,2,2,3,3,3]
-@test comp_events == [:a,:b,:c,:d]
-if check_timing
-  @test all(abs(diff(comp_times) - 0.05) .< 3Weber.timing_tolerance)
-end
-@test loop_events == [:a,:b,:c,:a,:b,:c,:a,:b,:c]
-@test loop_index == [(1,1),(1,1),(1,1),(2,1),(2,1),(2,1),(3,1),(3,1),(3,1)]
-@test when_events == [:a]
