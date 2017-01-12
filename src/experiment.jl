@@ -1,6 +1,11 @@
 import Base: run
 export Experiment, setup, run, experiment_trial, experiment_offset
 
+const default_moment_resolution = 0.0015
+const default_input_resolution = 1/60
+const exp_width = 1024
+const exp_height = 768
+
 const experiment_context = Array{Nullable{Experiment}}()
 experiment_context[] = Nullable()
 
@@ -158,6 +163,55 @@ function warmup_run(exp::Experiment)
              moment(t -> x += 1))
   end
   run(warm_up)
+end
+
+
+function pause(exp,message,time,firstpause=true)
+  exp.flags.running = false
+  record(exp,"paused")
+  if firstpause
+    save_display(exp.win)
+  end
+  overlay = visual(colorant"gray",priority=Inf) + visual(message,priority=Inf)
+  display(exp.win,overlay)
+end
+
+function unpause(exp,time)
+  record(exp,"unpaused")
+  exp.data.pause_mode = Running
+  restore_display(exp.win)
+  exp.data.last_bad_delta = -1.0
+  exp.data.last_good_delta = -1.0
+  exp.flags.running = true
+  process_event(exp,EndPauseEvent(time))
+end
+
+const Running = 0
+const ToExit = 1
+const Unfocused = 2
+const Error = 3
+
+function watch_pauses(exp,e)
+  if exp.data.pause_mode == Running && iskeydown(e,key":escape:")
+    pause(exp,"Exit? [Y for yes, or N for no]",time(e))
+    exp.data.pause_mode = ToExit
+  elseif exp.data.pause_mode == Running && isunfocused(e) && exp.flags.processing
+    pause(exp,"Waiting for window focus...",time(e))
+    exp.data.pause_mode = Unfocused
+  elseif exp.data.pause_mode == ToExit && iskeydown(e,key"y")
+    record(exp,"terminated")
+    exp.data.cleanup()
+  elseif exp.data.pause_mode == ToExit && iskeydown(e,key"n")
+    unpause(exp,time(e))
+  elseif exp.data.pause_mode == Unfocused && isfocused(e)
+    if exp.flags.processing
+      pause(exp,"Paused. [To exit hit Y, to resume hit N]",time(e),false)
+      exp.data.pause_mode = ToExit
+    else
+      exp.data.pause_mode = Running
+      exp.flags.running = true
+    end
+  end
 end
 
 process_event(exp::Experiment,event::QuitEvent) = exp.data.cleanup()
