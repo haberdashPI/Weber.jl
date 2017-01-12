@@ -189,7 +189,7 @@ end
 """
     sound(x::Array,[sample_rate_Hz=44100])
 
-Creates a `Sound` from an aribtrary array.
+Creates a sound object from an aribtrary array.
 
 For real numbers, assumes 1 is the loudest and -1 the softest. Assumes 16-bit
 PCM for integers. The array should be 1d for mono signals, or an array of size
@@ -204,26 +204,11 @@ end
 """
    sound(x::SampleBuff)
 
-Creates a `Sounds from a `SampleBuf` (from the SampledSignals package).
+Creates a sound object from a `SampleBuf` (from the `SampledSignals` module).
 """
 function sound(x::SampleBuf)
   bounded = max(min(x.data,typemax(Fixed{Int16,15})),typemin(Fixed{Int16,15}))
   sound(SampleBuf(Fixed{Int16,15}.(bounded),samplerate(x)))
-end
-
-"""
-    play(x;[wait=false],[times=1])
-
-Plays a sound.
-
-
-If `wait` == false, returns an object that can be used to `stop`, or `pause` the
-sound. One can also call play(x,wait=true) on this object to wait for the sound
-to finish. The sound will normally play only once, but can be repeated
-multiple times using `times`.
-"""
-function play(x;keys...)
-  play(sound(x);keys...)
 end
 
 immutable MixChunk
@@ -391,6 +376,18 @@ type PlayingSound
   sound::Sound
   times::Int
 end
+
+
+"""
+    play(x;[wait=false],[times=1])
+
+Plays a sound (created via `sound`).
+
+If `wait` == false, returns an object that can be used to `stop`, or `pause` the
+sound. One can also call play(x,wait=true) on this object to wait for the sound
+to finish. The sound will normally play only once, but can be repeated
+multiple times using `times`.
+"""
 
 function play(x::Sound;wait=false,times=1)
   channel = ccall((:Mix_PlayChannelTimed,_psycho_SDL2_mixer),Cint,
