@@ -7,9 +7,9 @@ using DataFrames: readtable
 # you generated using audiotiming.jl. This script will then report
 # the error in audio playback onsets.
 
-audiofile = "/Users/davidlittle/Desktop/beeps.wav"
-timing_file = "audio_timing.csv"
-relt = 0.25 # the relative threshold, you may need to change this.
+audiofile = "/Users/davidlittle/Desktop/beeps2.wav"
+timing_file = "data/audio_timing_2017-01-11__09_19_19.csv"
+relt = 0.6 # the relative threshold, you may need to change this.
 
 # NOTE: this script may require a little troubleshooting depending on your
 # recording fideltiy. As is, for me, this works quite well even using laptop
@@ -42,27 +42,27 @@ end
 envelope = lowpass(max(beeps,0),100)
 atimes = findpeaks(diff(envelope),relt)/44100
 
-# you can use this plot to troubleshoot the threshold
-# for finding onsets
-#
-# a = 1
-# b = 44100
+# # you can use this plot to troubleshoot the threshold
+# # for finding onsets
+
+# a = round(Int,0*44100+1)
+# b = round(Int,1*44100)
 
 # plot(x=(a:b)/44100,
-#      y=diff(envelope)[a:b],
+#      y=beeps[a:b],#diff(envelope)[a:b],
 #      yintercept=[relt*maximum(diff(envelope))],
 #      xintercept=atimes[a/44100 .< atimes .< b/44100],
 #      Geom.line,Geom.hline(color=colorant"red",size=0.5mm),
 #      Geom.vline(color=colorant"purple",size=0.5mm))
 
 df = readtable(timing_file)
-times = df[:times]
+times = df[df[:code] .== "sound",:time]
 times += atimes[end] - times[end]
 
 # # you can use this plot to compare the actual and measured times
 # # across absolute times
-# a = maximum(times) - 10
-# b = maximum(times) - 5
+# a = maximum(times) - 2
+# b = maximum(times) - 1
 # des = times[a .< times .< b]
 # mes = atimes[a .< atimes .< b]
 
@@ -87,7 +87,7 @@ d_delta = d_delta[1:length(m_delta)]
 #            y=[minimum([d_delta;m_delta]),
 #               maximum([d_delta;m_delta])],
 #            Geom.line),
-#      Coord.cartesian(xmin=0.1,xmax=0.2,ymin=0.1,ymax=0.2)
+#      Coord.cartesian(xmin=0.1,xmax=0.2,ymin=0.1,ymax=0.2),
 #      Guide.xlabel("desired delta"),
 #      Guide.ylabel("measured delta"))
 
