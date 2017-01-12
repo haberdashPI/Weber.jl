@@ -1,6 +1,6 @@
 # TODO: create a 2AFC adaptive abstraction
 
-export instruct, response, addbreak_every, show_cross, @read_args
+export instruct, response, addbreak_every, show_cross, @read_args, randomize_by
 using ArgParse
 using Juno: input, selector
 import Juno
@@ -123,7 +123,17 @@ function as_arg_result(expr)
 end
 
 """
-   @read_args(description,[keyword args...])
+    randomize_by(itr)
+
+Randomize by a given iterable object, usually a string (e.g. the subject id.)
+
+If the same string is given, calls to random functions (e.g. `rand`, `randn` and
+`shuffle`) will result in the same output.
+"""
+randomize_by(itr) = srand(reinterpret(UInt32,collect(itr)))
+
+"""
+    @read_args(description,[keyword args...])
 
 Reads experimental parameters from the user.
 
