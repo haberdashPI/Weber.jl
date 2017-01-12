@@ -170,6 +170,7 @@ function pause(exp,message,time,firstpause=true)
   record(exp,"paused")
   if firstpause
     save_display(exp.win)
+    pause_sounds()
   end
   overlay = visual(colorant"gray",priority=Inf) + visual(message,priority=Inf)
   display(exp.win,overlay)
@@ -178,7 +179,10 @@ end
 function unpause(exp,time)
   record(exp,"unpaused")
   exp.data.pause_mode = Running
+
   restore_display(exp.win)
+  resume_sounds()
+
   exp.data.last_bad_delta = -1.0
   exp.data.last_good_delta = -1.0
   exp.flags.running = true
