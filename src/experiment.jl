@@ -42,7 +42,7 @@ experiment_metadata() = experiment_metadata(get_experiment())
 
 """
    Experiment([skip=0],[columns=[symbols...]],[debug=false],
-              [moment_resolution=1/2000],[input_resolution=1/60],[data_dir="data"],
+              [moment_resolution=0.0015],[input_resolution=1/60],[data_dir="data"],
               [width=1024],[height=768],kwds...)
 
 Prepares a new experiment to be run.
