@@ -286,6 +286,47 @@ function current_sound_latency()
   sound_setup_state.buffer_size / samplerate(sound_setup_state)
 end
 
+type SDLAudioSpec
+  freq::Cint
+  format::UInt16
+  channels::UInt8
+  silence::UInt8
+  buffer_size::UInt16
+  size::UInt32
+  callback::Ptr{Void}
+  user::Ptr{Void}
+end
+
+function empty_callback(udata::Ptr{Void},stream::Ptr{UInt8},len::Cint)
+  nothing
+end
+
+function verify_buffer_size(sample_rate_Hz,buffer_size)
+  if buffer_size != nothing
+    ec = cfunction(empty_callback,Void,(Ptr{Void},Ptr{UInt8},Cint))
+    requested = SDLAudioSpec(sample_rate_Hz,AUDIO_S16,2,0,buffer_size,
+                             2buffer_size,ec,C_NULL)
+    given = SDLAudioSpec(sample_rate_Hz,AUDIO_S16,2,0,0,0,ec,C_NULL)
+    sdl_init = ccall((:SDL_OpenAudio,_psycho_SDL2),Cint,
+                     (Ptr{SDLAudioSpec},Ptr{SDLAudioSpec}),
+                     Ref(requested),Ref(given))
+    if sdl_init < 0
+      error("Failed to initialize sound: "*SDL_GetError())
+    end
+    if requested.buffer_size != given.buffer_size
+      ccall((:SDL_CloseAudio,_psycho_SDL2),Void,())
+      error("The requested buffer size $buffer_size cannot be provided.")
+    else
+      info("Using audio buffer size of $buffer_size")
+    end
+    ccall((:SDL_CloseAudio,_psycho_SDL2),Void,())
+
+    buffer_size
+  else
+    256
+  end
+end
+
 """
     setup_sound([sample_rate_Hz=44100],[buffer_size=256])
 
@@ -305,7 +346,7 @@ rate. Upon playback, there is no check to ensure that the sample rate of a given
 sound is the same as that setup here, and no resampling of the sound is made.
 """
 function setup_sound(;sample_rate_Hz=samplerate(sound_setup_state),
-                     buffer_size=256)
+                     buffer_size=nothing)
   global sound_setup_state
 
   if isready(sound_setup_state)
@@ -328,7 +369,8 @@ function setup_sound(;sample_rate_Hz=samplerate(sound_setup_state),
   end
 
   sound_setup_state.samplerate = sample_rate_Hz
-  sound_setup_state.buffer_size = buffer_size
+  buffer_size = sound_setup_state.buffer_size =
+    verify_buffer_size(sample_rate_Hz,buffer_size)
 
   mixer_init = ccall((:Mix_OpenAudio,_psycho_SDL2_mixer),
                      Cint,(Cint,UInt16,Cint,Cint),
