@@ -395,6 +395,10 @@ If `wait` == false, returns an object that can be used to `stop`, or `pause` the
 sound. One can also call play(x,wait=true) on this object to wait for the sound
 to finish. The sound will normally play only once, but can be repeated
 multiple times using `times`.
+
+For convienience, play can also can be called on any object that can be turned
+into a sound (via `sound`). However, this can introduce latency into an
+experiment, and as such, raises a warning if called during an experiment.
 """
 
 function play(x::Sound;wait=false,times=1)
