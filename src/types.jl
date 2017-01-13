@@ -313,16 +313,20 @@ type TimedMoment <: AbstractTimedMoment
   delta_t::Float64
   run::Function
 end
+delta_t(moment::TimedMoment) = moment.delta_t
 
 type OffsetStartMoment <: AbstractTimedMoment
   run::Function
   count_trials::Bool
   expanding::Bool
 end
+delta_t(moment::OffsetStartMoment) = 0.0
 
 type FinalMoment <: SimpleMoment
   run::Function
 end
+delta_t(moment::FinalMoment) = 0.0
+
 
 type CompoundMoment <: Moment
   data::Array{Moment}

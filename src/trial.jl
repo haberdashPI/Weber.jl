@@ -446,13 +446,6 @@ function when(condition::Function,moments...;loop=false,update_offset=false)
   e
 end
 
-function delta_t(moment::TimedMoment)
-  moment.delta_t
-end
-
-delta_t(moment::OffsetStartMoment) = 0.0
-delta_t(moment::FinalMoment) = 0.0
-
 function handle(exp::Experiment,q::MomentQueue,moment::FinalMoment,x)
   for sq in exp.data.moments
     if sq != q && !isempty(sq)
