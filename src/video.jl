@@ -140,8 +140,8 @@ function window(width=1024,height=768;fullscreen=true,
   end
 
   x = y = SDL_WINDOWPOS_CENTERED
-  flags = (fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : UInt32(0)) |
-    SDL_WINDOW_INPUT_GRABBED
+  flags = (fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0x0) |
+    SDL_WINDOW_INPUT_GRABBED | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_MOUSE_FOCUS
 
   win = ccall((:SDL_CreateWindow,_psycho_SDL2),Ptr{Void},
               (Cstring,Cint,Cint,Cint,Cint,UInt32),
@@ -191,6 +191,7 @@ Closes a visible SDLWindow window.
 function close(win::SDLWindow)
   ccall((:SDL_DestroyRenderer,_psycho_SDL2),Void,(Ptr{Void},),win.renderer)
   ccall((:SDL_DestroyWindow,_psycho_SDL2),Void,(Ptr{Void},),win.data)
+  ccall((:SDL_ShowCursor,_psycho_SDL2),Void,(Cint,),1)
 
   win.closed = true
 end
