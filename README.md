@@ -244,20 +244,21 @@ during `run`.
 - [x] make sure all dependent libraries installed on mac os x (retry Homebrew.jl
   ??)
 - [x] simplify moments and submoments to moments in ExperimentData
-- [ ] fix false mis-timing warnings when using `update_delta = false` (do we
+- [x] fix false mis-timing warnings when using `update_delta = false` (do we
   need this anymore?)
 - [ ] create a calibration program
 - [ ] rename `display_key_codes`
 - [ ] test `display` timing (using an oscilloscope)
 - [ ] add remaining special keys to @key_str
 - [ ] port to linux
-- [ ] create hepler to generate template experiment (including run, setup and
-      README.md files)
+- [ ] create hepler to generate template experiment (including run, setup, 
+      update, and README.md files)
 
 For the 0.3.0 release
 - [ ] implement a loop and conditional that works across multiple trials
 - [ ] create 2AFC abstraction
 - [ ] replace interactive text input with simple Gtk window or SDL based GUI??
+- [ ] minimize GC using preinitialized data structures during experiment
 
 For the 0.3.x release
 - [ ] edit/refine the user manual

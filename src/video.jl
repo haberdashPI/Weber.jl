@@ -63,25 +63,30 @@ function delete_untimed!(x::DisplayStack)
   filter!(r -> display_duration(r) > 0.0,x.data)
 end
 
+function delete_timed!(x::DisplayStack)
+  filter!(r -> display_duration(r) <= 0.0,x.data)
+  x
+end
+
+const change_resolution = 0.001
 function delete_expired!(stack::DisplayStack,tick=exp_tick())
   next_change = Inf
   stack.data = filter!(stack.data) do item
-    if item.delete_at >= tick
-      next_change = min(stack.next_change,item.delete_at)
-      true
+    if item.delete_at + change_resolution <= tick
+      next_change = min(next_change,item.delete_at)
+      false
     else
-      !timed(item)
+      true
     end
   end
   stack.next_change = next_change
 
   stack
 end
-const change_resolution = 0.001
 length(x::DisplayStack) = length(x.data)
 collect(x::DisplayStack) = collect(x.data)
 copy(x::DisplayStack) = DisplayStack(copy(x.data),x.next_change)
-ischanging(x::DisplayStack) = x.next_change - change_resolution <= exp_tick()
+ischanging(x::DisplayStack,tick) = x.next_change + change_resolution <= tick
 
 abstract ExperimentWindow
 type NullWindow <: ExperimentWindow
@@ -677,9 +682,9 @@ function draw_stack(window::SDLWindow)
   show_drawn(window)
 end
 
-function refresh_display(window::SDLWindow)
-  if ischanging(window.stack)
-    window.stack = delete_expired!(window.stack)
+function refresh_display(window::SDLWindow,tick=exp_tick())
+  if ischanging(window.stack,tick)
+    window.stack = delete_expired!(window.stack,tick)
     draw_stack(window)
   end
 end
@@ -723,8 +728,9 @@ function update_stack_helper!(window,restore::RestoreDisplay)
   # only restore objects that aren't timed. Otherwise the timed objects will
   # never get deleted. There is no well defined way to set their duration again
   # and remove them, since some unknown amount of time has passed since they
-  # started being displayed.
-  window.stack = filter!(r -> display_duration(r) <= 0.0,restore.x)
+  # started being displayed. TODO: this is no longer true,
+  # their duration could be calculated
+  window.stack = delete_timed!(restore.x)
 end
 
 const saved_display = Array{DisplayStack}()

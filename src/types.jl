@@ -302,10 +302,11 @@ type ResponseMoment <: SimpleMoment
   respond::Function
   timeout::Function
   timeout_delta_t::Float64
-  update_last::Bool
+  minimum_delta_t::Float64
 end
-update_last(m::ResponseMoment) = m.update_last
-update_last(m::Moment) = true
+function delta_t(moment::ResponseMoment)
+  (moment.timeout_delta_t > 0.0 ? moment.timeout_delta_t : Inf)
+end
 
 abstract AbstractTimedMoment <: SimpleMoment
 
@@ -332,14 +333,12 @@ type CompoundMoment <: Moment
   data::Array{Moment}
 end
 delta_t(m::CompoundMoment) = 0.0
-update_last(m::CompoundMoment) = false
 >>(a::SimpleMoment,b::SimpleMoment) = CompoundMoment([a,b])
 >>(a::CompoundMoment,b::CompoundMoment) = CompoundMoment(vcat(a.data,b.data))
 >>(a::Moment,b::Moment) = >>(promote(a,b)...)
->>(a::Moment,b::Moment,c::Moment,d::Vararg{Moment}) = moment(a,b,c,d...)
+>>(a::Moment,b::Moment,c::Moment,d::Moment...) = moment(a,b,c,d...)
 promote_rule(::Type{SimpleMoment},::Type{CompoundMoment}) = CompoundMoment
 convert(::Type{CompoundMoment},x::SimpleMoment) = CompoundMoment([x])
-
 
 type ExpandingMoment <: Moment
   condition::Function
@@ -348,7 +347,6 @@ type ExpandingMoment <: Moment
   update_offset::Bool
 end
 delta_t(m::ExpandingMoment) = 0.0
-update_last(m::ExpandingMoment) = false
 
 type MomentQueue
   data::Deque{Moment}
@@ -358,23 +356,10 @@ isempty(m::MomentQueue) = isempty(m.data)
 length(m::MomentQueue) = length(m.data)
 enqueue!(m::MomentQueue,x) = push!(m.data,x)
 dequeue!(m::MomentQueue) = shift!(m.data)
+unshift!(m::MomentQueue,x) = unshift!(m.data,x)
 front(m::MomentQueue) = front(m.data)
 function next_moment_time(m::MomentQueue)
   (isempty(m) ? Inf : m.last + delta_t(front(m)))
-end
-
-function expand(m::ExpandingMoment,q::MomentQueue)
-  if m.condition()
-    if !m.repeat
-      dequeue!(q)
-    end
-
-    for x in m.data
-      unshift!(q.data,x)
-    end
-
-    unshift!(q.data,m)
-  end
 end
 
 ################################################################################

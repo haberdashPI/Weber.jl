@@ -383,37 +383,43 @@ function final_moment(fn::Function)
 end
 
 """
-   await_response(isresponse)
+   await_response(isresponse;[atleast=0.0])
 
 This moment starts when the `isresponse` function evaluates to true.
 
 The `isresponse` function will be called anytime an event occurs. It should
 take one parameter (the event that just occured).
+
+If the response is provided before `atleast` seconds, the moment does not start
+until `atleast` seconds.
 """
-function await_response(fn::Function)
+function await_response(fn::Function;atleast=0.0)
   for t in concrete_events
     precompile(fn,(t,))
   end
 
-  ResponseMoment(fn,(t) -> nothing,0,true)
+  ResponseMoment(fn,(t) -> nothing,0,atleast)
 end
 
 """
-    timeout(fn,isresposne,timeout,[delta_update=true])
+    timeout(fn,isresposne,timeout,[atleast=0.0])
 
 This moment starts when either `isresponse` evaluates to true or
 timeout time (in seconds) passes.
 
 If the moment times out, the function `fn` will be called, recieving
 the current time in seconds.
+
+If the response is provided before `atleast` seconds, the moment does not begin
+until `atleast` seconds (`fn` will not be called).
 """
-function timeout(fn::Function,isresponse::Function,timeout;delta_update=true)
+function timeout(fn::Function,isresponse::Function,timeout;atleast=0.0)
   precompile(fn,(Float64,))
   for t in concrete_events
     precompile(isresponse,(t,))
   end
 
-  ResponseMoment(isresponse,fn,timeout,delta_update)
+  ResponseMoment(isresponse,fn,timeout,atleast)
 end
 
 flag_expanding(m::Moment) = m
@@ -450,10 +456,12 @@ function handle(exp::Experiment,q::MomentQueue,moment::FinalMoment,x)
   for sq in exp.data.moments
     if sq != q && !isempty(sq)
       enqueue!(sq,moment)
+      dequeue!(q)
       return true
     end
   end
   moment.run()
+  dequeue!(q)
   true
 end
 
@@ -464,7 +472,8 @@ function handle(exp::Experiment,q::MomentQueue,
                 moment::AbstractTimedMoment,time::Float64)
   exp.data.last_time = time
   run(moment,time)
-
+  q.last = time
+  dequeue!(q)
   true
 end
 
@@ -473,20 +482,26 @@ function handle(exp::Experiment,q::MomentQueue,
   false
 end
 
-function delta_t(moment::ResponseMoment)
-  (moment.timeout_delta_t > 0.0 ? moment.timeout_delta_t : Inf)
-end
-
 function handle(exp::Experiment,q::MomentQueue,
                 moment::ResponseMoment,time::Float64)
-  exp.data.last_time = time
   moment.timeout(time)
+  q.last = time
+  dequeue!(q)
   true
 end
 
-function handle(exp::Experiment,q::MomentQueue,
-                moment::ResponseMoment,event::ExpEvent)
-  moment.respond(event)
+function handle(exp::Experiment,q::MomentQueue,m::ResponseMoment,event::ExpEvent)
+  if m.respond(event)
+    if (m.minimum_delta_t > 0.0 &&
+        m.minimum_delta_t + q.last > exp_tick(exp))
+      dequeue!(q)
+      unshift!(q,moment(m.minimum_delta_t))
+    else
+      dequeue!(q)
+    end
+    true
+  end
+  false
 end
 
 keep_skipping(exp,moment::Moment) = exp.data.offset < exp.data.skip_offsets
@@ -522,10 +537,21 @@ function handle(exp::Experiment,q::MomentQueue,moments::CompoundMoment,x)
     push!(queue,moment)
   end
   push!(exp.data.moments,MomentQueue(queue,q.last))
+  dequeue!(q)
   true
 end
 
-function handle(exp::Experiment,queue::MomentQueue,m::ExpandingMoment,x)
-  expand(m,queue)
+function handle(exp::Experiment,q::MomentQueue,m::ExpandingMoment,x)
+  if m.condition()
+    if !m.repeat
+      dequeue!(q)
+    end
+
+    for x in m.data
+      unshift!(q.data,x)
+    end
+  else
+    dequeue!(q)
+  end
   true
 end

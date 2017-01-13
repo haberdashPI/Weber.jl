@@ -369,10 +369,6 @@ function process(exp::Experiment,queue::MomentQueue,event::ExpEvent)
       # @show time(event)
       # @show queue.last
 
-      dequeue!(queue)
-      if update_last(moment)
-        queue.last = time(event)
-      end
       exp.data.next_moment = min(exp.data.next_moment,next_moment_time(queue))
     end
   end
@@ -411,20 +407,9 @@ function process(exp::Experiment,queue::MomentQueue,t::Float64)
         run_time = offset + time()
       end
       exp.data.last_time = run_time
-      handled = handle(exp,queue,moment,run_time)
-      check_timing(exp,moment,run_time,queue.last)
-      if handled
-        # println("--------")
-        # @show event_time
-        # @show run_time
-        # @show moment
-        # @show t
-        # @show queue.last
-
-        dequeue!(queue)
-        if update_last(moment)
-          queue.last = run_time
-        end
+      last = queue.last
+      if handle(exp,queue,moment,run_time)
+        check_timing(exp,moment,run_time,last)
         exp.data.next_moment = min(exp.data.next_moment,next_moment_time(queue))
       end
     end
