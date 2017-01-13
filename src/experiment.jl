@@ -308,7 +308,7 @@ function run(exp::Experiment)
         process(exp,exp.data.moments,tick)
       end
 
-      # handle all events (handles pauses, and notifys moments)
+      # handle all input events (handles pauses, and notifys moments)
       if tick - last_input > exp.info.input_resolution
         check_events(process_event,exp,tick)
         last_input = tick
