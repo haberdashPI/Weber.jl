@@ -523,12 +523,6 @@ function keep_skipping(exp,moment::ExpandingMoment)
 end
 keep_skipping(exp,moment::FinalMoment) = false
 
-function skip_offsets(exp,queue)
-  while !isempty(queue) && keep_skipping(exp,front(queue))
-    dequeue!(queue)
-  end
-end
-
 function handle(exp::Experiment,q::MomentQueue,moments::CompoundMoment,x)
   queue = Deque{Moment}()
   for moment in moments.data

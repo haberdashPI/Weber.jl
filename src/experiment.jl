@@ -351,6 +351,12 @@ function process(exp::Experiment,queues::Array{MomentQueue},x)
   end
 end
 
+function skip_offsets(exp,queue)
+  while !isempty(queue) && keep_skipping(exp,front(queue))
+    dequeue!(queue)
+  end
+end
+
 function process(exp::Experiment,queue::MomentQueue,event::ExpEvent)
   skip_offsets(exp,queue)
 
