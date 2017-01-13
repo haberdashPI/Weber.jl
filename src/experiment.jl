@@ -333,9 +333,8 @@ function run(exp::Experiment)
         sleep(sleep_amount)
       end
     end
-
-    experiment_context[] = Nullable()
   finally
+    experiment_context[] = Nullable()
     close(exp.win)
     gc_enable(true)
     if !exp.info.hide_output
