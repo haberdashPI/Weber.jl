@@ -34,6 +34,14 @@ experiment_trial() = experiment_trial(get_experiment())
 experiment_offset(exp) = exp.data.offset
 experiment_offset() = experiment_offset(get_experiment())
 
+exp_tick(exp) = exp.data.last_time
+function exp_tick()
+  if isnull(experiment_context[])
+    time()
+  else
+    exp_tick(get(experiment_context[]))
+  end
+end
 
 """
    experiment_metadata() = Dict{Symbol,Any}()

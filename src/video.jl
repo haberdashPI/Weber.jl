@@ -3,7 +3,8 @@ using Images
 using DataStructures
 using Lazy: @>>
 
-import Base: display, close, +, convert, promote_rule, convert, push!
+import Base: display, close, +, convert, promote_rule, convert, push!,
+  filter!, length, collect, copy
 
  # importing solely to allow their use in user code
 import Colors: @colorant_str, RGB
@@ -31,6 +32,57 @@ function find_font(name,dirs)
         join(dirs,", "," and ")*".")
 end
 
+abstract SDLRendered
+abstract SDLSimpleRendered <: SDLRendered
+timed(r) = 0.0 < display_duration(r) < Inf
+
+type RenderItem
+  r::SDLRendered
+  delete_at::Float64
+end
+display_priority(x::RenderItem) = display_priority(x.r)
+display_duration(x::RenderItem) = display_duration(x.r)
+timed(x::RenderItem) = timed(x.r)
+
+type DisplayStack
+  data::OrderedSet{RenderItem}
+  next_change::Float64
+end
+DisplayStack() = DisplayStack(OrderedSet{RenderItem}(),Inf)
+
+function push!(x::DisplayStack,r::SDLRendered)
+  item = RenderItem(r,(timed(r) ? exp_tick() + display_duration(r) : Inf))
+  push!(x.data,item)
+  if timed(r)
+    x.next_change = min(x.next_change,item.delete_at)
+  end
+  x
+end
+
+function delete_untimed!(x::DisplayStack)
+  filter!(r -> display_duration(r) > 0.0,x.data)
+end
+
+function delete_expired!(stack::DisplayStack,tick=exp_tick())
+  next_change = Inf
+  stack.data = filter!(stack.data) do item
+    if item.delete_at >= tick
+      next_change = min(stack.next_change,item.delete_at)
+      true
+    else
+      !timed(item)
+    end
+  end
+  stack.next_change = next_change
+
+  stack
+end
+const change_resolution = 0.001
+length(x::DisplayStack) = length(x.data)
+collect(x::DisplayStack) = collect(x.data)
+copy(x::DisplayStack) = DisplayStack(copy(x.data),x.next_change)
+ischanging(x::DisplayStack) = x.next_change - change_resolution <= exp_tick()
+
 abstract ExperimentWindow
 type NullWindow <: ExperimentWindow
   w::Cint
@@ -46,11 +98,14 @@ type SDLWindow <: ExperimentWindow
   w::Cint
   h::Cint
   closed::Bool
+  stack::DisplayStack
 end
 
 const SDL_WINDOWPOS_CENTERED = 0x2fff0000
 const SDL_WINDOW_FULLSCREEN_DESKTOP = 0x00001001
 const SDL_WINDOW_INPUT_GRABBED = 0x00000100
+const SDL_WINDOW_INPUT_FOCUS = 0x00000200
+const SDL_WINDOW_MOUSE_FOCUS = 0x00000400
 const SDL_RENDERER_SOFTWARE = 0x00000001
 const SDL_RENDERER_ACCELERATED = 0x00000002
 const SDL_RENDERER_PRESENTVSYNC = 0x00000004
@@ -122,7 +177,7 @@ function window(width=1024,height=768;fullscreen=true,
         (Ptr{Void},Ptr{Cint},Ptr{Cint}),win,pointer(wh,1),pointer(wh,2))
   ccall((:SDL_ShowCursor,_psycho_SDL2),Void,(Cint,),0)
 
-  x = SDLWindow(win,rend,wh[1],wh[2],false)
+  x = SDLWindow(win,rend,wh[1],wh[2],false,DisplayStack())
   finalizer(x,x -> (x.closed ? nothing : close(x)))
 
   x
@@ -209,9 +264,6 @@ and heights (for y), with (0,0) at the center of the screen.
     into one object, so that they are displayed together
 """
 visual(x,args...;keys...) = visual(get_experiment().win,x,args...;keys...)
-
-abstract SDLRendered
-abstract SDLSimpleRendered <: SDLRendered
 
 function draw(r::SDLRendered)
   draw(get_experiment().window,r)
@@ -543,18 +595,7 @@ function show_drawn(window::SDLWindow)
 end
 show_drawn(win::NullWindow) = nothing
 
-type RenderItem
-  r::SDLRendered
-  onset::Float64
-end
-typealias DisplayStack OrderedSet{RenderItem}
-push!(x::DisplayStack,r::SDLRendered) = push!(x,RenderItem(r,time()))
-display_priority(x::RenderItem) = display_priority(x.r)
-display_duration(x::RenderItem) = display_duration(x.r)
-
-# called in __init__() to create display_stacks global variable
 const SDL_INIT_VIDEO = 0x00000020
-const display_stacks = Dict{SDLWindow,DisplayStack}()
 function setup_display()
   init = ccall((:SDL_Init,_psycho_SDL2),Cint,(UInt32,),SDL_INIT_VIDEO)
   if init < 0
@@ -595,42 +636,23 @@ function display(window::SDLWindow,r::SDLRendered;kwds...)
   update_stack!(window,r)
 
   # if there's no experiment, handle display duration
-  if timed(r) && isnull(experiment_context[])
+  if timed(r) && !experiment_running()
     eventually_remove!(window,stack,r)
+    warn("calling display outside of an experiment")
   end
 end
 
 function update_stack!(window,r)
-  if window ∉ keys(display_stacks)
-    stack = display_stacks[window] = DisplayStack()
-  else
-    stack = display_stacks[window]
-  end
-
-  stack = display_stacks[window] = update_stack_helper!(window,stack,r)
-  draw_stack(window,stack)
+  update_stack_helper!(window,r)
+  draw_stack(window)
 end
 
 function eventually_remove!(window::SDLWindow,stack::DisplayStack,r::SDLRendered)
   Timer(duration(r)) do t
-    handle_remove!(window,stack)
-    draw_stack(window,stack)
+    window.stack = delete_expired!(window.stack,time())
+    draw_stack(window)
   end
 end
-
-function handle_remove!(window::SDLWindow,stack::DisplayStack)
-  oldlen = length(stack)
-  filter!(stack) do item
-    if timed(item)
-      display_duration(item) > time() - item.onset
-    else
-      true
-    end
-  end
-
-  oldlen != length(stack)
-end
-
 
 function display(w::SDLWindow,r)
   if experiment_running()
@@ -641,28 +663,23 @@ function display(w::SDLWindow,r)
   display(w,visual(w,r))
 end
 
-function update_stack_helper!(window,stack,r::SDLRendered)
-  stack = filter!(r -> display_duration(r) > 0.0,stack)
-  push!(stack,r)
+function update_stack_helper!(window,r::SDLRendered)
+  delete_untimed!(window.stack)
+  push!(window.stack,r)
 end
 
-timed(r::SDLRendered) = 0.0 > display_duration(r) > Inf
-timed(r::RenderItem) = timed(r.r)
-
-function draw_stack(window::SDLWindow,stack::DisplayStack)
+function draw_stack(window::SDLWindow)
   clear(window)
-  for item in sort(collect(stack),by=display_priority,alg=MergeSort)
+  for item in sort(collect(window.stack),by=display_priority,alg=MergeSort)
     draw(window,item.r)
   end
   show_drawn(window)
 end
 
 function refresh_display(window::SDLWindow)
-  if window ∈ keys(display_stacks)
-    stack = display_stacks[window]
-    if any(timed,stack) && handle_remove!(window,stack)
-      draw_stack(window,stack)
-    end
+  if ischanging(window.stack)
+    window.stack = delete_expired!(window.stack)
+    draw_stack(window)
   end
 end
 
@@ -680,12 +697,11 @@ end
 +(a::SDLRendered,b::SDLRendered) = +(promote(a,b)...)
 promote_rule(::Type{SDLSimpleRendered},::Type{SDLCompound}) = SDLCompound
 convert(::Type{SDLCompound},x::SDLSimpleRendered) = SDLCompound([x])
-function update_stack_helper!(window,stack,rs::SDLCompound)
-  filter!(r -> display_duration(r) > 0.0,stack)
+function update_stack_helper!(window,rs::SDLCompound)
+  delete_untimed!(window.stack)
   for r in rs.data
-    push!(stack,r)
+    push!(window.stack,r)
   end
-  stack
 end
 function eventually_remove!(window::SDLWindow,stack::DisplayStack,
                             rs::SDLCompound)
@@ -702,22 +718,18 @@ end
 type RestoreDisplay <: SDLRendered
   x::DisplayStack
 end
-function update_stack_helper!(window,stack,restore::RestoreDisplay)
+function update_stack_helper!(window,restore::RestoreDisplay)
   # only restore objects that aren't timed. Otherwise the timed objects will
   # never get deleted. There is no well defined way to set their duration again
   # and remove them, since some unknown amount of time has passed since they
   # started being displayed.
-  filter!(r -> display_duration(r) <= 0.0,restore.x)
+  window.stack = filter!(r -> display_duration(r) <= 0.0,restore.x)
 end
 
 const saved_display = Array{DisplayStack}()
 saved_display[] = DisplayStack()
 function save_display(window::SDLWindow)
-  if window ∈ keys(display_stacks)
-    saved_display[] = copy(display_stacks[window])
-  else
-    saved_display[] = DisplayStack()
-  end
+  saved_display[] = copy(window.stack)
 end
 save_display(win::NullWindow) = nothing
 
