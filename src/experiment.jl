@@ -241,30 +241,32 @@ function process_event(exp::Experiment,event)
   end
 end
 
+roundstr(x,n=5) = x > 10.0^-n ? string(round(x,n)) : "≤1e-$n"
+
 const last_delta_resolution = 1
 function report_deltas(exp::Experiment)
   if !exp.info.hide_output
     if exp.data.last_bad_delta > 0
-      err = exp.data.last_bad_delta
-      warn("""
+      err_str = roundstr(exp.data.last_bad_delta)
+      warn(cleanstr("""
 
-The latency of trial moments has exceeded desirable levels ($err seconds). This
-normally occurs when the experiment first starts up, but if unacceptable levels
-continue throughout the experiment, consider closing some programs on your
-computer or running this program on a faster machine. Poor latency will also
-occur when you pause the experiment, because moments will not occur during a
-pause.
+The latency of trial moments is at undesirable levels ($err_str
+seconds). This normally occurs when the experiment first starts up, but if
+unacceptable levels continue throughout the experiment, consider closing some
+programs on your computer or running this program on a faster machine. Poor
+latency will also occur when you pause the experiment, because moments will not
+occur during a pause.
 
-           """)
-      record(exp,"bad_delta_latency($err)")
+           """))
+      record(exp,"bad_delta_latency($err_str)")
     end
 
     if exp.data.last_good_delta > 0
-      err = exp.data.last_good_delta
+      err_str = roundstr(exp.data.last_good_delta)
       exp.data.last_good_delta = -1.0
-      info("""
+      info(cleanstr("""
 
-The latency of trial moments has fallen to an acceptable level ($err
+The latency of trial moments has fallen to an acceptable level ($err_str
 seconds). It may fall further, but unless it exceedes a tolerable level, you
 will not be notified. Note that this measure of latency only verifies that the
 commands to generate stimuli occur when they should. Emprical verification of
@@ -273,8 +275,8 @@ sensors and microphones. You can use the scripts available in
 $(Pkg.dir("Weber","test")) to test the timing of auditory and visual
 stimuli presented with Weber.
 
-           """)
-      record(exp,"good_delta_latency($err)")
+           """))
+      record(exp,"good_delta_latency($err_str)")
     end
   end
 end

@@ -662,9 +662,9 @@ end
 
 function display(w::SDLWindow,r)
   if experiment_running()
-    warn("Visual was not precomputed! To minimize latency, call ",
+    warn(cleanstr("Visual was not precomputed! To minimize latency, call ",
          "`x = visual(obj)` before running an experiment, then call",
-         " `display(x)` during the experiment.")
+         " `display(x)` during the experiment."))
   end
   display(w,visual(w,r))
 end

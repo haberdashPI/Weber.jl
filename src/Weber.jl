@@ -2,6 +2,25 @@ __precompile__()
 
 module Weber
 
+# helper function for clean info and warn output
+function cleanstr(strs...;width=70)
+  nlines = 0
+  ncolumns = 0
+  words = (w for str in strs for w in split(str,r"\s+"))
+  reduce(words) do result,word
+    if ncolumns + length(word) > width
+      ncolumns = 0
+      nlines += 1
+      result *= "\n"
+    else
+      ncolumns += length(word) + 1
+      result *= " "
+    end
+
+    result*word
+  end
+end
+
 try
   @assert sizeof(Int) == 8
 catch
@@ -15,8 +34,9 @@ try
 
   suffix = (success(`git diff-index HEAD --quiet`) ? "" : "-dirty")
   if !isempty(suffix)
-    warn("Source files in $(Pkg.dir("Weber")) have been modified without being ",
-         "committed to git. Your experiment will not be reproduceable.")
+    warn(cleanstr("Source files in $(Pkg.dir("Weber")) have been modified",
+                  "without being committed to git. Your experiment will not",
+                  "be reproduceable."))
   end
   global const version =
     convert(VersionNumber,chomp(readstring(`git describe --tags`))*suffix)
@@ -24,9 +44,9 @@ catch
   try
     global const version = Pkg.installed("Weber")
   catch
-    warn("The Weber version number could not be determined. ",
-         "Your experiment will not be reproducable. ",
-         "It is recommended that you install Weber via Pkg.add(\"Weber\").")
+    warn(cleanstr("The Weber version number could not be determined.",
+         "Your experiment will not be reproducable.",
+         "It is recommended that you install Weber via Pkg.add(\"Weber\")."))
   end
 finally
   cd(old)

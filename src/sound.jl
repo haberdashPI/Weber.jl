@@ -350,10 +350,10 @@ function setup_sound(;sample_rate_Hz=samplerate(sound_setup_state),
     end
   end
   if samplerate(sound_setup_state) != sample_rate_Hz
-    warn("The sample rate is being changed from "*
+    warn(cleanstr("The sample rate is being changed from "*
          "$(samplerate(sound_setup_state))Hz to $(sample_rate_Hz)Hz. "*
          "Sounds you've created that do not share this new sample rate will "*
-         "not play correctly.")
+         "not play correctly."))
   end
 
   sound_setup_state.samplerate = sample_rate_Hz
@@ -379,9 +379,9 @@ end
 
 function play(x;keys...)
   if experiment_running()
-    warn("Sound was not precomputed! To minimize latency, call ",
+    warn(cleanstr("Sound was not precomputed! To minimize latency, call ",
          "`x = sound(obj)` before running an experiment, then call `play(x)` ",
-         "during the experiment.")
+         "during the experiment."))
   end
   play(sound(x);keys...)
 end
