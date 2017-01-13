@@ -338,8 +338,8 @@ function run(exp::Experiment)
     close(exp.win)
     gc_enable(true)
     if !exp.info.hide_output
-      info("Experiment terminated at offset $(exp.data.offset). You can ",
-           "find the collected data in $(exp.info.file).")
+      info("Experiment terminated at offset $(exp.data.offset).")
+      info("Data recorded to: $(exp.info.file)")
     end
   end
   nothing
