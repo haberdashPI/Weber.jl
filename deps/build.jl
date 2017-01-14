@@ -1,4 +1,4 @@
-using PyCall
+using Conda
 
 downloaddir = joinpath(dirname(@__FILE__),"downloads")
 bindir = joinpath(dirname(@__FILE__),"usr","lib")
