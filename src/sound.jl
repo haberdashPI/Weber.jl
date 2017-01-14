@@ -1,13 +1,14 @@
 using SampledSignals
 using DSP
-using LibSndFile
 using FixedPointNumbers
+using FileIO
+import FileIO: load
 import SampledSignals: samplerate
 
 export match_lengths, mix, mult, silence, noise, highpass, lowpass, bandpass,
 	tone, ramp, harmonic_complex, attenuate, sound, play, pause, stop,
   savesound, duration, setup_sound, current_sound_latency, buffer,
-  resume_sounds, pause_sounds
+  resume_sounds, pause_sounds, load, save
 
 """
    match_lengths(x,y,...)
@@ -227,6 +228,32 @@ immutable Sound
     end
     new(c,b)
   end
+end
+
+load(f::File{format"WAV"}) = load_helper(f)
+load(f::File{format"AIFF"}) = load_helper(f)
+load(f::File{format"RIFF"}) = load_helper(f)
+load(f::File{format"OGG"}) = load_helper(f)
+load(f::File{format"VOC"}) = load_helper(f)
+function load_helper(f::File)
+  if !isready(sound_setup_state)
+    setup_sound()
+  end
+
+  rw = ccall((:SDL_RWFromFile,_psycho_SDL2),Ptr{Void},(Cstring,Cstring),
+              filename(f), "rb")
+  if rw == C_NULL
+    error("Failed to open file $(filename(f)): "*SDL_GetError())
+  end
+
+  pchunk = ccall((:Mix_LoadWAV_RW,_psycho_SDL2_mixer),Ptr{MixChunk},
+                 (Ptr{Void},Cint),rw,1)
+  if pchunk == C_NULL
+    error("Failed to load WAV $(filename(f)): "*SDL_GetError())
+  end
+  chunk = unsafe_load(pchunk)
+  SampleBuf(unsafe_wrap(Array,chunk.buffer,chunk.byte_length >> 1,true),
+            samplerate(sound_setup_state))
 end
 
 function sound(x::SampleBuf{Fixed{Int16,15}})
