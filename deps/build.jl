@@ -87,13 +87,5 @@ else
   error("Unsupported operating system.")
 end
 
-try
-  pyimport_conda("pyxid","pyxid","haberdashPI")
-catch e
-  if isa(e,PyCall.PyError) &&
-    pybuiltin("type")(e.val) == pybuiltin("ImportError")
-    info("Please restart Julia before using Weber.")
-  else
-    rethrow(e)
-  end
-end
+Conda.add_channel("haberdashPI")
+Conda.add("pyxid")
