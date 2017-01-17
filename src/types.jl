@@ -1,4 +1,5 @@
-import Base: show, isempty, time, >>, length, unshift!, promote_rule, convert
+import Base: show, isempty, time, >>, length, unshift!, promote_rule, convert,
+  hash, ==
 import DataStructures: front
 
 export iskeydown, iskeyup, iskeypressed, isfocused, isunfocused, keycode,
@@ -72,14 +73,19 @@ time(event::WindowFocused) = event.time
 time(event::WindowUnfocused) = event.time
 
 abstract Key
+==(x::Key,y::Key) = false
 
 type KeyboardKey <: Key
   code::Int32
 end
+hash(x::KeyboardKey,h::UInt) = hash(KeyboardKey,hash(x.code,h))
+==(x::KeyboardKey,y::KeyboardKey) = x.code == y.code
 
 type CedrusKey <: Key
   code::Int
 end
+hash(x::CedrusKey,h::UInt) = hash(CedrusKey,hash(x.code,h))
+==(x::CedrusKey,y::CedrusKey) = x.code == y.code
 
 const str_to_code = Dict(
   "a" => KeyboardKey(reinterpret(Int32,'a')),
