@@ -7,18 +7,21 @@ function cleanstr(strs...;width=70)
   nlines = 0
   ncolumns = 0
   words = (w for str in strs for w in split(str,r"\s+"))
-  reduce(words) do result,word
+  result = IOBuffer()
+  print(result,first(words))
+  for word in drop(words,1)
     if ncolumns + length(word) > width
       ncolumns = 0
       nlines += 1
-      result *= "\n"
+      print(result,"\n")
     else
       ncolumns += length(word) + 1
-      result *= " "
+      print(result," ")
     end
 
-    result*word
+    print(result,word)
   end
+  takebuf_string(result)
 end
 
 try
