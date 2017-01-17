@@ -1,7 +1,7 @@
-export display_key_codes
+export run_keycode_helper
 
-function display_key_codes()
-  exp = Experiment()
+function run_keycode_helper()
+  exp = Experiment(hide_output=true)
   setup(exp) do
     addbreak(instruct("Press keys to see their codes."))
     addtrial(show_cross(),await_response(iskeydown(key":escape:"))) do event
