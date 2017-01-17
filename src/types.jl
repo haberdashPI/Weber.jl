@@ -47,25 +47,24 @@ type CedrusUpEvent <: ExpEvent
 end
 
 """
-      response_time(e::ExpEvent)
+    response_time(e::ExpEvent)
 
-  Get the response time an event occured at. Only meaningful for response pad
-  events (returns NaN in other cases). The response time is normally measured from
-  the start of a trial (see `reset_response`).
-
-  """
+Get the response time an event occured at. Only meaningful for response pad
+events (returns NaN in other cases). The response time is normally measured from
+the start of a trial (see `reset_response`).
+"""
 response_time(e::ExpEvent) = NaN
 response_time(e::CedrusUpEvent) = e.rt
 response_time(e::CedrusDownEvent) = e.rt
 
 """
-      time(e::ExpEvent)
+    time(e::ExpEvent)
 
-  Get the time an event occured relative to the start of the experiment.
-  Resolution is limited by an expeirment's input_resolution (which can be
-  specified upon initialization), and the response rate of the device. For
-  instance, keyboards usually have a latency on the order of 20-30ms.
-  """
+Get the time an event occured relative to the start of the experiment.
+Resolution is limited by an expeirment's input_resolution (which can be
+specified upon initialization), and the response rate of the device. For
+instance, keyboards usually have a latency on the order of 20-30ms.
+"""
 time(event::ExpEvent) = NaN
 time(event::KeyUpEvent) = event.time
 time(event::KeyDownEvent) = event.time
