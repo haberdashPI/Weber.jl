@@ -373,7 +373,7 @@ immutable ExperimentInfo
   moment_resolution::Float64
   start::DateTime
   header::Array{Symbol}
-  file::String
+  file::Nullable{String}
   hide_output::Bool
 end
 

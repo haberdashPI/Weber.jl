@@ -28,11 +28,14 @@ function record_helper(exp::Experiment,kwds,header)
 
   kwds = reverse(kwds) # this ensures that if the user overwrites a value
                        # it will be honored
-  open(exp.info.file,"a") do stream
-    @_ header begin
-      map(c -> findkwd(kwds,c,""),_)
-      join(_,",")
-      println(stream,_)
+
+  if !isnull(exp.info.file)
+    open(get(exp.info.file),"a") do stream
+      @_ header begin
+        map(c -> findkwd(kwds,c,""),_)
+        join(_,",")
+        println(stream,_)
+      end
     end
   end
 end
@@ -53,7 +56,9 @@ function record_header(exp)
   end
 
   columns = [extra_keys...,info_keys...,:code,exp.info.header...]
-  open(x -> println(x,join(columns,",")),exp.info.file,"w")
+  if !isnull(exp.info.file)
+    open(x -> println(x,join(columns,",")),get(exp.info.file),"w")
+  end
 end
 
 function record(exp::Experiment,code;kwds...)

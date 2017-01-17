@@ -69,7 +69,8 @@ the experiment (using `record`).
   should be presented at
 * input_resolution: the precision (in seconds) that input events should
 be queried.
-* data_dir: the directory where data files should be stored
+* data_dir: the directory where data files should be stored (can be set to
+  nothing to prevent a file from being created)
 * width and height: specified the screen resolution during the experiment
 
 Additional keyword arguments can be specified to store extra information to the
@@ -83,14 +84,21 @@ function Experiment(;skip=0,columns=Symbol[],debug=false,
                     hide_output = false,
                     input_resolution = default_input_resolution,
                     width=exp_width,height=exp_height,info_values...)
-  mkpath(data_dir)
+  if !(data_dir == nothing || hide_output)
+    mkpath(data_dir)
+  elseif !hide_output
+    warn(cleanstr("No directory specified for saving data. ALL DATA FROM THIS",
+                  " EXPERIMENT WILL BE LOST!!! Refer to the documentation for",
+                  "`Experiment`."))
+  end
 
   meta = Dict{Symbol,Any}()
   start_time = time()
   start_date = now()
   timestr = Dates.format(start_date,"yyyy-mm-dd__HH_MM_SS")
   info_str = join(map(x -> x[2],info_values),"_")
-  filename = joinpath(data_dir,info_str*"_"*timestr*".csv")
+  filename = (data_dir == nothing || hide_output ? Nullable() :
+              Nullable(joinpath(data_dir,info_str*"_"*timestr*".csv")))
   einfo = ExperimentInfo(info_values,meta,input_resolution,
                          moment_resolution,start_date,columns,filename,
                          hide_output)
@@ -341,7 +349,9 @@ function run(exp::Experiment)
     gc_enable(true)
     if !exp.info.hide_output
       info("Experiment terminated at offset $(exp.data.offset).")
-      info("Data recorded to: $(exp.info.file)")
+      if !isnull(exp.info.file)
+        info("Data recorded to: $(get(exp.info.file))")
+      end
     end
   end
   nothing
