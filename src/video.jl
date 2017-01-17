@@ -701,7 +701,7 @@ function +(a::SDLCompound,b::SDLCompound)
   SDLCompound(vcat(a.data,b.data))
 end
 +(a::SDLRendered,b::SDLRendered) = +(promote(a,b)...)
-promote_rule(::Type{SDLSimpleRendered},::Type{SDLCompound}) = SDLCompound
+promote_rule{T <: SDLSimpleRendered}(::Type{SDLCompound},::Type{T}) = SDLCompound
 convert(::Type{SDLCompound},x::SDLSimpleRendered) = SDLCompound([x])
 function update_stack_helper!(window,rs::SDLCompound)
   delete_untimed!(window.stack)

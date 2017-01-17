@@ -337,7 +337,7 @@ delta_t(m::CompoundMoment) = 0.0
 >>(a::CompoundMoment,b::CompoundMoment) = CompoundMoment(vcat(a.data,b.data))
 >>(a::Moment,b::Moment) = >>(promote(a,b)...)
 >>(a::Moment,b::Moment,c::Moment,d::Moment...) = moment(a,b,c,d...)
-promote_rule(::Type{SimpleMoment},::Type{CompoundMoment}) = CompoundMoment
+promote_rule{T <: SimpleMoment}(::Type{CompoundMoment},::Type{T}) = CompoundMoment
 convert(::Type{CompoundMoment},x::SimpleMoment) = CompoundMoment([x])
 
 type ExpandingMoment <: Moment
