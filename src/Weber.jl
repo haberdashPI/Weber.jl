@@ -22,7 +22,7 @@ function cleanstr(strs...;width=70)
 end
 
 try
-  @assert sizeof(Int) == 8
+  @assert Sys.WORD_SIZE == 64
 catch
   error("Weber can only be run as a 64-bit program. Please use a 64-bit ",
         "implementation of Julia.")
