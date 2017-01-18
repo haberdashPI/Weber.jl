@@ -48,10 +48,10 @@ function check_events(callback,exp::Experiment{SDLWindow},time::Float64)
   while ccall((:SDL_PollEvent,_psycho_SDL2),Cint,(Ptr{Void},),event) != 0
     etype = at(event,UInt32,type_ptr)
     if etype == SDL_KEYDOWN
-      code = at(event,Int32,keysym_ptr + sym_ptr)
+      code = at(event,UInt32,keysym_ptr + sym_ptr)
       callback(exp,KeyDownEvent(code,time))
     elseif etype == SDL_KEYUP
-      code = at(event,Int32,keysym_ptr + sym_ptr)
+      code = at(event,UInt32,keysym_ptr + sym_ptr)
       callback(exp,KeyUpEvent(code,time))
     elseif etype == SDL_WINDOWEVENT
       wevent = at(event,UInt8,win_event_ptr)
