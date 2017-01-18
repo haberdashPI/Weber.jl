@@ -1,9 +1,9 @@
 import Base: show, isempty, time, >>, length, unshift!, promote_rule, convert,
-  hash, ==
+  hash, ==, isless
 import DataStructures: front
 
 export iskeydown, iskeyup, iskeypressed, isfocused, isunfocused, keycode,
-  endofpause, @key_str, time, response_time, keycode
+  endofpause, @key_str, time, response_time, keycode, listkeys
 
 ################################################################################
 # event types
@@ -14,12 +14,12 @@ type QuitEvent <: ExpEvent
 end
 
 type KeyUpEvent <: ExpEvent
-  code::Int32
+  code::UInt32
   time::Float64
 end
 
 type KeyDownEvent <: ExpEvent
-  code::Int32
+  code::UInt32
   time::Float64
 end
 
@@ -44,6 +44,22 @@ type CedrusUpEvent <: ExpEvent
   port::Int
   rt::Float64
   time::Float64
+end
+
+macro os(kwds...)
+  @assert kwds[1].args[1] == :apple
+  @assert kwds[2].args[1] == :windows
+  @assert kwds[3].args[1] == :linux
+
+  if is_apple()
+    kwds[1].args[2]
+  elseif is_windows()
+    kwds[2].args[2]
+  elseif is_linux()
+    kwds[3].args[2]
+  else
+    error("Unsupported operating system")
+  end
 end
 
 """
@@ -79,70 +95,142 @@ type KeyboardKey <: Key
 end
 hash(x::KeyboardKey,h::UInt) = hash(KeyboardKey,hash(x.code,h))
 ==(x::KeyboardKey,y::KeyboardKey) = x.code == y.code
+isless(x::KeyboardKey,y::KeyboardKey) = isless(x.code,y.code)
 
 type CedrusKey <: Key
   code::Int
 end
 hash(x::CedrusKey,h::UInt) = hash(CedrusKey,hash(x.code,h))
 ==(x::CedrusKey,y::CedrusKey) = x.code == y.code
+isless(x::CedrusKey,y::CedrusKey) = isless(x.code,y.code)
+
+isless(x::KeyboardKey,y::CedrusKey) = false
+isless(x::CedrusKey,y::KeyboardKey) = true
 
 const str_to_code = Dict(
-  "a" => KeyboardKey(reinterpret(Int32,'a')),
-  "b" => KeyboardKey(reinterpret(Int32,'b')),
-  "c" => KeyboardKey(reinterpret(Int32,'c')),
-  "d" => KeyboardKey(reinterpret(Int32,'d')),
-  "e" => KeyboardKey(reinterpret(Int32,'e')),
-  "f" => KeyboardKey(reinterpret(Int32,'f')),
-  "g" => KeyboardKey(reinterpret(Int32,'g')),
-  "h" => KeyboardKey(reinterpret(Int32,'h')),
-  "i" => KeyboardKey(reinterpret(Int32,'i')),
-  "j" => KeyboardKey(reinterpret(Int32,'j')),
-  "k" => KeyboardKey(reinterpret(Int32,'k')),
-  "l" => KeyboardKey(reinterpret(Int32,'l')),
-  "m" => KeyboardKey(reinterpret(Int32,'m')),
-  "n" => KeyboardKey(reinterpret(Int32,'n')),
-  "o" => KeyboardKey(reinterpret(Int32,'o')),
-  "p" => KeyboardKey(reinterpret(Int32,'p')),
-  "q" => KeyboardKey(reinterpret(Int32,'q')),
-  "r" => KeyboardKey(reinterpret(Int32,'r')),
-  "s" => KeyboardKey(reinterpret(Int32,'s')),
-  "t" => KeyboardKey(reinterpret(Int32,'t')),
-  "u" => KeyboardKey(reinterpret(Int32,'u')),
-  "v" => KeyboardKey(reinterpret(Int32,'v')),
-  "w" => KeyboardKey(reinterpret(Int32,'w')),
-  "x" => KeyboardKey(reinterpret(Int32,'x')),
-  "y" => KeyboardKey(reinterpret(Int32,'y')),
-  "z" => KeyboardKey(reinterpret(Int32,'z')),
-  "0" => KeyboardKey(reinterpret(Int32,'0')),
-  "1" => KeyboardKey(reinterpret(Int32,'1')),
-  "2" => KeyboardKey(reinterpret(Int32,'2')),
-  "3" => KeyboardKey(reinterpret(Int32,'3')),
-  "4" => KeyboardKey(reinterpret(Int32,'4')),
-  "5" => KeyboardKey(reinterpret(Int32,'5')),
-  "6" => KeyboardKey(reinterpret(Int32,'6')),
-  "7" => KeyboardKey(reinterpret(Int32,'7')),
-  "8" => KeyboardKey(reinterpret(Int32,'8')),
-  "9" => KeyboardKey(reinterpret(Int32,'9')),
-  "-" => KeyboardKey(reinterpret(Int32,'-')),
-  "=" => KeyboardKey(reinterpret(Int32,'=')),
-  "[" => KeyboardKey(reinterpret(Int32,'[')),
-  "]" => KeyboardKey(reinterpret(Int32,']')),
-  "\\" => KeyboardKey(reinterpret(Int32,'\\')),
-  ":backslash:" => KeyboardKey(reinterpret(Int32,'\\')),
-  ";" => KeyboardKey(reinterpret(Int32,';')),
-  "'" => KeyboardKey(reinterpret(Int32,''')),
-  "," => KeyboardKey(reinterpret(Int32,',')),
-  "." => KeyboardKey(reinterpret(Int32,'.')),
-  "/" => KeyboardKey(reinterpret(Int32,'/')),
-  "`" => KeyboardKey(reinterpret(Int32,'`')),
-  ":space:" => KeyboardKey(reinterpret(Int32,' ')),
-  " " => KeyboardKey(reinterpret(Int32,' ')),
-  ":up:" => KeyboardKey(reinterpret(Int32,0x40000052)),
-  ":down:" => KeyboardKey(reinterpret(Int32,0x40000051)),
-  ":left:" => KeyboardKey(reinterpret(Int32,0x40000050)),
-  ":right:" => KeyboardKey(reinterpret(Int32,0x4000004f)),
-  ":escape:" => KeyboardKey(reinterpret(Int32,0x0000001b)),
-  ":esc:" => KeyboardKey(reinterpret(Int32,0x0000001b)),
+  "a" => KeyboardKey(reinterpret(UInt32,'a')),
+  "b" => KeyboardKey(reinterpret(UInt32,'b')),
+  "c" => KeyboardKey(reinterpret(UInt32,'c')),
+  "d" => KeyboardKey(reinterpret(UInt32,'d')),
+  "e" => KeyboardKey(reinterpret(UInt32,'e')),
+  "f" => KeyboardKey(reinterpret(UInt32,'f')),
+  "g" => KeyboardKey(reinterpret(UInt32,'g')),
+  "h" => KeyboardKey(reinterpret(UInt32,'h')),
+  "i" => KeyboardKey(reinterpret(UInt32,'i')),
+  "j" => KeyboardKey(reinterpret(UInt32,'j')),
+  "k" => KeyboardKey(reinterpret(UInt32,'k')),
+  "l" => KeyboardKey(reinterpret(UInt32,'l')),
+  "m" => KeyboardKey(reinterpret(UInt32,'m')),
+  "n" => KeyboardKey(reinterpret(UInt32,'n')),
+  "o" => KeyboardKey(reinterpret(UInt32,'o')),
+  "p" => KeyboardKey(reinterpret(UInt32,'p')),
+  "q" => KeyboardKey(reinterpret(UInt32,'q')),
+  "r" => KeyboardKey(reinterpret(UInt32,'r')),
+  "s" => KeyboardKey(reinterpret(UInt32,'s')),
+  "t" => KeyboardKey(reinterpret(UInt32,'t')),
+  "u" => KeyboardKey(reinterpret(UInt32,'u')),
+  "v" => KeyboardKey(reinterpret(UInt32,'v')),
+  "w" => KeyboardKey(reinterpret(UInt32,'w')),
+  "x" => KeyboardKey(reinterpret(UInt32,'x')),
+  "y" => KeyboardKey(reinterpret(UInt32,'y')),
+  "z" => KeyboardKey(reinterpret(UInt32,'z')),
+  "0" => KeyboardKey(reinterpret(UInt32,'0')),
+  "1" => KeyboardKey(reinterpret(UInt32,'1')),
+  "2" => KeyboardKey(reinterpret(UInt32,'2')),
+  "3" => KeyboardKey(reinterpret(UInt32,'3')),
+  "4" => KeyboardKey(reinterpret(UInt32,'4')),
+  "5" => KeyboardKey(reinterpret(UInt32,'5')),
+  "6" => KeyboardKey(reinterpret(UInt32,'6')),
+  "7" => KeyboardKey(reinterpret(UInt32,'7')),
+  "8" => KeyboardKey(reinterpret(UInt32,'8')),
+  "9" => KeyboardKey(reinterpret(UInt32,'9')),
+  "-" => KeyboardKey(reinterpret(UInt32,'-')),
+  "=" => KeyboardKey(reinterpret(UInt32,'=')),
+  "_" => KeyboardKey(reinterpret(UInt32,'-')),
+  "+" => KeyboardKey(reinterpret(UInt32,'=')),
+  "[" => KeyboardKey(reinterpret(UInt32,'[')),
+  "]" => KeyboardKey(reinterpret(UInt32,']')),
+  "\\" => KeyboardKey(reinterpret(UInt32,'\\')),
+  ":backslash:" => KeyboardKey(reinterpret(UInt32,'\\')),
+  ";" => KeyboardKey(reinterpret(UInt32,';')),
+  "'" => KeyboardKey(reinterpret(UInt32,''')),
+  "," => KeyboardKey(reinterpret(UInt32,',')),
+  "." => KeyboardKey(reinterpret(UInt32,'.')),
+  "/" => KeyboardKey(reinterpret(UInt32,'/')),
+  "`" => KeyboardKey(reinterpret(UInt32,'`')),
+  ":tab:" => KeyboardKey(reinterpret(UInt32,'\t')),
+  ":space:" => KeyboardKey(reinterpret(UInt32,' ')),
+  " " => KeyboardKey(reinterpret(UInt32,' ')),
+  ":up:" => KeyboardKey(0x40000052),
+  ":down:" => KeyboardKey(0x40000051),
+  ":left:" => KeyboardKey(0x40000050),
+  ":right:" => KeyboardKey(0x4000004f),
+  ":delete:" => KeyboardKey(0x0000007f),
+  ":backspace:" => KeyboardKey(0x00000008),
+  ":enter:" => KeyboardKey(0x40000058),
+
+  ":lshift:" => KeyboardKey(0x400000e1),
+  ":rshift:" => KeyboardKey(0x400000e5),
+  ":left-shift:" => KeyboardKey(0x400000e1),
+  ":right-shift:" => KeyboardKey(0x400000e5),
+
+  ":lctrl:" => KeyboardKey(0x400000e0),
+  ":rctrl:" => KeyboardKey(0x400000e4),
+  ":left-ctrl:" => KeyboardKey(0x400000e0),
+  ":right-ctrl:" => KeyboardKey(0x400000e4),
+
+  ":lalt:" => KeyboardKey(0x400000e2),
+  ":ralt:" => KeyboardKey(0x400000e6),
+  ":left-alt:" => KeyboardKey(0x400000e2),
+  ":right-alt:" => KeyboardKey(0x400000e6),
+
+  @os(apple=":apple:",windows=":windows:",linux=":application:") =>
+    KeyboardKey(0x40000065),
+
+  ":caps-lock:" => KeyboardKey(0x40000039),
+  ":escape:" => KeyboardKey(0x0000001b),
+  ":esc:" => KeyboardKey(0x0000001b),
+
+  ":f1:" => KeyboardKey(0x4000003a),
+  ":f2:" => KeyboardKey(0x4000003b),
+  ":f3:" => KeyboardKey(0x4000003c),
+  ":f4:" => KeyboardKey(0x4000003d),
+  ":f5:" => KeyboardKey(0x4000003e),
+  ":f6:" => KeyboardKey(0x4000003f),
+  ":f7:" => KeyboardKey(0x40000040),
+  ":f8:" => KeyboardKey(0x40000041),
+  ":f9:" => KeyboardKey(0x40000042),
+  ":f10:" => KeyboardKey(0x40000043),
+  ":f11:" => KeyboardKey(0x40000044),
+  ":f12:" => KeyboardKey(0x40000045),
+
+  ":pause:" => KeyboardKey(0x40000048),
+  ":insert:" => KeyboardKey(0x40000049),
+  ":home:" => KeyboardKey(0x4000004a),
+  ":pageup:" => KeyboardKey(0x4000004b),
+  ":end:" => KeyboardKey(0x4000004d),
+  ":pagedown:" => KeyboardKey(0x4000004e),
+
+  ":numlock:" => KeyboardKey(0x40000053),
+  ":num /:" => KeyboardKey(0x40000054),
+  ":num *:" => KeyboardKey(0x40000055),
+  ":num -:" => KeyboardKey(0x40000056),
+  ":num +:" => KeyboardKey(0x40000057),
+  ":num =:" => KeyboardKey(0x40000067),
+  ":num enter:" => KeyboardKey(0x40000058),
+  ":num tab:" => KeyboardKey(0x400000ba),
+  ":num ." => KeyboardKey(0x40000063),
+  ":num 1:" => KeyboardKey(0x40000059),
+  ":num 2:" => KeyboardKey(0x4000005a),
+  ":num 3:" => KeyboardKey(0x4000005b),
+  ":num 4:" => KeyboardKey(0x4000005c),
+  ":num 5:" => KeyboardKey(0x4000005d),
+  ":num 6:" => KeyboardKey(0x4000005e),
+  ":num 7:" => KeyboardKey(0x4000005f),
+  ":num 8:" => KeyboardKey(0x40000060),
+  ":num 9:" => KeyboardKey(0x40000061),
+  ":num 0:" => KeyboardKey(0x40000062),
+
   ":cedrus0:" => CedrusKey(0),
   ":cedrus1:" => CedrusKey(1),
   ":cedrus2:" => CedrusKey(2),
@@ -187,24 +275,23 @@ function show(io::IO,key::KeyboardKey)
 end
 
 """
+  listkeys()
+
+Lists all available key codes in order.
+
+Also see `@key_str`.
+"""
+listkeys() = foreach(println,values(str_to_code) |> unique |> collect |> sort)
+
+"""
     key"keyname"
 
 Generate a key code, using a single character (e.g. key"q" or key"]"), a
 special-key name, or Cedrus response-pad key.
 
-Implemented special keys include:
-- ":space:"
-- ":up:"
-- ":down:"
-- ":left"
-- ":right:"
-- ":escape:"
-
-Cedrus response-pad keys are indicated as ":cedrusN:" where N >= 0
-
-If you want to quickly see the name for a given button you can use
-`display_key_codes()`.
-
+Note that keys are orderd, you can list all implemented keys in order, using
+`listkeys`. If you want to quickly see the name for a given button you can use
+`run_keycode_helper()`.
 """
 
 macro key_str(key)
