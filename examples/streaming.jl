@@ -1,31 +1,28 @@
 #!/usr/bin/env julia
 
 using Weber
-using Lazy: @>
 
-version = v"0.0.3"
+version = v"0.0.4"
 sid,trial_skip =
-  @read_args("Runs an intermittent aba experiment, version $version.")
+  @read_args("Runs an intermittant aba experiment, version $version.")
 
 const ms = 1/1000
 const st = 1/12
-atten_dB = 20
+atten_dB = 30
 
 # We might be able to change this to ISI now that there
 # is no gap.
-tone_len = 50ms
-tone_SOA = 120ms
+tone_len = 60ms
+tone_SOA = 144ms
 aba_SOA = 4tone_SOA
 A_freq = 300
-response_spacing = 200ms
-n_repeat_example = 20
+response_spacing = aba_SOA
 n_trials = 1600
-n_break_after = 50
+n_break_after = 75
 stimuli_per_response = 2
-responses_per_phase = 1
-num_practice_trials = 10
 
-response_pause = 400ms
+n_repeat_example = 30
+num_practice_trials = 20
 
 function aba(step)
   A = ramp(tone(A_freq,tone_len))
@@ -34,15 +31,8 @@ function aba(step)
   sound([A;gap;B;gap;A])
 end
 
-stimuli = Dict(:low => aba(3st),:medium => aba(6st),:high => aba(12st))
-
-# randomize context order
-contexts = @> keys(stimuli) begin
-  cycle
-  take(n_trials)
-  collect
-  shuffle
-end
+medium_st = 8st
+stimuli = Dict(:low => aba(3st),:medium => aba(medium_st),:high => aba(18st))
 
 isresponse(e) = iskeydown(e,key"p") || iskeydown(e,key"q")
 
@@ -60,30 +50,27 @@ function practice_trial(stimulus;limit=response_spacing,info...)
 
   go_faster = visual("Faster!",size=50,duration=500ms,y=0.15,priority=1)
   waitlen = aba_SOA*stimuli_per_response+limit
-  await = timeout(isresponse,waitlen,delta_update=false) do time
+  min_wait = aba_SOA*stimuli_per_response+response_spacing
+  await = timeout(isresponse,waitlen,atleast=min_wait) do time
     record("response_timeout";info...)
     display(go_faster)
   end
 
-  stim = create_aba(stimulus;info...) >> moment(aba_SOA)
+  stim = [create_aba(stimulus;info...),moment(aba_SOA)]
 
-  x = [resp,show_cross(),
-       moment(repeated(stim,stimuli_per_response)),
-       await,moment(aba_SOA*stimuli_per_response+response_spacing)]
-  repeat(x,outer=responses_per_phase)
+  [resp,show_cross(),moment(repeated(stim,stimuli_per_response)),await]
 end
 
 function real_trial(stimulus;limit=response_spacing,info...)
   resp = response(key"q" => "stream_1",key"p" => "stream_2";info...)
-  stim = create_aba(stimulus;info...) >> moment(aba_SOA)
+  stim = [create_aba(stimulus;info...),moment(aba_SOA)]
 
-  x = [resp,show_cross(),
-       moment(repeated(stim,stimuli_per_response)),
-       moment(aba_SOA*stimuli_per_response + limit)]
-  repeat(x,outer=responses_per_phase)
+  [resp,show_cross(),moment(repeated(stim,stimuli_per_response)),
+   moment(aba_SOA*stimuli_per_response + limit)]
 end
 
 exp = Experiment(sid = sid,condition = "pilot",version = version,
+				 separation = "8st",
                  skip=trial_skip,columns = [:stimulus,:phase])
 
 setup(exp) do
