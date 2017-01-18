@@ -1,0 +1,1 @@
+Pkg.add("Weber",{{version}})

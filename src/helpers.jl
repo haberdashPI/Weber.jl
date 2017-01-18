@@ -1,4 +1,4 @@
-export run_keycode_helper, run_calibrate
+export run_keycode_helper, run_calibrate, create_new_project
 using DataStructures
 
 function run_keycode_helper()
@@ -68,4 +68,44 @@ function run_calibrate()
 
   run(exp)
   return OrderedDict(f => atten for (f,atten) in zip(freqs,atten))
+end
+
+"""
+   create_new_project(name,dir=".")
+
+Creates a set of files to help you get started on a new experiment.
+
+This creates a file called run_[name].jl, and a README.md and setup.jl file
+for your expeirment. The readme provides useful information for running
+the experiment that is common across all expeirments. The run file
+provides some guidelines to get you started creating an experiment and
+setup is a script that can be used to install Weber and an additional
+dependencies for the project, for anyone who wants to download and run your
+experiment.
+"""
+
+function create_new_project(name,dir=".")
+  values = Dict(r"{{project}}" => name,
+                r"{{weber_dir}}" => abspath(joinpath(dirname(@__FILE__),"..")),
+                r"{{version}}" => "v\"$(Weber.version)\"")
+
+  apply_template(joinpath(dirname(@__FILE__),"..","templates","README.md"),
+                 joinpath(dir,"README.md"),values)
+  apply_template(joinpath(dirname(@__FILE__),"..","templates","setup.jl"),
+                 joinpath(dir,"setup.jl"),values)
+  apply_template(joinpath(dirname(@__FILE__),"..","templates","run_project.jl"),
+                 joinpath(dir,"run_$name.jl"),values)
+end
+
+function apply_template(sourcefile,destfile,values)
+  open(sourcefile,"r") do source
+    open(destfile,"w") do dest
+      for line in readlines(source)
+        for (pat,result) in values
+          line = replace(line,pat,result)
+        end
+        write(dest,line)
+      end
+    end
+  end
 end
