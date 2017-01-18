@@ -1,3 +1,4 @@
+using BinDeps
 using Conda
 
 downloaddir = joinpath(dirname(@__FILE__),"downloads")
@@ -11,6 +12,10 @@ end
 
 ################################################################################
 # install SDL2 and plugins
+
+SDL2 = "UNKNOWN"
+SDL2_mixer = "UNKNOWN"
+SDL2_ttf = "UNKNOWN"
 
 @static if is_windows()
   # WinRPM lacks SDL2_ttf and SDL2_mixer binaries, so I'm just directly
@@ -38,12 +43,6 @@ end
     rm(downloaddir,recursive=true,force=true)
   end
 
-  deps = joinpath(dirname(@__FILE__),"deps.jl")
-  open(deps,"w") do s
-    for (var,val) in [:SDL2 => SDL2, :SDL2_mixer => SDL2_mixer,:SDL2_ttf => SDL2_ttf]
-      println(s,"const _psycho_$var = \"$val\"")
-    end
-  end
 elseif is_apple()
   using Homebrew
 
@@ -56,35 +55,33 @@ elseif is_apple()
   SDL2_mixer = joinpath(prefix,"libSDL2_mixer-2.0.0.dylib")
   SDL2_ttf = joinpath(prefix,"libSDL2_ttf-2.0.0.dylib")
 
-  deps = joinpath(dirname(@__FILE__),"deps.jl")
-  open(deps,"w") do s
-    for (var,val) in [:SDL2 => SDL2, :SDL2_mixer => SDL2_mixer,:SDL2_ttf => SDL2_ttf]
-      println(s,"const _psycho_$var = \"$val\"")
-    end
-  end
 elseif is_linux()
-  # SDL2 = library_dependency("libSDL", aliases = ["libSDL", "SDL"])
-  # SDL2_mixer = library_dependency("libSDL_mixer", aliases = ["libSDL_mixer"], depends = [libSDL], os = :Unix)
-  # SDL2_ttf = library_dependency("libSDL_ttf", aliases = ["libSDL_ttf"], depends = [libSDL], os = :Unix)
-
-  # provides(AptGet,
-	#     	{"libsdl1.2-dev" => libSDL,
-	#     	 "libsdl-mixer1.2-dev" => SDLmixer,
-	#     	 "libsdl-ttf2.0-dev" => SDLttf})
-
-  # provides(Yum,
-  #   		   {"SDL-devel" => libSDL,
-  #   		    "SDL_mixer-devel" => SDLmixer,
-  #   		    "SDL_ttf-devel" => SDLttf})
-
-  # @BinDeps.install [:SDL2 => :SDL2,
-  #                   :SDL2_mixer => :SDL2_mixer,
-  #                   :SDL2_ttf => :SDL2_ttf]
-
-  error("I don't have access to an available linux distro to troubleshoot"*
-        " this program, so I have left the linux install unimplemented.")
+    error("Weber does not support Linux. You can try manually installing ",
+          "SDL2, SDL2_mixer, and SDL2_ttf, and then creating an appropriate ",
+          "deps.jl file in $(dirname(@__FILE__)). Be warned however that ",
+          "I have encountered strange runtime errors with the linux ",
+          "implementation, possibly related to SDL2 problems.")
+  # function getdir(lib)
+  #   dir = readlines(`dpkg -L $lib-0`)
+  #   libs = filter(x -> ismatch(Regex(lowercase(lib)*".so"),lowercase(x)),dir)
+  #   chomp(last(libs))
+  # end
+  # SDL2 = getdir("libsdl2-2.0")
+  # SDL2_mixer = getdir("libsdl2-mixer-2.0")
+  # SDL2_ttf = getdir("libsdl2-ttf-2.0")
 else
   error("Unsupported operating system.")
+end
+
+@assert SDL2 != "UNKNOWN"
+@assert SDL2_mixer != "UNKNOWN"
+@assert SDL2_ttf != "UNKNOWN"
+
+deps = joinpath(dirname(@__FILE__),"deps.jl")
+open(deps,"w") do s
+  for (var,val) in [:SDL2 => SDL2, :SDL2_mixer => SDL2_mixer,:SDL2_ttf => SDL2_ttf]
+    println(s,"const _psycho_$var = \"$val\"")
+  end
 end
 
 Conda.add_channel("haberdashPI")
