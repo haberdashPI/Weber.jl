@@ -1,6 +1,11 @@
 export run_keycode_helper, run_calibrate, create_new_project
 using DataStructures
 
+"""
+    run_keycode_helper()
+
+Runs a program that will display the keycode for each key that you press.
+"""
 function run_keycode_helper()
   exp = Experiment(hide_output=true)
   setup(exp) do
@@ -15,6 +20,15 @@ function run_keycode_helper()
   run(exp)
 end
 
+"""
+   run_calibrate()
+
+Runs a program that will allow you to play pure tones and adjust the level.
+
+This program provides one means of calibrating the levels of sound in
+your experiment. Using a sound-level meter you can determine the dB SPL of
+each tone, and adjust the attenuation to achieve a desired sound level.
+"""
 function run_calibrate()
   exp = Experiment(hide_output=true)
   freqs = [100,250,500,1000,2000,4000,6000,8000]
