@@ -12,7 +12,7 @@
 * [About](#about)
 * [Installation](#installation)
 * [Usage](#usage)
-* [Roadmap](#roadmap)
+* [Status](#status)
 
 # About
 
@@ -22,11 +22,6 @@ psychophysics, but the package has the features necessary to generate most
 visual stimuli one would desire as well. It is named after Ernst Weber. Weber
 runs on Windows and Mac OS X, and supports keyboard input or Cedrus response-pad
 input.
-
-It should be very easy to port this to linux, I just don't have
-linux currently installed to test for proper installation of SDL2, and so I
-haven't gotten around to this.
-
 
 # Installation
 
@@ -218,7 +213,19 @@ break every N trials. Refer to its documentation for details. Future Weber
 versions will probably include many more such primitives to simplify the
 creation of experiments.
 
-# Roadmap
+# Status
+
+## Linux support
+
+Weber does not currently support Linux. Julia's support for installation of
+binary dependencies in linux is
+[currently broken](https://github.com/JuliaLang/BinDeps.jl/issues/199) and even
+with a manual install of the necessary libraries (SDL2, SDL2_mixer and SDL2_ttf)
+I have run into LLVM errors that I have yet to track down. If you can get Weber
+to work on Linux I would happily accept a
+[pull request](http://docs.julialang.org/en/release-0.5/manual/packages/#making-changes-to-an-existing-package).
+
+## Roadmap
 
 For the 0.2.0 release
 - [x] document object composition
