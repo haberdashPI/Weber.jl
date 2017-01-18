@@ -253,11 +253,11 @@ during `run`.
 - [x] simplify moments and submoments to moments in ExperimentData
 - [x] fix false mis-timing warnings when using `update_delta = false` (do we
   need this anymore?)
-- [ ] create a calibration program
-- [ ] rename `display_key_codes`
+- [x] create a calibration program
+- [x] rename `display_key_codes`
 - [ ] test `display` timing (using an oscilloscope)
-- [ ] add remaining special keys to @key_str
-- [ ] create hepler to generate template experiment (including run, setup, 
+- [x] add remaining special keys to @key_str
+- [x] create hepler to generate template experiment (including run, setup, 
       update, and README.md files)
 
 For the 0.3.0 release
