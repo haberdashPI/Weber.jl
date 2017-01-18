@@ -389,6 +389,7 @@ const concrete_events = [
 
 abstract Moment
 abstract SimpleMoment <: Moment
+required_delta_t(m::Moment) = delta_t(m)
 
 type ResponseMoment <: SimpleMoment
   respond::Function
@@ -399,6 +400,7 @@ end
 function delta_t(moment::ResponseMoment)
   (moment.timeout_delta_t > 0.0 ? moment.timeout_delta_t : Inf)
 end
+required_delta_t(m::ResponseMoment) = Inf
 
 abstract AbstractTimedMoment <: SimpleMoment
 

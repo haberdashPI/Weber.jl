@@ -65,10 +65,13 @@ Prepares a new experiment to be run.
 * columns: the names (as symbols) of columns that will be recorded during
 the experiment (using `record`).
 * debug: if true experiment will show in a windowed view
-* moment_resolution: the precision (in seconds) that moments
-  should be presented at
+* moment_resolution: the desired precision (in seconds) that moments
+  should be presented at. Warnings will be printed for moments that
+  lack this precision.
 * input_resolution: the precision (in seconds) that input events should
-be queried.
+  be queried. This almost never needs to be changed. Keyboards do not provide
+  precise timing, and the timing of response pads is queried independently
+  from input_resolution by using `response_time`.
 * data_dir: the directory where data files should be stored (can be set to
   nothing to prevent a file from being created)
 * width and height: specified the screen resolution during the experiment
@@ -318,7 +321,7 @@ function run(exp::Experiment)
         process(exp,exp.data.moments,tick)
       end
 
-      # handle all input events (handles pauses, and notifys moments)
+      # handle all input events (handles pauses, and notifys moments of events)
       if tick - last_input > exp.info.input_resolution
         check_events(process_event,exp,tick)
         last_input = tick
@@ -391,7 +394,7 @@ end
 function check_timing(exp::Experiment,moment::Moment,
                       run_t::Float64,last::Float64)
   const res = exp.info.moment_resolution
-  d = delta_t(moment)
+  d = required_delta_t(moment)
   if 0.0 < d < Inf
     empirical_delta = run_t - last
     error = abs(empirical_delta - d)
