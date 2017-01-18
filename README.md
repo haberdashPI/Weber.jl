@@ -250,7 +250,6 @@ during `run`.
 - [ ] rename `display_key_codes`
 - [ ] test `display` timing (using an oscilloscope)
 - [ ] add remaining special keys to @key_str
-- [ ] port to linux
 - [ ] create hepler to generate template experiment (including run, setup, 
       update, and README.md files)
 
@@ -266,6 +265,7 @@ For the 0.3.x release
 - [ ] allow calls to Cedrus stim tracker??
 
 For the 0.4.0 release?
+- [ ] port to linux
 - [ ] video playback
 - [ ] track audio buffer timing so we can zero-pad sounds to get sub-buffer-size timing
   acuracy.
