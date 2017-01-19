@@ -49,7 +49,8 @@ end
 comp_events,comp_times = find_timing() do record
   addtrial(moment(0.05,t -> record(:a,t)),
            moment(0.05,t -> record(:b,t)) >> moment(0.1,t -> record(:d,t)),
-           moment(0.1,t -> record(:c,t)))
+           moment(0.1,t -> record(:c,t)),
+           moment(0.1,t -> record(:e,t)))
 end
 
 loop_events,loop_index = find_timing() do record
@@ -89,7 +90,7 @@ const moment_eps = 1e-3
   end
 
   @testset "Compound Moments" begin
-    @test comp_events == [:a,:b,:c,:d]
+    @test comp_events == [:a,:b,:c,:d,:e]
     if check_timing
       comp_diff = maximum(diff(comp_times) - 0.05)
       @test comp_diff < moment_eps
