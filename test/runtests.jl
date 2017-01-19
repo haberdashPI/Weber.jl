@@ -12,7 +12,7 @@ function find_timing(fn)
 
   exp = Experiment(null_window=true,hide_output=true)
   setup(() -> fn(record_time),exp)
-  run(exp)
+  run(exp,await_input=false)
 
   getindex.(recording,1),getindex.(recording,2)
 end

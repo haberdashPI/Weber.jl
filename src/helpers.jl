@@ -17,7 +17,7 @@ function run_keycode_helper()
     end
   end
 
-  run(exp)
+  run(exp,await_input=false)
 end
 
 """
@@ -80,7 +80,7 @@ function run_calibrate()
     end
   end
 
-  run(exp)
+  run(exp,await_input=false)
   return OrderedDict(f => atten for (f,atten) in zip(freqs,atten))
 end
 

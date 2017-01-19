@@ -1,5 +1,6 @@
 import Base: run
 export Experiment, setup, run, experiment_trial, experiment_offset
+import Juno
 
 const default_moment_resolution = 0.0015
 const default_input_resolution = 1/60
@@ -199,7 +200,7 @@ function warmup_run(exp::Experiment)
              moment(t -> x += 1),
              moment(t -> x += 1))
   end
-  run(warm_up)
+  run(warm_up,await_input=false)
 end
 
 
@@ -308,11 +309,21 @@ const sleep_resolution = 0.05
 const sleep_amount = 0.002
 
 """
-    run(experiment)
+    run(experiment;await_input=true)
 
 Runs an experiment. You must call `setup` first.
+
+By default this function waits for user input before returning.
+This prevents a console from closing at the end of an experiment,
+preventing the user from viewing important messages. The exception
+is if run is called form within Juno: await_input should
+never be set to true in this case.
 """
-function run(exp::Experiment)
+function run(exp::Experiment;await_input=!Juno.isactive())
+  if Juno.isactive() && await_input
+    error("`await_input` must be false when Juno is active.")
+  end
+
   warmup_run(exp)
   # println("========================================")
   # println("Completed warmup run.")
@@ -360,6 +371,13 @@ function run(exp::Experiment)
         sleep(sleep_amount)
       end
     end
+  catch e
+    if await_input
+      show(e)
+      Base.show_backtrace(STDOUT,catch_backtrace())
+    else
+      rethrow(e)
+    end
   finally
     experiment_context[] = Nullable()
     close(exp.win)
@@ -370,6 +388,10 @@ function run(exp::Experiment)
         info("Data recorded to: $(get(exp.info.file))")
       end
     end
+  end
+  if await_input
+    println("Hit enter to end experiment.")
+    readline(STDIN)
   end
   nothing
 end
