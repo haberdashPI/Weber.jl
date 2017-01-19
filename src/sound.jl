@@ -437,7 +437,7 @@ function play(x::Sound;wait=false,times=1)
   end
 
   if !wait
-    PlayingSound(channel,preceise_time(),NaN,x,times)
+    PlayingSound(channel,precise_time(),NaN,x,times)
   else
     sleep(times*duration(x)-0.01)
     while ccall((:Mix_Playing,_psycho_SDL2_mixer),Cint,(Cint,),channel) > 0
