@@ -438,7 +438,8 @@ function process(exp::Experiment,queue::MomentQueue,t::Float64)
 
         latency = run_time - event_time
 
-        if 0.0 < d < Inf && latency > exp.info.moment_resolution
+        if (0.0 < d < Inf && latency > exp.info.moment_resolution &&
+            !exp.info.hide_output)
           warn(cleanstr(
             "Delivered moment with a latency of $(roundstr(latency)). To
              reduce latency, reduce the amount of slow code in moments,
