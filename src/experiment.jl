@@ -308,6 +308,8 @@ end
 const sleep_resolution = 0.05
 const sleep_amount = 0.002
 
+const gc_time = 1
+
 """
     run(experiment;await_input=true)
 
@@ -363,11 +365,15 @@ function run(exp::Experiment;await_input=!Juno.isactive())
       # if after all this processing there's still plenty of time left
       # then sleep for a little while. (pausing also sleeps the loop)
       new_tick = precise_time() - start
-      if ((new_tick - last_delta) > sleep_resolution &&
-          (new_tick - last_input) > sleep_resolution &&
-          (new_tick - exp.data.next_moment) > sleep_resolution) ||
-          !exp.flags.running
-
+      if !exp.flags.running
+        gc()
+        sleep(sleep_amount)
+      elseif ((new_tick - last_delta) > sleep_resolution &&
+              (new_tick - last_input) > sleep_resolution &&
+              (exp.data.next_moment - new_tick) > sleep_resolution)
+        if (exp.data.next_moment - new_tick) > gc_time
+          gc()
+        end
         sleep(sleep_amount)
       end
     end
@@ -415,7 +421,7 @@ function process(exp::Experiment,queue::MomentQueue,event::ExpEvent)
     moment = front(queue)
     handled = handle(exp,queue,moment,event)
     if handled
-      exp.data.next_moment = min(exp.data.next_moment,next_moment_time(queue))
+      exp.data.next_moment = minimum(map(next_moment_time,exp.data.moments))
     end
   end
 
@@ -455,7 +461,8 @@ function process(exp::Experiment,queue::MomentQueue,t::Float64)
           record("high_latency",value=latency)
         end
 
-        exp.data.next_moment = min(exp.data.next_moment,next_moment_time(queue))
+        exp.data.next_moment = minimum(map(next_moment_time,exp.data.moments))
+
       end
     end
   end
