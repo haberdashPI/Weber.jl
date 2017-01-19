@@ -2,6 +2,7 @@
 *.jl.*.cov
 *.jl.mem
 .#*
+*~
 examples/data
 deps/deps.jl
 deps/usr
