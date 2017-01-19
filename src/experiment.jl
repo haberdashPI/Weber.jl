@@ -446,11 +446,12 @@ function process(exp::Experiment,queue::MomentQueue,t::Float64)
         if (0.0 < d < Inf && latency > exp.info.moment_resolution &&
             !exp.info.hide_output)
           warn(cleanstr(
-            "Delivered moment with a latency of $(roundstr(latency)). To
-             reduce latency, reduce the amount of slow code in moments,
-             close programs or run on a faster machine to reduce
-             latency. Or, if this latency is acceptable, you should increase
-             `moment_resolution` when you call `Experiment`."))
+            "Delivered moment with a latency of $(roundstr(latency)). This often
+             happens at the start of an experiment, but should rarely, if at all,
+             occur throughout the expeirment. To reduce latency, reduce the
+             amount of slow code in moments, close programs or run on a faster
+             machine to reduce latency. Or, if this latency is acceptable, you
+             should increase `moment_resolution` when you call `Experiment`."))
           record("high_latency",value=latency)
         end
 
