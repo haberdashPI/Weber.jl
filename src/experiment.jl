@@ -37,7 +37,7 @@ experiment_offset() = experiment_offset(get_experiment())
 exp_tick(exp) = exp.data.last_time
 function exp_tick()
   if isnull(experiment_context[])
-    time()
+    precise_time()
   else
     exp_tick(get(experiment_context[]))
   end
@@ -95,8 +95,16 @@ function Experiment(;skip=0,columns=Symbol[],debug=false,
                   "`Experiment`."))
   end
 
+  if moment_resolution < approx_timer_resolution
+    warn(cleanstr("The desired timing resolution of $moment_resolution ",
+                  "seconds is probably not achievable on your system. The ",
+                  "approximate minimum is $approx_timer_resolution seconds.",
+                  " Try changing the moment_resolution to a higher value (see ",
+                  "documentation for `Experiment`)."))
+  end
+
   meta = Dict{Symbol,Any}()
-  start_time = time()
+  start_time = precise_time()
   start_date = now()
   timestr = Dates.format(start_date,"yyyy-mm-dd__HH_MM_SS")
   info_str = join(map(x -> x[2],info_values),"_")
@@ -292,7 +300,7 @@ stimuli presented with Weber.
   end
 end
 
-const sleep_resolution = 0.01
+const sleep_resolution = 0.05
 const sleep_amount = 0.002
 
 """
@@ -312,10 +320,11 @@ function run(exp::Experiment)
     exp.flags.processing = true
     exp.flags.running = true
 
-    start = time()
+    start = precise_time()
     tick = exp.data.last_time = last_input = last_delta = 0.0
     while exp.flags.processing
-      tick = exp.data.last_time = time() - start
+      tick = exp.data.last_time = precise_time() - start
+
       # notify all moments about the new time
       if exp.flags.running
         process(exp,exp.data.moments,tick)
@@ -337,7 +346,7 @@ function run(exp::Experiment)
 
       # if after all this processing there's still plenty of time left
       # then sleep for a little while. (pausing also sleeps the loop)
-      new_tick = time() - start
+      new_tick = precise_time() - start
       if ((new_tick - last_delta) > sleep_resolution &&
           (new_tick - last_input) > sleep_resolution &&
           (new_tick - exp.data.next_moment) > sleep_resolution) ||
@@ -379,11 +388,6 @@ function process(exp::Experiment,queue::MomentQueue,event::ExpEvent)
     moment = front(queue)
     handled = handle(exp,queue,moment,event)
     if handled
-      # println("--------")
-      # @show moment
-      # @show time(event)
-      # @show queue.last
-
       exp.data.next_moment = min(exp.data.next_moment,next_moment_time(queue))
     end
   end
@@ -412,14 +416,14 @@ function process(exp::Experiment,queue::MomentQueue,t::Float64)
   skip_offsets(exp,queue)
 
   if !isempty(queue)
-    start_time = time()
+    start_time = precise_time()
     moment = front(queue)
     event_time = delta_t(moment) + queue.last
     if event_time - t <= exp.info.moment_resolution
       offset = t - start_time
-      run_time = offset + time()
+      run_time = offset + precise_time()
       while event_time > run_time
-        run_time = offset + time()
+        run_time = offset + precise_time()
       end
       exp.data.last_time = run_time
       last = queue.last

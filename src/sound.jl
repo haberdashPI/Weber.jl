@@ -437,7 +437,7 @@ function play(x::Sound;wait=false,times=1)
   end
 
   if !wait
-    PlayingSound(channel,time(),NaN,x,times)
+    PlayingSound(channel,preceise_time(),NaN,x,times)
   else
     sleep(times*duration(x)-0.01)
     while ccall((:Mix_Playing,_psycho_SDL2_mixer),Cint,(Cint,),channel) > 0
@@ -449,14 +449,14 @@ end
 function play(x::PlayingSound;wait=false)
   if !isnan(x.paused)
     ccall((:Mix_Resume,_psycho_SDL2_mixer),Void,(Cint,),x.channel)
-    x.start = time() - (x.paused - x.start)
+    x.start = precise_time() - (x.paused - x.start)
     x.paused = NaN
   end
 
   if !wait
     x
   else
-    sleep(duration(x) - (time() - x.start) - 0.01)
+    sleep(duration(x) - (precise_time() - x.start) - 0.01)
     while ccall((:Mix_Playing,_psycho_SDL2_mixer),Cint,(Cint,),x.channel) > 0
     end
     nothing
@@ -468,7 +468,7 @@ Pause playback of the sound. Resume by calling `play` on the sound again.
 """
 function pause(x::PlayingSound)
   ccall((:Mix_Pause,_psycho_SDL2_mixer),Void,(Cint,),x.channel)
-  x.paused = time()
+  x.paused = precise_time()
   x
 end
 

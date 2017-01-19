@@ -85,6 +85,8 @@ export load, save
 const sdl_is_setup = Array{Bool}()
 sdl_is_setup[] = false
 
+include(joinpath(dirname(@__FILE__),"timing.jl"))
+
 include(joinpath(dirname(@__FILE__),"video.jl"))
 include(joinpath(dirname(@__FILE__),"sound.jl"))
 

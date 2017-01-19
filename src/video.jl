@@ -655,7 +655,7 @@ end
 
 function eventually_remove!(window::SDLWindow,stack::DisplayStack,r::SDLRendered)
   Timer(duration(r)) do t
-    window.stack = delete_expired!(window.stack,time())
+    window.stack = delete_expired!(window.stack,precise_time())
     draw_stack(window)
   end
 end
