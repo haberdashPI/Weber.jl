@@ -63,7 +63,9 @@ Prepares a new experiment to be run.
 # Keyword Arguments
 * skip: the number of offsets to skip. Allows restarting of an experiment.
 * columns: the names (as symbols) of columns that will be recorded during
-the experiment (using `record`).
+  the experiment (using `record`). The column `:value` is always included here,
+  even if not specified, since there are number of events recorded automatically
+  which make use of this column.
 * debug: if true experiment will show in a windowed view
 * moment_resolution: the desired precision (in seconds) that moments
   should be presented at. Warnings will be printed for moments that
@@ -101,6 +103,10 @@ function Experiment(;skip=0,columns=Symbol[],debug=false,
                   "approximate minimum is $approx_timer_resolution seconds.",
                   " Try changing the moment_resolution to a higher value (see ",
                   "documentation for `Experiment`)."))
+  end
+
+  if :value ∉ columns
+    push!(columns,:value)
   end
 
   meta = Dict{Symbol,Any}()
@@ -153,9 +159,9 @@ function setup(fn::Function,exp::Experiment)
     exp.flags.processing = false
     close(exp.win)
 
-    # gc is disabled during individual trials (and enabled at the end of
+    # OBSOLETE: gc is disabled during individual trials (and enabled at the end of
     # a trial). Make sure it really does return to an enabled state.
-    gc_enable(true)
+    # gc_enable(true)
   end
 
   try
@@ -172,7 +178,7 @@ function setup(fn::Function,exp::Experiment)
     enqueue!(first(exp.data.moments),final_moment(() -> cleanup()))
   catch e
     close(exp.win)
-    gc_enable(true)
+    # gc_enable(true)
     rethrow(e)
   end
 end
@@ -260,45 +266,43 @@ function process_event(exp::Experiment,event)
   end
 end
 
-roundstr(x,n=5) = x > 10.0^-n ? string(round(x,n)) : "≤1e-$n"
+# const last_delta_resolution = 1
+# function report_deltas(exp::Experiment)
+#   if !exp.info.hide_output
+#     if exp.data.last_bad_delta > 0
+#       err_str = roundstr(exp.data.last_bad_delta)
+#       warn(cleanstr("""
 
-const last_delta_resolution = 1
-function report_deltas(exp::Experiment)
-  if !exp.info.hide_output
-    if exp.data.last_bad_delta > 0
-      err_str = roundstr(exp.data.last_bad_delta)
-      warn(cleanstr("""
+# The latency of trial moments is at undesirable levels ($err_str
+# seconds). This normally occurs when the experiment first starts up, but if
+# unacceptable levels continue throughout the experiment, consider closing some
+# programs on your computer or running this program on a faster machine. Poor
+# latency will also occur when you pause the experiment, because moments will not
+# occur during a pause.
 
-The latency of trial moments is at undesirable levels ($err_str
-seconds). This normally occurs when the experiment first starts up, but if
-unacceptable levels continue throughout the experiment, consider closing some
-programs on your computer or running this program on a faster machine. Poor
-latency will also occur when you pause the experiment, because moments will not
-occur during a pause.
+#            """))
+#       record(exp,"bad_delta_latency($err_str)")
+#     end
 
-           """))
-      record(exp,"bad_delta_latency($err_str)")
-    end
+#     if exp.data.last_good_delta > 0
+#       err_str = roundstr(exp.data.last_good_delta)
+#       exp.data.last_good_delta = -1.0
+#       info(cleanstr("""
 
-    if exp.data.last_good_delta > 0
-      err_str = roundstr(exp.data.last_good_delta)
-      exp.data.last_good_delta = -1.0
-      info(cleanstr("""
+# The latency of trial moments has fallen to an acceptable level ($err_str
+# seconds). It may fall further, but unless it exceedes a tolerable level, you
+# will not be notified. Note that this measure of latency only verifies that the
+# commands to generate stimuli occur when they should. Emprical verification of
+# stimulus timing requires that you monitor the output of your machine using light
+# sensors and microphones. You can use the scripts available in
+# $(Pkg.dir("Weber","test")) to test the timing of auditory and visual
+# stimuli presented with Weber.
 
-The latency of trial moments has fallen to an acceptable level ($err_str
-seconds). It may fall further, but unless it exceedes a tolerable level, you
-will not be notified. Note that this measure of latency only verifies that the
-commands to generate stimuli occur when they should. Emprical verification of
-stimulus timing requires that you monitor the output of your machine using light
-sensors and microphones. You can use the scripts available in
-$(Pkg.dir("Weber","test")) to test the timing of auditory and visual
-stimuli presented with Weber.
-
-           """))
-      record(exp,"good_delta_latency($err_str)")
-    end
-  end
-end
+#            """))
+#       record(exp,"good_delta_latency($err_str)")
+#     end
+#   end
+# end
 
 const sleep_resolution = 0.05
 const sleep_amount = 0.002
@@ -336,11 +340,12 @@ function run(exp::Experiment)
         last_input = tick
       end
 
-      # report on any irregularity in the timing of moments
-      if exp.flags.running && tick - last_delta > last_delta_resolution
-        report_deltas(exp)
-        last_delta = tick
-      end
+      # # report on any irregularity in the timing of moments
+      # if exp.flags.running && tick - last_delta > last_delta_resolution
+      #   report_deltas(exp)
+      #   last_delta = tick
+      # end
+
       # refresh screen
       refresh_display(exp.win)
 
@@ -358,7 +363,7 @@ function run(exp::Experiment)
   finally
     experiment_context[] = Nullable()
     close(exp.win)
-    gc_enable(true)
+    # gc_enable(true)
     if !exp.info.hide_output
       info("Experiment terminated at offset $(exp.data.offset).")
       if !isnull(exp.info.file)
@@ -412,6 +417,7 @@ function check_timing(exp::Experiment,moment::Moment,
   end
 end
 
+roundstr(x,n=6) = x > 10.0^-n ? string(round(x,n)) : "≤1e-$n"
 function process(exp::Experiment,queue::MomentQueue,t::Float64)
   skip_offsets(exp,queue)
 
@@ -428,7 +434,21 @@ function process(exp::Experiment,queue::MomentQueue,t::Float64)
       exp.data.last_time = run_time
       last = queue.last
       if handle(exp,queue,moment,run_time)
-        check_timing(exp,moment,run_time,last)
+        d = required_delta_t(moment)
+
+        latency = run_time - event_time
+
+        if 0.0 < d < Inf && latency > exp.info.moment_resolution
+          warn(cleanstr("Delivered moment with a latency of ",
+                        "$(roundstr(latency)). ",
+                        "To reduce latency, reduce the amount of ",
+			"slow code in moments, close programs or run on",
+			" a faster machine to reduce latency. Or, if this ",
+			"latency is acceptable, you should increase ",
+			"`moment_resolution` when you call `Experiment`."))
+          record("high_latency",value=latency)
+        end
+
         exp.data.next_moment = min(exp.data.next_moment,next_moment_time(queue))
       end
     end

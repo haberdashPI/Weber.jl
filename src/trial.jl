@@ -161,7 +161,7 @@ function addtrial_helper(exp::Experiment,trial_count,moments;keys...)
 
   # make sure the trial doesn't lag due to memory allocation
   start_trial = offset_start_moment(trial_count) do t
-    gc_enable(false)
+    #gc_enable(false)
     if trial_count
       record("trial_start")
     else
@@ -171,7 +171,7 @@ function addtrial_helper(exp::Experiment,trial_count,moments;keys...)
   end
 
   end_trial = moment() do t
-    gc_enable(true)
+    #gc_enable(true)
   end
 
   addmoments(exp,[start_trial,moments,end_trial];keys...)
@@ -307,7 +307,7 @@ function addbreak(moments...;keys...)
 end
 
 function addbreak(exp::Experiment,moments...;keys...)
-  addmoments(exp,[offset_start_moment(),moments];keys...)
+  addmoments(exp,[offset_start_moment(#=t -> gc_enable(true)=#),moments];keys...)
 end
 
 """
