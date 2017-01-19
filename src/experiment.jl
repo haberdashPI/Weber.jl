@@ -422,23 +422,6 @@ function process(exp::Experiment,queue::MomentQueue,event::ExpEvent)
   queue
 end
 
-function check_timing(exp::Experiment,moment::Moment,
-                      run_t::Float64,last::Float64)
-  const res = exp.info.moment_resolution
-  d = required_delta_t(moment)
-  if 0.0 < d < Inf
-    empirical_delta = run_t - last
-    error = abs(empirical_delta - d)
-    if error > res
-      exp.data.last_bad_delta = error
-      exp.data.last_good_delta = -1.0
-    elseif exp.data.last_bad_delta > res
-      exp.data.last_bad_delta = -1.0
-      exp.data.last_good_delta = error
-    end
-  end
-end
-
 roundstr(x,n=6) = x > 10.0^-n ? string(round(x,n)) : "≤1e-$n"
 function process(exp::Experiment,queue::MomentQueue,t::Float64)
   skip_offsets(exp,queue)
