@@ -1,5 +1,6 @@
 using Lazy: @_
 using DataStructures
+using MacroTools
 import Base: run
 export addtrial, addbreak, addpractice, moment, await_response, record, timeout,
   when, looping
@@ -145,15 +146,17 @@ function addmoment(q,ms)
   q
 end
 
+const addtrial_block = Array{Nullable{ExpandingMoment}}()
 function addmoments(exp,moments;when=nothing,loop=nothing)
-  if when == nothing && loop == nothing
-    foreach(m -> addmoment(exp,m),moments)
-  elseif when != nothing && loop != nothing
-    error("You can only define a `when` or a `loop` not both.")
-  elseif when != nothing
-    addmoment(exp,Weber.when(when,update_offset=true,moments...))
-  elseif loop != nothing
-    addmoment(exp,Weber.when(loop,loop=true,update_offset=true,moments...))
+  if when != nothing || loop != nothing
+    error("Trials cannot have when and loop clauses in Weber v0.3.0, ",
+          "use @addtrials instead.")
+  else
+    if isnull(addtrial_block[])
+      foreach(m -> addmoment(exp,m),moments)
+    else
+      foreach(m -> addmoment(get(addtrial_block[]),m),moments)
+    end
   end
 end
 
@@ -178,7 +181,192 @@ function addtrial_helper(exp::Experiment,trial_count,moments;keys...)
 end
 
 """
-    addtrial(moments...,[when=nothing],[loop=nothing])
+@addtrials expr...
+
+Add trials to the experiment conditioned on state that changes during the
+experiment.
+
+If you only you wish to add trials based on state that can be determiend before
+the experiment begins `@addtrials` is unncsesary. This usually means, if you use
+addtrials, that you will need to declare some variables inside of a let block,
+change these variables inside of moments, and use these variables inside of
+`expr`.
+
+There are two kinds of trials you can add with this macro: conditional and
+looping trials.
+
+# Conditional Trials
+
+    @addtrials if [cond1]
+      body...
+    elseif [cond2]
+      body...
+    ...
+    elseif [condN]
+      body...
+    else
+      body...
+    end
+
+Adds one or mores trials that are presented only if the given conditions are
+met. The expressions `cond1` through `condN` are evaluted during the experiment,
+but each `body` is executed before the experiment begins, and is used to
+indicate the set of trials (and breaks or practice trials) that will be run for
+a given condition.
+
+For example, the following code only runs the second trial if the user
+hits the "y" key.
+
+    let y_hit = false
+      message = visual("Hit Y or N.")
+      isresponse(e) = iskeydown(e,key"y") || iskeydown(e,key"n")
+      addtrial(moment(t -> display(message)),await_response(isresponse)) do event
+        if iskeydown(event,key"y")
+          y_hit = true
+        end
+      end
+
+      @addtrials if !y_hit
+        yhit_message = visual("You did not hit Y!")
+        addtrial(moment(t -> display(yhit_message)),await_response(iskeydown))
+      end
+    end
+
+If @addtrials was not present in the above example, the second trial would
+always run. This is because the `if` expression would be evaluated before any
+trials were run (when `y_hit` is false).
+
+# Looping Trials
+
+    @addtrials while expr
+      body...
+    end
+
+Add some number of trials that repeat as long as `expr` evalutes to true.
+For example the follow code runs as long as the user hits the "y" key.
+
+    let y_hit = true
+      message = visual("Hit Y if you want to continue")
+      @addtrials while y_hit
+        addtrial(moment(t -> display(message)),await_response(iskeydown)) do event
+          y_hit = iskeydown(event,key"y")
+        end
+      end
+    end
+
+If @addtrials was not present in the above example, the while loop would never
+terminate, running an infinite loop, because `y_hit` is true before the
+experiment starts.
+
+# Offset counting
+
+Note that the offset counter, which is meant to refer to a well defined state
+of the experiment, cannot be automatically determined for experiments that use
+@addtrials. By default, the offset counter is never incremented in an experiment
+using `@addtrials`. To manage offset counting in such an experiment you must
+call `define_offset`.
+"""
+
+macro addtrials(expr)
+  if isexpr(expr,:if)
+    println(expr)
+
+    parts = @match expr begin
+      if cond_
+        ifbody_
+      else
+        elsebody_
+      end => (cond,ifbody,elsebody)
+    end
+
+    if isexpr(elsebody,:if)
+      elsebody = :(@trials $elsebody)
+    end
+
+    if elsebody == nothing
+      quote
+        trial_block(when=() -> $cond) do
+          $ifbody
+        end
+      end
+    else
+      quote
+        let ifpassed = false
+          trial_block(() -> ifpassed = $cond) do
+            $ifbody
+          end
+          trial_block(() -> !ifpassed) do
+            $elsebody
+          end
+        end
+      end
+    end
+  elseif isexpr(expr,:while)
+    parts = @match expr begin
+      while cond_
+        body_
+      end => (cond,body)
+    end
+
+    quote
+      trial_block(loop=true,() -> $cond) do
+        $body
+      end
+    end
+  else
+    error("Expected an if block or a while block.")
+  end
+end
+
+function trial_block(body,condition;keys...)
+  trial_block(get_experiment(),body,condition;keys...)
+end
+
+function trial_block(exp,body,condition;loop=false)
+  exp.flags.automated_offsets = false
+  addtrial_block[] = Nullable(ExpandingMoment(condition,Stack(Moment),loop,false))
+  body()
+  addtrial_block[] = Nullable{ExpandingMoment}()
+end
+
+
+"""
+    define_offset()
+
+Defines an offset that can be used to fast forward through the experiment.
+
+Each call increments the offset counter by 1. All trials added before
+an offset will be skipped when the user requests that the experiment start
+at a given offset.
+
+This allows an experiment using @addtrials to manually define offsets in the
+experiment. You do not normally need to use this unless @addtrials is defined,
+but if you do, there will be no automated offset counting (that is `addtrials`
+and friends will not automatically increment the offset counter).
+
+Keep in mind that all experimental state will be unchanged by trials whose
+offsets are skipped. Thus, any state that is modified during a skipped moment
+will not be modified.
+
+!!! warning
+
+    This function must be used with care. If you do not properly define offsets
+    the counter will not refer to a predictable location in your experiment.
+    For this reason, you cannot define offsets inside of @addtrials blocks.
+    You should also not define an offset in a location that depends on
+    state which changes during the experiment unless it acceptable
+    for this state to have it's pre-experiment value when reaching this offset.
+"""
+define_offset() = define_offset(get_experiment())
+function define_offset(exp)
+  if !isnull(addtrial_block[])
+    error("You cannot define an offset inside of an `@addtrials` block.")
+  end
+  addmoment(exp,ManualOffsetMoment())
+end
+
+"""
+    addtrial(moments...)
 
 Adds a trial to the experiment, consisting of the specified moments.
 
@@ -187,40 +375,37 @@ offset counter. These two numbers are reported on every line of the resulting
 data file (see `record`). They can be retrieved using `experiment_trial`
 and `experiment_offset`.
 
-# Conditional and Looping Trials
-
-If a `when` function (with no arguments) is specified the trial only occurs if
-the function evaluates to true. If a `loop` function is specified the trial
-repeats until the function (with no arguments) evaluates to false. The offset
-counter is only udpated once by a looping trial, even if many trial occur
-because of the loop.  This is because the loop may result in an aribtrary number
-of trials, and an offset number must refer to a well defined event in the
-experiment, that will occur every single time the expeirment runs. If the loop
-function does not depend on some state that updates during the experiment
-(e.g. by changing a variable loop depends on inside of a moment), then it is
-recommended that you don't use a loop function and instead simply add multiple
-trials, like so:
-
-    for i in 1:N
-      addtrial(...)
-    end
-
 # How to create moments
 
-Moments can be arbitrarily nested in iterable collections. Each individual
-moment is one of the following objects.
+Moment can be added as individual arguments to addtrial, or they can be
+arbitrarily nested in iterable collections. Such collections are iterated
+recursively to add the moments to a trial in sequence. Each individual moment is
+one of the following objects,
 
-1. function
+1. moment object
 
-Immediately after the *start* of the preceeding moment (or at the
-start of the trial if it is the first argument), this function becomes the event
-watcher. Any time an event occurs this function will be called, until a new
-watcher replaces it. It shoudl take one argument (the event that occured).
+Result of calling the `moment` function, this will trigger some time after the
+*start* of the previous moment, or after the start of the trial if it is the
+first moment in the trial.
 
-2. moment object
+1. function watcher
 
-Result of calling the `moment` function, this will
-trigger some time after the *start* of the previosu moment.
+Immediately after the *start* of the preceeding moment (or at the start of the
+trial if this is the first argument), a function creates an event watcher. Any
+time an event occurs this function will be called, until a new watcher replaces
+it. It should take one argument (the event that occured).  This is normally the
+first argument to addtrial, since rarely do we want to change how a trial
+responds to events in the middle of a trial or ignore events. Placing the
+function first also allows it to be specified using the do block syntax:
+
+    addtrial(moments...) do event
+      if iskeydown(event,key"y")
+        display(visual("You hit y!"))
+      end
+    end
+
+In this example, "You hit y!" will be displayed on screen any time the user hits
+the "y" key.
 
 3. timeout object
 
@@ -230,24 +415,24 @@ moment, until the specified timeout.
 
 4. await object
 
-Reuslt of calling `await_response` this moment will
-begin as soon as the specified response is provided by the subject.
+Result of calling `await_response` this moment will begin as soon as the
+specified response is provided by the subject.
 
 5. looping object
 
-Result of calling `looping`, this will repeat
-a series of moments based on some condition
+Result of calling `looping`, this will repeat a series of moments based on some
+condition.
 
 6. when object
 
-Result of call `when`, this will present as series
-of moments based on some condition.
+Result of call `when`, this will present as series of moments based on some
+condition.
 
 
 !!! note
 
     In addition to these types of moments you can create more complicated
-    moments by concatenating simpler moments togehter using the `>>` operator or
+    moments by concatenating simpler moments together using the `>>` operator or
     `moment(momoment1,moment2,...)` . See the documentation of `moment` for more
     details.
 
@@ -269,8 +454,8 @@ generally safe to perform during a moment:
 Note that Julia compiles functions on demand (known as JIT compilation), which
 can lead to very slow runtimes the first time a function runs.  To minimize JIT
 compilation during an experiment, any functions called directly by a moment are
-first precompiled. Futher, many methods in Weber and other dependent
-modules are precompiled before the experiment begins.
+first precompiled. Futher, many methods in Weber precompiled before the
+experiment begins.
 """
 
 function addtrial(moments...;keys...)
@@ -326,7 +511,15 @@ experiment.
     `display` return immediately, before the sound or visual is finished being
     presented to the participant. Please refer to the `addtrial` documentation
     for more details.
+
+!!! warning
+
+    Beware moments that make changes to variables. In general you should only
+    change variables inside a moment if you are using `@addtrials`. If you do
+    change a variable inside a moment, you probably want to manually define
+    offsets using `define_offset`.
 """
+
 moment(delta_t::Number) = TimedMoment(delta_t,t->nothing)
 moment() = TimedMoment(0,()->nothing)
 

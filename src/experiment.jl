@@ -62,7 +62,8 @@ experiment_metadata() = experiment_metadata(get_experiment())
 Prepares a new experiment to be run.
 
 # Keyword Arguments
-* skip: the number of offsets to skip. Allows restarting of an experiment.
+* skip: the number of offsets to skip. Allows restarting of an experiment
+  somewhere in the middle.
 * columns: the names (as symbols) of columns that will be recorded during
   the experiment (using `record`). The column `:value` is always included here,
   even if not specified, since there are number of events recorded automatically
@@ -409,8 +410,14 @@ function process(exp::Experiment,queues::Array{MomentQueue},x)
 end
 
 function skip_offsets(exp,queue)
-  while !isempty(queue) && keep_skipping(exp,front(queue))
-    dequeue!(queue)
+  if exp.flags.automated_offsets
+    while !isempty(queue) && keep_skipping(exp,front(queue))
+      dequeue!(queue)
+    end
+  else
+    while !isempty(queue) && manual_skip(exp,front(queue))
+      dequeue!(queue)
+    end
   end
 end
 
