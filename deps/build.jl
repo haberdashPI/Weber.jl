@@ -1,4 +1,3 @@
-using BinDeps
 using Conda
 
 downloaddir = joinpath(dirname(@__FILE__),"downloads")
