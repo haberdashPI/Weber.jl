@@ -227,22 +227,6 @@ to work on Linux I would happily accept a
 
 ## Roadmap
 
-For the 0.2.0 release
-- [x] document object composition
-- [x] document moment composition
-- [x] document experiment construction
-- [x] document primitives.jl
-- [x] create a basic usage guidelines in README.
-
-- [x] allow resetting of Cedrus response timer
-- [x] debug (or remove) harmonic_complex
-- [x] test responses to Cedrus XID devices (create example for reading buttons)
-- [x] test `play` timing (using a microphone)
-- [x] create some tests
-- [x] submit the package to METADATA.jl
-- [x] use the version number of Weber.jl indicated by Pkg
-- [x] get windows install of pyxid working
-
 For the 0.2.x releases
 - [x] warm up JIT compilation by running a windowless, soundless experiment
 during `run`.
@@ -255,13 +239,15 @@ during `run`.
   need this anymore?)
 - [x] create a calibration program
 - [x] rename `display_key_codes`
-- [ ] test `display` timing (using an oscilloscope)
+- [x] test `display` timing (using an oscilloscope)
 - [x] add remaining special keys to @key_str
-- [x] create hepler to generate template experiment (including run, setup, 
+- [x] create helper to generate template experiment (including run, setup, 
       update, and README.md files)
 
 For the 0.3.0 release
 - [ ] implement a loop and conditional that works across multiple trials
+- [ ] allow display and play to be moments, and add arugments to record at the
+	  same time.
 - [ ] create 2AFC abstraction
 - [ ] replace interactive text input with simple Gtk window or SDL based GUI??
 - [ ] minimize GC using preinitialized data structures during experiment
