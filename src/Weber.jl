@@ -51,7 +51,7 @@ catch
                     "of Weber. Your experiment will not be reproducable. ",
                     "Consider installing git and adding it to your PATH to ",
                     "record a more precise version number."))
-
+    end
   catch
     warn(cleanstr("The Weber version number could not be determined.",
          "Your experiment will not be reproducable.",
