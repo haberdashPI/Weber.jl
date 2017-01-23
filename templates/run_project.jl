@@ -8,18 +8,18 @@
 ################################################################################
 
 using Weber
+include("calibrate.jl") # machine specific parameters
+setup_sound(buffer_size=buffer_size)
 
 version = v"0.0.1"
 sid,skip = @read_args("...insert project summary...")
 
 exp = Experiment(sid = sid, version = version, skip = skip,
+                 moment_resolution = moment_resolution,
                  columns = [#= add additional data columns here =#])
 
 # define experiment variables here
 n_trials = 60
-
-# use run_calibrate to find an appropriate attenuation level
-atten_dB = 20
 
 # define a function to create a trial here
 function one_trial()
