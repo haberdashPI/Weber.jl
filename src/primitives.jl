@@ -22,16 +22,18 @@ function response(responses...;info...)
 end
 
 """
-    instruct(str)
+    instruct(str;keys...)
 
 Presents some instructions to the participant.
 
 This adds "(Hit spacebar to continue...)" to the end of the text, and waits for
 the participant to press spacebar to move on.
 
+Any keyword arguments are passed onto to `visual`, which can be used
+to adjust how the instructions are displayed.
 """
-function instruct(str)
-  text = visual(str*" (Hit spacebar to continue...)")
+function instruct(str;keys...)
+  text = visual(str*" (Hit spacebar to continue...)";keys...)
   m = moment() do t
     record("instructions")
     display(text)
