@@ -136,7 +136,9 @@ function Experiment(;skip=0,columns=Symbol[],debug=false,
                         pause_mode,moments,cleanup,last_good_delta,
                         last_bad_delta)
 
-  flags = ExperimentFlags(false,false)
+  running = processing = false
+  automated_offsets = true
+  flags = ExperimentFlags(running,processing,automated_offsets)
 
   win = window(width,height,fullscreen=!debug,accel=!debug,null=null_window)
 

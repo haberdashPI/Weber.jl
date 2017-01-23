@@ -247,8 +247,10 @@ during `run`.
 
 For the 0.3.0 release
 - [ ] implement a loop and conditional that works across multiple trials
-- [ ] allow record, display and play to be moments.
+- [ ] allow record, display and play (or visual and sound?) to be moments.
 - [ ] create 2AFC abstraction
+- [ ] remove t parameter from moment funtions (if needed one can use experiment_tick())
+- [ ] allow the function passed to moment to take extra arguments passed to `moment`
 - [ ] replace interactive text input with simple Gtk window or SDL based GUI??
 - [ ] minimize GC using preinitialized data structures during experiment??
 

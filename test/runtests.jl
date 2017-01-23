@@ -54,17 +54,26 @@ comp_events,comp_times = find_timing() do record
 end
 
 loop_events,loop_index = find_timing() do record
-  i = 0
-  addtrial(loop=() -> (i+=1; i <= 3),
-           moment(t -> record(:a,(experiment_trial(),experiment_offset()))),
-           moment(t -> record(:b,(experiment_trial(),experiment_offset()))),
-           moment(t -> record(:c,(experiment_trial(),experiment_offset()))))
+  let i = 0
+    @addtrials while i < 3
+      addtrial(moment(t -> (i+=1; record(:a,(experiment_trial(),
+                                             experiment_offset())))),
+               moment(t -> record(:b,(experiment_trial(),experiment_offset()))),
+               moment(t -> record(:c,(experiment_trial(),experiment_offset()))))
+    end
+  end
 end
 
 when_events,_ = find_timing() do record
-  test = true
-  addtrial(when=() -> (test = false; true),moment(t -> record(:a,0)))
-  addtrial(when=() -> test,moment(t -> record(:b,0)))
+  let test = true
+    @addtrials if test
+      addtrial(moment(t -> (record(:a,0); test = false)))
+    end
+
+    @addtrials if test
+      addtrial(moment(t -> (record(:b,0))))
+    end
+  end
 end
 
 check_timing = get(ENV,"WEBER_TIMING_TESTS","Yes") != "No"

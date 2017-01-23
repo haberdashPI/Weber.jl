@@ -3,7 +3,7 @@ using DataStructures
 using MacroTools
 import Base: run
 export addtrial, addbreak, addpractice, moment, await_response, record, timeout,
-  when, looping
+  when, looping, @addtrials
 
 function findkwd(kwds,sym,default)
   for (k,v) in kwds
@@ -147,9 +147,10 @@ function addmoment(q,ms)
 end
 
 const addtrial_block = Array{Nullable{ExpandingMoment}}()
+addtrial_block[] = Nullable()
 function addmoments(exp,moments;when=nothing,loop=nothing)
   if when != nothing || loop != nothing
-    error("Trials cannot have when and loop clauses in Weber v0.3.0, ",
+    error("Trials cannot have when and loop clauses in Weber v0.3.0 and up, ",
           "use @addtrials instead.")
   else
     if isnull(addtrial_block[])
@@ -271,7 +272,7 @@ macro addtrials(expr)
   if isexpr(expr,:if)
     println(expr)
 
-    parts = @match expr begin
+    cond,ifbody,elsebody = @match expr begin
       if cond_
         ifbody_
       else
@@ -302,7 +303,7 @@ macro addtrials(expr)
       end
     end
   elseif isexpr(expr,:while)
-    parts = @match expr begin
+    cond,body = @match expr begin
       while cond_
         body_
       end => (cond,body)
@@ -340,7 +341,7 @@ an offset will be skipped when the user requests that the experiment start
 at a given offset.
 
 This allows an experiment using @addtrials to manually define offsets in the
-experiment. You do not normally need to use this unless @addtrials is defined,
+experiment. You do not normally need to use this unless @addtrials is used,
 but if you do, there will be no automated offset counting (that is `addtrials`
 and friends will not automatically increment the offset counter).
 
@@ -467,7 +468,7 @@ function addtrial(exp::Experiment,moments...;keys...)
 end
 
 """
-   addpractice(moments...,[when=nothing],[loop=nothing])
+   addpractice(moments...)
 
 Identical to `addtrial`, except that it does not incriment the trial count.
 """
@@ -480,7 +481,7 @@ function addpractice(exp::Experiment,moments...;keys...)
 end
 
 """
-   addbreak(moments...,[when=nothing],[loop=nothing])
+   addbreak(moments...)
 
 Identical to `addpractice` but there is no optimization to ensure that events
 occur in realtime. This will allow the program to safely recover memory through
@@ -500,9 +501,10 @@ end
     moment([delta_t],[fn])
 
 Create a moment that occurs `delta_t` (default 0) seconds after the *start* of
-the previous moment, running the specified function. The function `fn` is called
-with one argument indicating the time in seconds since the start of the
-experiment.
+the previous moment, running the specified function.
+
+The function `fn` is called with one argument indicating the time in seconds
+since the start of the experiment.
 
 !!! warning
 
@@ -536,6 +538,34 @@ end
 function moment(fn::Function)
   precompile(fn,(Float64,))
   TimedMoment(0,fn)
+end
+
+"""
+    moment([delta_t],v::SDLRendered)
+    moment(v::SDLRendered,delta_t)
+
+Create a moment from the visual, by calling moment(delta_t,t -> display(v)).
+"""
+function moment(delta_t::Number,v::SDLRendered)
+  moment(delta_t,t -> display(v))
+end
+
+function moment(v::SDLRendered,delta_t::Number=0.0)
+  moment(delta_t,t -> display(v))
+end
+
+"""
+    moment([delta_t],s::Sound)
+    moment(s::Sound,delta_t)
+
+Create a moment from the sound, by calling moment(delta_t,t -> play(v)).
+"""
+function moment(delta_t::Number,v::Sound)
+  moment(delta_t,t -> play(v))
+end
+
+function moment(v::Sound,delta_t::Number=0.0)
+  moment(delta_t,t -> play(v))
 end
 
 """
