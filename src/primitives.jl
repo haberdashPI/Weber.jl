@@ -57,7 +57,7 @@ function addbreak_every(n,total,response=key":space:",
       record("break")
       display(visual("You can take a break. Hit "*
                      "$response_str when you're ready to resume... "*
-                     "$(div(index,n)) of $(div(total,n)-1) breaks."))
+                     "$(div(index,n)) of $(div(total-1,n)) breaks."))
     end
 
     addbreak(message,await_response(e -> iskeydown(e,response)))
