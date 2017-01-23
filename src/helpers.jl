@@ -109,6 +109,8 @@ function create_new_project(name,dir=".")
                  joinpath(dir,"setup.jl"),values)
   apply_template(joinpath(dirname(@__FILE__),"..","templates","run_project.jl"),
                  joinpath(dir,"run_$name.jl"),values)
+  apply_template(joinpath(dirname(@__FILE__),"..","templates",".gitignore"),
+                 joinpath(dir,".gitignore"),values)
 end
 
 function apply_template(sourcefile,destfile,values)
