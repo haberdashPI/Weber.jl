@@ -46,6 +46,12 @@ try
 catch
   try
     global const version = Pkg.installed("Weber")
+    if !isempty(version.build)
+      warn(cleanstr("Source files do not correspond to an official release ",
+                    "of Weber. Your experiment will not be reproducable. ",
+                    "Consider installing git and adding it to your PATH to ",
+                    "record a more precise version number."))
+
   catch
     warn(cleanstr("The Weber version number could not be determined.",
          "Your experiment will not be reproducable.",
