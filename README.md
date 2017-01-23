@@ -243,14 +243,14 @@ during `run`.
 - [x] add remaining special keys to @key_str
 - [x] create helper to generate template experiment (including run, setup, 
       update, and README.md files)
+- [ ] implement stimtrak communication
 
 For the 0.3.0 release
 - [ ] implement a loop and conditional that works across multiple trials
-- [ ] allow display and play to be moments, and add arugments to record at the
-	  same time.
+- [ ] allow record, display and play to be moments.
 - [ ] create 2AFC abstraction
 - [ ] replace interactive text input with simple Gtk window or SDL based GUI??
-- [ ] minimize GC using preinitialized data structures during experiment
+- [ ] minimize GC using preinitialized data structures during experiment??
 
 For the 0.3.x release
 - [ ] edit/refine the user manual
@@ -259,6 +259,6 @@ For the 0.3.x release
 
 For the 0.4.0 release?
 - [ ] port to linux
-- [ ] video playback
+- [ ] video playback (requires julia multi threading)
 - [ ] track audio buffer timing so we can zero-pad sounds to get sub-buffer-size timing
-  acuracy.
+      acuracy. (requires julia multi threading)
