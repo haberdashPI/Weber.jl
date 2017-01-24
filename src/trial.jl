@@ -146,24 +146,23 @@ function addmoment(q,ms)
   q
 end
 
-const addtrial_block = Array{Nullable{ExpandingMoment}}()
-addtrial_block[] = Nullable()
+const addtrial_block = Stack(ExpandingMoment)
 function addmoments(exp,moments;when=nothing,loop=nothing)
   if when != nothing || loop != nothing
-    error("Trials cannot have when and loop clauses in Weber v0.3.0 and up, ",
+    error("Trials cannot have `when` and `loop` clauses in Weber v0.3.0 and up, ",
           "use @addtrials instead.")
   else
-    if isnull(addtrial_block[])
+    if isempty(addtrial_block)
       foreach(m -> addmoment(exp,m),moments)
     else
-      foreach(m -> addmoment(get(addtrial_block[]),m),moments)
+      block = top(addtrial_block)
+      foreach(m -> addmoment(block,m),moments)
     end
   end
 end
 
 function addtrial_helper(exp::Experiment,trial_count,moments;keys...)
 
-  # make sure the trial doesn't lag due to memory allocation
   start_trial = offset_start_moment(trial_count) do t
     #gc_enable(false)
     if trial_count
@@ -187,14 +186,38 @@ end
 Add trials to the experiment conditioned on state that changes during the
 experiment.
 
-If you only you wish to add trials based on state that can be determiend before
-the experiment begins `@addtrials` is unncsesary. This usually means, if you use
-addtrials, that you will need to declare some variables inside of a let block,
-change these variables inside of moments, and use these variables inside of
-`expr`.
+If you only you wish to add trials based on state that can be determined before
+the experiment begins then `@addtrials` is unncsesary. So, add trials is useful
+when you change a variable during a moment and then check the value of this
+variable in an @addtrials expression.
 
-There are two kinds of trials you can add with this macro: conditional and
-looping trials.
+Trials within an @addtrials expression do not increment the offset counter.
+Instead the entire block of trials added by an @addtrials block is referenced
+using a single offset.
+
+There are three kinds of trials you can add with this macro: blocks,
+conditionals and loops.
+
+# Blocks of Trials
+
+    @addtrials let [assignments]
+      body...
+    end
+
+Blocks of trials are useful for setting up state to be used in a subsequent
+@addtrials expression. All other types of @addtrials expression will likely be
+nested inside this type. The main reason to use such a block is to ensure that
+the offset counter is appropriately set.
+
+The offset counter is meant to refer to a well defined time during the
+experiment.  They can be used to fast forward through the expeirment by
+specifying an offset greater than 0.  However, if there is state that changes
+throughout the course of several trials, trials that follow these state changes
+cannot be relibably reproduced when those state-chaning trials are skipped
+because the user specifies an offset > 0. Thus anytime you have
+a series of trials, some of which depend on the state of one another, those
+trials should be placed inside of an @addtrials let block if you want
+fast-forwarding through parts of the experiment to work as expected.
 
 # Conditional Trials
 
@@ -218,7 +241,7 @@ a given condition.
 For example, the following code only runs the second trial if the user
 hits the "y" key.
 
-    let y_hit = false
+    @addtrials let y_hit = false
       message = visual("Hit Y or N.")
       isresponse(e) = iskeydown(e,key"y") || iskeydown(e,key"n")
       addtrial(moment(t -> display(message)),await_response(isresponse)) do event
@@ -233,9 +256,9 @@ hits the "y" key.
       end
     end
 
-If @addtrials was not present in the above example, the second trial would
-always run. This is because the `if` expression would be evaluated before any
-trials were run (when `y_hit` is false).
+If `@addtrials if !y_hit` was replaced with `if !y_hit` in the above example,
+the second trial would always run. This is because the `if` expression would be
+evaluated before any trials were run (when `y_hit` is false).
 
 # Looping Trials
 
@@ -246,7 +269,7 @@ trials were run (when `y_hit` is false).
 Add some number of trials that repeat as long as `expr` evalutes to true.
 For example the follow code runs as long as the user hits the "y" key.
 
-    let y_hit = true
+    @addtrials let y_hit = true
       message = visual("Hit Y if you want to continue")
       @addtrials while y_hit
         addtrial(moment(t -> display(message)),await_response(iskeydown)) do event
@@ -255,24 +278,25 @@ For example the follow code runs as long as the user hits the "y" key.
       end
     end
 
-If @addtrials was not present in the above example, the while loop would never
-terminate, running an infinite loop, because `y_hit` is true before the
-experiment starts.
+If `@addtrials while y_hit` was replaced with `while y_hit` in the above
+example, the while loop would never terminate, running an infinite loop, because
+`y_hit` is true before the experiment starts.
 
-# Offset counting
-
-Note that the offset counter, which is meant to refer to a well defined state
-of the experiment, cannot be automatically determined for experiments that use
-@addtrials. By default, the offset counter is never incremented in an experiment
-using `@addtrials`. To manage offset counting in such an experiment you must
-call `define_offset`.
 """
 
 macro addtrials(expr)
-  if isexpr(expr,:if)
-    println(expr)
-
+  if isexpr(expr,:let)
+    quote
+      trial_block(() -> true) do
+        $(esc(expr))
+      end
+    end
+  elseif isexpr(expr,:if)
     cond,ifbody,elsebody = @match expr begin
+      if cond_
+        ifbody_
+      end => (cond,ifbody,nothing)
+
       if cond_
         ifbody_
       else
@@ -281,23 +305,23 @@ macro addtrials(expr)
     end
 
     if isexpr(elsebody,:if)
-      elsebody = :(@trials $elsebody)
+      elsebody = :(@addtrials $(esc(elsebody)))
     end
 
     if elsebody == nothing
       quote
-        trial_block(when=() -> $cond) do
-          $ifbody
+        trial_block(() -> $(esc(cond))) do
+          $(esc(ifbody))
         end
       end
     else
       quote
         let ifpassed = false
-          trial_block(() -> ifpassed = $cond) do
-            $ifbody
+          trial_block(() -> ifpassed = $(esc(cond))) do
+            $(esc(ifbody))
           end
           trial_block(() -> !ifpassed) do
-            $elsebody
+            $(esc(elsebody))
           end
         end
       end
@@ -310,12 +334,12 @@ macro addtrials(expr)
     end
 
     quote
-      trial_block(loop=true,() -> $cond) do
-        $body
+      trial_block(loop=true,() -> $(esc(cond))) do
+        $(esc(body))
       end
     end
   else
-    error("Expected an if block or a while block.")
+    error("@addtrials expects a `let`, `if` or `while` expression.")
   end
 end
 
@@ -323,47 +347,13 @@ function trial_block(body,condition;keys...)
   trial_block(get_experiment(),body,condition;keys...)
 end
 
-function trial_block(exp,body,condition;loop=false)
-  exp.flags.automated_offsets = false
-  addtrial_block[] = Nullable(ExpandingMoment(condition,Stack(Moment),loop,false))
+function trial_block(exp::Experiment,body::Function,condition::Function;loop=false)
+  moment = ExpandingMoment(condition,Stack(Moment),loop,true)
+  push!(addtrial_block,moment)
   body()
-  addtrial_block[] = Nullable{ExpandingMoment}()
-end
+  pop!(addtrial_block)
 
-
-"""
-    define_offset()
-
-Defines an offset that can be used to fast forward through the experiment.
-
-Each call increments the offset counter by 1. All trials added before
-an offset will be skipped when the user requests that the experiment start
-at a given offset.
-
-This allows an experiment using @addtrials to manually define offsets in the
-experiment. You do not normally need to use this unless @addtrials is used,
-but if you do, there will be no automated offset counting (that is `addtrials`
-and friends will not automatically increment the offset counter).
-
-Keep in mind that all experimental state will be unchanged by trials whose
-offsets are skipped. Thus, any state that is modified during a skipped moment
-will not be modified.
-
-!!! warning
-
-    This function must be used with care. If you do not properly define offsets
-    the counter will not refer to a predictable location in your experiment.
-    For this reason, you cannot define offsets inside of @addtrials blocks.
-    You should also not define an offset in a location that depends on
-    state which changes during the experiment unless it acceptable
-    for this state to have it's pre-experiment value when reaching this offset.
-"""
-define_offset() = define_offset(get_experiment())
-function define_offset(exp)
-  if !isnull(addtrial_block[])
-    error("You cannot define an offset inside of an `@addtrials` block.")
-  end
-  addmoment(exp,ManualOffsetMoment())
+  addmoment(exp,moment)
 end
 
 """
@@ -516,10 +506,11 @@ since the start of the experiment.
 
 !!! warning
 
-    Beware moments that make changes to variables. In general you should only
-    change variables inside a moment if you are using `@addtrials`. If you do
-    change a variable inside a moment, you probably want to manually define
-    offsets using `define_offset`.
+    Avoid moments that depend on state that changes during the
+    experiment. Specifically, moments that depend on a state which is altered by
+    moments on a previous trial can lead to undefined behavior when an
+    expeirment is run with a non-zero offset. If you find you need to do this,
+    you likely want to use an `@addtrials` expression.
 """
 
 moment(delta_t::Number) = TimedMoment(delta_t,t->nothing)
@@ -654,6 +645,13 @@ flag_expanding(m::Moment) = m
 function flag_expanding(m::OffsetStartMoment)
   OffsetStartMoment(m.run,m.count_trials,true)
 end
+function flag_expanding(m::ExpandingMoment)
+  if m.update_offset
+    ExpandingMoment(m.condition,m.data,m.repeat,false)
+  else
+    m
+  end
+end
 
 """
     looping(when=fn,moments...)
@@ -731,33 +729,6 @@ function handle(exp::Experiment,q::MomentQueue,m::ResponseMoment,event::ExpEvent
   end
   false
 end
-
-keep_skipping(exp,moment::Moment) = exp.data.offset < exp.data.skip_offsets
-function keep_skipping(exp,moment::OffsetStartMoment)
-  # start moments that originate from an expanding moment do not increment the
-  # offset. This is because expanding moments can generate an aribtrary number
-  # of such offset moments, so we can not determine a priori how many moments
-  # will occur. Thus, there is no good way to skip past part of an expanding
-  # moment. However, we still increment the trial count, if appropriate so the
-  # reported data correctly shows where trials begin and end.
-  if !moment.expanding
-    exp.data.offset += 1
-  end
-  if moment.count_trials
-    exp.data.trial += 1
-  end
-  exp.data.offset < exp.data.skip_offsets
-end
-function keep_skipping(exp,moment::ExpandingMoment)
-  if moment.update_offset
-    exp.data.offset += 1
-    # each expanding moment only ever incriments the offset
-    # counter once, event if it creates a loop.
-    moment.update_offset = false
-  end
-  exp.data.offset < exp.data.skip_offsets
-end
-keep_skipping(exp,moment::FinalMoment) = false
 
 function handle(exp::Experiment,q::MomentQueue,moments::CompoundMoment,x)
   queue = Deque{Moment}()

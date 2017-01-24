@@ -403,15 +403,6 @@ function delta_t(moment::ResponseMoment)
 end
 required_delta_t(m::ResponseMoment) = Inf
 
-type ManualOffsetMoment <: SimpleMoment
-end
-delta_t(m::ManualOffsetMoment) = 0.0
-manual_skip(exp,m) = exp.data.offset < exp.data.skip_offsets
-function manual_skip(exp,m::ManualOffsetMoment)
-  exp.data.offset += 1
-  exp.data.offset < exp.data.skip_offsets
-end
-
 abstract AbstractTimedMoment <: SimpleMoment
 
 type TimedMoment <: AbstractTimedMoment
@@ -500,7 +491,6 @@ end
 type ExperimentFlags
   running::Bool
   processing::Bool
-  automated_offsets::Bool
 end
 
 immutable Experiment{T}

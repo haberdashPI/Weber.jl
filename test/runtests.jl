@@ -54,7 +54,7 @@ comp_events,comp_times = find_timing() do record
 end
 
 loop_events,loop_index = find_timing() do record
-  let i = 0
+  @addtrials let i = 0
     @addtrials while i < 3
       addtrial(moment(t -> (i+=1; record(:a,(experiment_trial(),
                                              experiment_offset())))),
@@ -65,7 +65,7 @@ loop_events,loop_index = find_timing() do record
 end
 
 when_events,_ = find_timing() do record
-  let test = true
+  @addtrials let test = true
     @addtrials if test
       addtrial(moment(t -> (record(:a,0); test = false)))
     end
@@ -75,6 +75,8 @@ when_events,_ = find_timing() do record
     end
   end
 end
+
+# TODO: test else, and elseif
 
 check_timing = get(ENV,"WEBER_TIMING_TESTS","Yes") != "No"
 

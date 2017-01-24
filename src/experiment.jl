@@ -137,8 +137,7 @@ function Experiment(;skip=0,columns=Symbol[],debug=false,
                         last_bad_delta)
 
   running = processing = false
-  automated_offsets = true
-  flags = ExperimentFlags(running,processing,automated_offsets)
+  flags = ExperimentFlags(running,processing)
 
   win = window(width,height,fullscreen=!debug,accel=!debug,null=null_window)
 
@@ -411,15 +410,32 @@ function process(exp::Experiment,queues::Array{MomentQueue},x)
   end
 end
 
+
+keep_skipping(exp,moment::Moment) = exp.data.offset < exp.data.skip_offsets
+function keep_skipping(exp,moment::OffsetStartMoment)
+  if !moment.expanding
+    exp.data.offset += 1
+  end
+  if moment.count_trials
+    exp.data.trial += 1
+  end
+  exp.data.offset < exp.data.skip_offsets
+end
+function keep_skipping(exp,moment::ExpandingMoment)
+  if moment.update_offset
+    exp.data.offset += 1
+    # each expanding moment only ever incriments the offset
+    # counter once, event if it creates a loop.
+    moment.update_offset = false
+  end
+  exp.data.offset < exp.data.skip_offsets
+end
+keep_skipping(exp,moment::FinalMoment) = false
+
+
 function skip_offsets(exp,queue)
-  if exp.flags.automated_offsets
-    while !isempty(queue) && keep_skipping(exp,front(queue))
-      dequeue!(queue)
-    end
-  else
-    while !isempty(queue) && manual_skip(exp,front(queue))
-      dequeue!(queue)
-    end
+  while !isempty(queue) && keep_skipping(exp,front(queue))
+    dequeue!(queue)
   end
 end
 
