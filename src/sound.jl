@@ -1,5 +1,6 @@
 using SampledSignals
 using DSP
+using LibSndFile # TODO: test this
 using FixedPointNumbers
 using FileIO
 import FileIO: load
@@ -230,31 +231,31 @@ immutable Sound
   end
 end
 
-load(f::File{format"WAV"}) = load_helper(f)
-load(f::File{format"AIFF"}) = load_helper(f)
-load(f::File{format"RIFF"}) = load_helper(f)
-load(f::File{format"OGG"}) = load_helper(f)
-load(f::File{format"VOC"}) = load_helper(f)
-function load_helper(f::File)
-  if !isready(sound_setup_state)
-    setup_sound()
-  end
+# load(f::File{format"WAV"}) = load_helper(f)
+# load(f::File{format"AIFF"}) = load_helper(f)
+# load(f::File{format"RIFF"}) = load_helper(f)
+# load(f::File{format"OGG"}) = load_helper(f)
+# load(f::File{format"VOC"}) = load_helper(f)
+# function load_helper(f::File)
+#   if !isready(sound_setup_state)
+#     setup_sound()
+#   end
 
-  rw = ccall((:SDL_RWFromFile,_psycho_SDL2),Ptr{Void},(Cstring,Cstring),
-              filename(f), "rb")
-  if rw == C_NULL
-    error("Failed to open file $(filename(f)): "*SDL_GetError())
-  end
+#   rw = ccall((:SDL_RWFromFile,_psycho_SDL2),Ptr{Void},(Cstring,Cstring),
+#               filename(f), "rb")
+#   if rw == C_NULL
+#     error("Failed to open file $(filename(f)): "*SDL_GetError())
+#   end
 
-  pchunk = ccall((:Mix_LoadWAV_RW,_psycho_SDL2_mixer),Ptr{MixChunk},
-                 (Ptr{Void},Cint),rw,1)
-  if pchunk == C_NULL
-    error("Failed to load WAV $(filename(f)): "*SDL_GetError())
-  end
-  chunk = unsafe_load(pchunk)
-  SampleBuf(unsafe_wrap(Array,chunk.buffer,chunk.byte_length >> 1,true),
-            samplerate(sound_setup_state))
-end
+#   pchunk = ccall((:Mix_LoadWAV_RW,_psycho_SDL2_mixer),Ptr{MixChunk},
+#                  (Ptr{Void},Cint),rw,1)
+#   if pchunk == C_NULL
+#     error("Failed to load WAV $(filename(f)): "*SDL_GetError())
+#   end
+#   chunk = unsafe_load(pchunk)
+#   SampleBuf(unsafe_wrap(Array,chunk.buffer,chunk.byte_length >> 1,true),
+#             samplerate(sound_setup_state))
+# end
 
 function sound(x::SampleBuf{Fixed{Int16,15}})
   Sound(MixChunk(0,pointer(x.data),sizeof(x.data),128),x)
