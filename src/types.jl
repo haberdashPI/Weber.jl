@@ -167,7 +167,8 @@ const str_to_code = Dict(
   ":right:" => KeyboardKey(0x4000004f),
   ":delete:" => KeyboardKey(0x0000007f),
   ":backspace:" => KeyboardKey(0x00000008),
-  ":enter:" => KeyboardKey(0x40000058),
+  ":enter:" => KeyboardKey(0x0000000d),
+  ":return:" => KeyboardKey(0x0000000d),
 
   ":lshift:" => KeyboardKey(0x400000e1),
   ":rshift:" => KeyboardKey(0x400000e5),
