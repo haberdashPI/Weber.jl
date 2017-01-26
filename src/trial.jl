@@ -758,3 +758,24 @@ function handle(exp::Experiment,q::MomentQueue,m::ExpandingMoment,x)
   end
   true
 end
+
+is_moment_skipped(exp,moment::Moment) = exp.data.offset < exp.data.skip_offsets
+function is_moment_skipped(exp,moment::OffsetStartMoment)
+  if !moment.expanding
+    exp.data.offset += 1
+  end
+  if moment.count_trials
+    exp.data.trial += 1
+  end
+  exp.data.offset < exp.data.skip_offsets
+end
+function is_moment_skipped(exp,moment::ExpandingMoment)
+  if moment.update_offset
+    exp.data.offset += 1
+    # each expanding moment only ever incriments the offset
+    # counter once, event if it creates a loop.
+    moment.update_offset = false
+  end
+  exp.data.offset < exp.data.skip_offsets
+end
+is_moment_skipped(exp,moment::FinalMoment) = false
