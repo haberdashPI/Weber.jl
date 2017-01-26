@@ -76,7 +76,31 @@ when_events,_ = find_timing() do record
   end
 end
 
-# TODO: test else, and elseif
+elseif_events,_ = find_timing() do record
+  @addtrials let test = true, test2 = false
+    @addtrials if test
+      addtrial(moment(t -> (record(:a,0); test = false)))
+    else
+      addtrial(moment(t -> (record(:bad_a,0); test = true)))
+    end
+
+    @addtrials if test
+      addtrial(moment(t -> (record(:bad_b1,0); test = false)))
+    elseif !test2
+      addtrial(moment(t -> (record(:b,0); test2 = true)))
+    else
+      addtrial(moment(t -> (record(:bad_b2,0); test = false)))
+    end
+
+    @addtrials if !test2
+      addtrial(moment(t -> record(:bad_c1,0)))
+    elseif test
+      addtrial(moment(t -> record(:bad_c2,0)))
+    else
+      addtrial(moment(t -> record(:c,0)))
+    end
+  end
+end
 
 check_timing = get(ENV,"WEBER_TIMING_TESTS","Yes") != "No"
 
@@ -115,5 +139,6 @@ const moment_eps = 1e-3
 
   @testset "Conditional Moments" begin
     @test when_events == [:a]
+    @test elseif_events == [:a,:b,:c]
   end
 end
