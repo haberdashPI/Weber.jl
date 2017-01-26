@@ -178,7 +178,7 @@ end
 """
    attenuate(x,atten_dB)
 
-Apply the given decibales of attentuation to the sound relative to a power level
+Apply the given decibells of attentuation to the sound relative to a power level
 of 1.
 
 This function normalizes the sound to have a root mean squared value of 1 and
