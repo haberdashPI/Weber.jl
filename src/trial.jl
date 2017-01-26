@@ -304,8 +304,12 @@ macro addtrials(expr)
       end => (cond,ifbody,elsebody)
     end
 
-    if isexpr(elsebody,:if)
-      elsebody = :(@addtrials $(esc(elsebody)))
+    elsebody = @match elsebody begin
+      ifelse_if => :(@addtrials($ifelse))
+      begin
+        ifelse_if
+      end => :(@addtrials($ifelse))
+      other_ => elsebody
     end
 
     if elsebody == nothing
