@@ -35,6 +35,7 @@ end
 abstract SDLRendered
 abstract SDLSimpleRendered <: SDLRendered
 timed(r) = 0.0 < display_duration(r) < Inf
+visual(x::SDLRendered) = x
 
 type RenderItem
   r::SDLRendered
@@ -386,7 +387,7 @@ end
 fonts = Dict{Tuple{String,Int},SDLFont}()
 
 """
-    visual(str::String, [font], [font_name="arial"], [size=32],
+    visual(str::String, [font=nothing], [font_name="arial"], [size=32],
            [color=colorant"white"],
            [wrap_width=0.8],[clean_whitespace=true],[x=0],[y=0],[duration=0],
            [priority=0])
@@ -401,11 +402,20 @@ before wrapping.
   space.
 """
 function visual(window::SDLWindow,str::String;
-                font_name="arial",size=32,info...)
-  f = get!(fonts,(font_name,size)) do
-    font(font_name,size)
+                font=nothing,font_name="arial",size=32,info...)
+
+  if font == nothing
+    f = get!(fonts,(font_name,size)) do
+      Weber.font(font_name,size)
+    end
+    visual(window,str,f;info...)
+  else
+    if font_name != "arial" || size != 32
+      error("Cannot specify both a font object and font_name or size. Either ",
+            "use a font object, or specify the font using a name and size.")
+    end
+    visual(window,str,font;info...)
   end
-  visual(window,str,f;info...)
 end
 
 function visual(window::SDLWindow,str::String,font::SDLFont;

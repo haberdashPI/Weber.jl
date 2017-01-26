@@ -34,7 +34,7 @@ to adjust how the instructions are displayed.
 """
 function instruct(str;keys...)
   text = visual(str*" (Hit spacebar to continue...)";keys...)
-  m = moment() do t
+  m = moment() do
     record("instructions")
     display(text)
   end
@@ -55,7 +55,7 @@ function addbreak_every(n,total,response=key":space:",
   meta = experiment_metadata()
   index = meta[:break_every_index] = get(meta,:break_every_index,0) + 1
   if n <= index < total && (n == 1 || index % n == 1)
-    message = moment() do t
+    message = moment() do
       record("break")
       display(visual("You can take a break. Hit "*
                      "$response_str when you're ready to resume... "*
@@ -73,8 +73,7 @@ Creates a moment that shows a cross hair `delta_t` seconds after the start
 of the previous moment (defaults to 0 seconds).
 """
 function show_cross(delta_t::Number=0;render_options...)
-  c = visual("+";render_options...)
-  moment(delta_t,t -> display(c))
+  moment(delta_t,display,"+";render_options...)
 end
 
 function as_arg(expr)

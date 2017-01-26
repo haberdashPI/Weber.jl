@@ -1,5 +1,5 @@
 import Base: run
-export Experiment, setup, run, experiment_trial, experiment_offset
+export Experiment, setup, run
 import Juno
 
 const default_moment_resolution = 0.0015
@@ -26,14 +26,31 @@ function experiment_running()
 end
 
 """
-    experiment_trial()
+    Weber.trial()
 
 Returns the current trial of the experiment.
 """
-experiment_trial(exp) = exp.data.trial
-experiment_trial() = experiment_trial(get_experiment())
-experiment_offset(exp) = exp.data.offset
-experiment_offset() = experiment_offset(get_experiment())
+get_trial(exp) = exp.data.trial
+get_trial() = get_trial(get_experiment())
+
+
+"""
+    Weber.offset()
+
+Returns the current trial of the experiment. The offset represents
+a well defined time in the experiment. Rerunning the experiemnt
+and skipping to a given offset will restart the experiment in exactly
+the same state it was on a previous run.
+
+!!! warning
+
+    For offsets to be well defined, all calls to `moments`
+    and `@addtrials` must following the guidlines specified
+    in their respective documentation.
+
+"""
+get_offset(exp) = exp.data.offset
+get_offset() = get_offset(get_experiment())
 
 exp_tick(exp) = exp.data.last_time
 function exp_tick()
@@ -45,13 +62,13 @@ function exp_tick()
 end
 
 """
-   experiment_metadata() = Dict{Symbol,Any}()
+   Weber.metadata() = Dict{Symbol,Any}()
 
 Returns metadata for this experiment. You can store
 global state, specific to this experiment, in this dictionary.
 """
-experiment_metadata(exp) = exp.info.meta
-experiment_metadata() = experiment_metadata(get_experiment())
+metadata(exp) = exp.info.meta
+metadata() = metadata(get_experiment())
 
 
 """

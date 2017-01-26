@@ -48,7 +48,7 @@ function run_calibrate()
                        " dB tone",y=-0.5)
 
   setup(exp) do
-    instructions = moment() do t
+    instructions = moment() do
       old_tone = play(sound(attenuate(tones[1],atten[1])))
       display(visual("Hit 1-8 to play a tone.",y=0.75,duration=Inf) +
               visual("Hit - or = to adjust dB by 10 dB\n"*

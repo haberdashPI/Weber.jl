@@ -230,6 +230,7 @@ immutable Sound
     new(c,b)
   end
 end
+sound(x::Sound) = x
 
 # load(f::File{format"WAV"}) = load_helper(f)
 # load(f::File{format"AIFF"}) = load_helper(f)

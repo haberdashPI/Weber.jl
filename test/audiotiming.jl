@@ -16,7 +16,7 @@ setup(exp) do
   addbreak(instruct("Test is ready."))
 
   moments = map(timing) do delta
-    moment(delta) do t
+    moment(delta) do
       play(beep)
       record("sound")
     end

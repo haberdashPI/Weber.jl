@@ -18,48 +18,48 @@ function find_timing(fn)
 end
 
 _,many_times = find_timing() do record
-  addtrial(repeated(moment(0.0005,t -> record(:a,t)),1000))
+  addtrial(repeated(moment(0.0005,record,:a,t),1000))
 end
 
 seq_events,_ = find_timing() do record
-  addtrial(moment(0.01,t -> record(:a,t)),
-           moment(0.01,t -> record(:b,t)),
-           moment(0.01,t -> record(:c,t)))
+  addtrial(moment(0.01,record,:a,t),
+           moment(0.01,record,:b,t),
+           moment(0.01,record,:c,t))
 end
 
 seq_trial_events,seq_trial_index = find_timing() do record
-  addtrial(moment(t -> record(:a,experiment_trial())),
-           moment(t -> record(:b,experiment_trial())),
-           moment(t -> record(:c,experiment_trial())))
-  addtrial(moment(t -> record(:a,experiment_trial())),
-           moment(t -> record(:b,experiment_trial())),
-           moment(t -> record(:c,experiment_trial())))
-  addtrial(moment(t -> record(:a,experiment_trial())),
-           moment(t -> record(:b,experiment_trial())),
-           moment(t -> record(:c,experiment_trial())))
+  addtrial(moment(record,:a,Weber.trial()),
+           moment(record,:b,Weber.trial()),
+           moment(record,:c,Weber.trial()))
+  addtrial(moment(record,:a,Weber.trial()),
+           moment(record,:b,Weber.trial()),
+           moment(record,:c,Weber.trial()))
+  addtrial(moment(record,:a,Weber.trial()),
+           moment(record,:b,Weber.trial()),
+           moment(record,:c,Weber.trial()))
 end
 
 # warm up JIT...
 find_timing() do record
-  addtrial(moment(0.05,t -> record(:a,t)),
-           moment(0.1,t -> record(:b,t)) >> moment(0.1,t -> record(:d,t)),
-           moment(0.15,t -> record(:c,t)))
+  addtrial(moment(0.05,record,:a,t),
+           moment(0.1,record,:b,t) >> moment(0.1,record,:d,t),
+           moment(0.15,record,:c,t))
 end
 
 comp_events,comp_times = find_timing() do record
-  addtrial(moment(0.05,t -> record(:a,t)),
-           moment(0.05,t -> record(:b,t)) >> moment(0.1,t -> record(:d,t)),
-           moment(0.1,t -> record(:c,t)),
-           moment(0.1,t -> record(:e,t)))
+  addtrial(moment(0.05,record,:a,t),
+           moment(0.05,record,:b,t) >> moment(0.1,record,:d,t),
+           moment(0.1,record,:c,t),
+           moment(0.1,record,:e,t))
 end
 
 loop_events,loop_index = find_timing() do record
   @addtrials let i = 0
     @addtrials while i < 3
-      addtrial(moment(t -> (i+=1; record(:a,(experiment_trial(),
-                                             experiment_offset())))),
-               moment(t -> record(:b,(experiment_trial(),experiment_offset()))),
-               moment(t -> record(:c,(experiment_trial(),experiment_offset()))))
+      addtrial(moment(() -> i+=1),
+               moment(record,:a,(Weber.trial(),Weber.offset())),
+               moment(record,:b,(Weber.trial(,Weber.offset()))),
+               moment(record,:c,(Weber.trial(,Weber.offset()))))
     end
   end
 end
@@ -67,11 +67,11 @@ end
 when_events,_ = find_timing() do record
   @addtrials let test = true
     @addtrials if test
-      addtrial(moment(t -> (record(:a,0); test = false)))
+      addtrial(moment(() -> (record(:a,0); test = false)))
     end
 
     @addtrials if test
-      addtrial(moment(t -> (record(:b,0))))
+      addtrial(moment(() -> (record(:b,0))))
     end
   end
 end
@@ -79,25 +79,25 @@ end
 elseif_events,_ = find_timing() do record
   @addtrials let test = true, test2 = false
     @addtrials if test
-      addtrial(moment(t -> (record(:a,0); test = false)))
+      addtrial(moment(() -> (record(:a,0); test = false)))
     else
-      addtrial(moment(t -> (record(:bad_a,0); test = true)))
+      addtrial(moment(() -> (record(:bad_a,0); test = true)))
     end
 
     @addtrials if test
-      addtrial(moment(t -> (record(:bad_b1,0); test = false)))
+      addtrial(moment(() -> (record(:bad_b1,0); test = false)))
     elseif !test2
-      addtrial(moment(t -> (record(:b,0); test2 = true)))
+      addtrial(moment(() -> (record(:b,0); test2 = true)))
     else
-      addtrial(moment(t -> (record(:bad_b2,0); test = false)))
+      addtrial(moment(() -> (record(:bad_b2,0); test = false)))
     end
 
     @addtrials if !test2
-      addtrial(moment(t -> record(:bad_c1,0)))
+      addtrial(moment(() -> record(:bad_c1,0)))
     elseif test
-      addtrial(moment(t -> record(:bad_c2,0)))
+      addtrial(moment(() -> record(:bad_c2,0)))
     else
-      addtrial(moment(t -> record(:c,0)))
+      addtrial(moment(() -> record(:c,0)))
     end
   end
 end

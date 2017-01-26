@@ -5,15 +5,15 @@
 using Weber
 sid,skip = @read_args("A simple frequency discrimination experiment.")
 
-low = sound(ramp(tone(1000,0.5)))
-high = sound(ramp(tone(1100,0.5)))
+low = ramp(tone(1000,0.5))
+high = ramp(tone(1100,0.5))
 
 function one_trial()
   if rand(Bool)
-    stim = moment(0.5,t -> play(low))
+    stim = moment(0.5,play,low)
     resp = response(key"q" => "low", key"p" => "high",actual = "low")
   else
-    stim = moment(0.5,t -> play(high))
+    stim = moment(0.5,play,high)
     resp = response(key"q" => "low", key"p" => "high",actual = "high")
   end
   return [show_cross(),stim,resp,await_response(iskeydown)]

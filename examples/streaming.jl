@@ -37,11 +37,8 @@ stimuli = Dict(:low => aba(3st),:medium => aba(medium_st),:high => aba(18st))
 isresponse(e) = iskeydown(e,key"p") || iskeydown(e,key"q")
 
 function create_aba(stimulus;info...)
-  sound = stimuli[stimulus]
-  moment() do t
-    play(sound)
-    record("stimulus",stimulus=stimulus;info...)
-  end
+  [moment(play,stimuli[stimulus]),
+   moment(record,"stimulus",stimulus=stimulus;info...)]
 end
 
 # runs an entire trial
@@ -74,7 +71,7 @@ exp = Experiment(sid = sid,condition = "pilot",version = version,
                  skip=trial_skip,columns = [:stimulus,:phase])
 
 setup(exp) do
-  start = moment(t -> record("start"))
+  start = moment(record,"start")
 
   addbreak(
     instruct("""
@@ -135,8 +132,7 @@ setup(exp) do
     to respond before the next trial begins, but even if you don't please still
     respond."""))
 
-  str = visual("Hit any key to start the real experiment...")
-  anykey = moment(t -> display(str))
+  anykey = moment(display,"Hit any key to start the real experiment...")
   addbreak(anykey,await_response(iskeydown))
 
   for trial in 1:n_trials

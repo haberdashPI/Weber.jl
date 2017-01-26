@@ -113,7 +113,7 @@ function addmoment(q::Union{ExpandingMoment,MomentQueue,Array},watcher::Function
   for t in concrete_events
     precompile(watcher,(t,))
   end
-  addmoment(q,moment(t -> get_experiment().data.trial_watcher = watcher))
+  addmoment(q,moment(() -> get_experiment().data.trial_watcher = watcher))
 end
 function addmoment(q,ms)
   function handle_error()
@@ -163,7 +163,7 @@ end
 
 function addtrial_helper(exp::Experiment,trial_count,moments;keys...)
 
-  start_trial = offset_start_moment(trial_count) do t
+  start_trial = offset_start_moment(trial_count) do
     #gc_enable(false)
     if trial_count
       record("trial_start")
@@ -173,7 +173,7 @@ function addtrial_helper(exp::Experiment,trial_count,moments;keys...)
     reset_response()
   end
 
-  end_trial = moment() do t
+  end_trial = moment() do
     #gc_enable(true)
   end
 
@@ -242,17 +242,15 @@ For example, the following code only runs the second trial if the user
 hits the "y" key.
 
     @addtrials let y_hit = false
-      message = visual("Hit Y or N.")
       isresponse(e) = iskeydown(e,key"y") || iskeydown(e,key"n")
-      addtrial(moment(t -> display(message)),await_response(isresponse)) do event
+      addtrial(moment(display,"Hit Y or N."),await_response(isresponse)) do event
         if iskeydown(event,key"y")
           y_hit = true
         end
       end
 
       @addtrials if !y_hit
-        yhit_message = visual("You did not hit Y!")
-        addtrial(moment(t -> display(yhit_message)),await_response(iskeydown))
+        addtrial(moment(display,"You did not hit Y!"),await_response(iskeydown))
       end
     end
 
@@ -270,9 +268,9 @@ Add some number of trials that repeat as long as `expr` evalutes to true.
 For example the follow code runs as long as the user hits the "y" key.
 
     @addtrials let y_hit = true
-      message = visual("Hit Y if you want to continue")
       @addtrials while y_hit
-        addtrial(moment(t -> display(message)),await_response(iskeydown)) do event
+        message = moment(display,"Hit Y if you want to continue")
+        addtrial(message,await_response(iskeydown)) do event
           y_hit = iskeydown(event,key"y")
         end
       end
@@ -367,8 +365,8 @@ Adds a trial to the experiment, consisting of the specified moments.
 
 Each trial increments a counter tracking the number of trials, and (normally) an
 offset counter. These two numbers are reported on every line of the resulting
-data file (see `record`). They can be retrieved using `experiment_trial`
-and `experiment_offset`.
+data file (see `record`). They can be retrieved using `Weber.trial()`
+and `Weber.offset()`.
 
 # How to create moments
 
@@ -492,13 +490,13 @@ end
 
 """
     moment([fn],[delta_t])
-    moment([delta_t],[fn])
+    moment([delta_t],[fn],args...;keys...)
 
 Create a moment that occurs `delta_t` (default 0) seconds after the *start* of
 the previous moment, running the specified function.
 
-The function `fn` is called with one argument indicating the time in seconds
-since the start of the experiment.
+The function `fn` is passed zero arguments, or it is passed the arguments
+specified in `args` and `keys`.
 
 !!! warning
 
@@ -517,50 +515,36 @@ since the start of the experiment.
     you likely want to use an `@addtrials` expression.
 """
 
-moment(delta_t::Number) = TimedMoment(delta_t,t->nothing)
+moment(delta_t::Number) = TimedMoment(delta_t,()->nothing)
 moment() = TimedMoment(0,()->nothing)
 
 function moment(fn::Function,delta_t::Number)
-  precompile(fn,(Float64,))
-  TimedMoment(delta_t,fn)
+  moment(delta_t,fn)
 end
 
-function moment(delta_t::Number,fn::Function)
-  precompile(fn,(Float64,))
-  TimedMoment(delta_t,fn)
+function moment(delta_t::Number,fn::Function,args...;keys...)
+  precompile(fn,typeof(args))
+  TimedMoment(delta_t,() -> fn(dargs...;keys...))
 end
 
-function moment(fn::Function)
-  precompile(fn,(Float64,))
-  TimedMoment(0,fn)
+function moment(fn::Function,args...;keys...)
+  moment(0,fn,args...;keys...)
 end
 
-"""
-    moment([delta_t],v::SDLRendered)
-    moment(v::SDLRendered,delta_t)
-
-Create a moment from the visual, by calling moment(delta_t,t -> display(v)).
-"""
-function moment(delta_t::Number,v::SDLRendered)
-  moment(delta_t,t -> display(v))
+const PlayFunction = typeof(play)
+function moment(delta_t::Number,::PlayFunction,x;keys...)
+  s = sound(x)
+  fn() = play(s;keys...)
+  precompile(fn,())
+  moment(delta_t,fn)
 end
 
-function moment(v::SDLRendered,delta_t::Number=0.0)
-  moment(delta_t,t -> display(v))
-end
-
-"""
-    moment([delta_t],s::Sound)
-    moment(s::Sound,delta_t)
-
-Create a moment from the sound, by calling moment(delta_t,t -> play(v)).
-"""
-function moment(delta_t::Number,v::Sound)
-  moment(delta_t,t -> play(v))
-end
-
-function moment(v::Sound,delta_t::Number=0.0)
-  moment(delta_t,t -> play(v))
+const DisplayFunction = typeof(display)
+function moment(delta_t::Number,::DisplayFunction,x;keys...)
+  v = visual(x;keys...)
+  fn() = display(v)
+  precompile(fn,())
+  moment(delta_t,fn)
 end
 
 """
@@ -575,8 +559,7 @@ example, the following code will present two sounds, one at 100ms, the other at
 200ms after the start of the trial. It will also display "Too Late!" on the
 screen if no keyboard key is pressed 150ms after the start of the trial.
 
-        addtrial(moment(moment(0.1,t -> play(soundA)),
-                        moment(0.1,t -> play(soundB))),
+        addtrial(moment(moment(0.1,play,soundA),moment(0.1,play,soundB)),
                  timeout(0.15,iskeydown,x -> display("Too Late!")))
 !!! note
 
@@ -595,7 +578,7 @@ function moment(moments)
   moment(collect(Any,moments))
 end
 
-function offset_start_moment(fn::Function=t->nothing,count_trials=false)
+function offset_start_moment(fn::Function=()->nothing,count_trials=false)
   precompile(fn,(Float64,))
   OffsetStartMoment(fn,count_trials,false)
 end
@@ -621,7 +604,7 @@ function await_response(fn::Function;atleast=0.0)
     precompile(fn,(t,))
   end
 
-  ResponseMoment(fn,(t) -> nothing,0,atleast)
+  ResponseMoment(fn,() -> nothing,0,atleast)
 end
 
 """
@@ -630,14 +613,13 @@ end
 This moment starts when either `isresponse` evaluates to true or
 timeout time (in seconds) passes.
 
-If the moment times out, the function `fn` will be called, recieving
-the current time in seconds.
+If the moment times out, the function `fn` (with no arguments) will be called.
 
 If the response is provided before `atleast` seconds, the moment does not begin
 until `atleast` seconds (`fn` will not be called).
 """
 function timeout(fn::Function,isresponse::Function,timeout;atleast=0.0)
-  precompile(fn,(Float64,))
+  precompile(fn,())
   for t in concrete_events
     precompile(isresponse,(t,))
   end
@@ -695,13 +677,10 @@ function handle(exp::Experiment,q::MomentQueue,moment::FinalMoment,x)
   true
 end
 
-run(moment::TimedMoment,time::Float64) = moment.run(time)
-run(moment::OffsetStartMoment,time::Float64) = moment.run(time)
-
 function handle(exp::Experiment,q::MomentQueue,
                 moment::AbstractTimedMoment,time::Float64)
   exp.data.last_time = time
-  run(moment,time)
+  moment.run()
   q.last = time
   dequeue!(q)
   true
@@ -714,7 +693,7 @@ end
 
 function handle(exp::Experiment,q::MomentQueue,
                 moment::ResponseMoment,time::Float64)
-  moment.timeout(time)
+  moment.timeout()
   q.last = time
   dequeue!(q)
   true
