@@ -246,21 +246,23 @@ during `run`.
 - [ ] implement stimtrak communication
 
 For the 0.3.0 release
-- [ ] implement a loop and conditional that works across multiple trials
-- [ ] allow record, display and play (or visual and sound?) to be moments.
+- [x] implement a loop and conditional that works across multiple trials
+- [x] allow record, display and play (or visual and sound?) to be moments.
+- [ ] make it an error to directly call display, play and record
 - [ ] create 2AFC abstraction
-- [ ] remove t parameter from moment funtions (if needed one can use experiment_tick())
-- [ ] allow the function passed to moment to take extra arguments passed to `moment`
+- [ ] change exp_tick() to Weber.tick()
+- [x] remove t parameter from moment funtions (if needed one can use Weber.tick())
+- [x] allow the function passed to moment to take extra arguments passed to `moment`
 - [ ] replace interactive text input with simple Gtk window or SDL based GUI??
-- [ ] minimize GC using preinitialized data structures during experiment??
 
 For the 0.3.x release
+- [ ] minimize GC using preinitialized data structures during experiment??
 - [ ] edit/refine the user manual
 - [ ] create examples to demonstrate all package features
 - [ ] allow calls to Cedrus stim tracker??
 
 For the 0.4.0 release?
 - [ ] port to linux
-- [ ] video playback (requires julia multi threading)
+- [ ] video playback (requires julia multi threading or custom c code)
 - [ ] track audio buffer timing so we can zero-pad sounds to get sub-buffer-size timing
-      acuracy. (requires julia multi threading)
+      acuracy. (requires julia multi threading or custom c code)
