@@ -427,9 +427,10 @@ delta_t(m::PlayMoment) = m.delta_t
 type PlayFunctionMoment <: AbstractTimedMoment
   delta_t::Float64
   fn::Function
+  keys::Vector
   sound::Nullable{Sound}
 end
-PlayFunctionMoment(d,f,s) = PlayFunctionMoment(d,f,s,Nullable())
+PlayFunctionMoment(d,f,k) = PlayFunctionMoment(d,f,k,Nullable())
 
 type DisplayMoment <: AbstractTimedMoment
   delta_t::Float64

@@ -52,7 +52,7 @@ By default this waits for the user to hit spacebar to move on.
 """
 function addbreak_every(n,total,response=key":space:",
                         response_str="the spacebar")
-  meta = experiment_metadata()
+  meta = Weber.metadata()
   index = meta[:break_every_index] = get(meta,:break_every_index,0) + 1
   if n <= index < total && (n == 1 || index % n == 1)
     message = moment() do

@@ -26,7 +26,7 @@ function in_experiment()
 end
 
 function experiment_running()
-  !isnull(experiment_context[]) && experiment_context[].flags.processing
+  !isnull(experiment_context[]) && get(experiment_context[]).flags.processing
 end
 
 """
@@ -61,11 +61,14 @@ offset() = offset(get_experiment())
 
 With microsecond precision, this returns the number of elapsed seconds from the
 start of the experiment to the start of the most recent moment.
+
+If there is no experiment running, this returns the time since epoch with
+microsecond precision.
 """
 tick(exp) = exp.data.last_time
 function tick()
   if isnull(experiment_context[])
-    error("Cannot call `Weber.tick()` outside of an experiment.")
+    precise_time()
   else
     tick(get(experiment_context[]))
   end
@@ -217,17 +220,19 @@ warmup_run(exp::Experiment{NullWindow}) = nothing
 function warmup_run(exp::Experiment)
   # warm up JIT compilation
   warm_up = Experiment(null_window=true,hide_output=true)
-  x = 0
-  i = 0
   setup(warm_up) do
-    addtrial(repeated(moment(t -> x += 1),10))
-    addtrial(moment(t -> x += 1),
-             moment(t -> x += 1) >> moment(t -> x += 1),
-             moment(t -> x += 1))
-    addtrial(loop=() -> (i+=1; i <= 3),
-             moment(t -> x += 1),
-             moment(t -> x += 1),
-             moment(t -> x += 1))
+    addtrial(moment(record,"a"),
+             moment(record,"b") >>
+             moment(record,"d"),
+             moment(record,"c"))
+    @addtrials let i = 0
+      @addtrials while i < 3
+        addtrial(moment(() -> i+=1),
+                 moment(record,"a"),
+                 moment(record,"b"),
+                 moment(record,"c"))
+      end
+    end
   end
   run(warm_up,await_input=false)
 end
@@ -499,7 +504,6 @@ function process(exp::Experiment,queue::MomentQueue,t::Float64)
         end
 
         exp.data.next_moment = minimum(map(next_moment_time,exp.data.moments))
-
       end
     end
   end

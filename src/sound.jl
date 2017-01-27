@@ -420,17 +420,10 @@ type PlayingSound
 end
 
 function play(x;keys...)
-  if in_experiment()
-    if experiment_running()
-      error("You cannot call `play` inside a moment function ",
-            " (e.g. `moment(() -> play(x))`). You must call as a moment function ",
-            " (e.g. `moment(play,x)`). If you need a state-dependent sound ",
-            "remeber that x can be a function that returns a sound.")
-    else
-      error("You cannot call `play` during experiment `setup`. During `setup`",
-            " you should add play to a trial (e.g. ",
-            "`addtrial(moment(play,my_sound))`).")
-    end
+  if in_experiment() && !experiment_running()
+    error("You cannot call `play` during experiment `setup`. During `setup`",
+          " you should add play to a trial (e.g. ",
+          "`addtrial(moment(play,my_sound))`).")
   end
   warn("Calling play outside of an experiment.")
   _play(x;keys...)

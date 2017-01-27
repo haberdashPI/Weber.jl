@@ -728,7 +728,7 @@ end
 function handle(exp::Experiment,q::MomentQueue,m::ResponseMoment,event::ExpEvent)
   if m.respond(event)
     if (m.minimum_delta_t > 0.0 &&
-        m.minimum_delta_t + q.last > exp_tick(exp))
+        m.minimum_delta_t + q.last > Weber.tick(exp))
       dequeue!(q)
       unshift!(q,moment(m.minimum_delta_t))
     else

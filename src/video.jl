@@ -52,7 +52,7 @@ end
 DisplayStack() = DisplayStack(OrderedSet{RenderItem}(),Inf)
 
 function push!(x::DisplayStack,r::SDLRendered)
-  item = RenderItem(r,(timed(r) ? exp_tick() + display_duration(r) : Inf))
+  item = RenderItem(r,(timed(r) ? Weber.tick() + display_duration(r) : Inf))
   push!(x.data,item)
   if timed(r)
     x.next_change = min(x.next_change,item.delete_at)
@@ -70,7 +70,7 @@ function delete_timed!(x::DisplayStack)
 end
 
 const change_resolution = 0.001
-function delete_expired!(stack::DisplayStack,tick=exp_tick())
+function delete_expired!(stack::DisplayStack,tick=Weber.tick())
   next_change = Inf
   stack.data = filter!(stack.data) do item
     if item.delete_at + change_resolution <= tick
@@ -651,16 +651,10 @@ This code will show the text "Hello, World!" on the screen 0.5 seconds after
 the start of the previous moment.
 """
 function display(r::SDLRendered;kwds...)
-  if in_experiment()
-    if experiment_running()
-      error("You cannot call `display` inisde a moment function ",
-            " (e.g. `moment(() -> display(x))`). You must call it as a",
-            " moment function (e.g. `moment(display,x)`).")
-    else
-      error("You cannot call `display` during experiment `setup`. During `setup`",
-            " you should add `dispaly` to a trial (e.g. ",
-            "`addtrial(moment(display,my_visual))`).")
-    end
+  if in_experiment() && !experiment_running()
+    error("You cannot call `display` during experiment `setup`. During `setup`",
+          " you should add `dispaly` to a trial (e.g. ",
+          "`addtrial(moment(display,my_visual))`).")
   end
   display(get_experiment().win,r;kwds...)
 end
@@ -718,7 +712,7 @@ function draw_stack(window::SDLWindow)
   show_drawn(window)
 end
 
-function refresh_display(window::SDLWindow,tick=exp_tick())
+function refresh_display(window::SDLWindow,tick=Weber.tick())
   if ischanging(window.stack,tick)
     window.stack = delete_expired!(window.stack,tick)
     draw_stack(window)
