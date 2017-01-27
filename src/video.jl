@@ -35,7 +35,7 @@ end
 abstract SDLRendered
 abstract SDLSimpleRendered <: SDLRendered
 timed(r) = 0.0 < display_duration(r) < Inf
-visual(x::SDLRendered) = x
+visual(x::SDLRendered;kwds...) = update_arguments(x;kdws...)
 
 type RenderItem
   r::SDLRendered
@@ -639,12 +639,38 @@ Displays anything rendered by `visual` onto the current experiment window.
 
 Any keyword arguments, available from `visual` are also available here.  They
 overload the arguments as specified during visual (but do not change them).
+
+    display(x;kwds...)
+
+Short-hand for `display(visual(x);kwds...)`. Commonly used when calling
+display as part of an trial moment. For example:
+
+    moment(0.5,display,"Hello, World!")
+
+This code will show the text "Hello, World!" on the screen 0.5 seconds after
+the start of the previous moment.
 """
 function display(r::SDLRendered;kwds...)
+  if in_experiment()
+    if experiment_running()
+      error("You cannot call `display` inisde a moment function ",
+            " (e.g. `moment(() -> display(x))`). You must call it as a",
+            " moment function (e.g. `moment(display,x)`).")
+    else
+      error("You cannot call `display` during experiment `setup`. During `setup`",
+            " you should add `dispaly` to a trial (e.g. ",
+            "`addtrial(moment(display,my_visual))`).")
+    end
+  end
   display(get_experiment().win,r;kwds...)
 end
 
+"""
+    display(fn::Function;kwds...)
 
+Display the visual returned by calling `fn`.
+"""
+display(fn::Function;kwds...) = display(fn();kwds...)
 
 update_arguments(r) = r
 function display(window::SDLWindow,r::SDLRendered;kwds...)
@@ -652,7 +678,7 @@ function display(window::SDLWindow,r::SDLRendered;kwds...)
   update_stack!(window,r)
 
   # if there's no experiment, handle display duration
-  if timed(r) && !experiment_running()
+  if timed(r) && !in_experiment()
     eventually_remove!(window,stack,r)
     warn("calling display outside of an experiment")
   end

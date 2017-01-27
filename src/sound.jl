@@ -213,6 +213,19 @@ function sound(x::SampleBuf)
   sound(SampleBuf(Fixed{Int16,15}.(bounded),samplerate(x)))
 end
 
+type SoundFunction
+  fn::Function
+end
+
+"""
+   sound(fn::Function)
+
+Play the sound that's returned by calling `fn`.
+"""
+function play(fn::Function;keys...)
+  play(fn();keys...)
+end
+
 immutable MixChunk
   allocated::Cint
   buffer::Ptr{Fixed{Int16,15}}
@@ -407,11 +420,23 @@ type PlayingSound
 end
 
 function play(x;keys...)
-  if experiment_running()
-    warn(cleanstr("Sound was not precomputed! To minimize latency, call ",
-         "`x = sound(obj)` before running an experiment, then call `play(x)` ",
-         "during the experiment."))
+  if in_experiment()
+    if experiment_running()
+      error("You cannot call `play` inside a moment function ",
+            " (e.g. `moment(() -> play(x))`). You must call as a moment function ",
+            " (e.g. `moment(play,x)`). If you need a state-dependent sound ",
+            "remeber that x can be a function that returns a sound.")
+    else
+      error("You cannot call `play` during experiment `setup`. During `setup`",
+            " you should add play to a trial (e.g. ",
+            "`addtrial(moment(play,my_sound))`).")
+    end
   end
+  warn("Calling play outside of an experiment.")
+  _play(x;keys...)
+end
+
+function _play(x;keys...)
   play(sound(x);keys...)
 end
 
@@ -426,8 +451,7 @@ to finish. The sound will normally play only once, but can be repeated
 multiple times using `times`.
 
 For convienience, play can also can be called on any object that can be turned
-into a sound (via `sound`). However, this can introduce latency into an
-experiment, and as such, raises a warning if called during an experiment.
+into a sound (via `sound`).
 """
 
 function play(x::Sound;wait=false,times=1)

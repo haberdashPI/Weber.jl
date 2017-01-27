@@ -18,48 +18,50 @@ function find_timing(fn)
 end
 
 _,many_times = find_timing() do record
-  addtrial(repeated(moment(0.0005,record,:a,t),1000))
+  addtrial(repeated(moment(0.0005,() -> record(:a,Weber.tick())),1000))
 end
 
 seq_events,_ = find_timing() do record
-  addtrial(moment(0.01,record,:a,t),
-           moment(0.01,record,:b,t),
-           moment(0.01,record,:c,t))
+  addtrial(moment(0.01,() -> record(:a,Weber.tick())),
+           moment(0.01,() -> record(:b,Weber.tick())),
+           moment(0.01,() -> record(:c,Weber.tick())))
 end
 
 seq_trial_events,seq_trial_index = find_timing() do record
-  addtrial(moment(record,:a,Weber.trial()),
-           moment(record,:b,Weber.trial()),
-           moment(record,:c,Weber.trial()))
-  addtrial(moment(record,:a,Weber.trial()),
-           moment(record,:b,Weber.trial()),
-           moment(record,:c,Weber.trial()))
-  addtrial(moment(record,:a,Weber.trial()),
-           moment(record,:b,Weber.trial()),
-           moment(record,:c,Weber.trial()))
+  addtrial(moment(() -> record(:a,Weber.trial())),
+           moment(() -> record(:b,Weber.trial())),
+           moment(() -> record(:c,Weber.trial())))
+  addtrial(moment(() -> record(:a,Weber.trial())),
+           moment(() -> record(:b,Weber.trial())),
+           moment(() -> record(:c,Weber.trial())))
+  addtrial(moment(() -> record(:a,Weber.trial())),
+           moment(() -> record(:b,Weber.trial())),
+           moment(() -> record(:c,Weber.trial())))
 end
 
 # warm up JIT...
 find_timing() do record
-  addtrial(moment(0.05,record,:a,t),
-           moment(0.1,record,:b,t) >> moment(0.1,record,:d,t),
-           moment(0.15,record,:c,t))
+  addtrial(moment(0.05,() -> record(:a,Weber.tick())),
+           moment(0.1,() -> record(:b,Weber.tick())) >>
+             moment(0.1,() -> record(:d,Weber.tick())),
+           moment(0.15,() -> record(:c,Weber.tick())))
 end
 
 comp_events,comp_times = find_timing() do record
-  addtrial(moment(0.05,record,:a,t),
-           moment(0.05,record,:b,t) >> moment(0.1,record,:d,t),
-           moment(0.1,record,:c,t),
-           moment(0.1,record,:e,t))
+  addtrial(moment(0.05,() -> record(:a,Weber.tick())),
+           moment(0.05,() -> record(:b,Weber.tick())) >>
+                  moment(0.1,() -> record(:d,Weber.tick())),
+           moment(0.1,() -> record(:c,Weber.tick())),
+           moment(0.1,() -> record(:e,Weber.tick())))
 end
 
 loop_events,loop_index = find_timing() do record
   @addtrials let i = 0
     @addtrials while i < 3
       addtrial(moment(() -> i+=1),
-               moment(record,:a,(Weber.trial(),Weber.offset())),
-               moment(record,:b,(Weber.trial(,Weber.offset()))),
-               moment(record,:c,(Weber.trial(,Weber.offset()))))
+               moment(() -> record(:a,(Weber.trial(),Weber.offset()))),
+               moment(() -> record(:b,(Weber.trial(),Weber.offset()))),
+               moment(() -> record(:c,(Weber.trial(),Weber.offset()))))
     end
   end
 end

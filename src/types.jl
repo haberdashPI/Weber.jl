@@ -418,6 +418,32 @@ type OffsetStartMoment <: AbstractTimedMoment
 end
 delta_t(moment::OffsetStartMoment) = 0.0
 
+type PlayMoment <: AbstractTimedMoment
+  delta_t::Float64
+  sound::Sound
+  keys::Vector
+end
+delta_t(m::PlayMoment) = m.delta_t
+type PlayFunctionMoment <: AbstractTimedMoment
+  delta_t::Float64
+  fn::Function
+  sound::Nullable{Sound}
+end
+PlayFunctionMoment(d,f,s) = PlayFunctionMoment(d,f,s,Nullable())
+
+type DisplayMoment <: AbstractTimedMoment
+  delta_t::Float64
+  visual::SDLRendered
+end
+delta_t(m::DisplayMoment) = m.delta_t
+type DisplayFunctionMoment <: AbstractTimedMoment
+  delta_t::Float64
+  fn::Function
+  keys::Vector
+  visual::Nullable{SDLRendered}
+end
+DisplayFunctionMoment(d,f,k) = DisplayFunctionMoment(d,f,k,Nullable())
+
 type FinalMoment <: SimpleMoment
   run::Function
 end

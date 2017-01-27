@@ -183,17 +183,13 @@ end
 """
 @addtrials expr...
 
-Add trials to the experiment conditioned on state that changes during the
-experiment.
+Add trials to the experiment that depend on changes to tstate that occur during
+the experiment.
 
-If you only you wish to add trials based on state that can be determined before
-the experiment begins then `@addtrials` is unncsesary. So, add trials is useful
-when you change a variable during a moment and then check the value of this
-variable in an @addtrials expression.
-
-Trials within an @addtrials expression do not increment the offset counter.
-Instead the entire block of trials added by an @addtrials block is referenced
-using a single offset.
+Example use cases include using an adaptive track to determine stimulus
+presentation, repeating trials based on a performance criterion, etc...
+In general if your trials do not depend on experiment-changing state,
+you do not need to use @addtrials.
 
 There are three kinds of trials you can add with this macro: blocks,
 conditionals and loops.
@@ -204,10 +200,11 @@ conditionals and loops.
       body...
     end
 
-Blocks of trials are useful for setting up state to be used in a subsequent
-@addtrials expression. All other types of @addtrials expression will likely be
-nested inside this type. The main reason to use such a block is to ensure that
-the offset counter is appropriately set.
+Blocks of trials are useful for setting up state that will change during the
+trials. Such state can then be used in a subsequent @addtrials expression. In
+fact all other types of @addtrials expression will likely be nested inside
+blocks. The main reason to use such a block is to ensure that the offset counter
+is appropriately set whith stateful trials.
 
 The offset counter is meant to refer to a well defined time during the
 experiment.  They can be used to fast forward through the expeirment by
@@ -511,8 +508,8 @@ specified in `args` and `keys`.
     Avoid moments that depend on state that changes during the
     experiment. Specifically, moments that depend on a state which is altered by
     moments on a previous trial can lead to undefined behavior when an
-    expeirment is run with a non-zero offset. If you find you need to do this,
-    you likely want to use an `@addtrials` expression.
+    experiment is run with a non-zero offset. If you need to do this, you likely
+    want to use the `@addtrials` macro.
 """
 
 moment(delta_t::Number) = TimedMoment(delta_t,()->nothing)
@@ -523,8 +520,8 @@ function moment(fn::Function,delta_t::Number)
 end
 
 function moment(delta_t::Number,fn::Function,args...;keys...)
-  precompile(fn,typeof(args))
-  TimedMoment(delta_t,() -> fn(dargs...;keys...))
+  precompile(fn,map(typeof,args))
+  TimedMoment(delta_t,() -> fn(args...;keys...))
 end
 
 function moment(fn::Function,args...;keys...)
@@ -533,18 +530,18 @@ end
 
 const PlayFunction = typeof(play)
 function moment(delta_t::Number,::PlayFunction,x;keys...)
-  s = sound(x)
-  fn() = play(s;keys...)
-  precompile(fn,())
-  moment(delta_t,fn)
+  PlayMoment(delta_t,sound(x),keys)
+end
+function moment(delta_t::Number,::PlayFunction,fn::Function;keys...)
+  PlayFunctionMoment(delta_t,fn,keys)
 end
 
 const DisplayFunction = typeof(display)
 function moment(delta_t::Number,::DisplayFunction,x;keys...)
-  v = visual(x;keys...)
-  fn() = display(v)
-  precompile(fn,())
-  moment(delta_t,fn)
+  DisplayMoment(delta_t,visual(x;keys...))
+end
+function moment(delta_t::Number,::DisplayFunction,fn::Function;keys...)
+  DisplayFunctionMoment(delta_t,fn,keys)
 end
 
 """
@@ -664,6 +661,28 @@ function when(condition::Function,moments...;loop=false,update_offset=false)
   e
 end
 
+#===============================================================================
+    prepare!(m)
+
+If there is anything the moment needs to do before it occurs, it
+is done during `prepare!`. This triggers immediately after the moment prior to
+the current one has finished.
+===============================================================================#
+
+prepare!(m::Moment) = nothing
+prepare!(m::DisplayFunctionMoment) = m.visual = Nullable(visual(m.fn();m.keys...))
+prepare!(m::PlayFunctionMoment) = m.sound = Nullalbe(sound(m.fn()))
+
+
+#===============================================================================
+    handle(exp,queue,moment,x)
+
+Internal method to handle the given event in a manner specific to the kind of
+moment. For example, a timed moment will trigger when the appropriate time has
+passed. Handle returns a boolean indicating whether the event was handled or if
+it did not. The moment remmains on the moment queue until it handles something.
+===============================================================================#
+
 function handle(exp::Experiment,q::MomentQueue,moment::FinalMoment,x)
   for sq in exp.data.moments
     if sq != q && !isempty(sq)
@@ -677,10 +696,17 @@ function handle(exp::Experiment,q::MomentQueue,moment::FinalMoment,x)
   true
 end
 
+run(exp,m::TimedMoment) = m.run()
+run(exp,m::OffsetStartMoment) = m.run()
+run(exp,m::PlayMoment) = _play(m.sound;m.keys...)
+run(exp,m::DisplayMoment) = display(exp.win,m.visual)
+run(exp,m::PlayFunctionMoment) = _play(get(m.sound);m.keys...)
+run(exp,m::DisplayFunctionMoment) = display(exp.win,get(m.visual))
+
 function handle(exp::Experiment,q::MomentQueue,
                 moment::AbstractTimedMoment,time::Float64)
   exp.data.last_time = time
-  moment.run()
+  run(exp,moment)
   q.last = time
   dequeue!(q)
   true

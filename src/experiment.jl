@@ -21,8 +21,12 @@ function get_experiment()
 end
 
 # internal function used to determine if there is an experiment running
-function experiment_running()
+function in_experiment()
   !isnull(experiment_context[])
+end
+
+function experiment_running()
+  !isnull(experiment_context[]) && experiment_context[].flags.processing
 end
 
 """
@@ -30,34 +34,40 @@ end
 
 Returns the current trial of the experiment.
 """
-get_trial(exp) = exp.data.trial
-get_trial() = get_trial(get_experiment())
+trial(exp) = exp.data.trial
+trial() = trial(get_experiment())
 
 
 """
     Weber.offset()
 
-Returns the current trial of the experiment. The offset represents
-a well defined time in the experiment. Rerunning the experiemnt
-and skipping to a given offset will restart the experiment in exactly
-the same state it was on a previous run.
+Returns the current offset. The offset represents a well defined time in the
+experiment. Rerunning the experiemnt and skipping to a given offset will restart
+the experiment in exactly the same state it was on a previous run.
 
 !!! warning
 
-    For offsets to be well defined, all calls to `moments`
-    and `@addtrials` must following the guidlines specified
-    in their respective documentation.
+    For offsets to be well defined, all calls to `moments` and `@addtrials` must
+    following the guidlines specified in their respective documentation. In
+    particular moments should not rely on state that changes during the
+    experiment unless they are wrapped in an @addtrials macro.
 
 """
-get_offset(exp) = exp.data.offset
-get_offset() = get_offset(get_experiment())
+offset(exp) = exp.data.offset
+offset() = offset(get_experiment())
 
-exp_tick(exp) = exp.data.last_time
-function exp_tick()
+"""
+    Weber.tick()
+
+With microsecond precision, this returns the number of elapsed seconds from the
+start of the experiment to the start of the most recent moment.
+"""
+tick(exp) = exp.data.last_time
+function tick()
   if isnull(experiment_context[])
-    precise_time()
+    error("Cannot call `Weber.tick()` outside of an experiment.")
   else
-    exp_tick(get(experiment_context[]))
+    tick(get(experiment_context[]))
   end
 end
 
@@ -441,6 +451,9 @@ function process(exp::Experiment,queue::MomentQueue,event::ExpEvent)
     moment = front(queue)
     handled = handle(exp,queue,moment,event)
     if handled
+      if !isempty(queue)
+        prepare!(front(queue))
+      end
       exp.data.next_moment = minimum(map(next_moment_time,exp.data.moments))
     end
   end
@@ -466,6 +479,9 @@ function process(exp::Experiment,queue::MomentQueue,t::Float64)
       last = queue.last
       if handle(exp,queue,moment,run_time)
         d = required_delta_t(moment)
+        if !isempty(queue)
+          prepare!(front(queue))
+        end
 
         latency = run_time - event_time
 
