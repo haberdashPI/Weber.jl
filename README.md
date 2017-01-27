@@ -243,7 +243,6 @@ during `run`.
 - [x] add remaining special keys to @key_str
 - [x] create helper to generate template experiment (including run, setup, 
       update, and README.md files)
-- [ ] implement stimtrak communication
 
 For the 0.3.0 release
 - [x] implement a loop and conditional that works across multiple trials
@@ -254,19 +253,18 @@ For the 0.3.0 release
 - [x] change exp_tick() to Weber.tick()
 - [x] remove t parameter from moment funtions (if needed one can use Weber.tick())
 - [x] allow the function passed to moment to take extra arguments passed to `moment`
-- [ ] create 2AFC abstraction
-- [ ] create example 2AFC experiment that shows state dependent visuals
-- [ ] replace interactive text input with simple Gtk window or SDL based GUI??
 
 For the 0.3.x release
 - [ ] run a series of delta 0 moments all at once.
+- [ ] replace interactive text input with simple Gtk window or SDL based GUI??
+- [ ] implement simtrak communication
 - [ ] minimize GC using preinitialized data structures during experiment??
+- [ ] create 2AFC abstraction
+- [ ] create example 2AFC experiment that shows state dependent visuals
 - [ ] edit/refine the user manual
 - [ ] create examples to demonstrate all package features
-- [ ] allow calls to Cedrus stim tracker??
 - [ ] create some more tests for state dependent experiments
-- [ ] implement visual and sound proxy objects to test display and play
-      logistics in tests.
+- [ ] create tests for `display` and `play` logistics. 
 
 For the 0.4.0 release?
 - [ ] port to linux
