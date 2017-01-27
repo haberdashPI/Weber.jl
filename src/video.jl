@@ -35,7 +35,7 @@ end
 abstract SDLRendered
 abstract SDLSimpleRendered <: SDLRendered
 timed(r) = 0.0 < display_duration(r) < Inf
-visual(x::SDLRendered;kwds...) = update_arguments(x;kdws...)
+visual(x::SDLRendered;kwds...) = update_arguments(x;kwds...)
 
 type RenderItem
   r::SDLRendered
