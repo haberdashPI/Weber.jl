@@ -42,7 +42,7 @@ function record_helper(exp::Experiment,kwds,header)
 end
 
 function record_header(exp)
-  extra_keys = [:psych_version,:start_date,:start_time,:offset,:trial,:time]
+  extra_keys = [:weber_version,:start_date,:start_time,:offset,:trial,:time]
   info_keys = map(x->x[1],exp.info.values)
 
   reserved_keys = Set([extra_keys...;info_keys...])
@@ -68,7 +68,7 @@ end
 
 function record(exp::Experiment{SDLWindow},code;kwds...)
 
-  extra = [:psych_version => Weber.version,
+  extra = [:weber_version => Weber.version,
            :start_date => Dates.format(exp.info.start,"yyyy-mm-dd"),
            :start_time => Dates.format(exp.info.start,"HH:MM:SS"),
            :offset => exp.data.offset,
