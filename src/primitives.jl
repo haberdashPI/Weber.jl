@@ -209,7 +209,7 @@ macro read_args(description,keys...)
   end
   push!(arg_body.args,result_tuple)
 
-  collect_args = :(collect_args())
+  collect_args = :(collect_args($(esc(description))))
   for k in keys
     push!(collect_args.args,k)
   end
@@ -225,11 +225,11 @@ macro read_args(description,keys...)
 end
 
 function collect_args(description;keys...)
-  if Juno.isactive()
-    collect_args_window(description;keys...)
-  else
-    collect_args_console(;keys...)
-  end
+  # if Juno.isactive()
+  #   collect_args_window(description;keys...)
+  # else
+  collect_args_console(;keys...)
+  # end
 end
 
 function collect_args_console(;keys...)
@@ -275,7 +275,6 @@ function collect_args_console(;keys...)
   (sid,skip,args...)
 end
 
-
 function collect_args_window(description;keys...)
   keys = ["sid" => String,keys...,"offset" => Int]
 
@@ -293,8 +292,9 @@ function collect_args_window(description;keys...)
       label = @Label(key)
       combo = @ComboBoxText()
       for v in values
-        push!(combo,v)
+        push!(combo,string(v))
       end
+      setproperty!(combo,:active,0)
       push!(components,combo)
       grid[1,i] = label
       grid[2,i] = combo
@@ -315,13 +315,22 @@ function collect_args_window(description;keys...)
         textbox = components[i]
         val = getproperty(textbox,:text,String)
         try
-          key => convert(values,val)
+          if values == String
+            key => val
+          else
+            key => parse(values,val)
+          end
         catch
-          error_dialog("Expected $val to be a $values.",win)
+          error_dialog("Expected $val to be of type $values.",win)
         end
       else
         combo = components[i]
-        key => values[getproperty(combo,:active,Int)]
+        i = getproperty(combo,:active,Int)+1
+        if i > 0
+          key => values[i]
+        else
+          key => values[1]
+        end
       end
     end
     put!(results,Nullable(x))
@@ -330,11 +339,14 @@ function collect_args_window(description;keys...)
 
   signal_connect(win,"delete_event") do w
     put!(results,Nullable())
-    nothing
   end
 
   showall(win)
   x = fetch(results)
   destroy(win)
-  x
+  if isnull(x)
+    exit()
+  else
+    get(x)
+  end
 end
