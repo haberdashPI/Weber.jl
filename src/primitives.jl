@@ -2,6 +2,7 @@
 
 export instruct, response, addbreak_every, show_cross, @read_args, randomize_by
 using ArgParse
+using Gtk.ShortNames
 using Juno: input, selector
 import Juno
 
@@ -11,7 +12,7 @@ import Juno
 Create a watcher moment that records press of `key[n]` as
 `record(response[n];kwds...)`.
 """
-function response(responses...;info...)
+function response(responses::Pair...;info...)
   begin (event) ->
     for (key,response) in responses
       if iskeydown(event,key)
