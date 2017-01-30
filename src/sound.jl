@@ -91,7 +91,7 @@ it avoids beating in the sound that may occur due floating point errors.
 function harmonic_complex(f0,harmonics,amps,length_s;
 						              sample_rate_Hz=samplerate(sound_setup_state),
                           phases=zeros(length(harmonics)))
-  @assert 0 .<= phases .< 2π
+  @assert all(0 .<= phases) && all(phases .< 2π)
 	n = maximum(harmonics)+1
 
   # generate single cycle of complex
