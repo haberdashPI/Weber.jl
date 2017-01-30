@@ -2,8 +2,6 @@
 
 export instruct, response, addbreak_every, show_cross, @read_args, randomize_by
 using ArgParse
-using Gtk.ShortNames: @Window, @Grid, @Label, @Entry, @ComboBoxText, @Button,
-  error_dialog, setproperty!, getproperty, signal_connect, destroy
 using Juno: input, selector
 import Juno
 
@@ -225,14 +223,6 @@ macro read_args(description,keys...)
 end
 
 function collect_args(description;keys...)
-  # if Juno.isactive()
-  #   collect_args_window(description;keys...)
-  # else
-  collect_args_console(;keys...)
-  # end
-end
-
-function collect_args_console(;keys...)
   print("Enter subject id: ")
   sid = chomp(input())
   args = Array{Any}(length(keys))
@@ -273,80 +263,4 @@ function collect_args_console(;keys...)
   end
   println("Running...")
   (sid,skip,args...)
-end
-
-function collect_args_window(description;keys...)
-  keys = ["sid" => String,keys...,"offset" => Int]
-
-  win = @Window(description)
-  grid = @Grid()
-  components = []
-  for (i,(key,values)) in enumerate(keys)
-    if isa(values,Type)
-      label = @Label(key)
-      textbox = @Entry()
-      push!(components,textbox)
-      grid[1,i] = label
-      grid[2,i] = textbox
-    else
-      label = @Label(key)
-      combo = @ComboBoxText()
-      for v in values
-        push!(combo,string(v))
-      end
-      setproperty!(combo,:active,0)
-      push!(components,combo)
-      grid[1,i] = label
-      grid[2,i] = combo
-    end
-  end
-  setproperty!(components[end],:text,"0")
-  okay = @Button("Ok")
-  grid[1:2,length(keys)+1] = okay
-  setproperty!(grid, :column_spacing, 15)
-  push!(win, grid)
-  setproperty!(win,:gravity,5)
-
-  results = Channel(1)
-  signal_connect(okay,"clicked") do w
-    x = map(enumerate(keys)) do x
-      (i,(key,values)) = x
-      if isa(values,Type)
-        textbox = components[i]
-        val = getproperty(textbox,:text,String)
-        try
-          if values == String
-            key => val
-          else
-            key => parse(values,val)
-          end
-        catch
-          error_dialog("Expected $val to be of type $values.",win)
-        end
-      else
-        combo = components[i]
-        i = getproperty(combo,:active,Int)+1
-        if i > 0
-          key => values[i]
-        else
-          key => values[1]
-        end
-      end
-    end
-    put!(results,Nullable(x))
-    nothing
-  end
-
-  signal_connect(win,"delete_event") do w
-    put!(results,Nullable())
-  end
-
-  showall(win)
-  x = fetch(results)
-  destroy(win)
-  if isnull(x)
-    exit()
-  else
-    get(x)
-  end
 end

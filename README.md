@@ -256,7 +256,6 @@ For the 0.3.0 release
 
 For the 0.3.x release
 - [ ] run a series of delta 0 moments all at once.
-- [ ] replace interactive text input with simple Gtk window or SDL based GUI??
 - [ ] implement simtrak communication
 - [ ] minimize GC using preinitialized data structures during experiment??
 - [ ] create 2AFC abstraction
