@@ -2,7 +2,8 @@
 
 export instruct, response, addbreak_every, show_cross, @read_args, randomize_by
 using ArgParse
-using Gtk.ShortNames
+using Gtk.ShortNames: @Window, @Grid, @Label, @Entry, @ComboBoxText, @Button,
+  error_dialog, setproperty!, getproperty, signal_connect, destroy
 using Juno: input, selector
 import Juno
 
@@ -134,58 +135,6 @@ If the same string is given, calls to random functions (e.g. `rand`, `randn` and
 """
 randomize_by(itr) = srand(reinterpret(UInt32,collect(itr)))
 
-function collect_args_window(description,keys...)
-  win = @Window(description)
-  grid = @Grid()
-  for (i,(key,values)) in enumerate(keys)
-    if isa(values,Type)
-      label = @Label(key)
-      textbox = @Entry()
-      g[i,1] = label
-      g[i,2] = textbox
-    else
-      label = @Label(key)
-      combo = @ComboBox()
-      for v in values
-        push!(combo,v)
-      end
-      g[i,1] = label
-      g[i,2] = combo
-    end
-  end
-  okay = @Button("Ok")
-  g[length(keys),2] = okay
-  setproperty!(g, :column_homogeneous, true)
-  setproperty!(g, :column_spacing, 15)
-  push!(win, g)
-  showall(win)
-
-  okay_clicked = Channel(1)
-  signal_connect(okay,"clicked") do w
-    put!(okay_clicked,true)
-  end
-
-  fetch(okay_clicked)
-
-  # TODO: make this a function, and keep trying until no error
-  map(enumerate(keys)) do x
-     (i,(key,values)) = x
-    if isa(values,Type)
-      textbox = g[i,2]
-      val = getproperty(textbox,:text)
-      try
-        Nullable(key => convert(val,values))
-      catch
-        Nullable()
-      end
-    else
-      combo = g[i,2]
-      Nullable(key => values[getproperty(g,:active)])
-    end
-  end
-
-end
-
 """
     @read_args(description,[keyword args...])
 
@@ -260,9 +209,9 @@ macro read_args(description,keys...)
   end
   push!(arg_body.args,result_tuple)
 
-  readline_call = :(readline_args())
+  collect_args = :(collect_args())
   for k in keys
-    push!(readline_call.args,k)
+    push!(collect_args.args,k)
   end
 
   quote
@@ -270,33 +219,47 @@ macro read_args(description,keys...)
     if length(ARGS) > 0
       $arg_body
     else
-      $readline_call
+      $collect_args
     end
   end
 end
 
-function readline_args(;keys...)
+function collect_args(description;keys...)
+  if Juno.isactive()
+    collect_args_window(description;keys...)
+  else
+    collect_args_console(;keys...)
+  end
+end
+
+function collect_args_console(;keys...)
   print("Enter subject id: ")
   sid = chomp(input())
   args = Array{Any}(length(keys))
   for (i,(kw,value)) in enumerate(keys)
     if isa(value,Type)
-      if Juno.isactive()
-        println("Enter $kw: ")
-      else
-        print("Enter $kw: ")
+      except = true
+      while except
+        try
+          print("Enter $kw: ")
+          args[i] = parse(value,chomp(input()))
+          except = false
+        catch
+          except = true
+          println("Expected $value.")
+        end
       end
-      args[i] = parse(value,input())
     else
-      if Juno.isactive()
-        println("Enter $kw: ")
-        args[i] = selector(value)
-      else
+      error = true
+      while error
         print("Enter $kw ($(join(map(string,value),", "," or "))): ")
         args[i] = chomp(readline())
         if Symbol(args[i]) ∉ value
-          error("Expected $kw to be $(join(map(string,value),", "," or ")) "*
-                "but got $(args[i]).")
+          println("Expected $kw to be $(join(map(string,value),", "," or ")) "*
+                  "but got $(args[i]).")
+          error = true
+        else
+          error = false
         end
       end
     end
@@ -310,4 +273,68 @@ function readline_args(;keys...)
   end
   println("Running...")
   (sid,skip,args...)
+end
+
+
+function collect_args_window(description;keys...)
+  keys = ["sid" => String,keys...,"offset" => Int]
+
+  win = @Window(description)
+  grid = @Grid()
+  components = []
+  for (i,(key,values)) in enumerate(keys)
+    if isa(values,Type)
+      label = @Label(key)
+      textbox = @Entry()
+      push!(components,textbox)
+      grid[1,i] = label
+      grid[2,i] = textbox
+    else
+      label = @Label(key)
+      combo = @ComboBoxText()
+      for v in values
+        push!(combo,v)
+      end
+      push!(components,combo)
+      grid[1,i] = label
+      grid[2,i] = combo
+    end
+  end
+  setproperty!(components[end],:text,"0")
+  okay = @Button("Ok")
+  grid[1:2,length(keys)+1] = okay
+  setproperty!(grid, :column_spacing, 15)
+  push!(win, grid)
+  setproperty!(win,:gravity,5)
+
+  results = Channel(1)
+  signal_connect(okay,"clicked") do w
+    x = map(enumerate(keys)) do x
+      (i,(key,values)) = x
+      if isa(values,Type)
+        textbox = components[i]
+        val = getproperty(textbox,:text,String)
+        try
+          key => convert(values,val)
+        catch
+          error_dialog("Expected $val to be a $values.",win)
+        end
+      else
+        combo = components[i]
+        key => values[getproperty(combo,:active,Int)]
+      end
+    end
+    put!(results,Nullable(x))
+    nothing
+  end
+
+  signal_connect(win,"delete_event") do w
+    put!(results,Nullable())
+    nothing
+  end
+
+  showall(win)
+  x = fetch(results)
+  destroy(win)
+  x
 end
