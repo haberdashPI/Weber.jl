@@ -1,31 +1,30 @@
-# WORK IN PROGRESS: does not compile
 using Distributions
-export
+export levitt_adapter, bayesian_adapter, delta
 
 """
 Adpaters, created through their individual constructors, can be used to estiamte
 some delta at which listeners respond correctly at a given threshold (e.g. 80%
-correct). They must define `update`, `estimate` and `delta`. The function
-`update` is not usually called directly, but instead called within
-`response`, when the adapter is passed as the first argument.
+correct). They must define `update`, `estimate` and `delta`.
 """
 abstract Adapter
 
 """
-    update(adapter,response,correct)
+    Weber.update(adapter,response,correct)
 
-Updates any internal state for the adapter when the listener response
-with `response` and the correct response is `correct`.
+Updates any internal state for the adapter when the listener responds with
+`response` and the correct response is `correct`. Usually not called directly,
+but instead called within `response`, when the adapter is passed as the first
+argument.
 """
 function update(adapter,response,correct)
 end
 
 """
-    estimate(adapter)
+    Weber.estimate(adapter)
 
-Returns the mean and error of the adapters threshold estimate. May
-take quite long to run.
-
+Returns the mean and error of the adapters threshold estimate. May take some
+time to run.  Usually not called directly, but instead called within `response`,
+when the adapter is passed as the first argument.
 """
 function estimate(adapter)
 end
@@ -39,13 +38,30 @@ function delta(adapter)
 end
 
 """
-    response([fn],track,[key1] => ["resp1"],...;correct=[resp],keys...)
+    response([fn],track,[key1] => ["resp1"],...;correct=[resp],
+             [show_feedback=true],
+             [feedback=Dict(true=>"Correct",false=>"Wrong!")]
+             keys...)
 
 Record a response in a n-alternative forced choice task and update
 an adapter.
 
+If you use this function, be sure to include :delta and :correct
+in your list of data columns (see `Experiment`), as they are used
+to record the correct response, and the adapter delta.
+
+The first response recieved is interprted as the actual response. Subsequent
+response will be recorded, without a delta or correct value set, and appending
+"late_" to the specified response string.
+
+# Function Callback
+
+Optionally, upon participant response, `fn` receives two arguments: the
+provided response, and the correct response.
+
 # Keyword Arguments
 
+- `correct`: the response string corresponding to the correct response
 - `show_feedback` (default = true): whether to show feedback to the
   participant after they respond.
 - `feedback` (default = Dict(true => "Correct!",false => "Wrong!"): the text
@@ -55,12 +71,6 @@ an adapter.
 Any additional keyword arguments are added as column values when the
 response is recorded.
 
-# Function Callback
-
-Optionally, upon participant response, `fn` resceives two arguments: the
-provided response, and the correct response. There are several additional
-keyword arguments. This allows for more customized feedback than possible
-using `show_feedback` and `feedback`, for example.
 """
 function response(track::Adapter,resp::Pair...;keys...)
   record(x -> nothing,track,resp;keys...)
@@ -75,23 +85,30 @@ function response(fn::Function,track::Adapter,responses::Pair...;
           join(getindex.(response,2),", "," or "))
   end
 
-  begin (event) ->
-    for (key,resp) in responses
-      if iskeydown(event,key)
-        update(track,resp,correct)
-        callback(resp,correct)
+  let responded = false
+    begin (event) ->
+      for (key,resp) in responses
+        if iskeydown(event,key)
+          if !responded
+            responded = true
+            update(track,resp,correct)
+            callback(resp,correct)
 
-        if show_feedback
-          display(feedback[resp==correct])
+            if show_feedback
+              display(feedback[resp==correct])
+            end
+            record(resp;correct=correct,delta=delta(adapter),keys...)
+          else
+            record("late_"*resp;keys...)
+          end
         end
-        record(resp;correct=correct,keys...)
       end
     end
   end
 end
 
 """
-    levit_adapter([first_delta=0.1],[up=3],[down=1],
+    levit_adapter([first_delta=0.1],[down=3],[up=1],
                   [big_reverse=3],[big=0.01],[little=0.005],
                   [min_reversals=7],[min_delta=-Inf],[max_delta=Inf],
                   [mult=false])
@@ -122,7 +139,7 @@ the 79%-correct threshold.
 - `mult`: whether the delta change should be additive (false) or
    multiplicative (true).
 """
-function levitt_adapter(;first_delta=0.1,up=3,down=1,big_reverse=3,
+function levitt_adapter(;first_delta=0.1,down=3,up=1,big_reverse=3,
                         big=0.01,little=0.005,min_reversals=7,
                         drop_reversals=3,min_delta=-Inf,max_delta=Inf,
                         mult=false)
@@ -210,7 +227,7 @@ function estimate(adapter::Levitt)
     NaN,NaN
   else
     if isodd(length(adapter.reversals))
-      estimate_helper(adapter.reversals[adapter.drop_reversals:end]))
+      estimate_helper(adapter.reversals[adapter.drop_reversals:end])
     else
       estimate_helper(adapter.reversals[adapter.drop_reversals+1:end])
     end
@@ -227,8 +244,8 @@ type ImportanceSampler
   min_delta::Float64
   max_delta::Float64
   delta_repeat::Int
-  resp = Dict{Float64,Int}
-  N = Dict{Float64,Int}
+  resp::Dict{Float64,Int}
+  N::Dict{Float64,Int}
 end
 
 """
