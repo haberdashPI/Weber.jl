@@ -1,5 +1,3 @@
-# TODO: create a 2AFC adaptive abstraction
-
 export instruct, response, addbreak_every, show_cross, @read_args, randomize_by
 using ArgParse
 using Juno: input, selector
@@ -132,58 +130,6 @@ If the same string is given, calls to random functions (e.g. `rand`, `randn` and
 `shuffle`) will result in the same output.
 """
 randomize_by(itr) = srand(reinterpret(UInt32,collect(itr)))
-
-function collect_args_window(description,keys...)
-  win = @Window(description)
-  grid = @Grid()
-  for (i,(key,values)) in enumerate(keys)
-    if isa(values,Type)
-      label = @Label(key)
-      textbox = @Entry()
-      g[i,1] = label
-      g[i,2] = textbox
-    else
-      label = @Label(key)
-      combo = @ComboBox()
-      for v in values
-        push!(combo,v)
-      end
-      g[i,1] = label
-      g[i,2] = combo
-    end
-  end
-  okay = @Button("Ok")
-  g[length(keys),2] = okay
-  setproperty!(g, :column_homogeneous, true)
-  setproperty!(g, :column_spacing, 15)
-  push!(win, g)
-  showall(win)
-
-  okay_clicked = Channel(1)
-  signal_connect(okay,"clicked") do w
-    put!(okay_clicked,true)
-  end
-
-  fetch(okay_clicked)
-
-  # TODO: make this a function, and keep trying until no error
-  map(enumerate(keys)) do x
-     (i,(key,values)) = x
-    if isa(values,Type)
-      textbox = g[i,2]
-      val = getproperty(textbox,:text)
-      try
-        Nullable(key => convert(val,values))
-      catch
-        Nullable()
-      end
-    else
-      combo = g[i,2]
-      Nullable(key => values[getproperty(g,:active)])
-    end
-  end
-
-end
 
 """
     @read_args(description,[keyword args...])
