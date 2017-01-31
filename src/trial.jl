@@ -671,8 +671,7 @@ the current one has finished.
 
 prepare!(m::Moment) = nothing
 prepare!(m::DisplayFunctionMoment) = m.visual = Nullable(visual(m.fn();m.keys...))
-prepare!(m::PlayFunctionMoment) = m.sound = Nullalbe(sound(m.fn()))
-
+prepare!(m::PlayFunctionMoment) = m.sound = Nullable(sound(m.fn()))
 
 #===============================================================================
     handle(exp,queue,moment,x)

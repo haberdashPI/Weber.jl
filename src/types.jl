@@ -424,6 +424,7 @@ type PlayMoment <: AbstractTimedMoment
   keys::Vector
 end
 delta_t(m::PlayMoment) = m.delta_t
+
 type PlayFunctionMoment <: AbstractTimedMoment
   delta_t::Float64
   fn::Function
@@ -431,6 +432,7 @@ type PlayFunctionMoment <: AbstractTimedMoment
   sound::Nullable{Sound}
 end
 PlayFunctionMoment(d,f,k) = PlayFunctionMoment(d,f,k,Nullable())
+delta_t(m::PlayFunctionMoment) = m.delta_t
 
 type DisplayMoment <: AbstractTimedMoment
   delta_t::Float64
@@ -444,6 +446,7 @@ type DisplayFunctionMoment <: AbstractTimedMoment
   visual::Nullable{SDLRendered}
 end
 DisplayFunctionMoment(d,f,k) = DisplayFunctionMoment(d,f,k,Nullable())
+delta_t(m::DisplayFunctionMoment) = m.delta_t
 
 type FinalMoment <: SimpleMoment
   run::Function

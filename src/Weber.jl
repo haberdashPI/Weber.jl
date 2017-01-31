@@ -92,7 +92,6 @@ const sdl_is_setup = Array{Bool}()
 sdl_is_setup[] = false
 
 include(joinpath(dirname(@__FILE__),"timing.jl"))
-
 include(joinpath(dirname(@__FILE__),"video.jl"))
 include(joinpath(dirname(@__FILE__),"sound.jl"))
 
@@ -103,6 +102,7 @@ include(joinpath(dirname(@__FILE__),"experiment.jl"))
 
 include(joinpath(dirname(@__FILE__),"primitives.jl"))
 include(joinpath(dirname(@__FILE__),"helpers.jl"))
+include(joinpath(dirname(@__FILE__),"adaptive.jl"))
 
 include(joinpath(dirname(@__FILE__),"precompile.jl"))
 

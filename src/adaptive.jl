@@ -73,17 +73,18 @@ response is recorded.
 
 """
 function response(track::Adapter,resp::Pair...;keys...)
-  record(x -> nothing,track,resp;keys...)
+  response((x,y) -> nothing,track,resp...;keys...)
 end
 
-function response(fn::Function,track::Adapter,responses::Pair...;
+function response(callback::Function,adapter::Adapter,responses::Pair...;
                   correct=nothing,show_feedback=true,
                   feedback=Dict(true => "Correct!",false => "Wrong!"),
                   keys...)
-  if isempty(correct_indices)
+  if correct ∉ map(x -> x[2],responses)
     error("The value of `correct` must be "*
-          join(getindex.(response,2),", "," or "))
+          join(map(x -> x[2],responses),", "," or "))
   end
+  feedback_visuals = map((pair) -> pair[1] => visual(pair[2]),feedback)
 
   let responded = false
     begin (event) ->
@@ -91,11 +92,11 @@ function response(fn::Function,track::Adapter,responses::Pair...;
         if iskeydown(event,key)
           if !responded
             responded = true
-            update(track,resp,correct)
+            update(adapter,resp,correct)
             callback(resp,correct)
 
             if show_feedback
-              display(feedback[resp==correct])
+              display(feedback_visuals[resp==correct])
             end
             record(resp;correct=correct,delta=delta(adapter),keys...)
           else
@@ -143,18 +144,18 @@ function levitt_adapter(;first_delta=0.1,down=3,up=1,big_reverse=3,
                         big=0.01,little=0.005,min_reversals=7,
                         drop_reversals=3,min_delta=-Inf,max_delta=Inf,
                         mult=false)
-  next_delta = first_delta
+  delta = first_delta
   reversals = Float64[]
   last_direction = 0
   num_correct = 0
   num_incorrect = 0
   operator = (mult ? :mult : :add)
-  adapter = Levitt{operator}(next_delta,up,down,big_reverse,big,little,
+  adapter = Levitt{operator}(delta,up,down,big_reverse,big,little,
                              min_reversals,drop_reversals,min_delta,max_delta,
-                             reversals,num_correct,num_incorrect)
+                             reversals,last_direction,num_correct,num_incorrect)
 end
 
-type Levitt{OP}
+type Levitt{OP} <: Adapter
   delta::Float64
 
   up::Int
@@ -175,7 +176,7 @@ type Levitt{OP}
 end
 delta(a::Levitt) = a.delta
 
-function update_reversals(adaapter::Levitt,direction::Int)
+function update_reversals(adapter::Levitt,direction::Int)
   if (adapter.last_direction != 0 && direction != adapter.last_direction)
     push!(adapter.reversals,adapter.next_delta)
   end
@@ -201,18 +202,18 @@ end
 
 function update(adapter::Levitt,response,correct)
   if correct == response
-    num_correct += 1
-    num_incorrect = 0
-    if num_correct >= adapter.down
-      num_correct = 0
+    adapter.num_correct += 1
+    adapter.num_incorrect = 0
+    if adapter.num_correct >= adapter.down
+      adapter.num_correct = 0
       update_reversals(adapter,-1)
       update_delta(adapter,down(adapter))
     end
   else
-    num_incorrect += 1
-    num_correct = 0
-    if num_incorrect >= adapter.up
-      num_incorrect = 0
+    adapter.num_incorrect += 1
+    adapter.num_correct = 0
+    if adapter.num_incorrect >= adapter.up
+      adapter.num_incorrect = 0
       update_reversals(adapter,1)
       update_delta(adapter,up(adapter))
     end
@@ -234,7 +235,7 @@ function estimate(adapter::Levitt)
   end
 end
 
-type ImportanceSampler
+type ImportanceSampler <: Adapter
   miss::Float64
   threshold::Float64
   n_samples::Int
@@ -293,8 +294,7 @@ function sample(adapter::ImportanceSampler)
   q_log_prob = logpdf(a.thresh_d,theta) .+ logpdf(a.slope_d,theta)
 
   udeltas = collect(keys(a.resp))
-  diffs = theta .- udeltas'
-  p = (a.miss/2) + (1-a.miss)*phi_approx(exp(diffs.*slope)/sqrt_2)
+  p = (a.miss/2) + (1-a.miss)*phi_approx(exp((theta .- udeltas').*slope)/sqrt_2)
   log_prob = sum(enumerate(udeltas)) do x
     i,delta = x
     logpdf.(Binom.(a.N[delta],p[:,i]),a.resp[delta])
@@ -307,8 +307,7 @@ function sample(adapter::ImportanceSampler)
 
   if ess / length(weights) < 0.1
     warn("Effective sampling size of importance samples is low ",
-         "($(round(ess,1))). Consider adjusting `thresh_mean` ",
-         "`thresh_sd`, `slope_mean` and/or `slope_sd`.")
+         "($(round(ess,1))). Consider adjusting the `thresh_d` and `slope_d`.")
     record("poor_adaptor_ess",value=ess)
   end
 

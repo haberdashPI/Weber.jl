@@ -3,8 +3,7 @@
 using Weber
 
 version = v"0.0.1"
-sid,trial_skip =
-  @read_args("Frequency Discrimination ($version).")
+sid,trial_skip = @read_args("Frequency Discrimination ($version).")
 
 const ms = 1/1000
 const st = 1/12
@@ -37,7 +36,7 @@ exp = Experiment(sid = sid,condition = "example",version = version,
                  columns = [:delta,:correct,:kind])
 
 setup(exp) do
-  start = moment(record,"start")
+  addbreak(moment(record,"start"))
 
   addbreak(instruct("""
 
