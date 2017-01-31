@@ -3,7 +3,7 @@ using DSP
 using LibSndFile # TODO: test this
 using FixedPointNumbers
 using FileIO
-import FileIO: load
+import FileIO: load, save
 import SampledSignals: samplerate
 
 export match_lengths, mix, mult, silence, noise, highpass, lowpass, bandpass,
@@ -213,10 +213,6 @@ function sound(x::SampleBuf)
   sound(SampleBuf(Fixed{Int16,15}.(bounded),samplerate(x)))
 end
 
-type SoundFunction
-  fn::Function
-end
-
 """
    sound(fn::Function)
 
@@ -244,6 +240,8 @@ immutable Sound
   end
 end
 sound(x::Sound) = x
+
+save(f::File,sound::Sound) = save(f,sound.buffer)
 
 # load(f::File{format"WAV"}) = load_helper(f)
 # load(f::File{format"AIFF"}) = load_helper(f)
