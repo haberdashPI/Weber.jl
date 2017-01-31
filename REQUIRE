@@ -1,6 +1,7 @@
 julia 0.5
 DSP
 SampledSignals
+FixedPointNumbers
 Lazy
 DataStructures
 Colors

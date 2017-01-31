@@ -1,4 +1,5 @@
 using Colors
+using FixedPointNumbers
 using Images
 using DataStructures
 using Lazy: @>>
@@ -204,10 +205,10 @@ end
 close(win::NullWindow) = win.closed = true
 
 function clear(window,color::Color)
-  clear(window,convert(RGB{U8},color))
+  clear(window,convert(RGB{N0f8},color))
 end
 
-function clear(window::SDLWindow,color::RGB{U8}=colorant"gray")
+function clear(window::SDLWindow,color::RGB{N0f8}=colorant"gray")
   ccall((:SDL_SetRenderDrawColor,_psycho_SDL2),Void,
         (Ptr{Void},UInt8,UInt8,UInt8),window.renderer,
         reinterpret(UInt8,red(color)),
@@ -220,7 +221,7 @@ clear(win::NullWindow,color) = nothing
 
 type SDLFont
   data::Ptr{Void}
-  color::RGBA{U8}
+  color::RGBA{N0f8}
 end
 
 """
@@ -419,7 +420,7 @@ function visual(window::SDLWindow,str::String;
 end
 
 function visual(window::SDLWindow,str::String,font::SDLFont;
-                color::RGB{U8}=colorant"white",
+                color::RGB{N0f8}=colorant"white",
                 wrap_width=0.8,clean_whitespace=true,x=0,y=0,
                 duration=0,priority=0)
   if clean_whitespace
@@ -433,10 +434,10 @@ end
 const w_ptr = 0x0000000000000010 # icxx"offsetof(SDL_Surface,w);"
 const h_ptr = 0x0000000000000014 # icxx"offsetof(SDL_Surface,h);"
 
-function visual(window::SDLWindow,x::Real,y::Real,font::SDLFont,color::RGB{U8},
+function visual(window::SDLWindow,x::Real,y::Real,font::SDLFont,color::RGB{N0f8},
                 wrap_width::UInt32,str::String,duration=0,priority=0)
   surface = ccall((:TTF_RenderUTF8_Blended_Wrapped,_psycho_SDL2_ttf),Ptr{Void},
-                  (Ptr{Void},Cstring,RGBA{U8},UInt32),
+                  (Ptr{Void},Cstring,RGBA{N0f8},UInt32),
                   font.data,pointer(str),color,wrap_width)
   if surface == C_NULL
     error("Failed to render text: "*TTF_GetError())
@@ -463,7 +464,7 @@ end
 
 type SDLImage <: SDLTextured
   data::Ptr{Void}
-  img::Image{RGBA{U8}}
+  img::Array{RGBA{N0f8}}
   rect::SDLRect
   duration::Float64
   priority::Float64
@@ -484,25 +485,39 @@ function update_arguments(img::SDLImage;w=NaN,h=NaN,duration=img.duration,
 end
 
 """
-    visual(img::Image, [x=0],[y=0],[duration=0],[priority=0])
     visual(img::Array, [x=0],[y=0],[duration=0],[priority=0])
 
 Prepare the color or gray scale image to be displayed to the screen.
 
-This works with standard multi-dimensional arrays `Image` objects from
-the Images package.
+This utilizes all the conventions in the `Images` package for representing
+images. Internally, real-number 2d arrays are interpreted as gray scale images,
+and real-number 3d arrays as an RGB image or RGBA image, depending on whether
+size(img,1) is of size 3 or 4. A 3d array with a size(img,1) ∉ [3,4] results in
+an error.
 """
+function visual{T <: AbstractFloat}(window::SDLWindow,img::Array{T};keys...)
+  if length(size(img)) == 3
+    if size(img,1) == 3
+      visual(window,n0f8.(colorview(RGB,image)))
+    elseif size(img,1) == 4
+      visual(window,n0f8.(colorview(RGBA,image)))
+    else
+      error("Could not interpret array of size $(size(imge)) as a color image.")
+    end
+  elseif length(size(img)) == 2
+    visual(window,n0f8.(colorview(Gray,image)))
+  end
+end
+
 function visual(window::SDLWindow,img::Array;keys...)
-  visual(window,convert(Image{RGBA{U8}},img);keys...)
+  visual(window,convert(RGBA,n0f8.(img));keys...)
 end
-function visual(window::SDLWindow,img::Image;keys...)
-  visual(window,convert(Image{RGBA{U8}},img);keys...)
-end
-function visual(window::SDLWindow,img::Image{RGBA{U8}};
+
+function visual(window::SDLWindow,img::Array{RGBA{N0f8}};
                 x=0,y=0,duration=0,priority=0)
   surface = ccall((:SDL_CreateRGBSurfaceFrom,_psycho_SDL2),Ptr{Void},
                   (Ptr{Void},Cint,Cint,Cint,Cint,UInt32,UInt32,UInt32,UInt32),
-                  pointer(raw(img)),size(img,2),size(img,1),32,
+                  pointer(img),size(img,2),size(img,1),32,
                   4size(img,2),0,0,0,0)
   if surface == C_NULL
     error("Failed to create image surface: "*SDL_GetError())
