@@ -139,7 +139,7 @@ function addmoment(q,ms)
     # some types iterate over themselves (e.g. numbers);
     # check for this to avoid infinite recursion
     if m == ms
-      error(emessage)
+      handle_error()
     end
     addmoment(q,m)
   end
