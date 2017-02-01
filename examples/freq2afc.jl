@@ -3,7 +3,8 @@
 using Weber
 
 version = v"0.0.1"
-sid,trial_skip = @read_args("Frequency Discrimination ($version).")
+sid,trial_skip,adapt = @read_args("Frequency Discrimination ($version).",
+                                  adapt=[:levitt,:bayes])
 
 const ms = 1/1000
 const st = 1/12
@@ -27,8 +28,7 @@ function one_trial(adapter)
    moment(play,stimuli[1]),moment(0.9,play,stimuli[2]),
    moment(0.1 + 0.3,display,
           "Was the first [Q] or second sound [P] lower in pitch?"),
-   resp,
-   await_response(isresponse)]
+   resp,await_response(isresponse),moment(0.75)]
 end
 
 exp = Experiment(sid = sid,condition = "example",version = version,
@@ -45,10 +45,16 @@ hear was lower in pitch. Hit 'Q' if the first beep was lower, and 'P' if the
 second beep was lower.
 """))
 
-  @addtrials let adapter = levitt_adapter(down=3,up=1,min_delta=0,max_delta=1,
-                                          big=2,little=sqrt(2),mult=true)
+  if adapt == :levitt
+    adapter = levitt_adapter(down=3,up=1,min_delta=0,max_delta=1,
+                             big=2,little=sqrt(2),mult=true)
+  else
+    adapter = bayesian_adapter(min_delta = 0,max_delta = 0.95)
+  end
+
+  @addtrials let a = adapter
     for trial in 1:n_trials
-      addtrial(one_trial(adapter))
+      addtrial(one_trial(a))
     end
   end
 end

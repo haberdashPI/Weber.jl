@@ -9,14 +9,14 @@ correct). They must define `update`, `estimate` and `delta`.
 abstract Adapter
 
 """
-    Weber.update(adapter,response,correct)
+    Weber.update!(adapter,response,correct)
 
 Updates any internal state for the adapter when the listener responds with
 `response` and the correct response is `correct`. Usually not called directly,
 but instead called within `response`, when the adapter is passed as the first
 argument.
 """
-function update(adapter,response,correct)
+function update!(adapter,response,correct)
 end
 
 """
@@ -92,13 +92,14 @@ function response(callback::Function,adapter::Adapter,responses::Pair...;
         if iskeydown(event,key)
           if !responded
             responded = true
-            update(adapter,resp,correct)
-            callback(resp,correct)
+            record(resp;correct=correct,delta=delta(adapter),keys...)
 
+            update!(adapter,resp,correct)
+            callback(resp,correct)
             if show_feedback
               display(feedback_visuals[resp==correct])
             end
-            record(resp;correct=correct,delta=delta(adapter),keys...)
+
           else
             record("late_"*resp;keys...)
           end
@@ -142,7 +143,7 @@ the 79%-correct threshold.
 """
 function levitt_adapter(;first_delta=0.1,down=3,up=1,big_reverse=3,
                         big=0.01,little=0.005,min_reversals=7,
-                        drop_reversals=3,min_delta=-Inf,max_delta=Inf,
+                        drop_reversals=3,min_delta=0,max_delta=Inf,
                         mult=false)
   delta = first_delta
   reversals = Float64[]
@@ -178,7 +179,7 @@ delta(a::Levitt) = a.delta
 
 function update_reversals(adapter::Levitt,direction::Int)
   if (adapter.last_direction != 0 && direction != adapter.last_direction)
-    push!(adapter.reversals,adapter.next_delta)
+    push!(adapter.reversals,adapter.delta)
   end
   adapter.last_direction = direction
 end
@@ -192,7 +193,7 @@ down(adapter::Levitt{:mult}) = /
 
 function update_delta(adapter,op)
   if length(adapter.reversals) < adapter.big_reverse
-    adapter.delta = bound(op(adatper.delta,adapter.big),
+    adapter.delta = bound(op(adapter.delta,adapter.big),
                           adapter.min_delta,adapter.max_delta)
   else
     adapter.delta = bound(op(adapter.delta,adapter.little),
@@ -200,7 +201,7 @@ function update_delta(adapter,op)
   end
 end
 
-function update(adapter::Levitt,response,correct)
+function update!(adapter::Levitt,response,correct)
   if correct == response
     adapter.num_correct += 1
     adapter.num_incorrect = 0
@@ -218,6 +219,7 @@ function update(adapter::Levitt,response,correct)
       update_delta(adapter,up(adapter))
     end
   end
+  adapter
 end
 
 estimate_helper(a::Levitt{:add}) = mean(a),sd(a)
@@ -247,13 +249,17 @@ type ImportanceSampler <: Adapter
   delta_repeat::Int
   resp::Dict{Float64,Int}
   N::Dict{Float64,Int}
+  thresh_samples::Vector{Float64}
+  thresh_weights::Vector{Float64}
+  repeat2_thresh::Float64
+  repeat3_thresh::Float64
 end
 
 """
     baysian_adapter([first_delta=0.1],[n_samples=1000],[miss=0.01],
-                    [threshold=0.79],[thresh_d=Normal(0,1)],
-                    [slope_d=Normal(1,0.1)],[repeat3_thresh=0.1],
-                    [repeat2_thresh=0.01],[min_delta=-Inf],[max_delta=Inf])
+                    [threshold=0.79],[thresh_d=Uniform(0,1)],
+                    [slope_d=LogNormal(log(1),log(100))],[repeat3_thresh=0.1],
+                    [repeat2_thresh=0.01],[min_delta=0],[max_delta=Inf])
 
 Creates an adapter that estimates the desired response threshold using
 a bayesian approach, selecting the delta to be the best estimate of this
@@ -261,92 +267,115 @@ threshold. This is a modified version of the approach described in
 Kontsevich & Tyler 1999.
 
 This estimator is designed to find, in a reasonably short time, a good estimate
-of the threshold. While past approaches have generally sought to select a delta
+of the threshold. While Kontsevich & Tyler's method selects a delta
 quite possibly far from the threshold (to better estiamte the overall
-psychometric function), in practice this can lead to a less efficient estimate
+psychometric function), in practice this can lead to a less efficient estimates
 of the threshold itself.
 
-For stability and robustness, this adapter begins by repeating the same delta
-multiple times and only begins quickly changing deltas trial-by-trial when the
-ratio of standard deviation to the mean is small.
+Further, for stability and robustness, this adapter begins by repeating the same
+delta multiple times and only begins quickly changing deltas trial-by-trial when
+the ratio of standard deviation to the mean is small.
 
 # Keyword Arugments
 
-TODO...
+- first_delta: the delta to start measuring with
+- n_samples: the number of samples to use during importance sampling
+- miss: the expected rate at which that listeners will make mistakes
+  even for easy to percieve differences.
+- threshold: the %-response threhsold to be estimated
+- thresh_d: the distribution over-which to draw samples for the threshold
+  during importance sampling
+- slope_d: the distribution over-which to draw samples for the slope
+  during importance sampling.
+- repeat3_thresh: the ratio of sd / mean required to move from
+  repeating a delta 3 times to 2 times before changing the delta.
+- repeat2_thresh: the ratio of sd / mean required to move from
+  repeating a delta 2 times to 1 time before changing the delta.
 """
 function bayesian_adapter(;first_delta=0.1,
                           n_samples=1000,miss=0.01,threshold=0.79,
-                          thresh_d=Normal(0,1),slope_d=Normal(1,0.5),
-                          repeat3_thresh=0.1,repeat2_thresh=0.01)
-  delta = next_delta = first_delta
+                          repeat3_thresh=0.1,repeat2_thresh=0.01,
+                          min_delta=0,max_delta=1,
+                          thresh_d=Uniform(min_delta,max_delta),
+                          slope_d=LogNormal(log(1),log(100)))
+  delta = first_delta
   delta_repeat = 0
   resp = Dict{Float64,Int}()
   N = Dict{Float64,Int}()
+  samples = ones(0)
+  weights = ones(0)
   ImportanceSampler(miss,threshold,n_samples,thresh_d,slope_d,delta,
-                    delta_repeat,resp,N)
+                    min_delta,max_delta,delta_repeat,resp,N,samples,weights,
+                    repeat3_thresh,repeat2_thresh)
 end
 
 const sqrt_2 = sqrt(2)
-phi_approx(x) = 1 / (1 + exp(-(0.07056x^3 + 1.5976x)))
-function sample(adapter::ImportanceSampler)
-  theta = rand(a.thresh_d,a.n_samples)
-  slope = randn(a.slope_d,a.n_samples)
-  q_log_prob = logpdf(a.thresh_d,theta) .+ logpdf(a.slope_d,theta)
+function sample(a::ImportanceSampler)
+  if length(a.thresh_samples) == 0
+    theta = rand(a.thresh_d,a.n_samples)
+    slope = rand(a.slope_d,a.n_samples)
+    q_log_prob = logpdf(a.thresh_d,theta) .+ logpdf(a.slope_d,slope)
 
-  udeltas = collect(keys(a.resp))
-  p = (a.miss/2) + (1-a.miss)*phi_approx(exp((theta .- udeltas').*slope)/sqrt_2)
-  log_prob = sum(enumerate(udeltas)) do x
-    i,delta = x
-    logpdf.(Binom.(a.N[delta],p[:,i]),a.resp[delta])
+    udeltas = collect(keys(a.resp))
+    p = (a.miss/2) + (1-a.miss)*cdf(Normal(),exp((udeltas' .- theta).*slope)/sqrt_2)
+    log_prob = sum(enumerate(udeltas)) do x
+      i,delta = x
+      logpdf.(Binomial.(a.N[delta],p[:,i]),a.resp[delta])
+    end
+
+    lweights = log_prob - q_log_prob
+    weights = exp.(lweights - maximum(lweights))
+    weights = weights ./ sum(weights)
+    ess = 1 / sum(weights.^2)
+
+    # if ess / length(weights) < 0.1
+    #   warn("Effective sampling size of importance samples is low ",
+    #        "($(round(ess,1))). Consider adjusting the `thresh_d` and `slope_d`.")
+    #   record("poor_adaptor_ess",value=ess)
+    # end
+
+    dprime = invlogcdf(Normal(),log((a.threshold-a.miss/2)/(1-a.miss)))
+    thresh_off = -log(dprime)./slope
+
+    a.thresh_samples = theta + thresh_off
+    a.thresh_weights = weights
   end
-
-  lweights = log_prob - q_log_prob
-  weights = exp.(lweights - max.(lweights))
-  weights = sum(weights) / length(weights)
-  ess = 1 / sum(weights.^2)
-
-  if ess / length(weights) < 0.1
-    warn("Effective sampling size of importance samples is low ",
-         "($(round(ess,1))). Consider adjusting the `thresh_d` and `slope_d`.")
-    record("poor_adaptor_ess",value=ess)
-  end
-
-  dprime = invlogcdf(Normal(),log((a.threshold-a.miss/2)/(1-a.miss)))
-  thresh_off = -log(dprime)./slope
-  thresh = theta + thresh_off
+  a.thresh_samples, a.thresh_weights
 end
 
-function update(adapter::ImportanceSampler,response,correct)
-  a = track.adapter
-  a.resp[track.next_delta] = get(a.resp,track.next_delta,0) +
-    response==correct
-  a.N[track.next_delta] = get(a.N,track.next_delta,0) + 1
+function update!(adapter::ImportanceSampler,response,correct)
+  adapter.thresh_samples = ones(0)
+  adapter.resp[adapter.delta] = get(adapter.resp,adapter.delta,0) +
+    (response==correct)
+  adapter.N[adapter.delta] = get(adapter.N,adapter.delta,0) + 1
 
   thresh,weights = sample(adapter)
-  mean,sd = estimate(adapter)
+  μ,σ = estimate(adapter)
 
-  sd_ratio = sd / mean
-  if sd_ratio > repeat3_thresh
+  sd_ratio = σ / μ
+  if sd_ratio > adapter.repeat3_thresh
     repeats = 2
-  elseif sd_ratio > repeat2_thresh
+  elseif sd_ratio > adapter.repeat2_thresh
     repeats = 1
   else
     repeats = 0
   end
 
-  if steps < a.delta_repeat
-    a.delta_repeat += 1
+  if repeats > adapter.delta_repeat
+    adapter.delta_repeat += 1
   else
-    a.delta_repeat = 0
-    a.delta = mean(thresh .* weights)
+    adapter.delta_repeat = 0
+    adapter.delta = bound(sum(thresh .* weights),adapter.min_delta,adapter.max_delta)
   end
+
+  adapter
 end
 
 function estimate(adapter::ImportanceSampler)
-  thresh,weights = samples(adapter)
-  μ = mean(thresh .* weights)
-  M = weights .> 0
-  σ = sqrt(sum(((μ .- thresh) .* weights).^2) /
+  thresh,weights = sample(adapter)
+  μ = sum(thresh .* weights)
+  M = sum(weights .> 0)
+  σ = sqrt.(sum(((μ .- thresh) .* weights).^2) ./
            ((M-1)/M)*sum(weights))
 
   μ,σ

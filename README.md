@@ -255,11 +255,11 @@ For the 0.3.0 release
 - [x] allow the function passed to moment to take extra arguments passed to `moment`
 
 For the 0.3.x release
+- [x] create 2AFC abstraction
+- [x] create example 2AFC experiment that shows state dependent visuals
 - [ ] run a series of delta 0 moments all at once.
 - [ ] implement simtrak communication
 - [ ] minimize GC using preinitialized data structures during experiment??
-- [ ] create 2AFC abstraction
-- [ ] create example 2AFC experiment that shows state dependent visuals
 - [ ] edit/refine the user manual
 - [ ] create examples to demonstrate all package features
 - [ ] create some more tests for state dependent experiments
