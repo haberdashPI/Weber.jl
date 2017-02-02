@@ -8,12 +8,17 @@ import Juno
 
 Create a watcher moment that records press of `key[n]` as
 `record(response[n];kwds...)`.
+
+Key releases are suffixed, by default with "_up". This suffix can be
+changed using the `keyup_suffix` keyword argument.
 """
-function response(responses::Pair...;info...)
+function response(responses::Pair...;keyup_suffix="_up",info...)
   begin (event) ->
     for (key,response) in responses
       if iskeydown(event,key)
         record(response;info...)
+      elseif iskeyup(event,key)
+        record(response*keyup_suffix;info...)
       end
     end
   end
