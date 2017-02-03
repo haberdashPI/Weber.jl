@@ -131,8 +131,8 @@ end
 
 Randomize by a given iterable object, usually a string (e.g. the subject id.)
 
-If the same string is given, calls to random functions (e.g. `rand`, `randn` and
-`shuffle`) will result in the same output.
+If the same iterable is given, calls to random functions (e.g. `rand`, `randn`
+and `shuffle`) will result in the same output.
 """
 randomize_by(itr) = srand(reinterpret(UInt32,collect(itr)))
 
@@ -144,13 +144,11 @@ Reads experimental parameters from the user.
 With no additional keyword arguments this requests the subject id, and an
 optional `skip` parameter (defaults to 0) from the user, and then returns them
 both in a tuple. The skip can be used to restart an experiment by passing it as
-the `skip` keyword argument to the `Experiment` constructor. The optional
-skip argument is always provided as the final value in the tuple (so if there
-are additional keyword arguments, skip will come after these)
+the `skip` keyword argument to the `Experiment` constructor.
 
 You can specify additional keyword arguments to request additional
 values from the user. Arguments that are a type will yield a request for
-textual input, and will verify that that input can be parased as the given type.
+textual input, and will verify that that input can be parsed as the given type.
 Arguments whose values are a list of symbols yield a request that the user select
 one of the specified values.
 
@@ -163,13 +161,13 @@ will print out the `desecription` string.
 
 # Example
 
-    subject_id,condition,block,skip = @read_args("A simple experiment",
+    subject_id,skip,condition,block = @read_args("A simple experiment",
       condition=[:red,:green,:blue],block=Int)
 """
 macro read_args(description,keys...)
   arg_expr = quote
     "sid"
-    $(esc(:help)) = "Subject id. Trials are randomized per subject."
+    $(esc(:help)) = "The subject id."
     $(esc(:required)) = true
     $(esc(:arg_type)) = String
   end
