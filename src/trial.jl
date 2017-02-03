@@ -67,6 +67,7 @@ function record(exp::Experiment,code;kwds...)
 end
 
 function record(exp::Experiment{SDLWindow},code;kwds...)
+  kwds = exp.info.record_callback(code;kwds...)
 
   extra = [:weber_version => Weber.version,
            :start_date => Dates.format(exp.info.start,"yyyy-mm-dd"),
@@ -86,9 +87,9 @@ end
 
 Record an event with the given `code` to the data file.
 
-Each event has a code which identifies it as being a particular type
-of event. By convention when you record something with the same code
-you should specify the same set of `column_values`.
+Each event has a code which identifies it as being a particular type of
+event. This is normally a string. By convention when you record something with
+the same code you should specify the same set of `column_values`.
 
 All calls to record also result in many additiaonl values being written to
 the data file. The start time and date of the experiment, the trial and offset
@@ -99,6 +100,21 @@ creation of the experiment (see `Experiment`).
 Each call opens and closes the data file used for the experiment, so there
 should be no loss of data if the program is terminated prematurely for some
 reason.
+
+# Extending record's functionality.
+
+In some cases, such as when recording events to a serial port during an EEG
+experiment, record needs to do more than just write events to a file. You can
+extend the functionality of record by specializing record's first argument using
+your own custom type, and then make sure all of your codes are of this type.
+
+This works the same way one would specialize any method: import the record
+method, define your custom type and the define a method of record on this type,
+you can call the more generic version of record, passing an appropriate string
+when you are done with the code specific to your expeirment. Note however that
+you must also define *(x::YourType,y:String) if you make use of the `response`
+fucntion, because this will concatenate "_up" to the end of each code when it
+calls record for keyup events.
 """
 function record(code;kwds...)
   record(get_experiment(),code;kwds...)

@@ -500,6 +500,7 @@ immutable ExperimentInfo
   header::Array{Symbol}
   file::Nullable{String}
   hide_output::Bool
+  record_callback::Function
 end
 
 # ongoing state about an experiment that changes moment to moment

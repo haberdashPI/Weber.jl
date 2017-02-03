@@ -109,6 +109,10 @@ Prepares a new experiment to be run.
 * data_dir: the directory where data files should be stored (can be set to
   nothing to prevent a file from being created)
 * width and height: specified the screen resolution during the experiment
+* record_callback: called first thing during record, receiving the same arguments,
+  this can record to further devices (e.g.  serial port). This should return
+  the keyword arguments. The keyword arguments can thus be modified
+  allowing additional columns to be recorded.
 
 Additional keyword arguments can be specified to store extra information to the
 recorded data file, e.g. the experimental condition or the version of the
@@ -120,6 +124,7 @@ function Experiment(;skip=0,columns=Symbol[],debug=false,
                     null_window = false,
                     hide_output = false,
                     input_resolution = default_input_resolution,
+                    record_callback = (code;kwds...) -> kwds,
                     width=exp_width,height=exp_height,info_values...)
   if !(data_dir == nothing || hide_output)
     mkpath(data_dir)
@@ -150,7 +155,7 @@ function Experiment(;skip=0,columns=Symbol[],debug=false,
               Nullable(joinpath(data_dir,info_str*"_"*timestr*".csv")))
   einfo = ExperimentInfo(info_values,meta,input_resolution,
                          moment_resolution,start_date,columns,filename,
-                         hide_output)
+                         hide_output,record_callback)
 
   offset = 0
   trial = 0
