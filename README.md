@@ -258,6 +258,7 @@ For the 0.3.x release
 - [x] create 2AFC abstraction
 - [x] create example 2AFC experiment that shows state dependent visuals
 - [ ] run a series of delta 0 moments all at once.
+- [ ] allow the addition of further data columns during experiment setup.
 - [ ] implement simtrak communication
 - [ ] minimize GC using preinitialized data structures during experiment??
 - [ ] edit/refine the user manual
