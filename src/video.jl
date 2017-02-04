@@ -664,6 +664,21 @@ display as part of an trial moment. For example:
 
 This code will show the text "Hello, World!" on the screen 0.5 seconds after
 the start of the previous moment.
+
+!!! warning
+
+    Assuming your hardware and video drivers permit it, `display` sycnrhonizes
+    to the screen refresh rate so long as the experiment window uses accelerated
+    graphics (true by default). The display of a visual can be no more accurate
+    than that permitted by this refresh rate. In particular display can block
+    for up to the length of an entire refresh cycle. If you want accurate timing
+    in your experiment, make sure that there is nothing you want to occur
+    immediately after calling display. If you want to display multiple visuals
+    at once remember that you can compose visuals using the `+` operator, do not
+    call display multiple times and expect these visual to all display at the
+    same time (also note that the default behavior of visuals is to disappear
+    when the next visual is shown).
+
 """
 function display(r::SDLRendered;kwds...)
   if in_experiment() && !experiment_running()
