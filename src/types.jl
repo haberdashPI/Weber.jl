@@ -1,6 +1,6 @@
 import Base: show, isempty, time, >>, length, unshift!, promote_rule, convert,
-  hash, ==, isless
-import DataStructures: front
+  hash, ==, isless, pop!
+import DataStructures: front, back
 
 export iskeydown, iskeyup, iskeypressed, isfocused, isunfocused, keycode,
   endofpause, @key_str, time, response_time, keycode, listkeys
@@ -391,6 +391,8 @@ const concrete_events = [
 abstract Moment
 abstract SimpleMoment <: Moment
 required_delta_t(m::Moment) = delta_t(m)
+isimmediate(m::Moment) = delta_t(m) == 0.0
+sequenceable(m::Moment) = isimmediate(m)
 
 type ResponseMoment <: SimpleMoment
   respond::Function
@@ -402,6 +404,7 @@ function delta_t(moment::ResponseMoment)
   (moment.timeout_delta_t > 0.0 ? moment.timeout_delta_t : Inf)
 end
 required_delta_t(m::ResponseMoment) = Inf
+isimmediate(m::ResponseMoment) = false
 
 abstract AbstractTimedMoment <: SimpleMoment
 
@@ -410,6 +413,7 @@ type TimedMoment <: AbstractTimedMoment
   run::Function
 end
 delta_t(moment::TimedMoment) = moment.delta_t
+sequenceable(m::TimedMoment) = true
 
 type OffsetStartMoment <: AbstractTimedMoment
   run::Function
@@ -417,6 +421,7 @@ type OffsetStartMoment <: AbstractTimedMoment
   expanding::Bool
 end
 delta_t(moment::OffsetStartMoment) = 0.0
+isimmediate(m::OffsetStartMoment) = false
 
 type PlayMoment <: AbstractTimedMoment
   delta_t::Float64
@@ -424,6 +429,7 @@ type PlayMoment <: AbstractTimedMoment
   keys::Vector
 end
 delta_t(m::PlayMoment) = m.delta_t
+sequenceable(m::PlayMoment) = true
 
 type PlayFunctionMoment <: AbstractTimedMoment
   delta_t::Float64
@@ -433,12 +439,15 @@ type PlayFunctionMoment <: AbstractTimedMoment
 end
 PlayFunctionMoment(d,f,k) = PlayFunctionMoment(d,f,k,Nullable())
 delta_t(m::PlayFunctionMoment) = m.delta_t
+sequenceable(m::PlayFunctionMoment) = true
 
 type DisplayMoment <: AbstractTimedMoment
   delta_t::Float64
   visual::SDLRendered
 end
 delta_t(m::DisplayMoment) = m.delta_t
+sequenceable(m::DisplayMoment) = true
+
 type DisplayFunctionMoment <: AbstractTimedMoment
   delta_t::Float64
   fn::Function
@@ -447,23 +456,36 @@ type DisplayFunctionMoment <: AbstractTimedMoment
 end
 DisplayFunctionMoment(d,f,k) = DisplayFunctionMoment(d,f,k,Nullable())
 delta_t(m::DisplayFunctionMoment) = m.delta_t
+sequenceable(m::DisplayFunctionMoment) = true
 
 type FinalMoment <: SimpleMoment
   run::Function
 end
 delta_t(moment::FinalMoment) = 0.0
+isimmediate(m::FinalMoment) = true
 
 
 type CompoundMoment <: Moment
   data::Array{Moment}
 end
 delta_t(m::CompoundMoment) = 0.0
+isimmediate(m::CompoundMoment) = false
 >>(a::SimpleMoment,b::SimpleMoment) = CompoundMoment([a,b])
 >>(a::CompoundMoment,b::CompoundMoment) = CompoundMoment(vcat(a.data,b.data))
 >>(a::Moment,b::Moment) = >>(promote(a,b)...)
 >>(a::Moment,b::Moment,c::Moment,d::Moment...) = moment(a,b,c,d...)
 promote_rule{T <: SimpleMoment}(::Type{CompoundMoment},::Type{T}) = CompoundMoment
 convert(::Type{CompoundMoment},x::SimpleMoment) = CompoundMoment([x])
+
+# optimize a seequence of moments that can occur, immediately, one after
+# the other
+type MomentSequence <: AbstractTimedMoment
+  data::Vector{Moment}
+end
+delta_t(m::MomentSequence) = delta_t(m.data[1])
+push!(m::MomentSequence,x) = push!(m.data,x)
+sequence(m1::Moment,m2::Moment) = MomentSequence([m1,m2])
+sequence(ms::MomentSequence,m::Moment) = (push!(ms.data,m); ms)
 
 type ExpandingMoment <: Moment
   condition::Function
@@ -472,6 +494,7 @@ type ExpandingMoment <: Moment
   update_offset::Bool
 end
 delta_t(m::ExpandingMoment) = 0.0
+isimmediate(m::ExpandingMoment) = false
 
 type MomentQueue
   data::Deque{Moment}
@@ -482,7 +505,9 @@ length(m::MomentQueue) = length(m.data)
 enqueue!(m::MomentQueue,x) = push!(m.data,x)
 dequeue!(m::MomentQueue) = shift!(m.data)
 unshift!(m::MomentQueue,x) = unshift!(m.data,x)
+pop!(m::MomentQueue) = pop!(m.data)
 front(m::MomentQueue) = front(m.data)
+back(m::MomentQueue) = back(m.data)
 function next_moment_time(m::MomentQueue)
   (isempty(m) ? Inf : m.last + delta_t(front(m)))
 end

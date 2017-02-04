@@ -120,12 +120,31 @@ function record(code;kwds...)
   record(get_experiment(),code;kwds...)
 end
 
+function addmoment(q::ExpandingMoment,m::Moment)
+  m = flag_expanding(m)
+  if !isempty(q.data) && isimmediate(m) && sequenceable(top(q.data))
+    m = sequence(pop!(q.data),m)
+  end
+  push!(q.data,m)
+end
+
+function addmoment(q::MomentQueue,m::Moment)
+  if !isempty(q) && isimmediate(m) && sequenceable(back(q))
+    m = sequence(pop!(q),m)
+  end
+  enqueue!(q,m)
+end
+
+function addmoment(q::Vector{Moment},m::Moment)
+  if !isempty(q) && isimmediate(m) && sequenceable(last(q))
+    m = sequence(pop!(q),m)
+  end
+  push!(q,m)
+end
+
 addmoment(e::Experiment,m) = addmoment(e.data.moments,m)
-addmoment(q::ExpandingMoment,m::Moment) = push!(q.data,flag_expanding(m))
 addmoment(q::Array{MomentQueue},m::Moment) = addmoment(first(q),m)
-addmoment(q::MomentQueue,m::Moment) = enqueue!(q,m)
-addmoment(q::Array{Moment,1},m::Moment) = push!(q,m)
-function addmoment(q::Union{ExpandingMoment,MomentQueue,Array},watcher::Function)
+function addmoment(q::Union{ExpandingMoment,MomentQueue,Array{MomentQueue}},watcher::Function)
   for t in concrete_events
     precompile(watcher,(t,))
   end
@@ -688,6 +707,7 @@ the current one has finished.
 prepare!(m::Moment) = nothing
 prepare!(m::DisplayFunctionMoment) = m.visual = Nullable(visual(m.fn();m.keys...))
 prepare!(m::PlayFunctionMoment) = m.sound = Nullable(sound(m.fn()))
+prepare!(m::MomentSequence) = foreach(prepare!,m.data)
 
 #===============================================================================
     handle(exp,queue,moment,x)
@@ -711,17 +731,18 @@ function handle(exp::Experiment,q::MomentQueue,moment::FinalMoment,x)
   true
 end
 
-run(exp,m::TimedMoment) = m.run()
-run(exp,m::OffsetStartMoment) = m.run()
-run(exp,m::PlayMoment) = _play(m.sound;m.keys...)
-run(exp,m::DisplayMoment) = display(exp.win,m.visual)
-run(exp,m::PlayFunctionMoment) = _play(get(m.sound);m.keys...)
-run(exp,m::DisplayFunctionMoment) = display(exp.win,get(m.visual))
+run(exp,q,m::TimedMoment) = m.run()
+run(exp,q,m::OffsetStartMoment) = m.run()
+run(exp,q,m::PlayMoment) = _play(m.sound;m.keys...)
+run(exp,q,m::DisplayMoment) = display(exp.win,m.visual)
+run(exp,q,m::PlayFunctionMoment) = _play(get(m.sound);m.keys...)
+run(exp,q,m::DisplayFunctionMoment) = display(exp.win,get(m.visual))
+run(exp,q,m::MomentSequence) = foreach(x -> run(exp,q,x),m.data)
 
 function handle(exp::Experiment,q::MomentQueue,
                 moment::AbstractTimedMoment,time::Float64)
   exp.data.last_time = time
-  run(exp,moment)
+  run(exp,q,moment)
   q.last = time
   dequeue!(q)
   true
