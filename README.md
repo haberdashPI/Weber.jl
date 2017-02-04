@@ -257,9 +257,10 @@ For the 0.3.0 release
 For the 0.3.x release
 - [x] create 2AFC abstraction
 - [x] create example 2AFC experiment that shows state dependent visuals
-- [ ] run a series of delta 0 moments all at once.
+- [x] run a series of delta 0 moments all at once.
 - [ ] allow the addition of further data columns during experiment setup.
 - [ ] implement simtrak communication
+- [ ] improve bayesian adaptive tracking algorithms
 - [ ] minimize GC using preinitialized data structures during experiment??
 - [ ] edit/refine the user manual
 - [ ] create examples to demonstrate all package features
