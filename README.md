@@ -16,7 +16,7 @@
 
 # About
 
-Weber can be used to generate simple pscyhology experiments that present visual
+Weber can be used to generate simple psychology experiments that present visual
 and auditory stimuli at precise times. The emphasis is currently on auditory
 psychophysics, but the package has the features necessary to generate most
 visual stimuli one would desire as well. It is named after Ernst Weber. Weber
@@ -99,9 +99,9 @@ high = ramp(tone(1100,0.5))
 This generates the low (1000 Hz) and high (1100 Hz) tone. In addition to `ramp`
 and `tone` there are many other function to help you generate sounds (`mix`,
 `mult`, `silence`, `noise`, `highpass`, `lowpass`, `bandpass`, `tone`, `ramp`,
-`harmonic_complex`, `attenuate`). Any aribtrary single dimensional array (or 2d for stereo
+`harmonic_complex`, `attenuate`). Any arbitrary single dimensional array (or 2d for stereo
 sound) can be used as a sound stimulus, and anything you can do to an array you
-can do to a sound stimiulus. You can also load sounds from a wav file using
+can do to a sound stimulus. You can also load sounds from a wav file using
 `load`. Refer to the documentation of these individual functions for
 details. Generally you should create the sounds prior to running an experiment,
 as shown here, to minimize latency. If these functions are insufficient you may
@@ -131,7 +131,7 @@ intended to occur at a precise time during a trial. They are the basic building
 blocks of trials. There are many ways to create moments: please refer to the
 documentation for `addtrial` for a complete list of available moment types, and
 some guidlines about creating low-latency moments. In the above, the function
-`moment`, `response` and `await_resposne` are functions that generate a kind of
+`moment`, `response` and `await_response` are functions that generate a kind of
 moment. The call to `moment` is used to present the tone (e.g. `play,low`) 0.5
 seconds after the start of the last moment. The `response` moment records all
 presses of 'q' and 'p' to a data file stored in the a subdirectory called
@@ -186,7 +186,7 @@ restart the experiment from some time point in the middle of an experiment.
 Note that the experiment has not actually been run after this code has completed
 running, it is merely ready to begin. Normally experiments have a fixed number
 of trials specified during setup, as shown here, but if you wish to do more
-advanced types of experiments with some aribtrary number of trials, refer to the
+advanced types of experiments with some arbitrary number of trials, refer to the
 documentation for `@addtrials`.
 
 ```julia
@@ -211,9 +211,9 @@ to the subject.
 There is also an `addbreak_every` primitive that adds a break every N trials,
 and `levitt_adapter` and `bayesian_adapter` which can be used to create trials
 with stimuli that adjust adaptively adjust based on the participant's
-responses. The adapter's usage is demosntrated in the example file
+responses. The adapter's usage is demonstrated in the example file
 `freq2afc.jl`. At the present moment the bayesian adapter's default priors are
-not well optimized, so it is recommended that you use `levitt_adpater`.
+not well optimized, so it is recommended that you use `levitt_adapter`.
 
 # Status
 
@@ -253,7 +253,7 @@ For the 0.3.0 release
 - [x] allow display and play to use thunks to generate visuals
       and sounds that depend on previous moments.
 - [x] change exp_tick() to Weber.tick()
-- [x] remove t parameter from moment funtions (if needed one can use Weber.tick())
+- [x] remove t parameter from moment functions (if needed one can use Weber.tick())
 - [x] allow the function passed to moment to take extra arguments passed to `moment`
 
 For the 0.3.x release
@@ -275,4 +275,4 @@ For the 0.4.0 release?
 - [ ] port to linux
 - [ ] video playback (requires julia multi threading or custom c code)
 - [ ] track audio buffer timing so we can zero-pad sounds to get sub-buffer-size timing
-      acuracy. (requires julia multi threading or custom c code)
+      accuracy. (requires julia multi threading or custom c code)
