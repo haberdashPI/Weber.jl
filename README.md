@@ -258,11 +258,12 @@ For the 0.3.x release
 - [x] create 2AFC abstraction
 - [x] create example 2AFC experiment that shows state dependent visuals
 - [x] run a series of delta 0 moments all at once.
-- [ ] allow the addition of further data columns during experiment setup.
-- [ ] implement simtrak communication
+- [x] allow the addition of further data columns during experiment setup.
+- [x] allow record callback to communicate with additional devices
 - [ ] improve bayesian adaptive tracking algorithms
 - [ ] minimize GC using preinitialized data structures during experiment??
 - [ ] edit/refine the user manual
+- [ ] remember to document the record codes generated automatically by Weber
 - [ ] create examples to demonstrate all package features
 - [ ] create some more tests for state dependent experiments
 - [ ] create tests for `display` and `play` logistics. 
