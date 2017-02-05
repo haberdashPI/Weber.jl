@@ -32,8 +32,7 @@ function one_trial(adapter)
 end
 
 exp = Experiment(sid = sid,condition = "example",version = version,
-                 skip=trial_skip,standard=1000,
-                 columns = [:delta,:correct,:kind])
+                 skip=trial_skip,standard=1000)
 
 setup(exp) do
   addbreak(moment(record,"start"))
