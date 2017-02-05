@@ -1,3 +1,4 @@
+using CSV
 import Base: run
 export Experiment, setup, run
 import Juno
@@ -83,6 +84,25 @@ global state, specific to this experiment, in this dictionary.
 metadata(exp) = exp.info.meta
 metadata() = metadata(get_experiment())
 
+"""
+    addcolumn(column::Symbol)
+
+Adds a column to be recorded in the data file.
+
+This function must be called during setup.  It cannot be called once the
+experiment has begun. Repeatedly adding the same column only adds the column
+once.
+"""
+function addcolumn(exp::Experiment,col::Symbol)
+  if exp.flags.processing
+    error("You cannot change the data file header once the experiment starts! ",
+          "Make sure call `addcolumn` during setup, not inside a moment.")
+  end
+  if col ∉ exp.info.header
+    push!(exp.info.header,col)
+  end
+end
+addcolumn(col::Symbol) = addcolumn(get_experiment(),col)
 
 """
    Experiment([skip=0],[columns=[symbols...]],[debug=false],
@@ -93,25 +113,27 @@ Prepares a new experiment to be run.
 
 # Keyword Arguments
 * skip: the number of offsets to skip. Allows restarting of an experiment
-  somewhere in the middle.
+  somewhere in the middle. When an experiment is terminated, the most
+  recent offset is reported. The offset is also recorded in each row
+  of the resulting data file (also reported on exit).
 * columns: the names (as symbols) of columns that will be recorded during
   the experiment (using `record`). The column `:value` is always included here,
   even if not specified, since there are number of events recorded automatically
   which make use of this column.
-* debug: if true experiment will show in a windowed view
+* debug: if true, experiment will show in a windowed view
 * moment_resolution: the desired precision (in seconds) that moments
   should be presented at. Warnings will be printed for moments that
   lack this precision.
 * input_resolution: the precision (in seconds) that input events should
-  be queried. This almost never needs to be changed. Keyboards do not provide
+  be queried at. This almost never needs to be changed. Keyboards do not provide
   precise timing, and the timing of response pads is queried independently
-  from input_resolution by using `response_time`.
+  from input_resolution, using `response_time`.
 * data_dir: the directory where data files should be stored (can be set to
   nothing to prevent a file from being created)
 * width and height: specified the screen resolution during the experiment
-* record_callback: called first thing during record, receiving the same arguments,
-  this can record to further devices (e.g.  serial port). This should return
-  the keyword arguments. The keyword arguments can thus be modified
+* record_callback: called first thing during record, receiving the same
+  arguments, this can record to further devices (e.g.  serial port). This should
+  return the keyword arguments. The keyword arguments can thus be modified
   allowing additional columns to be recorded.
 
 Additional keyword arguments can be specified to store extra information to the
@@ -191,7 +213,6 @@ calls to `addtrial`, `addbreak` and `addpractice` must be called in side of
 """
 function setup(fn::Function,exp::Experiment)
   # create data file header
-  record_header(exp)
   function cleanup()
     exp.flags.running = false
     exp.flags.processing = false
@@ -369,6 +390,7 @@ function run(exp::Experiment;await_input=!Juno.isactive())
   # println("========================================")
   # println("Completed warmup run.")
   try
+    record_header(exp)
     focus(exp.win)
 
     experiment_context[] = Nullable(exp)

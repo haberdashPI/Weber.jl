@@ -46,10 +46,6 @@ end
 Record a response in a n-alternative forced choice task and update
 an adapter.
 
-If you use this function, be sure to include :delta and :correct
-in your list of data columns (see `Experiment`), as they are used
-to record the correct response, and the adapter delta.
-
 The first response recieved is interprted as the actual response. Subsequent
 response will be recorded, without a delta or correct value set, and appending
 "late_" to the specified response string.
@@ -80,6 +76,9 @@ function response(callback::Function,adapter::Adapter,responses::Pair...;
                   correct=nothing,show_feedback=true,
                   feedback=Dict(true => "Correct!",false => "Wrong!"),
                   keys...)
+  addcolumn(:correct)
+  addcolumn(:delta)
+
   if correct ∉ map(x -> x[2],responses)
     error("The value of `correct` must be "*
           join(map(x -> x[2],responses),", "," or "))
