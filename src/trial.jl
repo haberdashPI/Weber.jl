@@ -517,7 +517,8 @@ function addbreak(moments...;keys...)
 end
 
 function addbreak(exp::Experiment,moments...;keys...)
-  addmoments(exp,[offset_start_moment(#=t -> gc_enable(true)=#),moments];keys...)
+  addmoments(exp,[offset_start_moment(() -> record("break_start")),moments];
+             keys...)
 end
 
 """
