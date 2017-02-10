@@ -1,5 +1,5 @@
 import Base: run
-export Experiment, setup, run
+export Experiment, setup, run, addcolumn
 import Juno
 
 const default_moment_resolution = 0.0015
