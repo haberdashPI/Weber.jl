@@ -115,10 +115,11 @@ Prepares a new experiment to be run.
   somewhere in the middle. When an experiment is terminated, the most
   recent offset is reported. The offset is also recorded in each row
   of the resulting data file (also reported on exit).
-* columns: the names (as symbols) of columns that will be recorded during
-  the experiment (using `record`). The column `:value` is always included here,
-  even if not specified, since there are number of events recorded automatically
-  which make use of this column.
+* columns: the names (as symbols) of columns that will be recorded during the
+  experiment (using `record`). These can be set to fixed values (using :name =>
+  value), or be filled in during a call to record (:name). The column `:value`
+  is always included here, even if not specified, since there are number of
+  events recorded automatically which make use of this column.
 * debug: if true, experiment will show in a windowed view
 * moment_resolution: the desired precision (in seconds) that moments
   should be presented at. Warnings will be printed for moments that
@@ -135,9 +136,7 @@ Prepares a new experiment to be run.
   return the keyword arguments. The keyword arguments can thus be modified
   allowing additional columns to be recorded.
 
-Additional keyword arguments can be specified to store extra information to the
-recorded data file, e.g. the experimental condition or the version of the
-experiment being run.
+
 """
 function Experiment(;skip=0,columns=Symbol[],debug=false,
                     moment_resolution = default_moment_resolution,
@@ -147,6 +146,7 @@ function Experiment(;skip=0,columns=Symbol[],debug=false,
                     input_resolution = default_input_resolution,
                     record_callback = (code;kwds...) -> kwds,
                     width=exp_width,height=exp_height,info_values...)
+                    width=exp_width,height=exp_height)
   if !(data_dir == nothing || hide_output)
     mkpath(data_dir)
   elseif !hide_output
@@ -171,12 +171,14 @@ function Experiment(;skip=0,columns=Symbol[],debug=false,
   start_time = precise_time()
   start_date = now()
   timestr = Dates.format(start_date,"yyyy-mm-dd__HH_MM_SS")
+  info_values = filter(x -> isa(x,Pair),columns)
+  reserved_columns = filter(x -> !isa(x,Pair),columns)
   info_str = join(map(x -> x[2],info_values),"_")
   filename = (data_dir == nothing || hide_output ? Nullable() :
               Nullable(joinpath(data_dir,info_str*"_"*timestr*".csv")))
-  einfo = ExperimentInfo(info_values,meta,input_resolution,
-                         moment_resolution,start_date,columns,filename,
-                         hide_output,record_callback)
+  einfo = ExperimentInfo(info_values,meta,input_resolution,moment_resolution,
+                         start_date,reserved_columns,filename,hide_output,
+                         record_callback)
 
   offset = 0
   trial = 0
