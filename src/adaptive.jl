@@ -114,12 +114,13 @@ end
                   [min_reversals=7],[min_delta=-Inf],[max_delta=Inf],
                   [mult=false])
 
-Creates a N-down M-up adaptor ala Levitt (1971). See documentaiton
-of `Adapter` for usage.
+Find a threshold according to a non-parametric statistical procedure. This
+approach makes fewer explicit assumptions than `bayesian_adapter` but may be
+slower to converge to a threshold.
 
-This can be used to adjust a perceptual difference (delta) to reach a desired
-threshold, as determiend by N and M. For instnace a 3-down, 1-up adapter finds
-the 79%-correct threshold.
+This finds a threshold by moving the delta down after three correct responses
+and up after one incorrect response (these default up and down counts can be
+changed). This is the same approach described in Levitt (1971).
 
 # Keyword Arguments
 
@@ -239,72 +240,129 @@ end
 type ImportanceSampler <: Adapter
   miss::Float64
   threshold::Float64
-  n_samples::Int
   thresh_d::UnivariateDistribution
-  slope_d::UnivariateDistribution
+  inv_slope_d::UnivariateDistribution
+  n_samples::Int
+
+  theta_prior::UnivariateDistribution
+  inv_slope_prior::UnivariateDistribution
+
   delta::Float64
   min_delta::Float64
   max_delta::Float64
   delta_repeat::Int
+
   resp::Dict{Float64,Int}
   N::Dict{Float64,Int}
   thresh_samples::Vector{Float64}
+  theta_samples::Vector{Float64}
+  inv_slope_samples::Vector{Float64}
   thresh_weights::Vector{Float64}
+
   repeat2_thresh::Float64
   repeat3_thresh::Float64
 end
 
+# TODO: prior is working, but improve it to make the
+# parameters easy to specify???
+
 """
-    baysian_adapter([first_delta=0.1],[n_samples=1000],[miss=0.01],
-                    [threshold=0.79],[thresh_d=Uniform(0,1)],
-                    [slope_d=LogNormal(log(1),log(100))],[repeat3_thresh=0.1],
-                    [repeat2_thresh=0.01],[min_delta=0],[max_delta=Inf])
+    baysian_adapter(;first_delta=0.1,
+                     n_samples=1000,miss=0.01,threshold=0.79,
+                     min_delta=0,max_delta=1,
+                     min_plausible_delta = 0.0001,
+                     max_plausible_delta = 0.2,
+                     repeat3_thresh=1.0,repeat2_thresh=0.1,
+                     thresh_prior=
+                     Truncated(LogNormal(log(min_plausible_delta),
+                                         log(max_plausible_delta/
+                                             min_plausible_delta/2)),
+                               min_delta,max_delta),
+                          inv_slope_prior=TruncatedNormal(0,0.25,0,Inf),
+                          thresh_d=thresh_prior,
+                          inv_slope_d=inv_slope_prior)
 
-Creates an adapter that estimates the desired response threshold using
-a bayesian approach, selecting the delta to be the best estimate of this
-threshold. This is a modified version of the approach described in
-Kontsevich & Tyler 1999.
+Find a threshold according to a parametric statistical model. This makes more
+explicit assumptions than the `levitt_adapter` but will normally find the
+threshold faster.
 
-This estimator is designed to find, in a reasonably short time, a good estimate
-of the threshold. While Kontsevich & Tyler's method selects a delta
-quite possibly far from the threshold (to better estiamte the overall
-psychometric function), in practice this can lead to a less efficient estimates
-of the threshold itself.
+The psychmetric curve is estimated from user responses using a bayesian
+approach. After estimation, each new delta is selected in a greedy fashion,
+picking the response that best minimizes entropy according to this psychometric
+function. This is a modified version of the approach described in Kontsevich &
+Tyler 1999. Specifically, the approach here uses importance sampling instead of
+sampling parmeters over a deterministic, uniform grid. This should increase
+measurement efficiency if the priors are chosen well.
 
-Further, for stability and robustness, this adapter begins by repeating the same
-delta multiple times and only begins quickly changing deltas trial-by-trial when
-the ratio of standard deviation to the mean is small.
+This algorithm assumes the following functional form for the psychometric
+response as a function of the stimulus difference ``Δ``.
+
+``
+f(Δ) = λ/2 + (1-λ) Φ((Δ - θ)⋅σ/√2
+``
+
+In the above ``Φ`` is the cumulative distribution function of a normal
+distribution, ``λ`` is the miss-rate parameter, indicating the rate at which
+listeners make a mistake, even when the delta is large and easily heard, ``θ``
+is the 50%-correct threshold, and ``σ`` is the psychometric slope.
+
+For stability and robustness, this adapter begins by repeating the same delta
+multiple times and only begins quickly changing deltas trial-by-trial when the
+ratio of standard deviation to the mean is small. This functionality can be
+adjusted using `repeat3_thresh` and `repeat2_thresh`, or, if you do not
+wish to have any repeats, both values can be set to Inf.
 
 # Keyword Arugments
 
 - first_delta: the delta to start measuring with
-- n_samples: the number of samples to use during importance sampling
+- n_samples: the number of samples to use during importance sampling.
+  The algorithm for selecting new deltas is O(n²).
 - miss: the expected rate at which that listeners will make mistakes
   even for easy to percieve differences.
-- threshold: the %-response threhsold to be estimated
+- threshold: the %-response threshold to be estimated
+- min_delta: the smallest possible delta
+- max_delta: the largest smallest possible delta
+- min_plausible_delta: the smallest plausible delta, should be > 0.
+  Used to define thresh_prior.
+- max_plausible_delta: the largest plausible delta, should be < max_delta.
+  Used to define thresh_prior.
+- thresh_prior: the prior probability distribution across thresholds.
+  This influence the way the delta is adapted. By default this is defined in
+  terms of max_plausible_delta.
+- inv_slope_prior: the prior probability distribution across inverse slopes.
 - thresh_d: the distribution over-which to draw samples for the threshold
-  during importance sampling
-- slope_d: the distribution over-which to draw samples for the slope
-  during importance sampling.
-- repeat3_thresh: the ratio of sd / mean required to move from
+  during importance sampling. This defaults to thresh_prior
+- inv_slope_d: the distribution over-which to draw samples for the inverse slope
+  during importance sampling. This defaults to inv_slope_prior.
+- repeat3_thresh: the ratio of sd / mean for theta required to move from
   repeating a delta 3 times to 2 times before changing the delta.
-- repeat2_thresh: the ratio of sd / mean required to move from
+- repeat2_thresh: the ratio of sd / mean for theta required to move from
   repeating a delta 2 times to 1 time before changing the delta.
 """
 function bayesian_adapter(;first_delta=0.1,
                           n_samples=1000,miss=0.01,threshold=0.79,
-                          repeat3_thresh=0.1,repeat2_thresh=0.01,
                           min_delta=0,max_delta=1,
-                          thresh_d=Uniform(min_delta,max_delta),
-                          slope_d=LogNormal(log(1),log(100)))
+                          min_plausible_delta = 0.0001,
+                          max_plausible_delta = 0.2,
+                          repeat3_thresh=1.0,repeat2_thresh=0.1,
+                          thresh_prior=
+                          Truncated(LogNormal(log(min_plausible_delta),
+                                              log(max_plausible_delta/
+                                                  min_plausible_delta/2)),
+                                    min_delta,max_delta),
+                          inv_slope_prior=TruncatedNormal(0,0.25,0,Inf),
+                          thresh_d=thresh_prior,
+                          inv_slope_d=inv_slope_prior)
   delta = first_delta
   delta_repeat = 0
   resp = Dict{Float64,Int}()
   N = Dict{Float64,Int}()
   samples = ones(0)
   weights = ones(0)
-  ImportanceSampler(miss,threshold,n_samples,thresh_d,slope_d,delta,
-                    min_delta,max_delta,delta_repeat,resp,N,samples,weights,
+  ImportanceSampler(miss,threshold,thresh_d,inv_slope_d,n_samples,
+                    thresh_prior,inv_slope_prior,
+                    delta,min_delta,max_delta,delta_repeat,
+                    resp,N,samples,samples,samples,weights,
                     repeat3_thresh,repeat2_thresh)
 end
 
@@ -312,15 +370,16 @@ const sqrt_2 = sqrt(2)
 function sample(a::ImportanceSampler)
   if length(a.thresh_samples) == 0
     theta = rand(a.thresh_d,a.n_samples)
-    slope = rand(a.slope_d,a.n_samples)
-    q_log_prob = logpdf(a.thresh_d,theta) .+ logpdf(a.slope_d,slope)
+    inv_slope = rand(a.inv_slope_d,a.n_samples)
+    q_log_prob = logpdf(a.thresh_d,theta) .+ logpdf(a.inv_slope_d,inv_slope)
 
     udeltas = collect(keys(a.resp))
-    p = (a.miss/2) + (1-a.miss)*cdf(Normal(),exp((udeltas' .- theta).*slope)/sqrt_2)
+    x = exp((udeltas' .- theta)./inv_slope)/sqrt_2
+    p = (a.miss/2) + (1-a.miss)*cdf(Normal(),x)
     log_prob = sum(enumerate(udeltas)) do x
       i,delta = x
       logpdf.(Binomial.(a.N[delta],p[:,i]),a.resp[delta])
-    end
+    end + logpdf(a.theta_prior,theta) + logpdf(a.inv_slope_prior,inv_slope)
 
     lweights = log_prob - q_log_prob
     weights = exp.(lweights - maximum(lweights))
@@ -334,8 +393,9 @@ function sample(a::ImportanceSampler)
     # end
 
     dprime = invlogcdf(Normal(),log((a.threshold-a.miss/2)/(1-a.miss)))
-    thresh_off = -log(dprime)./slope
-
+    thresh_off = -log(dprime).*inv_slope
+    a.theta_samples = theta
+    a.inv_slope_samples = inv_slope
     a.thresh_samples = theta + thresh_off
     a.thresh_weights = weights
   end
@@ -364,7 +424,21 @@ function update!(adapter::ImportanceSampler,response,correct)
     adapter.delta_repeat += 1
   else
     adapter.delta_repeat = 0
-    adapter.delta = bound(sum(thresh .* weights),adapter.min_delta,adapter.max_delta)
+
+    # TODO: sample these differences to make sure this is a reasonably
+    # sized array
+    # TODO: debug selection
+
+    entropies = -sum(1:adapter.n_samples) do i
+      diff = adapter.thresh_samples[i] .- adapter.theta_samples
+      dprime = exp(diff./adapter.inv_slope_samples)/sqrt_2
+      p = ((adapter.miss/2) + (1-adapter.miss)*cdf(Normal(),dprime))
+      (p .* log(p) + (1-p) .* log(1-p)) .* weights
+    end
+
+    _,i = findmax(entropies)
+
+    adapter.delta = adapter.thresh_samples[i]
   end
 
   adapter
