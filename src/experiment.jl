@@ -106,7 +106,7 @@ addcolumn(col::Symbol) = addcolumn(get_experiment(),col)
 """
    Experiment([skip=0],[columns=[symbols...]],[debug=false],
               [moment_resolution=0.0015],[input_resolution=1/60],[data_dir="data"],
-              [width=1024],[height=768],kwds...)
+              [width=1024],[height=768],[extensions=[]])
 
 Prepares a new experiment to be run.
 
@@ -131,10 +131,8 @@ Prepares a new experiment to be run.
 * data_dir: the directory where data files should be stored (can be set to
   nothing to prevent a file from being created)
 * width and height: specified the screen resolution during the experiment
-* record_callback: called first thing during record, receiving the same
-  arguments, this can record to further devices (e.g.  serial port). This should
-  return the keyword arguments. The keyword arguments can thus be modified
-  allowing additional columns to be recorded.
+* extensions: an array of Weber.Extension objects, which extend the
+  behavior of an experiment.
 
 
 """
@@ -144,8 +142,7 @@ function Experiment(;skip=0,columns=Symbol[],debug=false,
                     null_window = false,
                     hide_output = false,
                     input_resolution = default_input_resolution,
-                    record_callback = (code;kwds...) -> kwds,
-                    width=exp_width,height=exp_height,info_values...)
+                    extensions = Extension[],
                     width=exp_width,height=exp_height)
   if !(data_dir == nothing || hide_output)
     mkpath(data_dir)
@@ -199,7 +196,8 @@ function Experiment(;skip=0,columns=Symbol[],debug=false,
 
   win = window(width,height,fullscreen=!debug,accel=!debug,null=null_window)
 
-  Experiment(einfo,data,flags,win)
+  base = Experiment(einfo,data,flags,win,EmptyExtension(),nothing)
+  reduce(extend,base,extensions)
 end
 
 

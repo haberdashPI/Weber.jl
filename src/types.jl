@@ -525,7 +525,6 @@ immutable ExperimentInfo
   header::Array{Symbol}
   file::Nullable{String}
   hide_output::Bool
-  record_callback::Function
 end
 
 # ongoing state about an experiment that changes moment to moment
@@ -549,9 +548,22 @@ type ExperimentFlags
   processing::Bool
 end
 
-immutable Experiment{T}
+abstract Extension
+
+type EmptyExtension <: Extension
+end
+
+immutable Experiment{W,E <: Extension,N}
   info::ExperimentInfo
   data::ExperimentData
   flags::ExperimentFlags
-  win::T
+  win::W
+  extension::E
+  next_extension::N
+end
+
+typealias ExtendedExperiment{E <: Extension} Experiment{SDLWindow,E}
+
+function extend{W,E <: Extension,N,E2 <: Extension}(e::Experiment{W,E,N},ext::E2)
+  Experiment(e.info,e.data,e.flags,e.win,ext,e)
 end

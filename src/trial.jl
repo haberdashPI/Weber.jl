@@ -67,8 +67,6 @@ function record(exp::Experiment,code;kwds...)
 end
 
 function record(exp::Experiment{SDLWindow},code;kwds...)
-  kwds = exp.info.record_callback(code;kwds...)
-
   extra = [:weber_version => Weber.version,
            :start_date => Dates.format(exp.info.start,"yyyy-mm-dd"),
            :start_time => Dates.format(exp.info.start,"HH:MM:SS"),
