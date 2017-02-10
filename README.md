@@ -7,21 +7,13 @@
 
 <!-- [![codecov.io](http://codecov.io/github/haberdashPI/Weber.jl/coverage.svg?branch=master)](http://codecov.io/github/haberdashPI/Weber.jl?branch=master) -->
 
-# Index
-
-* [About](#about)
-* [Installation](#installation)
-* [Usage](#usage)
-* [Status](#status)
-
 # About
 
-Weber can be used to generate simple psychology experiments that present visual
-and auditory stimuli at precise times. The emphasis is currently on auditory
-psychophysics, but the package has the features necessary to generate most
-visual stimuli one would desire as well. It is named after Ernst Weber. Weber
-runs on Windows and Mac OS X, and supports keyboard input or Cedrus response-pad
-input.
+Weber is a Julia package that can be used to generate simple psychology experiments that present visual and auditory stimuli at precise times. Julia is a recent programming language designed specifically for technical computing.
+
+Weber's intended audience is graduate students in psychology and neuroscience, so it has been built with the assumption that its users have only minimal programming experience. The hope is that users should be able to get started right away making simple experiments.
+
+Weber's emphasis is currently on auditory psychophysics, but the package has the features necessary to generate most visual stimuli one would desire as well, thanks to [Images.jl](https://github.com/JuliaImages/Images.jl). It is named after Ernst Weber. Weber runs on Windows and Mac OS X, and supports keyboard input or Cedrus response-pad input.
 
 # Installation
 
@@ -31,6 +23,11 @@ prompt, run this code.
 ```julia
 julia> Pkg.add("Weber")
 ```
+
+# Documentation
+
+[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://haberdashPI.github.io/Weber.jl/stable)
+[![](https://img.shields.io/badge/docs-latest-blue.svg)](https://USER_NAME.github.io/Weber.jl/latest)
 
 # Usage
 
@@ -265,7 +262,8 @@ For the 0.3.x release
 - [x] improve bayesian adaptive tracking algorithms
 - [x] implement extensions
 - [x] move extra static columns into separeate keyword argument
-- [ ] edit/refine the user manual
+- [x] edit/refine the user manual
+- [ ] proofread documentation
 - [ ] remember to document the record codes generated automatically by Weber
 - [ ] create examples to demonstrate all package features
 - [ ] create some more tests for state dependent experiments

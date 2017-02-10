@@ -10,25 +10,21 @@ high = ramp(tone(1100,0.5))
 
 function one_trial()
   if rand(Bool)
-    stim = moment(0.5,play,low)
-    resp = response(key"q" => "low", key"p" => "high",actual = "low")
+    stim1 = moment(0.5,play,low)
+	stim2 = moment(0.5,play,high)
+    resp = response(key"q" => "low_first", key"p" => "low_second",correct = "low_first")
   else
-    stim = moment(0.5,play,high)
-    resp = response(key"q" => "low", key"p" => "high",actual = "high")
+	stim1 = moment(0.5,play,high)
+	stim2 = moment(0.5,play,low)
+    resp = response(key"q" => "low_first", key"p" => "low_second",correct = "low_second")	
   end
-  return [show_cross(),stim,resp,await_response(iskeydown)]
+  return [show_cross(),stim1,stim2,resp,await_response(iskeydown)]
 end
 
-exp = Experiment(sid = sid,condition = "ConditionA",skip=skip,columns=[:actual])
+exp = Experiment(columns = [:sid => sid,condition => "ConditionA",:correct],skip=skip)
 setup(exp) do
-  addbreak(instruct("Here are some instructions."))
-  addbreak(instruct("Here's some practice."))
-  for i in 1:5
-    addpractice(one_trial())
-  end
-
-  addbreak(instruct("Here's the real deal."))
-  for trial in 1:60
+  addbreak(instruct("Press 'q' when you hear the low tone first and 'p' otherwise."))
+  for trial in 1:10
     addtrial(one_trial())
   end
 end

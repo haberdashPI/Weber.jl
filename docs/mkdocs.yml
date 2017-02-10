@@ -1,0 +1,38 @@
+site_name:        Weber.jl
+repo_url:         https://github.com/haberdashPI/Weber.jl
+site_description: A julia package for creating simple psychophysical experiments.
+site_author:      haberdashPI
+
+theme: readthedocs
+
+extra_css:
+  - assets/Documenter.css
+
+extra_javascript:
+  - https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML
+  - assets/mathjaxhelper.js
+
+markdown_extensions:
+  - admonition
+  - extra
+  - tables
+  - fenced_code
+  - mdx_math
+
+docs_dir: 'build'
+
+pages:
+  - 'Introduction': index.md
+  - 'User Guide':
+      - 'Getting Started': start.md
+      - 'Trial Creation': trial_guide.md
+      # - 'Testing': testing.md
+      # - 'Calibration': calibrate.md
+      # - 'Adaptive Tracks': adaptive.md
+      # - 'Advanced Experiments': advanced.md
+  - 'Reference':
+      - 'Experiments': experiment.md
+      - 'Trials': trials.md
+      - 'Sound': sound.md
+      - 'Video': video.md
+      - 'Events': event.md

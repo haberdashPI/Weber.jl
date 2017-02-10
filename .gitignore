@@ -6,3 +6,5 @@
 examples/data
 deps/deps.jl
 deps/usr
+docs/build
+docs/site

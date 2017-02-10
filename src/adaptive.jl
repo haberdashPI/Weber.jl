@@ -267,7 +267,7 @@ end
 # parameters easy to specify???
 
 """
-    baysian_adapter(;first_delta=0.1,
+    bayesian_adapter(;first_delta=0.1,
                      n_samples=1000,miss=0.01,threshold=0.79,
                      min_delta=0,max_delta=1,
                      min_plausible_delta = 0.0001,
