@@ -174,8 +174,7 @@ function Experiment(;skip=0,columns=Symbol[],debug=false,
   filename = (data_dir == nothing || hide_output ? Nullable() :
               Nullable(joinpath(data_dir,info_str*"_"*timestr*".csv")))
   einfo = ExperimentInfo(info_values,meta,input_resolution,moment_resolution,
-                         start_date,reserved_columns,filename,hide_output,
-                         record_callback)
+                         start_date,reserved_columns,filename,hide_output)
 
   offset = 0
   trial = 0
