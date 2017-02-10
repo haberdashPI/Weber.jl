@@ -262,8 +262,9 @@ For the 0.3.x release
 - [x] run a series of delta 0 moments all at once.
 - [x] allow the addition of further data columns during experiment setup.
 - [x] allow record callback to communicate with additional devices
-- [ ] improve bayesian adaptive tracking algorithms
-- [ ] minimize GC using preinitialized data structures during experiment??
+- [x] improve bayesian adaptive tracking algorithms
+- [x] implement extensions
+- [x] move extra static columns into separeate keyword argument
 - [ ] edit/refine the user manual
 - [ ] remember to document the record codes generated automatically by Weber
 - [ ] create examples to demonstrate all package features
