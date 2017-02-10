@@ -263,8 +263,11 @@ For the 0.3.x release
 - [x] implement extensions
 - [x] move extra static columns into separeate keyword argument
 - [x] edit/refine the user manual
-- [ ] proofread documentation
+- [x] create extension API
+- [ ] document extension API
 - [ ] remember to document the record codes generated automatically by Weber
+- [ ] proofread documentation
+- [ ] publish documentation
 - [ ] create examples to demonstrate all package features
 - [ ] create some more tests for state dependent experiments
 - [ ] create tests for `display` and `play` logistics.
