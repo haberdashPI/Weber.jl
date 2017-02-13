@@ -25,7 +25,7 @@ function reset_response()
 end
 
 
-check_events(callback,exp::Experiment{NullWindow},time::Float64) = nothing
+poll_events{T <: BaseExperiment{NullWindow}}(callback,exp::T,time::Float64) = nothing
 
 const SDL_KEYDOWN = 0x00000300
 const SDL_KEYUP = 0x00000301
@@ -41,7 +41,11 @@ const sym_ptr = 0x0000000000000004        # offsetof(SDL_Keysym,sym)
 const win_event_ptr = 0x000000000000000c  # offsetof(SDL_WindowEvent,event)
 const event_size = 0x0000000000000038     # sizeof(SDL_Event)
 
-function check_events(callback,exp::Experiment{SDLWindow},time::Float64)
+function poll_events(callback,exp::ExtendedExperiment,time::Float64)
+  poll_events(callback,next(exp),time)
+end
+
+function poll_events{T <: BaseExperiment{SDLWindow}}(callback,exp::T,time::Float64)
   event_bytes = Array{Int8}(event_size)
   event = reinterpret(Ptr{Void},pointer(event_bytes))
 

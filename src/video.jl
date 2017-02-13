@@ -271,10 +271,10 @@ and heights (for y), with (0,0) at the center of the screen.
     By using using the `+` operator, multiple visual objects can be composed
     into one object, so that they are displayed together
 """
-visual(x,args...;keys...) = visual(get_experiment().win,x,args...;keys...)
+visual(x,args...;keys...) = visual(win(get_experiment()),x,args...;keys...)
 
 function draw(r::SDLRendered)
-  draw(get_experiment().window,r)
+  draw(win(get_experiment()),r)
 end
 
 type SDLClear <: SDLSimpleRendered
@@ -686,7 +686,7 @@ function display(r::SDLRendered;kwds...)
           " you should add `dispaly` to a trial (e.g. ",
           "`addtrial(moment(display,my_visual))`).")
   end
-  display(get_experiment().win,r;kwds...)
+  display(win(get_experiment()),r;kwds...)
 end
 
 """

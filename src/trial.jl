@@ -49,12 +49,12 @@ function record_helper(exp::Experiment,kwds,header)
   write_csv_line(exp,header,kwds)
 end
 
-function record_header(exp)
+function record_header(exp::Experiment)
   extra_keys = [:weber_version,:start_date,:start_time,:offset,:trial,:time]
-  info_keys = map(x->x[1],exp.info.values)
+  info_keys = map(x->x[1],info(exp).values)
 
   reserved_keys = Set([extra_keys...;info_keys...])
-  reserved = filter(x -> x ∈ reserved_keys,exp.info.header)
+  reserved = filter(x -> x ∈ reserved_keys,info(exp).header)
   if length(reserved) == 1
     error("The column name \"$(reserved[1])\" is reserved. Please use "*
           " a different name.")
@@ -64,28 +64,27 @@ function record_header(exp)
           " are reserved. Please use different names.")
   end
 
-  columns = [extra_keys...,info_keys...,:code,exp.info.header...]
-  if !isnull(exp.info.file)
-    open(x -> println(x,join(columns,",")),get(exp.info.file),"w")
+  columns = [extra_keys...,info_keys...,:code,info(exp).header...]
+  if !isnull(info(exp).file)
+    open(x -> println(x,join(columns,",")),get(info(exp).file),"w")
   end
 end
 
-function record(exp::Experiment,code;kwds...)
-  nothing
+function record(exp::ExtendedExperiment,code;kwds...)
+  record(next(exp),code;kwds...)
 end
-
-function record(exp::Experiment{SDLWindow},code;kwds...)
+function record{T <: BaseExperiment}(exp::T,code;kwds...)
   extra = [:weber_version => Weber.version,
-           :start_date => Dates.format(exp.info.start,"yyyy-mm-dd"),
-           :start_time => Dates.format(exp.info.start,"HH:MM:SS"),
-           :offset => exp.data.offset,
-           :trial => exp.data.trial,
-           :time => exp.data.last_time]
+           :start_date => Dates.format(info(exp).start,"yyyy-mm-dd"),
+           :start_time => Dates.format(info(exp).start,"HH:MM:SS"),
+           :offset => data(exp).offset,
+           :trial => data(exp).trial,
+           :time => data(exp).last_time]
 
-  info_keys = map(x->x[1],exp.info.values)
+  info_keys = map(x->x[1],info(exp).values)
   extra_keys = map(x->x[1],extra)
-  record_helper(exp,tuple(extra...,exp.info.values...,:code => code,kwds...),
-                [extra_keys...,info_keys...,:code,exp.info.header...])
+  record_helper(exp,tuple(extra...,info(exp).values...,:code => code,kwds...),
+                [extra_keys...,info_keys...,:code,info(exp).header...])
 end
 
 """
@@ -133,13 +132,14 @@ function addmoment(q::Vector{Moment},m::Moment)
   push!(q,m)
 end
 
-addmoment(e::Experiment,m) = addmoment(e.data.moments,m)
+addmoment{T <: BaseExperiment}(e::T,m) = addmoment(data(e).moments,m)
+addmoment(e::ExtendedExperiment,m) = addmoment(next(e),m)
 addmoment(q::Array{MomentQueue},m::Moment) = addmoment(first(q),m)
 function addmoment(q::Union{ExpandingMoment,MomentQueue,Array{MomentQueue}},watcher::Function)
   for t in concrete_events
     precompile(watcher,(t,))
   end
-  addmoment(q,moment(() -> get_experiment().data.trial_watcher = watcher))
+  addmoment(q,moment(() -> data(get_experiment()).trial_watcher = watcher))
 end
 function addmoment(q,ms)
   function handle_error()
@@ -173,22 +173,16 @@ function addmoment(q,ms)
 end
 
 const addtrial_block = Stack(ExpandingMoment)
-function addmoments(exp,moments;when=nothing,loop=nothing)
-  if when != nothing || loop != nothing
-    error("Trials cannot have `when` and `loop` clauses in Weber v0.3.0 and up, ",
-          "use @addtrials instead.")
+function addmoments(exp,moments)
+  if isempty(addtrial_block)
+    foreach(m -> addmoment(exp,m),moments)
   else
-    if isempty(addtrial_block)
-      foreach(m -> addmoment(exp,m),moments)
-    else
-      block = top(addtrial_block)
-      foreach(m -> addmoment(block,m),moments)
-    end
+    block = top(addtrial_block)
+    foreach(m -> addmoment(block,m),moments)
   end
 end
 
-function addtrial_helper(exp::Experiment,trial_count,moments;keys...)
-
+function addtrial_helper(exp::Experiment,trial_count,moments)
   start_trial = offset_start_moment(trial_count) do
     #gc_enable(false)
     if trial_count
@@ -203,7 +197,7 @@ function addtrial_helper(exp::Experiment,trial_count,moments;keys...)
     #gc_enable(true)
   end
 
-  addmoments(exp,[start_trial,moments,end_trial];keys...)
+  addmoments(exp,[start_trial,moments,end_trial])
 end
 
 """
@@ -372,7 +366,13 @@ function trial_block(body,condition;keys...)
   trial_block(get_experiment(),body,condition;keys...)
 end
 
-function trial_block(exp::Experiment,body::Function,condition::Function;loop=false)
+function trial_block(exp::ExtendedExperiment,body::Function,
+                     condition::Function;loop=false)
+  trial_block(next(exp),body,condition,loop=loop)
+end
+
+function trial_block{T <: BaseExperiment}(exp::T,body::Function,
+                                          condition::Function;loop=false)
   moment = ExpandingMoment(condition,Stack(Moment),loop,true)
   push!(addtrial_block,moment)
   body()
@@ -392,12 +392,13 @@ reported on every line of the resulting data file (see [`record`](@ref)). They c
 retrieved using [`Weber.trial()`](@ref) and [`Weber.offset()`](@ref).
 """
 
-function addtrial(moments...;keys...)
-  addtrial_helper(get_experiment(),true,moments;keys...)
+function addtrial(moments...)
+  addtrial_helper(get_experiment(),true,moments)
 end
 
-function addtrial(exp::Experiment,moments...;keys...)
-  addtrial_helper(exp,true,moments;keys...)
+addtrial(exp::ExtendedExperiment,moments...) = addtrial(next(exp),moments...)
+function addtrial{T <: BaseExperiment}(exp::T,moments...)
+  addtrial_helper(exp,true,moments)
 end
 
 """
@@ -407,11 +408,12 @@ Identical to [`addtrial`](@ref), except that it does not incriment the trial cou
 and records a "practice_start" instead of "trial_start" code.
 """
 function addpractice(moments...;keys...)
-  addtrial_helper(get_experiment(),false,moments;keys...)
+  addtrial_helper(get_experiment(),false,moments)
 end
 
-function addpractice(exp::Experiment,moments...;keys...)
-  addtrial_helper(exp,false,moments;keys...)
+addpractice(exp::ExtendedExperiment,moments...) = addpractice(next(exp),moments...)
+function addpractice{T <: BaseExperiment}(exp::T,moments...)
+  addtrial_helper(exp,false,moments...)
 end
 
 """
@@ -423,7 +425,8 @@ function addbreak(moments...;keys...)
   addbreak(get_experiment(),moments...;keys...)
 end
 
-function addbreak(exp::Experiment,moments...;keys...)
+addbreak(exp::ExtendedExperiment,moments...) = addbreak(next(exp),moments...)
+function addbreak{T <: BaseExperiment}(exp::T,moments...;keys...)
   addmoments(exp,[offset_start_moment(() -> record("break_start")),moments];
              keys...)
 end
@@ -596,7 +599,7 @@ it did not. The moment remmains on the moment queue until it handles something.
 ===============================================================================#
 
 function handle(exp::Experiment,q::MomentQueue,moment::FinalMoment,x)
-  for sq in exp.data.moments
+  for sq in data(exp).moments
     if sq != q && !isempty(sq)
       enqueue!(sq,moment)
       dequeue!(q)
@@ -611,14 +614,14 @@ end
 run(exp,q,m::TimedMoment) = m.run()
 run(exp,q,m::OffsetStartMoment) = m.run()
 run(exp,q,m::PlayMoment) = _play(m.sound;m.keys...)
-run(exp,q,m::DisplayMoment) = display(exp.win,m.visual)
+run(exp,q,m::DisplayMoment) = display(win(exp),m.visual)
 run(exp,q,m::PlayFunctionMoment) = _play(get(m.sound);m.keys...)
-run(exp,q,m::DisplayFunctionMoment) = display(exp.win,get(m.visual))
+run(exp,q,m::DisplayFunctionMoment) = display(win(exp),get(m.visual))
 run(exp,q,m::MomentSequence) = foreach(x -> run(exp,q,x),m.data)
 
 function handle(exp::Experiment,q::MomentQueue,
-                moment::AbstractTimedMoment,time::Float64)
-  exp.data.last_time = time
+                            moment::AbstractTimedMoment,time::Float64)
+  data(exp).last_time = time
   run(exp,q,moment)
   q.last = time
   dequeue!(q)
@@ -626,19 +629,20 @@ function handle(exp::Experiment,q::MomentQueue,
 end
 
 function handle(exp::Experiment,q::MomentQueue,
-                moment::AbstractTimedMoment,event::ExpEvent)
+                            moment::AbstractTimedMoment,event::ExpEvent)
   false
 end
 
 function handle(exp::Experiment,q::MomentQueue,
-                moment::ResponseMoment,time::Float64)
+                            moment::ResponseMoment,time::Float64)
   moment.timeout()
   q.last = time
   dequeue!(q)
   true
 end
 
-function handle(exp::Experiment,q::MomentQueue,m::ResponseMoment,event::ExpEvent)
+function handle(exp::Experiment,q::MomentQueue,
+                            m::ResponseMoment,event::ExpEvent)
   if m.respond(event)
     if (m.minimum_delta_t > 0.0 &&
         m.minimum_delta_t + q.last > Weber.tick(exp))
@@ -652,12 +656,13 @@ function handle(exp::Experiment,q::MomentQueue,m::ResponseMoment,event::ExpEvent
   false
 end
 
-function handle(exp::Experiment,q::MomentQueue,moments::CompoundMoment,x)
+function handle(exp::Experiment,q::MomentQueue,
+                            moments::CompoundMoment,x)
   queue = Deque{Moment}()
   for moment in moments.data
     push!(queue,moment)
   end
-  push!(exp.data.moments,MomentQueue(queue,q.last))
+  push!(data(exp).moments,MomentQueue(queue,q.last))
   dequeue!(q)
   true
 end
@@ -677,23 +682,23 @@ function handle(exp::Experiment,q::MomentQueue,m::ExpandingMoment,x)
   true
 end
 
-is_moment_skipped(exp,moment::Moment) = exp.data.offset < exp.data.skip_offsets
+is_moment_skipped(exp,moment::Moment) = data(exp).offset < data(exp).skip_offsets
 function is_moment_skipped(exp,moment::OffsetStartMoment)
   if !moment.expanding
-    exp.data.offset += 1
+    data(exp).offset += 1
   end
   if moment.count_trials
-    exp.data.trial += 1
+    data(exp).trial += 1
   end
-  exp.data.offset < exp.data.skip_offsets
+  data(exp).offset < data(exp).skip_offsets
 end
 function is_moment_skipped(exp,moment::ExpandingMoment)
   if moment.update_offset
-    exp.data.offset += 1
+    data(exp).offset += 1
     # each expanding moment only ever incriments the offset
     # counter once, event if it creates a loop.
     moment.update_offset = false
   end
-  exp.data.offset < exp.data.skip_offsets
+  data(exp).offset < data(exp).skip_offsets
 end
 is_moment_skipped(exp,moment::FinalMoment) = false

@@ -26,7 +26,7 @@ function in_experiment()
 end
 
 function experiment_running()
-  !isnull(experiment_context[]) && get(experiment_context[]).flags.processing
+  !isnull(experiment_context[]) && flags(get(experiment_context[])).processing
 end
 
 """
@@ -34,7 +34,7 @@ end
 
 Returns the current trial of the experiment.
 """
-trial(exp) = exp.data.trial
+trial(exp) = data(exp).trial
 trial() = trial(get_experiment())
 
 
@@ -53,7 +53,7 @@ the experiment in exactly the same state it was on a previous run.
     experiment unless they are wrapped in an @addtrials macro.
 
 """
-offset(exp) = exp.data.offset
+offset(exp) = data(exp).offset
 offset() = offset(get_experiment())
 
 """
@@ -65,7 +65,7 @@ start of the experiment to the start of the most recent moment.
 If there is no experiment running, this returns the time since epoch with
 microsecond precision.
 """
-tick(exp) = exp.data.last_time
+tick(exp) = data(exp).last_time
 function tick()
   if isnull(experiment_context[])
     precise_time()
@@ -80,7 +80,7 @@ end
 Returns metadata for this experiment. You can store
 global state, specific to this experiment, in this dictionary.
 """
-metadata(exp) = exp.info.meta
+metadata(exp) = info(exp).meta
 metadata() = metadata(get_experiment())
 
 """
@@ -92,14 +92,17 @@ This function must be called during setup.  It cannot be called once the
 experiment has begun. Repeatedly adding the same column only adds the column
 once.
 """
-function addcolumn(exp::Experiment,col::Symbol)
-  if exp.flags.processing
+function addcolumn{T <: BaseExperiment}(exp::T,col::Symbol)
+  if flags(exp).processing
     error("You cannot change the data file header once the experiment starts! ",
-          "Make sure call `addcolumn` during setup, not inside a moment.")
+          "Make sure you call `addcolumn` during setup-time, not run-time.")
   end
-  if col ∉ exp.info.header
-    push!(exp.info.header,col)
+  if col ∉ info(exp).header
+    push!(info(exp).header,col)
   end
+end
+function addcolumn(exp::ExtendedExperiment,col::Symbol)
+  addcolumn(next(exp),col)
 end
 addcolumn(col::Symbol) = addcolumn(get_experiment(),col)
 
@@ -194,8 +197,7 @@ function Experiment(;skip=0,columns=Symbol[],debug=false,
 
   win = window(width,height,fullscreen=!debug,accel=!debug,null=null_window)
 
-  base = Experiment(einfo,data,flags,win,EmptyExtension(),nothing)
-  reduce(extend,base,extensions)
+  extend(UnextendedExperiment(einfo,data,flags,win),extensions)
 end
 
 
@@ -208,12 +210,13 @@ Setup creats the context necessary to generate elements of an experiment. All
 calls to `addtrial`, `addbreak` and `addpractice` must be called in side of
 `fn`. This function must be called before `run`.
 """
-function setup(fn::Function,exp::Experiment)
+setup(fn::Function,exp::ExtendedExperiment) = setup(fn,next(exp))
+function setup{T <: BaseExperiment}(fn::Function,exp::T)
   # create data file header
   function cleanup()
-    exp.flags.running = false
-    exp.flags.processing = false
-    close(exp.win)
+    flags(exp).running = false
+    flags(exp).processing = false
+    close(win(exp))
 
     # OBSOLETE: gc is disabled during individual trials (and enabled at the end of
     # a trial). Make sure it really does return to an enabled state.
@@ -223,17 +226,17 @@ function setup(fn::Function,exp::Experiment)
   try
     # the first moment just waits a short time to ensure
     # notify(clean_run) runs after wait(cleanup_run)
-    exp.data.cleanup = cleanup
+    data(exp).cleanup = cleanup
 
     # setup all trial moments for this experiment
-    experiment_context[] = Nullable(exp)
+    experiment_context[] = Nullable(top(exp))
     fn()
     experiment_context[] = Nullable{Experiment}()
 
     # the last moment run cleans up the experiment
-    enqueue!(first(exp.data.moments),final_moment(() -> cleanup()))
+    enqueue!(first(data(exp).moments),final_moment(() -> cleanup()))
   catch e
-    close(exp.win)
+    close(win(exp))
     # gc_enable(true)
     rethrow(e)
   end
@@ -262,26 +265,26 @@ end
 
 
 function pause(exp,message,time,firstpause=true)
-  exp.flags.running = false
+  flags(exp).running = false
   record(exp,"paused")
   if firstpause
-    save_display(exp.win)
+    save_display(win(exp))
     pause_sounds()
   end
   overlay = visual(colorant"gray",priority=Inf) + visual(message,priority=Inf)
-  display(exp.win,overlay)
+  display(win(exp),overlay)
 end
 
 function unpause(exp,time)
   record(exp,"unpaused")
-  exp.data.pause_mode = Running
+  data(exp).pause_mode = Running
 
-  restore_display(exp.win)
+  restore_display(win(exp))
   resume_sounds()
 
-  exp.data.last_bad_delta = -1.0
-  exp.data.last_good_delta = -1.0
-  exp.flags.running = true
+  data(exp).last_bad_delta = -1.0
+  data(exp).last_good_delta = -1.0
+  flags(exp).running = true
   process_event(exp,EndPauseEvent(time))
 end
 
@@ -291,35 +294,35 @@ const Unfocused = 2
 const Error = 3
 
 function watch_pauses(exp,e)
-  if exp.data.pause_mode == Running && iskeydown(e,key":escape:")
+  if data(exp).pause_mode == Running && iskeydown(e,key":escape:")
     pause(exp,"Exit? [Y for yes, or N for no]",time(e))
-    exp.data.pause_mode = ToExit
-  elseif exp.data.pause_mode == Running && isunfocused(e) && exp.flags.processing
+    data(exp).pause_mode = ToExit
+  elseif data(exp).pause_mode == Running && isunfocused(e) && flags(exp).processing
     pause(exp,"Waiting for window focus...",time(e))
-    exp.data.pause_mode = Unfocused
-  elseif exp.data.pause_mode == ToExit && iskeydown(e,key"y")
+    data(exp).pause_mode = Unfocused
+  elseif data(exp).pause_mode == ToExit && iskeydown(e,key"y")
     record(exp,"terminated")
-    exp.data.cleanup()
-  elseif exp.data.pause_mode == ToExit && iskeydown(e,key"n")
+    data(exp).cleanup()
+  elseif data(exp).pause_mode == ToExit && iskeydown(e,key"n")
     unpause(exp,time(e))
-  elseif exp.data.pause_mode == Unfocused && isfocused(e)
-    if exp.flags.processing
+  elseif data(exp).pause_mode == Unfocused && isfocused(e)
+    if flags(exp).processing
       pause(exp,"Paused. [To exit hit Y, to resume hit N]",time(e),false)
-      exp.data.pause_mode = ToExit
+      data(exp).pause_mode = ToExit
     else
-      exp.data.pause_mode = Running
-      exp.flags.running = true
+      data(exp).pause_mode = Running
+      flags(exp).running = true
     end
   end
 end
 
-process_event(exp::Experiment,event::QuitEvent) = exp.data.cleanup()
+process_event(exp::Experiment,event::QuitEvent) = data(exp).cleanup()
 function process_event(exp::Experiment,event)
-  if exp.flags.running
-    exp.data.trial_watcher(event)
-    process(exp,exp.data.moments,event)
+  if flags(exp).running
+    data(exp).trial_watcher(event)
+    process(exp,data(exp).moments,event)
   end
-  if exp.flags.processing
+  if flags(exp).processing
     watch_pauses(exp,event)
   end
 end
@@ -340,7 +343,8 @@ preventing the user from viewing important messages. The exception
 is if run is called form within Juno: await_input should
 never be set to true in this case.
 """
-function run(exp::Experiment;await_input=!Juno.isactive())
+run(exp::ExtendedExperiment;keys...) = run(next(exp);keys...)
+function run{T <: BaseExperiment}(exp::T;await_input=!Juno.isactive())
   if Juno.isactive() && await_input
     error("`await_input` must be false when Juno is active.")
   end
@@ -350,48 +354,48 @@ function run(exp::Experiment;await_input=!Juno.isactive())
   # println("Completed warmup run.")
   try
     record_header(exp)
-    focus(exp.win)
+    focus(win(exp))
 
-    experiment_context[] = Nullable(exp)
-    exp.data.pause_mode = Running
-    exp.flags.processing = true
-    exp.flags.running = true
+    experiment_context[] = Nullable(top(exp))
+    data(exp).pause_mode = Running
+    flags(exp).processing = true
+    flags(exp).running = true
 
     start = precise_time()
-    tick = exp.data.last_time = last_input = last_delta = 0.0
-    while exp.flags.processing
-      tick = exp.data.last_time = precise_time() - start
+    tick = data(exp).last_time = last_input = last_delta = 0.0
+    while flags(exp).processing
+      tick = data(exp).last_time = precise_time() - start
 
       # notify all moments about the new time
-      if exp.flags.running
-        process(exp,exp.data.moments,tick)
+      if flags(exp).running
+        process(exp,data(exp).moments,tick)
       end
 
       # handle all input events (handles pauses, and notifys moments of events)
-      if tick - last_input > exp.info.input_resolution
-        check_events(process_event,exp,tick)
+      if tick - last_input > info(exp).input_resolution
+        poll_events(process_event,top(exp),tick)
         last_input = tick
       end
 
       # # report on any irregularity in the timing of moments
-      # if exp.flags.running && tick - last_delta > last_delta_resolution
+      # if flags(exp).running && tick - last_delta > last_delta_resolution
       #   report_deltas(exp)
       #   last_delta = tick
       # end
 
       # refresh screen
-      refresh_display(exp.win)
+      refresh_display(win(exp))
 
       # if after all this processing there's still plenty of time left
       # then sleep for a little while. (pausing also sleeps the loop)
       new_tick = precise_time() - start
-      if !exp.flags.running
+      if !flags(exp).running
         gc()
         sleep(sleep_amount)
       elseif ((new_tick - last_delta) > sleep_resolution &&
               (new_tick - last_input) > sleep_resolution &&
-              (exp.data.next_moment - new_tick) > sleep_resolution)
-        if (exp.data.next_moment - new_tick) > gc_time
+              (data(exp).next_moment - new_tick) > sleep_resolution)
+        if (data(exp).next_moment - new_tick) > gc_time
           gc()
         end
         sleep(sleep_amount)
@@ -406,12 +410,12 @@ function run(exp::Experiment;await_input=!Juno.isactive())
     end
   finally
     experiment_context[] = Nullable()
-    close(exp.win)
+    close(win(exp))
     # gc_enable(true)
-    if !exp.info.hide_output
-      info("Experiment terminated at offset $(exp.data.offset).")
-      if !isnull(exp.info.file)
-        info("Data recorded to: $(get(exp.info.file))")
+    if !info(exp).hide_output
+      info("Experiment terminated at offset $(data(exp).offset).")
+      if !isnull(info(exp).file)
+        info("Data recorded to: $(get(info(exp).file))")
       end
     end
   end
@@ -445,7 +449,7 @@ function process(exp::Experiment,queue::MomentQueue,event::ExpEvent)
       if !isempty(queue)
         prepare!(front(queue))
       end
-      exp.data.next_moment = minimum(map(next_moment_time,exp.data.moments))
+      data(exp).next_moment = minimum(map(next_moment_time,data(exp).moments))
     end
   end
 
@@ -460,13 +464,13 @@ function process(exp::Experiment,queue::MomentQueue,t::Float64)
     start_time = precise_time()
     moment = front(queue)
     event_time = delta_t(moment) + queue.last
-    if event_time - t <= exp.info.moment_resolution
+    if event_time - t <= info(exp).moment_resolution
       offset = t - start_time
       run_time = offset + precise_time()
       while event_time > run_time
         run_time = offset + precise_time()
       end
-      exp.data.last_time = run_time
+      data(exp).last_time = run_time
       last = queue.last
       if handle(exp,queue,moment,run_time)
         d = required_delta_t(moment)
@@ -476,8 +480,8 @@ function process(exp::Experiment,queue::MomentQueue,t::Float64)
 
         latency = run_time - event_time
 
-        if (0.0 < d < Inf && latency > exp.info.moment_resolution &&
-            !exp.info.hide_output)
+        if (0.0 < d < Inf && latency > info(exp).moment_resolution &&
+            !info(exp).hide_output)
           warn(cleanstr(
             "Delivered moment with a high latency ($(roundstr(latency))
              seconds). This often happens at the start of an experiment, but
@@ -489,7 +493,7 @@ function process(exp::Experiment,queue::MomentQueue,t::Float64)
           record("high_latency",value=latency)
         end
 
-        exp.data.next_moment = minimum(map(next_moment_time,exp.data.moments))
+        data(exp).next_moment = minimum(map(next_moment_time,data(exp).moments))
       end
     end
   end

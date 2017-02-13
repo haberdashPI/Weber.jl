@@ -1,9 +1,10 @@
 import Base: show, isempty, time, >>, length, unshift!, promote_rule, convert,
-  hash, ==, isless, pop!
-import DataStructures: front, back
+  hash, ==, isless, pop!, info, next
+import DataStructures: front, back, top
 
 export iskeydown, iskeyup, iskeypressed, isfocused, isunfocused, keycode,
-  endofpause, @key_str, time, response_time, keycode, listkeys
+  endofpause, @key_str, time, response_time, keycode, listkeys,
+  ExtendedExperiment, extension, next, top
 
 ################################################################################
 # event types
@@ -549,21 +550,63 @@ type ExperimentFlags
 end
 
 abstract Extension
+abstract Experiment{W}
 
-type EmptyExtension <: Extension
-end
-
-immutable Experiment{W,E <: Extension,N}
+immutable UnextendedExperiment{W} <: Experiment{W}
   info::ExperimentInfo
   data::ExperimentData
   flags::ExperimentFlags
   win::W
-  extension::E
-  next_extension::N
+end
+info(e::UnextendedExperiment) = e.info
+data(e::UnextendedExperiment) = e.data
+flags(e::UnextendedExperiment) = e.flags
+win(e::UnextendedExperiment) = e.win
+top(e::UnextendedExperiment) = e
+
+immutable ExtendedExperiment{E <: Extension,ES <: Tuple,N,W} <: Experiment{W}
+  exp::UnextendedExperiment{W}
+  extensions::ES
+end
+info(e::ExtendedExperiment) = e.exp.info
+data(e::ExtendedExperiment) = e.exp.data
+flags(e::ExtendedExperiment) = e.exp.flags
+win(e::ExtendedExperiment) = e.exp.win
+extension{E,ES,N,W}(e::ExtendedExperiment{E,ES,N,W}) = e.extensions[N]
+
+function top{E,ES <: Tuple,N,W}(e::ExtendedExperiment{E,ES,N,W})
+  E1 = ES.parameters[end]
+  N1 = length(e.extensions)
+  ExtendedExperiment{E1,ES,N1,W}(e.exp,e.extensions)
+end
+function next{E,ES,N,W}(e::ExtendedExperiment{E,ES,N,W})
+  E1 = ES.parameters[N-1]
+  ExtendedExperiment{E1,ES,N-1,W}(e.exp,e.extensions)
+end
+function next{E,ES,W}(e::ExtendedExperiment{E,ES,1,W})
+  BaseExtendedExperiment{W,typeof(top(e))}(top(e))
 end
 
-typealias ExtendedExperiment{E <: Extension} Experiment{SDLWindow,E}
+immutable BaseExtendedExperiment{W,E <: ExtendedExperiment} <: Experiment{W}
+  top::E
+end
+info(e::BaseExtendedExperiment) = e.top.exp.info
+data(e::BaseExtendedExperiment) = e.top.exp.data
+flags(e::BaseExtendedExperiment) = e.top.exp.flags
+win(e::BaseExtendedExperiment) = e.top.exp.win
+top(e::BaseExtendedExperiment) = e.top
 
-function extend{W,E <: Extension,N,E2 <: Extension}(e::Experiment{W,E,N},ext::E2)
-  Experiment(e.info,e.data,e.flags,e.win,ext,e)
+typealias BaseExperiment{W} Union{UnextendedExperiment{W},BaseExtendedExperiment{W}}
+
+function extend{W}(exp::UnextendedExperiment{W},exts)
+  if isempty(exts)
+    exp
+  else
+    exts = reverse(exts) # first extension takes precedence over subsequent ones
+    exts_tup = tuple(exts...)
+    E = typeof(exts[end])
+    ES = typeof(exts_tup)
+    N = length(exts)
+    ExtendedExperiment{E,ES,N,W}(exp,exts_tup)
+  end
 end

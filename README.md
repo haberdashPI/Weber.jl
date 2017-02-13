@@ -261,6 +261,7 @@ For the 0.3.x release
 - [x] allow record callback to communicate with additional devices
 - [x] improve bayesian adaptive tracking algorithms
 - [x] implement extensions
+- [x] implement non-overlapping layered extensions
 - [x] move extra static columns into separeate keyword argument
 - [x] edit/refine the user manual
 - [x] create extension API

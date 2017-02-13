@@ -59,7 +59,6 @@ function addbreak_every(n,total,response=key":space:",
   index = meta[:break_every_index] = get(meta,:break_every_index,0) + 1
   if n <= index < total && (n == 1 || index % n == 1)
     message = moment() do
-      record("break")
       display(visual("You can take a break. Hit "*
                      "$response_str when you're ready to resume... "*
                      "$(div(index,n)) of $(div(total-1,n)) breaks."))
