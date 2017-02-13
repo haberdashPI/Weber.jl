@@ -15,6 +15,22 @@ function findkwd(kwds,sym,default)
   default
 end
 
+const null_record = []
+function write_csv_line(exp::Experiment{NullWindow},header,kwds)
+  push!(null_record,Dict(map(c -> c => findkwd(kwds,c,""),header)))
+end
+
+function write_csv_line(exp::Experiment{SDLWindow},header,kwds)
+  if !isnull(info(exp).file)
+    open(get(info(exp).file),"a") do stream
+      @_ (string(findkwd(kwds,c,"")) for c in header) begin
+        join(_,",")
+        println(stream,_)
+      end
+    end
+  end
+end
+
 function record_helper(exp::Experiment,kwds,header)
   columns = map(x -> x[1],kwds)
 
@@ -30,15 +46,7 @@ function record_helper(exp::Experiment,kwds,header)
   kwds = reverse(kwds) # this ensures that if the user overwrites a value
                        # it will be honored
 
-  if !isnull(exp.info.file)
-    open(get(exp.info.file),"a") do stream
-      @_ header begin
-        map(c -> findkwd(kwds,c,""),_)
-        join(_,",")
-        println(stream,_)
-      end
-    end
-  end
+  write_csv_line(exp,header,kwds)
 end
 
 function record_header(exp)
