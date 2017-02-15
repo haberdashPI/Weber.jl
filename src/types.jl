@@ -339,7 +339,7 @@ moment should begin.
 delta_t(m::Moment) = 0.0
 required_delta_t(m::Moment) = delta_t(m)
 isimmediate(m::Moment) = delta_t(m) == 0.0
-sequenceable(m::Moment) = isimmediate(m)
+sequenceable(m::Moment) = false
 
 type ResponseMoment <: SimpleMoment
   respond::Function
@@ -354,6 +354,7 @@ required_delta_t(m::ResponseMoment) = Inf
 isimmediate(m::ResponseMoment) = false
 
 abstract AbstractTimedMoment <: SimpleMoment
+sequenceable(m::AbstractTimedMoment) = true
 
 type TimedMoment <: AbstractTimedMoment
   delta_t::Float64
