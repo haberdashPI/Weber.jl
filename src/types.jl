@@ -391,6 +391,14 @@ const concrete_events = [
 
 abstract Moment
 abstract SimpleMoment <: Moment
+
+"""
+    delta_t(m::Moment)
+
+Returns the time, since the start of the previous moment, at which this
+moment should begin.
+"""
+delta_t(m::Moment) = 0.0
 required_delta_t(m::Moment) = delta_t(m)
 isimmediate(m::Moment) = delta_t(m) == 0.0
 sequenceable(m::Moment) = isimmediate(m)
@@ -562,7 +570,13 @@ info(e::UnextendedExperiment) = e.info
 data(e::UnextendedExperiment) = e.data
 flags(e::UnextendedExperiment) = e.flags
 win(e::UnextendedExperiment) = e.win
-top(e::UnextendedExperiment) = e
+
+"""
+    top(experiment::Experiment)
+
+Get the the top-most extended verison for this experiment, if any.
+"""
+top(e::Experiment) = e
 
 immutable ExtendedExperiment{E <: Extension,ES <: Tuple,N,W} <: Experiment{W}
   exp::UnextendedExperiment{W}
@@ -572,6 +586,12 @@ info(e::ExtendedExperiment) = e.exp.info
 data(e::ExtendedExperiment) = e.exp.data
 flags(e::ExtendedExperiment) = e.exp.flags
 win(e::ExtendedExperiment) = e.exp.win
+
+"""
+    extension(experiment::ExtendedExperiment)
+
+Get the extension object for this extended expeirment
+"""
 extension{E,ES,N,W}(e::ExtendedExperiment{E,ES,N,W}) = e.extensions[N]
 
 function top{E,ES <: Tuple,N,W}(e::ExtendedExperiment{E,ES,N,W})
@@ -579,6 +599,12 @@ function top{E,ES <: Tuple,N,W}(e::ExtendedExperiment{E,ES,N,W})
   N1 = length(e.extensions)
   ExtendedExperiment{E1,ES,N1,W}(e.exp,e.extensions)
 end
+
+"""
+     next(experiment::ExtendedExperiment)
+
+Get the next extended version of this experiment.
+"""
 function next{E,ES,N,W}(e::ExtendedExperiment{E,ES,N,W})
   E1 = ES.parameters[N-1]
   ExtendedExperiment{E1,ES,N-1,W}(e.exp,e.extensions)
