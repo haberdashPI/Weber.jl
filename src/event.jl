@@ -1,28 +1,3 @@
-using PyCall
-export reset_response
-
-# called by __init__ in Weber.jl
-function init_events()
-  global const pyxid = pyimport_conda("pyxid","pyxid","haberdashPI")
-  global const pyxid_devices = pyxid[:get_xid_devices]()
-end
-
-"""
-      reset_resposne()
-
-  Reset the response timer for all Cedrus response-pad devices.
-
-  This function will rarely need to be explicitly called. The response timer is
-  automatically reset at the start of each trial.
-  """
-function reset_response()
-  for dev in pyxid_devices
-    if dev[:is_response_device]()
-      dev[:reset_base_timer]()
-      dev[:reset_rt_timer]()
-    end
-  end
-end
 
 
 poll_events{T <: BaseExperiment{NullWindow}}(callback,exp::T,time::Float64) = nothing
@@ -66,22 +41,6 @@ function poll_events{T <: BaseExperiment{SDLWindow}}(callback,exp::T,time::Float
       end
     elseif etype == SDL_QUIT
       callback(exp,QuitEvent())
-    end
-  end
-
-  for dev in pyxid_devices
-    if dev[:is_response_device]()
-      dev[:poll_for_response]()
-      while dev[:response_queue_size]() > 0
-        resp = dev[:get_next_response]()
-        if resp["pressed"]
-          callback(exp,CedrusDownEvent(resp["key"],resp["port"],
-                                       resp["time"],time))
-        else
-          callback(exp,CedrusUpEvent(resp["key"],resp["port"],
-                                     resp["time"],time))
-        end
-      end
     end
   end
 end

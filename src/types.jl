@@ -1,6 +1,7 @@
 import Base: show, isempty, time, >>, length, unshift!, promote_rule, convert,
   hash, ==, isless, pop!, info, next
 import DataStructures: front, back, top
+using MacroTools
 
 export iskeydown, iskeyup, iskeypressed, isfocused, isunfocused, keycode,
   endofpause, @key_str, time, response_time, keycode, listkeys,
@@ -11,68 +12,46 @@ export iskeydown, iskeyup, iskeypressed, isfocused, isunfocused, keycode,
 
 abstract ExpEvent
 
-type QuitEvent <: ExpEvent
-end
+const concrete_events = []
 
-type KeyUpEvent <: ExpEvent
-  code::UInt32
-  time::Float64
-end
+# TODO: debug this macro
+macro event(type_form)
+  if !isexpr(type_form,:type)
+    error("@event expects a type or immutable")
+  end
+  decl = type_form.args[2]
+  if !isexpr(decl,:<:)
+    error("@event type must inhert from ExpEvent or a child of ExpEvent.")
+  end
+  name = decl.args[1] = esc(decl.args[1])
 
-type KeyDownEvent <: ExpEvent
-  code::UInt32
-  time::Float64
-end
-
-type WindowFocused <: ExpEvent
-  time::Float64
-end
-
-type WindowUnfocused <: ExpEvent
-  time::Float64
-end
-
-type CedrusDownEvent <: ExpEvent
-  code::Int
-  port::Int
-  rt::Float64
-  time::Float64
-end
-
-
-type CedrusUpEvent <: ExpEvent
-  code::Int
-  port::Int
-  rt::Float64
-  time::Float64
-end
-
-macro os(kwds...)
-  @assert kwds[1].args[1] == :apple
-  @assert kwds[2].args[1] == :windows
-  @assert kwds[3].args[1] == :linux
-
-  if is_apple()
-    kwds[1].args[2]
-  elseif is_windows()
-    kwds[2].args[2]
-  elseif is_linux()
-    kwds[3].args[2]
-  else
-    error("Unsupported operating system")
+  quote
+    $type_form
+    push!(concrete_events,$name)
   end
 end
 
-"""
-    response_time(e::ExpEvent)
+@event immutable QuitEvent <: ExpEvent
+end
 
-Get the response time an event occured at. Only meaningful for response pad
-events (returns NaN in other cases). The response time is normally measured from
-the start of a trial (see `reset_response`).
-"""
-response_time(e::ExpEvent) = NaN
-response_time(e::CedrusUpEvent) = e.rt
-response_time(e::CedrusDownEvent) = e.rt
+@event immutable KeyUpEvent <: ExpEvent
+  code::UInt32
+  time::Float64
+end
+
+@event immutable KeyDownEvent <: ExpEvent
+  code::UInt32
+  time::Float64
+end
+
+@event immutable WindowFocused <: ExpEvent
+  time::Float64
+end
+
+@event immutable WindowUnfocused <: ExpEvent
+  time::Float64
+end
+
 
 """
     time(e::ExpEvent)
@@ -97,18 +76,25 @@ end
 hash(x::KeyboardKey,h::UInt) = hash(KeyboardKey,hash(x.code,h))
 ==(x::KeyboardKey,y::KeyboardKey) = x.code == y.code
 isless(x::KeyboardKey,y::KeyboardKey) = isless(x.code,y.code)
+isless(x::Key,y::Key) = hash(typeof(x)) < hash(typeof(y))
 
-type CedrusKey <: Key
-  code::Int
+macro os(kwds...)
+  @assert kwds[1].args[1] == :apple
+  @assert kwds[2].args[1] == :windows
+  @assert kwds[3].args[1] == :linux
+
+  if is_apple()
+    kwds[1].args[2]
+  elseif is_windows()
+    kwds[2].args[2]
+  elseif is_linux()
+    kwds[3].args[2]
+  else
+    error("Unsupported operating system")
+  end
 end
-hash(x::CedrusKey,h::UInt) = hash(CedrusKey,hash(x.code,h))
-==(x::CedrusKey,y::CedrusKey) = x.code == y.code
-isless(x::CedrusKey,y::CedrusKey) = isless(x.code,y.code)
 
-isless(x::KeyboardKey,y::CedrusKey) = false
-isless(x::CedrusKey,y::KeyboardKey) = true
-
-const str_to_code = Dict(
+const str_to_code = Dict{String,Key}(
   "a" => KeyboardKey(reinterpret(UInt32,'a')),
   "b" => KeyboardKey(reinterpret(UInt32,'b')),
   "c" => KeyboardKey(reinterpret(UInt32,'c')),
@@ -231,37 +217,8 @@ const str_to_code = Dict(
   ":num 7:" => KeyboardKey(0x4000005f),
   ":num 8:" => KeyboardKey(0x40000060),
   ":num 9:" => KeyboardKey(0x40000061),
-  ":num 0:" => KeyboardKey(0x40000062),
-
-  ":cedrus0:" => CedrusKey(0),
-  ":cedrus1:" => CedrusKey(1),
-  ":cedrus2:" => CedrusKey(2),
-  ":cedrus3:" => CedrusKey(3),
-  ":cedrus4:" => CedrusKey(4),
-  ":cedrus5:" => CedrusKey(5),
-  ":cedrus6:" => CedrusKey(6),
-  ":cedrus7:" => CedrusKey(7),
-  ":cedrus8:" => CedrusKey(8),
-  ":cedrus9:" => CedrusKey(9),
-  ":cedrus10:" => CedrusKey(10),
-  ":cedrus11:" => CedrusKey(11),
-  ":cedrus12:" => CedrusKey(12),
-  ":cedrus13:" => CedrusKey(13),
-  ":cedrus14:" => CedrusKey(14),
-  ":cedrus15:" => CedrusKey(15),
-  ":cedrus16:" => CedrusKey(16),
-  ":cedrus17:" => CedrusKey(17),
-  ":cedrus18:" => CedrusKey(18),
-  ":cedrus19:" => CedrusKey(19)
+  ":num 0:" => KeyboardKey(0x40000062)
 )
-
-function show(io::IO,x::CedrusKey)
-  if 0 <= x.code <= 19
-    write(io,"key\":cedrus$(x.code):\"")
-  else
-    write(io,"Weber.CedrusKey($(x.code))")
-  end
-end
 
 function show(io::IO,key::KeyboardKey)
   found = filter((_,akey) -> isa(akey,KeyboardKey) && akey.code == key.code,
@@ -288,8 +245,8 @@ listkeys() = foreach(println,values(str_to_code) |> unique |> collect |> sort)
 """
     key"keyname"
 
-Generate a key code, using a single character (e.g. key"q" or key"]"), a
-special-key name, or Cedrus response-pad key.
+Generate a key code, using a single character (e.g. key"q" or key"]"), or
+some special key name surrounded by colons (e.g. :escape:).
 
 Note that keys are orderd, you can list all implemented keys in order, using
 `listkeys`. If you want to quickly see the name for a given button you can use
@@ -310,8 +267,6 @@ end
 Report the key code for this event, if there is one.
 """
 keycode(e::ExpEvent) = nothing
-keycode(e::CedrusDownEvent) = CedrusKey(e.code)
-keycode(e::CedrusUpEvent) = CedrusKey(e.code)
 keycode(e::KeyDownEvent) = KeyboardKey(e.code)
 keycode(e::KeyUpEvent) = KeyboardKey(e.code)
 
@@ -328,12 +283,9 @@ down.
 """
 iskeydown(event::ExpEvent) = false
 iskeydown(event::KeyDownEvent) = true
-iskeydown(event::CedrusDownEvent) = true
 iskeydown(key::KeyboardKey) = e -> iskeydown(e,key::KeyboardKey)
-iskeydown(key::CedrusKey) = e -> iskeydown(e,key::CedrusKey)
 iskeydown(event::ExpEvent,keycode::Key) = false
 iskeydown(event::KeyDownEvent,key::KeyboardKey) = event.code == key.code
-iskeydown(event::CedrusDownEvent,key::CedrusKey) = event.code == key.code
 
 """
    iskeyup(event,[key])
@@ -347,12 +299,9 @@ Returns a function which tests if an event indicates the given key was released.
 """
 iskeyup(event::ExpEvent) = false
 iskeyup(event::KeyUpEvent) = true
-iskeyup(event::CedrusUpEvent) = true
 iskeyup(key::KeyboardKey) = e -> iskeydown(e,key)
-iskeyup(key::CedrusKey) = e -> iskeydown(e,key)
 iskeyup(event::ExpEvent,keycode::Key) = false
 iskeyup(event::KeyUpEvent,key::KeyboardKey) = event.code == key.code
-iskeyup(event::CedrusUpEvent,key::CedrusKey) = event.code == key.code
 
 isfocused(event::ExpEvent) = false
 isfocused(event::WindowFocused) = true
@@ -361,7 +310,7 @@ isunfocused(event::ExpEvent) = false
 isunfocused(event::WindowUnfocused) = true
 
 
-type EndPauseEvent <: ExpEvent
+@event type EndPauseEvent <: ExpEvent
   time::Float64
 end
 
@@ -374,17 +323,6 @@ the user.
 endofpause(event::ExpEvent) = false
 endofpause(event::EndPauseEvent) = true
 time(event::EndPauseEvent) = event.time
-
-const concrete_events = [
-  KeyUpEvent,
-  KeyDownEvent,
-  WindowFocused,
-  WindowUnfocused,
-  EndPauseEvent,
-  CedrusDownEvent,
-  CedrusUpEvent,
-  QuitEvent
-]
 
 ################################################################################
 # trial types
