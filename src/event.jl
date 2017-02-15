@@ -20,6 +20,20 @@ function poll_events(callback,exp::ExtendedExperiment,time::Float64)
   poll_events(callback,next(exp),time)
 end
 
+"""
+     Weber.poll_events(callback,experiment,time)
+
+Call the function `callback`, possibility multiple times, passing it an event
+object each time. The time at which the events have been polled is passed,
+allowing events to makred as having occured at a specific time.
+
+!!! warning
+
+    This function should never be called directly by user code. A new
+    methods of this function can be implemented to extend Weber,
+    allowing it to report new kinds events.
+
+"""
 function poll_events{T <: BaseExperiment{SDLWindow}}(callback,exp::T,time::Float64)
   event_bytes = Array{Int8}(event_size)
   event = reinterpret(Ptr{Void},pointer(event_bytes))

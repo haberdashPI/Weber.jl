@@ -12,7 +12,7 @@ export match_lengths, mix, mult, silence, noise, highpass, lowpass, bandpass,
   resume_sounds, pause_sounds, load, save
 
 """
-   match_lengths(x,y,...)
+    match_lengths(x,y,...)
 
 Ensure that all sounds have exactly the same length by adding silence
 to the end of shorter sounds.
@@ -60,7 +60,7 @@ function silence(length_s;sample_rate_Hz=samplerate(sound_setup_state))
 end
 
 """
-   noise(length,[sample_rate_Hz=44100])
+    noise(length,[sample_rate_Hz=44100])
 
 Creats a period of white noise of the given length (in seconds).
 """
@@ -146,7 +146,7 @@ function lowpass(x,low;order=5,sample_rate_Hz=samplerate(x))
 end
 
 """
-   highpass(x,high,[order=5],[sample_rate_Hz=samplerate(x)])
+    highpass(x,high,[order=5],[sample_rate_Hz=samplerate(x)])
 
 High-pass filter the sound at the specified frequency.
 
@@ -159,7 +159,7 @@ function highpass(x,high;order=5,sample_rate_Hz=samplerate(x))
 end
 
 """
-   ramp(x,[ramp_s=0.005];[sample_rate_Hz=samplerate(x)])
+    ramp(x,[ramp_s=0.005];[sample_rate_Hz=samplerate(x)])
 
 Applies a half cosine ramp to the sound. Prevents click sounds at the start of
 tones.
@@ -176,7 +176,7 @@ function ramp(x,ramp_s=0.005;sample_rate_Hz=samplerate(x))
 end
 
 """
-   attenuate(x,atten_dB)
+    attenuate(x,atten_dB)
 
 Apply the given decibells of attentuation to the sound relative to a power level
 of 1.
@@ -204,7 +204,7 @@ function sound{T <: Number}(x::Array{T};
 end
 
 """
-   sound(x::SampleBuff)
+    sound(x::SampleBuff)
 
 Creates a sound object from a `SampleBuf` (from the `SampledSignals` module).
 """
@@ -214,7 +214,7 @@ function sound(x::SampleBuf)
 end
 
 """
-   sound(fn::Function)
+    sound(fn::Function)
 
 Play the sound that's returned by calling `fn`.
 """
@@ -274,7 +274,7 @@ function sound(x::SampleBuf{Fixed{Int16,15}})
 end
 
 """
-   buffer(s::Sound)
+    buffer(s::Sound)
 
 Gets the `SampleBuf` associated with this sound.
 """
@@ -481,6 +481,8 @@ function play(x::PlayingSound;wait=false)
 end
 
 """
+    pause(x)
+
 Pause playback of the sound. Resume by calling `play` on the sound again.
 """
 function pause(x::PlayingSound)
@@ -490,7 +492,7 @@ function pause(x::PlayingSound)
 end
 
 """
-     stop(x)
+    stop(x)
 
 Stop playback of the sound.
 """

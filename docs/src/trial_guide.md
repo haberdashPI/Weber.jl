@@ -2,7 +2,7 @@ We'll look in detail at how to create trials of an experiment. For a broad overv
 
 # Defining Moments
 
-To add a trial to an experiment you create a series of moments and pass them as arguments to the [`addtrial`](@ref) function. There are serveral types of moments: timed moments, compound moments, watcher moments, and conditional moments.
+To add a trial to an experiment you create a series of moments and pass them as arguments to the [`addtrial`](@ref) function. There are several types of moments: timed moments, compound moments, watcher moments, and conditional moments.
 
 ## Timed Moments
 
@@ -13,7 +13,7 @@ moment([fn],[delta_t])
 moment([delta_t],[fn],args...;keys...)
 ```
 
-The moment waits `delta_t` seconds after the onset of the previous moment, and then runs the specificed function (`fn`), if any, passing it any `args` and `keys` provided. The short form (when `fn` is the second argument) is the most common type of moment to define, and allows for moments to run one specific function at a specific time. Long-form moments aren't normally necessary, and are a more advanced topic. Below is an example of a short-form moment.
+The moment waits `delta_t` seconds after the onset of the previous moment, and then runs the specified function (`fn`), if any, passing it any `args` and `keys` provided. The short form (when `fn` is the second argument) is the most common type of moment to define, and allows for moments to run one specific function at a specific time. Long-form moments aren't normally necessary, and are a more [advanced topic](advanced.md). Below is an example of a short-form moment.
 
 ```julia
 moment(0.5,play,mysound)
@@ -63,9 +63,9 @@ addtrial(moment(0.1,play,soundA) >> moment(0.1,play,soundB),
 
 Watcher moments are used to respond to events. Often, watcher moments need not directly defined, and the higher level [`response`](@ref) method may be used.
 
-As long as a watcher moment is active it occurs any time an event is triggered. A watcher moment becomes active at the start of the preceeding moment, or at the start of a trial (if it's the first moment in a trial). This latter form is most common, since generally one wishes to listen to all events during a trial. A watcher moments is simply a function that takes one argument, the event to be processed.
+As long as a watcher moment is active it occurs any time an event is triggered. A watcher moment becomes active at the start of the preceding moment, or at the start of a trial (if it's the first moment in a trial). This latter form is most common, since generally one wishes to listen to all events during a trial. A watcher moments is simply a function that takes one argument, the event to be processed.
 
-If the watcher is the first moment in a trial, a convienient `do` block syntax is possible.
+If the watcher is the first moment in a trial, a convenient `do` block syntax is possible.
 
 ```julia
 message = visual("You hit spacebar!")
@@ -77,16 +77,17 @@ addtrial(moment2,moment3) do event
 end
 ```
 
-In the above example the watcher behavior is defined inside the do block.
+In the above example, "You hit spacebar!" is displayed every time the space bar
+is hit.
 
 Refer to the documentation for [Events](event.md) for full details on how to respond to events.
 
 ## Condition Moments
 
-Conditional moments are a more advanced technique for creating moments and aren't normally necessary. They run a function only when a certain condition is true (the [`when`](@ref) moemnt) or repeat a function until a condition is false (the [`looping`](@ref) moment). They require a good understand of the difference between [setup- and run-time](@ref setup_time), [anonymous functions](http://docs.julialang.org/en/stable/manual/functions/#anonymous-functions), and [scoping rules](http://docs.julialang.org/en/stable/manual/variables-and-scoping/) in julia.
+Conditional moments are a more advanced technique for creating moments and aren't normally necessary. They run a function only when a certain condition is true (the [`when`](@ref) moment) or repeat a function until a condition is false (the [`looping`](@ref) moment). They require a good understanding of the difference between [setup- and run-time](@ref setup_time), [anonymous functions](http://docs.julialang.org/en/stable/manual/functions/#anonymous-functions), and [scoping rules](http://docs.julialang.org/en/stable/manual/variables-and-scoping/) in julia.
 
 # Adding Trials
 
-Normally, to add moments to a trial you simply call [`addtrial`](@ref). There is also [`addpractice`](@ref), and [`addbreak`](@ref). These functions are nearlly identical to [`addtrial`](@ref) but differ in how they update the trial and offset counters, and what they automatically [`record`](@ref) to a data file.
+Normally, to add moments to a trial you simply call [`addtrial`](@ref). There is also [`addpractice`](@ref), and [`addbreak`](@ref). These functions are nearly identical to [`addtrial`](@ref) but differ in how they update the trial and offset counters, and what they automatically [`record`](@ref) to a data file.
 
 All of these functions take a iterable object of moments. For convience these iterables can be nested, allowing functions that return multiple moments themselves to be easily passed to [`addtrial`](@ref). 

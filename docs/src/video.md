@@ -12,6 +12,4 @@ instruct
 font
 window
 close
-@colorant_str
-RGB
 ```

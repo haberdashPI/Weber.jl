@@ -1,12 +1,19 @@
 # About
 
-Weber is a Julia package that can be used to generate simple psychology experiments that present visual and auditory stimuli at precise times. Julia is a recent programming language designed specifically for technical computing.
+Weber is a [Julia](http://julialang.org/) package that can be used to generate simple psychology experiments that present visual and auditory stimuli at precise times. Julia is a recent programming language designed specifically for technical computing.
 
-Weber's intended audience is graduate students in psychology and neuroscience, so it has been built with the assumption that its users have only minimal programming experience. The hope is that users should be able to get started right away making simple experiments.
+Weber has been built with the assumption that most of its users have only
+minimal programming experience. The hope is that such users should be able to
+get started quickly, making simple experiments today.
 
-Weber's emphasis is currently on auditory psychophysics, but the package has the features necessary to generate most visual stimuli one would desire as well, thanks to [Images.jl](https://github.com/JuliaImages/Images.jl). It is named after Ernst Weber. Weber runs on Windows and Mac OS X, and supports keyboard input or Cedrus response-pad input.
+Weber's emphasis is currently on auditory psychophysics, but the package has the
+features necessary to generate most visual stimuli one would desire as well,
+thanks to [Images.jl](https://github.com/JuliaImages/Images.jl). It is named
+after Ernst Weber. Weber runs on Windows and Mac OS X, and supports keyboard
+input or Cedrus response-pad input. Additional functionality can be added by
+making [extensions](extend.md)
 
-# Installation
+# [Installation](@id install)
 
 The following instructions are designed for those new to Julia, and coding in general.
 
@@ -25,6 +32,3 @@ A console window will appear. Type `Pkg.add("Weber")` in the console and hit ent
 
 ![Image of `Pkg.add("Weber")` in Console](install2.png)
 
-```@contents
-Depth = 2
-```

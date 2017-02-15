@@ -29,10 +29,12 @@ pages:
       # - 'Testing': testing.md
       # - 'Calibration': calibrate.md
       # - 'Adaptive Tracks': adaptive.md
-      # - 'Advanced Experiments': advanced.md
+      - 'Advanced Experiments': advanced.md
+      - 'Extending Weber': extend.md
   - 'Reference':
       - 'Experiments': experiment.md
       - 'Trials': trials.md
       - 'Sound': sound.md
       - 'Video': video.md
       - 'Events': event.md
+      - 'Extenable Functions': extend_ref.md

@@ -207,7 +207,7 @@ end
 Setup the experiment, adding breaks, practice, and trials.
 
 Setup creats the context necessary to generate elements of an experiment. All
-calls to `addtrial`, `addbreak` and `addpractice` must be called in side of
+calls to `addtrial`, `addbreak` and `addpractice` must be called inside of
 `fn`. This function must be called before `run`.
 """
 setup(fn::Function,exp::ExtendedExperiment) = setup(fn,next(exp))

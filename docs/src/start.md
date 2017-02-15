@@ -1,9 +1,11 @@
 In the following example, we'll run through all the basics of how to create an
-experiment in Weber. First, open Atom.
+experiment in Weber. It's assumed you have already followed the [directions for
+installing Julia and Juno](@ref install). First, open Atom.
 
-You may want to familiarize yourself with the basics of Julia. Specifically, the
-[Getting Sarted section of the
-Julia manual](http://docs.julialang.org/en/stable/manual/getting-started) may be of use.
+You may want to familiarize yourself with the basics of Julia. There are a
+number of useful
+[resources](http://docs.julialang.org/en/stable/manual/getting-started/#resources)
+available to learn Julia.
 
 Next, open the Julia console, and enter the following lines of code.
 
@@ -103,24 +105,25 @@ end
 These lines define a function that is used to create a single trial of the
 experiment. To create a trial, a random boolean value (true or false) is
 produced. When true, the low stimulus is presented first, when false, the high
-stimulus is presented first.
+stimulus is presented first. There are two basic components of ane experiment
+this demonstrated by trial creation: trial moments and trial events.
 
 ## Trial Moments
 
-Each trial is composed of a sequence of **moments**. Most moments just run a
+Each trial is composed of a sequence of *moments*. Most moments just run a
 short function at some well defined point in time. For example, during the
 experiment, the moment `moment(0.5,play,low)` will call the function
 [`play`](@ref) on the `low` stimulus, doing so 0.5 seconds after the onset of
 the previous moment. All moments running at a specified time do so in reference
 to the onset of the prior moment.
 
-There are two other moments created in this function: `show_cross()`---which simply
-displays a "+" symbol in the middle of the screen---and
-`await_response(iskeydown)`---which is a moment that begins only once a key is
+There are two other moments created in this function: [`show_cross`](@ref)--which simply
+displays a "+" symbol in the middle of the screen--and
+[`await_response`](@ref)--which is a moment that begins only once a key is
 pressed, and then immediately ends.
 
-Once all of the moments have been defined, they are returned in an array (the
-`[]` symbols) and will be run in sequence during the experiment.
+Once all of the moments have been defined, they are returned in an array and
+will be run in sequence during the experiment.
 
 For more details on how to create trial moments you can refer to the
 [`Trial Creation`](trial_guide.md) section of the user guide and the [`Trials`](trials.md)
@@ -128,7 +131,7 @@ section of the reference.
 
 ## Trial Events
 
-The `response` function also creates a moment. It's purpose is to record the
+The [`response`](@ref) function also creates a moment. It's purpose is to record the
 keyboard presses to q or p. It works a little differently than other
 moments. Rather than running once at a well defined time, it runs anytime an
 event occurs.
@@ -148,7 +151,7 @@ exp = Experiment(columns = [:sid => sid,condition => "ConditionA",:correct],skip
 ```
 
 This line creates the actual experiment. It creates a datafile with an
-appropriate name, and opens a window for the expeirment to be displayed in.
+appropriate name, and opens a window for the experiment to be displayed in.
 
 The code `columns` creates a number of columns. Some of these columns have fixed
 values, that are the same for each row of the data (e.g. `:sid => sid`) but one
@@ -187,14 +190,15 @@ run(exp)
 This final part of the code actually runs the experiment. Note that none of the
 code in setup actually runs during the experiment. This is _important_! Weber is
 designed to run as much code as possible before the experiment starts, during
-setup. This is called setup-time. This ensures that the code that which
+setup. This is called setup-time. This insures that the code that which
 does run during the experiment, during run-time, can do so in a timely manner. The
 only code that actually runs during the experiment is the behavior defined
 within each moment.
 
 # Where to go from here.
 
-That's it. You're done! From here you can begin writing your own simple experiments.
-Take a look at some of the example experiments under Weber's example directory,
-or read through the rest of the user guide. You can find the location of this
-directoy by typing `Pkg.dir("Weber","examples")` in the julia console.
+That's it. From here you can begin writing your own simple experiments. Take a
+look at some of the example experiments under Weber's example directory to see
+what you can do. You can find the location of this directory by typing
+`Pkg.dir("Weber","examples")` in the julia console. To develop a deeper
+understanding, you can read through the rest of the user guide.
