@@ -155,7 +155,7 @@ Adds a given moment object to the experiment.
     can be extended. This is useful, for example, when one wishes
     to transform one type of moment to some custom type of moment.
 """
-addmoment{T <: BaseExperiment}(e::T,m) = addmoment(data(e).moments,m)
+addmoment(e::Experiment,m) = addmoment(data(e).moments,m)
 addmoment(q::Array{MomentQueue},m::Moment) = addmoment(first(q),m)
 function addmoment(q::Union{ExpandingMoment,MomentQueue,Array{MomentQueue}},watcher::Function)
   for t in concrete_events
@@ -212,7 +212,6 @@ function addtrial_helper(exp::Experiment,trial_count,moments)
     else
       record("practice_start")
     end
-    reset_response()
   end
 
   end_trial = moment() do

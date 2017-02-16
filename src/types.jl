@@ -370,6 +370,7 @@ type OffsetStartMoment <: AbstractTimedMoment
 end
 delta_t(moment::OffsetStartMoment) = 0.0
 isimmediate(m::OffsetStartMoment) = false
+sequenceable(m::OffsetStartMoment) = false
 
 type PlayMoment <: AbstractTimedMoment
   delta_t::Float64
