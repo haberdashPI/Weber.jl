@@ -91,7 +91,7 @@ Adds a column to be recorded in the data file.
 This function must be called during setup.  It cannot be called once the
 experiment has begun. Repeatedly adding the same column only adds the column
 once. After adding a column you can include that column as a keyword argument
-to [`record`](@ref). You need not write to the column for every call to record.
+to [`record`](@ref). You need not write to the column for every record.
 If left out, the column will be empty in the resulting row of the data file.
 """
 function addcolumn{T <: BaseExperiment}(exp::T,col::Symbol)

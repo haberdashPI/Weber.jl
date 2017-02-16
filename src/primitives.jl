@@ -30,7 +30,8 @@ end
 Presents some instructions to the participant.
 
 This adds "(Hit spacebar to continue...)" to the end of the text, and waits for
-the participant to press spacebar to move on.
+the participant to press spacebar to move on. It records an "instructions"
+event to the data file.
 
 Any keyword arguments are passed onto to `visual`, which can be used
 to adjust how the instructions are displayed.
