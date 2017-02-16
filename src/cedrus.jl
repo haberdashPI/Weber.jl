@@ -128,6 +128,7 @@ function addpractice(e::ExtendedExperiment{CedrusXID},moments...)
 end
 
 function poll_events(callback::Function,exp::ExtendedExperiment{CedrusXID},time::Float64)
+  poll_events(callback,next(exp),time)
   for dev in extension(exp).devices
     if dev[:is_response_device]()
       dev[:poll_for_response]()
