@@ -37,4 +37,4 @@ pages:
       - 'Sound': sound.md
       - 'Video': video.md
       - 'Events': event.md
-      - 'Extenable Functions': extend_ref.md
+      - 'Extensions': extend_ref.md

@@ -265,11 +265,15 @@ For the 0.3.x release
 - [x] move extra static columns into separeate keyword argument
 - [x] edit/refine the user manual
 - [x] create extension API
-- [ ] document extension API
-- [ ] remember to document the record codes generated automatically by Weber
+- [x] document extension API
+- [x] make the cedrus response pad input an extension
+- [x] remember to document the record codes generated automatically by Weber
 - [ ] proofread documentation
 - [ ] publish documentation
+- [ ] create a simple abstraction for 2AFC adaptive tracking.
+- [ ] document adaptive tracking
 - [ ] create examples to demonstrate all package features
+- [ ] have docs direct to relevant example scripts
 - [ ] create some more tests for state dependent experiments
 - [ ] create tests for `display` and `play` logistics.
 - [ ] evaluate code coverage and memory allocation for tests

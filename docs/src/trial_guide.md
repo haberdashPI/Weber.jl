@@ -2,7 +2,8 @@ We'll look in detail at how to create trials of an experiment. For a broad overv
 
 # Defining Moments
 
-To add a trial to an experiment you create a series of moments and pass them as arguments to the [`addtrial`](@ref) function. There are several types of moments: timed moments, compound moments, watcher moments, and conditional moments.
+There are several types of moments: timed moments, compound moments, watcher
+moments, and conditional moments.
 
 ## Timed Moments
 
@@ -13,7 +14,13 @@ moment([fn],[delta_t])
 moment([delta_t],[fn],args...;keys...)
 ```
 
-The moment waits `delta_t` seconds after the onset of the previous moment, and then runs the specified function (`fn`), if any, passing it any `args` and `keys` provided. The short form (when `fn` is the second argument) is the most common type of moment to define, and allows for moments to run one specific function at a specific time. Long-form moments aren't normally necessary, and are a more [advanced topic](advanced.md). Below is an example of a short-form moment.
+The moment waits `delta_t` seconds after the onset of the previous moment, and
+then runs the specified function (`fn`), if any, passing it any `args` and
+`keys` provided. The short form (when `fn` is the second argument) is the most
+common type of moment to define, and allows for moments to run one specific
+function at a specific time. Long-form moments aren't normally necessary, and
+are a more [advanced topic](advanced.md). Below is an example of a short-form
+moment.
 
 ```julia
 moment(0.5,play,mysound)
@@ -21,13 +28,18 @@ moment(0.5,play,mysound)
 
 This moment plays `mysound` 0.5 seconds after the onset of the previous moment.
 
-There are several other kinds of timed moments, other than those created by calling [`moment`](@ref). Specifically, [`timeout`](@ref) and [`await_response`](@ref) wait for a particular event to occur (such as a key press) before they begin.
+There are several other kinds of timed moments, other than those created by
+calling [`moment`](@ref). Specifically, [`timeout`](@ref) and
+[`await_response`](@ref) wait for a particular event to occur (such as a key
+press) before they begin.
 
 ### Guidlines for low-latency trials
 
 Weber aims to present trials at low latencies for accurate experiments.
 
-To maintain low latency, as much of the experimental logic as possible should be precomputed, outside of trial moments, during [setup-time](@ref setup_time). The following operations are generally safe to perform during a moment:
+To maintain low latency, as much of the experimental logic as possible should be
+precomputed, outside of trial moments, during [setup-time](@ref setup_time). The
+following operations are generally safe to perform during a moment:
 
 1. Calls to [`play`](@ref) to present a sound
 2. Calls to [`display`](@ref) to present a visual.
@@ -61,9 +73,15 @@ addtrial(moment(0.1,play,soundA) >> moment(0.1,play,soundB),
 
 ## Watcher Moments
 
-Watcher moments are used to respond to events. Often, watcher moments need not directly defined, and the higher level [`response`](@ref) method may be used.
+Watcher moments are used to respond to events. Often, watcher moments need not
+be directly used. Instead, the higher level [`response`](@ref) method can be used.
 
-As long as a watcher moment is active it occurs any time an event is triggered. A watcher moment becomes active at the start of the preceding moment, or at the start of a trial (if it's the first moment in a trial). This latter form is most common, since generally one wishes to listen to all events during a trial. A watcher moments is simply a function that takes one argument, the event to be processed.
+As long as a watcher moment is active it occurs any time an event is
+triggered. A watcher moment becomes active at the start of the preceding moment,
+or at the start of a trial (if it's the first moment in a trial). This latter
+form is most common, since generally one wishes to listen to all events during a
+trial. A watcher moments is simply a function that takes one argument: the event
+to be processed.
 
 If the watcher is the first moment in a trial, a convenient `do` block syntax is possible.
 
@@ -77,7 +95,7 @@ addtrial(moment2,moment3) do event
 end
 ```
 
-In the above example, "You hit spacebar!" is displayed every time the space bar
+In the above example, "You hit spacebar!" is displayed every time the spacebar
 is hit.
 
 Refer to the documentation for [Events](event.md) for full details on how to respond to events.

@@ -2,12 +2,12 @@ export run_keycode_helper, run_calibrate, create_new_project
 using DataStructures
 
 """
-    run_keycode_helper()
+    run_keycode_helper(;extensions=[])
 
 Runs a program that will display the keycode for each key that you press.
 """
-function run_keycode_helper()
-  exp = Experiment(hide_output=true)
+function run_keycode_helper(;extensions=Extension[])
+  exp = Experiment(hide_output=true,extensions=extensions)
   setup(exp) do
     addbreak(instruct("Press keys to see their codes."))
     addtrial(show_cross(),await_response(iskeydown(key":escape:"))) do event
@@ -23,7 +23,7 @@ end
 """
    run_calibrate()
 
-Runs a program that will allow you to play pure tones and adjust the level.
+Runs a program that will allow you to play pure tones and adjust their level.
 
 This program provides one means of calibrating the levels of sound in
 your experiment. Using a sound-level meter you can determine the dB SPL of

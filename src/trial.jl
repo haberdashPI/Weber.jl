@@ -105,6 +105,18 @@ experiment (see `Experiment`).
 Each call to record writes a new row to the data file used for the experiment, so
 there should be no loss of data if the program is terminated prematurely for
 some reason.
+
+!!! note "Automatic Recorded Codes"
+
+    There are several codes that are automatically recorded by Weber.
+    They include:
+    1. **trial_start** - recorded at the start of moments added by `addtrial`
+    2. **practice_start** - recorded at the start of moments added by `addpractice`
+    3. **break_start** - recorded at the start of moments added by `addbreak`
+    4. **high_latency** - recorded whenever a high latency warning is triggered.
+       The "value" column is set to the error between the actual and the desired
+       timing of a moment, in seconds.
+
 """
 function record(code;kwds...)
   record(get_experiment(),code;kwds...)
@@ -211,7 +223,7 @@ function addtrial_helper(exp::Experiment,trial_count,moments)
 end
 
 """
-@addtrials expr...
+    @addtrials expr...
 
 Marks a let block, a for loop, or an if expression as dependent on experiment
 run-time state, leaving the offset counter unincremented within that block.  The

@@ -62,7 +62,7 @@ end
 """
     noise(length,[sample_rate_Hz=44100])
 
-Creats a period of white noise of the given length (in seconds).
+Creates a period of white noise of the given length (in seconds).
 """
 function noise(length_s;sample_rate_Hz=samplerate(sound_setup_state))
 	return SampleBuf(1-2rand(floor(Int,length_s*sample_rate_Hz)),sample_rate_Hz)
@@ -71,7 +71,7 @@ end
 """
     tone(freq,length,[sample_rate_Hz=44100],[phase=0])
 
-Creats a pure tone of the given frequency and length (in seconds).
+Creates a pure tone of the given frequency and length (in seconds).
 """
 function tone(freq_Hz,length_s;sample_rate_Hz=samplerate(sound_setup_state),
               phase=0)
@@ -83,7 +83,7 @@ end
     harmonic_complex(f0,harmonics,amps,length,
                      [sample_rate_Hz=44100],[phases=zeros(length(harmonics))])
 
-Creates a haromic complex of the given length, with the specified harmonics
+Creates a harmonic complex of the given length, with the specified harmonics
 at the given amplitudes. This implementation is somewhat superior
 to simply summing a number of pure tones generated using `tone`, because
 it avoids beating in the sound that may occur due floating point errors.
@@ -178,7 +178,7 @@ end
 """
     attenuate(x,atten_dB)
 
-Apply the given decibells of attentuation to the sound relative to a power level
+Apply the given decibels of attenuation to the sound relative to a power level
 of 1.
 
 This function normalizes the sound to have a root mean squared value of 1 and
@@ -191,11 +191,17 @@ end
 """
     sound(x::Array,[sample_rate_Hz=44100])
 
-Creates a sound object from an aribtrary array.
+Creates a sound object from an arbitrary array.
 
 For real numbers, assumes 1 is the loudest and -1 the softest. Assumes 16-bit
 PCM for integers. The array should be 1d for mono signals, or an array of size
 (N,2) for stereo sounds.
+
+!!! note "Called Implicitly"
+
+    This function is normally called implicitly in a call to
+    `play(x)`, where x is an arbitrary array, so it need not normally
+    be called.
 """
 function sound{T <: Number}(x::Array{T};
                             sample_rate_Hz=samplerate(sound_setup_state))
@@ -211,15 +217,6 @@ Creates a sound object from a `SampleBuf` (from the `SampledSignals` module).
 function sound(x::SampleBuf)
   bounded = max(min(x.data,typemax(Fixed{Int16,15})),typemin(Fixed{Int16,15}))
   sound(SampleBuf(Fixed{Int16,15}.(bounded),samplerate(x)))
-end
-
-"""
-    sound(fn::Function)
-
-Play the sound that's returned by calling `fn`.
-"""
-function play(fn::Function;keys...)
-  play(fn();keys...)
 end
 
 immutable MixChunk
@@ -369,7 +366,7 @@ the better. However, when this size is too small, audio playback will be
 corrupted.
 
 Changing the sample rate from the default 44100 to a new value will also change
-the default sample rate sounds will be creataed at, to match this new sample
+the default sample rate sounds will be created at, to match this new sample
 rate. Upon playback, there is no check to ensure that the sample rate of a given
 sound is the same as that setup here, and no resampling of the sound is made.
 """
@@ -441,7 +438,7 @@ sound. One can also call play(x,wait=true) on this object to wait for the sound
 to finish. The sound will normally play only once, but can be repeated
 multiple times using `times`.
 
-For convienience, play can also can be called on any object that can be turned
+For convenience, play can also can be called on any object that can be turned
 into a sound (via `sound`).
 """
 
@@ -461,6 +458,15 @@ function play(x::Sound;wait=false,times=1)
     end
     nothing
   end
+end
+
+"""
+    play(fn::Function)
+
+Play the sound that's returned by calling `fn`.
+"""
+function play(fn::Function;keys...)
+  play(fn();keys...)
 end
 
 function play(x::PlayingSound;wait=false)

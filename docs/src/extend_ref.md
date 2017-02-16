@@ -2,7 +2,7 @@ The following functions are used when [extending experiments](extend.md).
 
 # Functions operating over extensions
 
-These functions operate directly on an ExtendedExperiment.
+These functions operate directly on an `ExtendedExperiment`.
 
 ```@meta
 CurrentModule = Weber

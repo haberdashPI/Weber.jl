@@ -234,7 +234,7 @@ function show(io::IO,key::KeyboardKey)
 end
 
 """
-  listkeys()
+    listkeys()
 
 Lists all available key codes in order.
 
@@ -271,12 +271,12 @@ keycode(e::KeyDownEvent) = KeyboardKey(e.code)
 keycode(e::KeyUpEvent) = KeyboardKey(e.code)
 
 """
-   iskeydown(event,[key])
+    iskeydown(event,[key])
 
 Evalutes to true if the event indicates that the given key (or any key)
 was pressed down. (See `@key_str`)
 
-   iskeydown(key)
+    iskeydown(key)
 
 Returns a function which tests if an event indicates the given key was pressed
 down.
@@ -288,12 +288,12 @@ iskeydown(event::ExpEvent,keycode::Key) = false
 iskeydown(event::KeyDownEvent,key::KeyboardKey) = event.code == key.code
 
 """
-   iskeyup(event,[key])
+    iskeyup(event,[key])
 
 Evalutes to true if the event indicates that the given keyboard key (or any key)
 was released.  (See `@key_str`)
 
-   iskeyup(key)
+    iskeyup(key)
 
 Returns a function which tests if an event indicates the given key was released.
 """

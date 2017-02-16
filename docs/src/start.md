@@ -76,7 +76,7 @@ high = ramp(tone(1100,0.5))
 ```
 
 These next two lines create two stimuli. A 1000 Hz tone (`low`) and a 1100 Hz
-tone (`hight`) each 0.5 seconds long. The `ramp` function adds a tapering of the
+tone (`hight`) each 0.5 seconds long. The [`ramp`](@ref) function adds a tapering of the
 sound from 0 to the loudest level at the start of the sound over the course of 5
 milliseconds, using the cosine function, and then a tapering back to 0 at the
 end of the sound.
@@ -105,8 +105,8 @@ end
 These lines define a function that is used to create a single trial of the
 experiment. To create a trial, a random boolean value (true or false) is
 produced. When true, the low stimulus is presented first, when false, the high
-stimulus is presented first. There are two basic components of ane experiment
-this demonstrated by trial creation: trial moments and trial events.
+stimulus is presented first. There are two basic components of trial creation:
+trial moments and trial events.
 
 ## Trial Moments
 
@@ -131,9 +131,9 @@ section of the reference.
 
 ## Trial Events
 
-The [`response`](@ref) function also creates a moment. It's purpose is to record the
-keyboard presses to q or p. It works a little differently than other
-moments. Rather than running once at a well defined time, it runs anytime an
+The [`response`](@ref) function also creates a moment. It's purpose is to record
+the keyboard presses to q or p. It works a little differently than other
+moments. Rather than running once after a specified time, it runs anytime an
 event occurs.
 
 Events indicate that something has changed: e.g. a key has been pressed, a key
@@ -190,15 +190,17 @@ run(exp)
 This final part of the code actually runs the experiment. Note that none of the
 code in setup actually runs during the experiment. This is _important_! Weber is
 designed to run as much code as possible before the experiment starts, during
-setup. This is called setup-time. This insures that the code that which
+setup. This is called setup-time. This ensures that code which
 does run during the experiment, during run-time, can do so in a timely manner. The
 only code that actually runs during the experiment is the behavior defined
 within each moment.
 
 # Where to go from here.
 
-That's it. From here you can begin writing your own simple experiments. Take a
-look at some of the example experiments under Weber's example directory to see
-what you can do. You can find the location of this directory by typing
-`Pkg.dir("Weber","examples")` in the julia console. To develop a deeper
-understanding, you can read through the rest of the user guide.
+From here you can begin writing your own simple experiments. Take a look at some
+of the example experiments under Weber's example directory to see what you can
+do. You can find the location of this directory by typing
+`Pkg.dir("Weber","examples")` in the julia console. To further your
+understanding of the details of Weber, you can also read through the rest of the
+user guide. Topics in the guide have been organized from simplest, and most
+useful, to the more advanced, least-frequently-necessary features.

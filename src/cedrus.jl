@@ -8,6 +8,17 @@ import Weber: keycode, iskeydown, iskeyup, addtrial, addpractice, poll_events
 type CedrusXID <: Weber.Extension
   devices::PyObject
 end
+"""
+    CedrusXID()
+
+Creates an extension for Weber experiments allowing an experiment to respond to
+events from Cedrus response-pad hardware. You can use [`iskeydown`](@ref) and
+[`iskeyup`](@ref) to check for events. To find the keycodes of the
+buttons for your response pad, run the following code, and press each of the
+buttons.
+
+    run_keycode_helper(extensions=[CedrusXID()])
+"""
 function CedrusXID()
   pyxid = pyimport_conda("pyxid","pyxid","haberdashPI")
   CedrusXID(pyxid[:get_xid_devices]())

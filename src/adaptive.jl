@@ -4,7 +4,9 @@ export levitt_adapter, bayesian_adapter, delta
 """
 Adpaters, created through their individual constructors, can be used to estiamte
 some delta at which listeners respond correctly at a given threshold (e.g. 80%
-correct). They must define `update`, `estimate` and `delta`.
+correct). They must define `update`, `estimate` and `delta`. Generally
+user-code should call the [`response`](@ref) method specialized for adapters to
+record responses and update the adapter.
 """
 abstract Adapter
 
@@ -114,7 +116,7 @@ end
                   [min_reversals=7],[min_delta=-Inf],[max_delta=Inf],
                   [mult=false])
 
-Find a threshold according to a non-parametric statistical procedure. This
+An adapter that finds a threshold according to a non-parametric statistical procedure. This
 approach makes fewer explicit assumptions than `bayesian_adapter` but may be
 slower to converge to a threshold.
 
@@ -282,9 +284,9 @@ end
                           thresh_d=thresh_prior,
                           inv_slope_d=inv_slope_prior)
 
-Find a threshold according to a parametric statistical model. This makes more
-explicit assumptions than the `levitt_adapter` but will normally find the
-threshold faster.
+An adapter that finds a threshold according to a parametric statistical
+model. This makes more explicit assumptions than the `levitt_adapter` but will
+normally find the threshold faster.
 
 The psychmetric curve is estimated from user responses using a bayesian
 approach. After estimation, each new delta is selected in a greedy fashion,
@@ -298,7 +300,7 @@ This algorithm assumes the following functional form for the psychometric
 response as a function of the stimulus difference ``Δ``.
 
 ``
-f(Δ) = λ/2 + (1-λ) Φ((Δ - θ)⋅σ/√2
+f(Δ) = λ/2 + (1-λ) Φ((Δ - θ)⋅σ/\sqrt{2})
 ``
 
 In the above ``Φ`` is the cumulative distribution function of a normal
@@ -310,7 +312,7 @@ For stability and robustness, this adapter begins by repeating the same delta
 multiple times and only begins quickly changing deltas trial-by-trial when the
 ratio of standard deviation to the mean is small. This functionality can be
 adjusted using `repeat3_thresh` and `repeat2_thresh`, or, if you do not
-wish to have any repeats, both values can be set to Inf.
+wish to have any repeats, both values can be set to .
 
 # Keyword Arugments
 
@@ -334,10 +336,10 @@ wish to have any repeats, both values can be set to Inf.
   during importance sampling. This defaults to thresh_prior
 - inv_slope_d: the distribution over-which to draw samples for the inverse slope
   during importance sampling. This defaults to inv_slope_prior.
-- repeat3_thresh: the ratio of sd / mean for theta required to move from
-  repeating a delta 3 times to 2 times before changing the delta.
-- repeat2_thresh: the ratio of sd / mean for theta required to move from
-  repeating a delta 2 times to 1 time before changing the delta.
+- repeat2_thresh: the ratio of sd / mean for theta must suprass
+  to repeat each delta twice.
+- repeat3_thresh: the ratio of sd / mean for theta must surpass
+  to repeat each delta thrice.
 """
 function bayesian_adapter(;first_delta=0.1,
                           n_samples=1000,miss=0.01,threshold=0.79,

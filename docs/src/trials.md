@@ -1,4 +1,9 @@
 
+```@meta
+CurrentModule = Weber
+```
+
+
 ```@docs
 addtrial
 addbreak
@@ -13,6 +18,10 @@ show_cross
 when
 looping
 @addtrials
+Adapter
+update!
+estimate
+delta
 levitt_adapter
 bayesian_adapter
 ```

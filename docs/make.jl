@@ -1,2 +1,2 @@
-using Documenter, Weber, Colors
-makedocs(modules = [Weber])
+using Documenter, Weber, Colors, Weber.Cedrus
+makedocs(modules = [Weber,Weber.Cedrus])

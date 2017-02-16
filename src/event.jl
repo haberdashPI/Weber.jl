@@ -30,7 +30,7 @@ allowing events to makred as having occured at a specific time.
 !!! warning
 
     This function should never be called directly by user code. A new
-    methods of this function can be implemented to extend Weber,
+    method of this function can be implemented to extend Weber,
     allowing it to report new kinds events.
 
 """

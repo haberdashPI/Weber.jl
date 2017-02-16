@@ -69,31 +69,41 @@ This demonstrates one last important concept. When calling `addcolumn`, the func
 
 # The private interface of run-time objects.
 
-Most of the functionality above allows the extension of [`setup-time`](@ref setup_time) functionality. However, there are two ways to implement new run-time functionality: the generation of new kinds of events and the creation of new kinds of moments.
+Most of the functionality above allows the extension of [setup-time](@ref setup_time) functionality. However, there are two ways to implement new run-time functionality: the generation of new kinds of events and the creation of new kinds of moments.
 
 ## Custom Events
 
 Extensions to [`poll_events`](@ref) can be used to generate new subtypes of the abstract type `Weber.ExpEvent`. These events should be tagged with the `@event` macro, to ensure proper pre-compilation of moment functions. Such events can implement new methods for the existing [public functions on events](event.md) or their own new functions.
 
 If you define new functions, instead of leveraging the existing event methods, they should generally have some default behavior for all `ExpEvent` objects, so it is easy
-to call the method on any event a watcher moment receive.
+to call the method on any event a watcher moment receives.
 
 ### Custom Key Events
 
-One approach, if you are implementing events for a hardware input device, is to leverage the existing methods [`iskeydown`](@ref). You can define your own type of keycode (which should be of some new custom type `<: Weber.Key`). You can then make use of the [`@key_str`](@ref) macro by adding entries to the `Weber.str_to_code` dictionary (a private global constant). So for example, you could add the following to the module implementing your extension.
+One approach, if you are implementing events for a hardware input device, is to
+leverage the existing methods [`iskeydown`](@ref). You can define your own type
+of keycode (which should be of some new custom type `<: Weber.Key`). You can
+then make use of the [`@key_str`](@ref) macro by adding entries to the
+`Weber.str_to_code` dictionary (a private global constant). So for example, you
+could add the following to the module implementing your extension.
 
 ```julia
 Weber.str_to_code["my_button1"] = MyHardwareKey(1)
 Weber.str_to_code["my_button1"] = MyHardwareKey(2)
 ```
 
-Such key types should implement `==`, `hash` and `isless` so that the events can be ordered. This
-allows them to be displayed in an organized fashion when printed using [`listkeys`](@ref). 
+Such key types should implement `==`, `hash` and `isless` so that the events can
+be ordered. This allows them to be displayed in an organized fashion when
+printed using [`listkeys`](@ref).
 
-You could then extend poll_events so that it generates events that return true for `iskeydown(myevent,key"my_button1")` (and a corresponding method for `iskeydown`). These buttons could then be used in code using your module by calling `response` as follows.
+You could then extend poll_events so that it generates events that return true
+for `iskeydown(myevent,key"my_button1")` (and a corresponding method for
+`iskeyup`). These buttons could then be used in code using your module by
+calling `response` as follows.
 
 ```julia
-response(key"my_button1" => "button1_pressed",key"my_button2" => button2_pressed)
+response(key"my_button1" => "button1_pressed",
+         key"my_button2" => button2_pressed)
 ```
 
 ## Custom Moments
@@ -104,7 +114,14 @@ automatically by extending `addtrial`. Once created, and added to trials, these
 moments will be processed at run-time using the function [`handle`](@ref), which
 should define the moment's run-time behavior.
 
-A moment can also define [`delta_t`](@ref)---to define when it occurs---or [`prepare!`](@ref)---to have some sort of initialization occur before its onset---but these both have default implementations.
+A moment can also define [`delta_t`](@ref)---to define when it occurs---or
+[`prepare!`](@ref)---to have some sort of initialization occur before its
+onset---but these both have default implementations.
 
-Methods of `handle` should not make use of the extension machinery described above. What this means is that methods of `handle` should never dispatch on an extended experiment, and no calls to `top`, `next` or `extension` should occur on the experiment object. Further, each moment should belong to one specific extension, in which all functionality for that custom moment should be implemented. 
+Methods of `handle` should not make use of the extension machinery described
+above. What this means is that methods of `handle` should never dispatch on an
+extended experiment, and no calls to `top`, `next` or `extension` should occur
+on the experiment object. Further, each moment should belong to one specific
+extension, in which all functionality for that custom moment should be
+implemented.
 
