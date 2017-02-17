@@ -25,7 +25,7 @@ features necessary to generate most visual stimuli one would desire as well,
 thanks to [Images.jl](https://github.com/JuliaImages/Images.jl). It is named
 after Ernst Weber. Weber runs on Windows and Mac OS X, and supports keyboard
 input or Cedrus response-pad input. Additional functionality can be added by
-making [extensions](https://haberdashpi.github.io/Weber.jl/stable/extend/)
+making [extensions](https://haberdashpi.github.io/Weber.jl/stable/extend/).
 
 # Status
 
