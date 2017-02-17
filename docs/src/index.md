@@ -1,6 +1,9 @@
 # About
 
-Weber is a [Julia](http://julialang.org/) package that can be used to generate simple psychology experiments that present visual and auditory stimuli at precise times. Julia is a recent programming language designed specifically for technical computing.
+Weber is a [Julia](http://julialang.org/) package that can be used to generate
+simple psychology experiments that present visual and auditory stimuli at
+precise times. Julia is a recent programming language designed specifically for
+technical computing.
 
 Weber has been built with the assumption that most of its users have only
 minimal programming experience. The hope is that such users should be able to
