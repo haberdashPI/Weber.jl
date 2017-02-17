@@ -284,8 +284,9 @@ const default_sample_rate = 44100
 type SoundSetupState
   samplerate::Int
   buffer_size::Int
+  playing::Dict{Sound,Float64}
 end
-SoundSetupState() = SoundSetupState(0,256)
+SoundSetupState() = SoundSetupState(0,256,Dict())
 function samplerate(s::SoundSetupState)
   if s.samplerate == 0
     default_sample_rate
@@ -294,9 +295,29 @@ function samplerate(s::SoundSetupState)
   end
 end
 isready(s::SoundSetupState) = s.samplerate != 0
-const sound_setup_state = SoundSetupState()
 samplerate(x::Vector) = samplerate(sound_setup_state)
 samplerate(x::Matrix) = samplerate(sound_setup_state)
+
+const sound_setup_state = SoundSetupState()
+
+# manages sounds, so they don't get garbage collected before
+# they're done playing
+function register_sound(current::Sound,play_from=0)
+  setstate = sound_setup_state
+  setstate.playing[current] = precise_time() + duration(current) - play_from
+  for s in keys(setstate.playing)
+    stop_at = setstate.playing[s]
+    if stop_at > precise_time()
+      delete!(setstate.playing,s)
+    end
+  end
+end
+
+function unregister_sound(current::Sound)
+  delete!(setstate.playing,current)
+end
+
+  # purge any sounds no longer playing
 
 """
     current_sound_latency()
@@ -451,6 +472,7 @@ function play(x::Sound;wait=false,times=1)
   end
 
   if !wait
+    register_sound(x)
     PlayingSound(channel,precise_time(),NaN,x,times)
   else
     sleep(times*duration(x)-0.01)
@@ -470,13 +492,16 @@ function play(fn::Function;keys...)
 end
 
 function play(x::PlayingSound;wait=false)
+  played = 0.0
   if !isnan(x.paused)
     ccall((:Mix_Resume,_psycho_SDL2_mixer),Void,(Cint,),x.channel)
-    x.start = precise_time() - (x.paused - x.start)
+    played = (x.paused - x.start)
+    x.start = precise_time() - played
     x.paused = NaN
   end
 
   if !wait
+    register_sound(x.sound,played)
     x
   else
     sleep(duration(x) - (precise_time() - x.start) - 0.01)
@@ -503,6 +528,7 @@ end
 Stop playback of the sound.
 """
 function stop(x::PlayingSound)
+  unregister_sound(x.sound)
   ccall((:Mix_HaltChannel,_psycho_SDL2_mixer),Void,(Cint,),x.channel)
   nothing
 end
@@ -514,6 +540,9 @@ Pause all sounds that are playing.
 """
 function pause_sounds()
   ccall((:Mix_Pause,_psycho_SDL2_mixer),Void,(Cint,),-1)
+  for s in keys(sound_setup_state.playing)
+    sound_setup_state.playing[s] = Inf
+  end
 end
 
 """
@@ -523,6 +552,15 @@ Resume all sounds that have been paused.
 """
 function resume_sounds()
   ccall((:Mix_Resume,_psycho_SDL2_mixer),Void,(Cint,),-1)
+  for s in keys(sound_setup_state.playing)
+    if isinf(sound_setup_state.playing[s])
+      # note: this is a conservative time when sounds can be removed from
+      # playing registry. It could be sooner, but that requires a lot of work to
+      # figure out, and it's fine if the sounds stick around for a bit after
+      # they're done playing.
+      sound_setup_state.playing[s] = precise_time() + duration(s)
+    end
+  end
 end
 
 
