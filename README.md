@@ -2,6 +2,8 @@
 
 [![Build status](https://ci.appveyor.com/api/projects/status/uvxq5mqlq0p2ap02/branch/master?svg=true)](https://ci.appveyor.com/project/haberdashPI/weber-jl/branch/master)
 [![TravisCI Status](https://travis-ci.org/haberdashPI/Weber.jl.svg?branch=master)](https://travis-ci.org/haberdashPI/Weber.jl)
+[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://haberdashPI.github.io/Weber.jl/stable)
+[![](https://img.shields.io/badge/docs-latest-blue.svg)](https://haberdashPI.github.io/Weber.jl/latest)
 
 <!-- [![Coverage Status](https://coveralls.io/repos/haberdashPI/Weber.jl/badge.svg?branch=master&service=github)](https://coveralls.io/github/haberdashPI/Weber.jl?branch=master) -->
 
@@ -24,11 +26,6 @@ thanks to [Images.jl](https://github.com/JuliaImages/Images.jl). It is named
 after Ernst Weber. Weber runs on Windows and Mac OS X, and supports keyboard
 input or Cedrus response-pad input. Additional functionality can be added by
 making [extensions](extend.md)
-
-# Documentation
-
-[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://haberdashPI.github.io/Weber.jl/stable)
-[![](https://img.shields.io/badge/docs-latest-blue.svg)](https://haberdashPI.github.io/Weber.jl/latest)
 
 # Status
 
