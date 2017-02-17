@@ -4,7 +4,7 @@ export CedrusXID, reset_response, response_time
 
 using Weber
 import Weber: keycode, iskeydown, iskeyup, addtrial, addpractice, poll_events
-import Base: hash, isless, ==
+import Base: hash, isless, ==, show
 
 type CedrusXID <: Weber.Extension
   devices::PyObject
