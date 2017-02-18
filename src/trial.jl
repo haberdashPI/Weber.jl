@@ -88,13 +88,14 @@ function record{T <: BaseExperiment}(exp::T,code;kwds...)
 end
 
 """
-    record(code;column_values...)
+    record(code;keys...)
 
 Record a row to the experiment data file using a given `code`.
 
 Each event has a code which identifies it as being a particular type of
-experiment event. This is normally a string. By convention when you record
-something with the same code you should specify the same set of `column_values`.
+experiment event. This is normally a string. Each keyword argument is the value
+of a column. By convention when you record something with the same
+code you should specify the same set of columns.
 
 All calls to record also result in many additional values being written to the
 data file. The start time and date of the experiment, the trial and offset
@@ -106,7 +107,7 @@ Each call to record writes a new row to the data file used for the experiment, s
 there should be no loss of data if the program is terminated prematurely for
 some reason.
 
-!!! note "Automatic Recorded Codes"
+!!! note "Automaticlly Recorded Codes"
 
     There are several codes that are automatically recorded by Weber.
     They include:
@@ -329,7 +330,7 @@ function addtrial{T <: BaseExperiment}(exp::T,moments...)
 end
 
 """
-   addpractice(moments...)
+    addpractice(moments...)
 
 Identical to [`addtrial`](@ref), except that it does not incriment the trial count,
 and records a "practice_start" instead of "trial_start" code.
@@ -344,7 +345,7 @@ function addpractice{T <: BaseExperiment}(exp::T,moments...)
 end
 
 """
-   addbreak(moments...)
+    addbreak(moments...)
 
 Identical to [`addpractice`](@ref), but records "break_start" instead of "practice_start".
 """
@@ -428,7 +429,7 @@ function final_moment(fn::Function)
 end
 
 """
-   await_response(isresponse;[atleast=0.0])
+    await_response(isresponse;[atleast=0.0])
 
 This moment starts when the `isresponse` function evaluates to true.
 
@@ -436,7 +437,7 @@ The `isresponse` function will be called anytime an event occurs. It should
 take one parameter (the event that just occured).
 
 If the response is provided before `atleast` seconds, the moment does not start
-until `atleast` seconds.
+until `atleast` seconds have passed.
 """
 function await_response(fn::Function;atleast=0.0)
   for t in concrete_events
@@ -523,13 +524,13 @@ prepare!(m::MomentSequence) = foreach(prepare!,m.data)
 """
     handle(exp,queue,moment,to_handle)
 
-Internal method to handle the given object in a manner specific to the kind of
-moment. The `to_handle` object is either a `Float64`, indicating the current
-time, or it is an `ExpEvent` indicating the event that just occured. A timed
-moment, for instance, will run when it recieves a Float64 value indicating a
-specified time has passed.  The queue is a MomentQueue object, which has the
-same interface as the Dequeue object (from the DataStructures
-package). Upon calling handle, top(queue) == moment.
+Internal method to handle the given moment object in a manner specific to the
+type of moment. The `to_handle` object is either a `Float64`, indicating the
+current time, or it is an `ExpEvent` indicating the event that just occured. A
+timed moment, for instance, will run when it recieves a `Float64` value. The
+queue is a `MomentQueue` object, which has the same interface as the `Dequeue`
+object (from the `DataStructures` package). Upon calling handle, `top(queue) ==
+moment`.
 
 Handle returns a boolean indicating whether the event was "handled" or not. If
 unhandled, the moment should remain on top of the queue. If returning true,

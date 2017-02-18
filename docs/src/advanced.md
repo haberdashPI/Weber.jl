@@ -2,7 +2,7 @@ There are several concepts and techniques best avoided unless they are really ne
 
 # Long-form moments
 
-Long-form moments generally follow the following pattern.
+Long-form moments generally fit the following pattern.
 
 ```julia
 mysound = sound(tone(1000,1))
@@ -50,12 +50,11 @@ is appropriately set with stateful trials.
 The offset counter is meant to refer to a well defined time during the
 experiment.  They can be used to fast forward through the expeirment by
 specifying an offset greater than 0.  However, if there is state that changes
-throughout the course of several trials, trials that follow these state changes
-cannot be reliably reproduced when those state-chaning trials are skipped
-because the user specifies an offset > 0. Thus anytime you have
-a series of trials, some of which depend on the state of one another, those
-trials should be placed inside of an @addtrials let block if you want
-fast-forwarding through parts of the experiment to work as expected.
+throughout the course of several trials, those trials cannot reliably be
+reproduced when they are skipped using an offset > 0. Anytime you have a series
+of trials, some of which depend on what happens earlier in an expeirment, such
+trials should be placed inside of an @addtrials let block. Otherwise experiment
+fast forwarding will result in unexpected behaviors.
 
 ## Conditional Trials
 
@@ -94,7 +93,7 @@ hits the "y" key.
 
 If `@addtrials if !y_hit` was replaced with `if !y_hit` in the above example,
 the second trial would always run. This is because the `if` expression would be
-evaluated before any trials were run (when `y_hit` is false).
+run during setup-time, before any trials were run (when `y_hit` is false).
 
 ## Looping Trials
 
@@ -120,13 +119,38 @@ example, the while loop would never terminate, running an infinite loop, because
 
 # Run-time stimulus generation.
 
-When stimuli need to be generated during an experiment the standard short-form moment will not do. Rather than resorting to long-form moments, a short-form moment calling `play` or `display` can take a zero-argument function rather than a sound or a visual. This function should return a sound or visual (like all short form moments, these need not explicitly call
-`sound` or `visual`).
+When stimuli need to be generated during an experiment the standard short-form
+moment will not do. For instance, if you want a tone's frequency to depend
+on some delta value that changes during the experimrent the following will not work.
 
-For example:
+```julia
+# THIS WILL NOT WORK!!!
+moment(play,tone(1000+my_delta))
+```
+
+The basic problem here is that tone is used to generate a sound at
+[setup-time](@ref setup_time). What we want is for the run-time value of
+`my_delta` to be used. To do this you can pass a function to play. This function
+will be used to generate a sound during runtime.
 
 ```julia
 moment(play,() -> tone(1000+my_delta,1))
 ```
 
-This moment plays a one second tone at frequency 1000+my_delta. The key point is that my_delta can be modified during the experiment, thus altering what sound will be generated.
+Similarly, we can use a runtime value in display by passing a function to display.
+
+```julia
+moment(display,() -> "hello $my_name.")
+```
+
+When moments are created this way, the sound or visual is generated before the
+moment even begins, to eliminate any latency that would be introduced by loading
+the sound or visual into memory. Specifically, the stimulus is
+generated at the start of the prior moment. So for instance, in the following
+example, `mysound` will be generated 0.5 seconds before `play` is called,
+because the moment before the `play` moment occurs 0.5 seconds before.
+
+```julia
+addtrial(moment(display,"Get ready!"),moment(0.5,play,mysound))
+```
+

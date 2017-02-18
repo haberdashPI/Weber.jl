@@ -1,6 +1,7 @@
 
 
 ```@docs
+@event
 @key_str
 keycode
 iskeydown

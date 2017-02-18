@@ -9,6 +9,7 @@ CurrentModule = Weber
 * [`run`](@ref)
 * [`record`](@ref)
 * [`addtrial`](@ref)
+* [`addpractice`](@ref)
 * [`addbreak`](@ref)
 * [`poll_events`](@ref)
 
@@ -20,12 +21,12 @@ type MyExtension <: Weber.Extension
 end
 ```
 
-For all fo the public functions above (everything but `poll_events`), you define
-a new method of these functions that includes one additional argument beyond
-that listed in its documentation, located before all other arguments. This
-argument should be of type `ExtendedExperiment{MyExtension}`. To extend the
-private `poll_events` function, replace the `Experiment` argument with an
-`ExtendedExperiment{MyExtension}` argument.
+For all fo the public functions above (everything but `poll_events`), you can
+then define a new method of these functions that includes one additional
+argument beyond that listed in its documentation, located before all other
+arguments. This argument should be of type `ExtendedExperiment{MyExtension}`. To
+extend the private `poll_events` function, replace the `Experiment` argument
+with an `ExtendedExperiment{MyExtension}` argument.
 
 !!! warning "Don't extend unlisted functions"
 
@@ -40,21 +41,20 @@ function record(experiment::ExtendedExperiment{MyExtension},code;keys...)
 end
 ```
 
-There are a few things to note about this implementation. First, it accesses
-the extension object in the experiment using `extension`.
+There are a few things to note about this implementation. First, 
+the extension object is accessed using [`extension`](@ref).
 
-Second, each experiment can have multiple extensions, so each subsequent
-*version* of the experiment must be dispatched over. Each version of an
-experiment refers to the experiment paired with one of its extensions. The
-top-most version is the first extension specified in the call to
-[`Experiment`](@ref), the bottom-most the experiment without any extensions.  As
-all extensions should, the above method calls the function being extended
-(`record`) in its body, but dispatching over the next experiment version. In
-this way, all behavior from each extension, and the base experiment, without any
-extensions, is executed. The next version is accessed using the [`next`](@ref)
-function.
+Second, `record` is called on the [`next`](@ref) extension.  **All extended
+functions should follow this pattern**. Each experiment can have multiple
+extensions, and each pairing of an experiment with a particular plugin is called
+an experiment *version*. These are ordered from top-most to bottom-most
+version. The top-most version is the first extension in the list specified in
+the call to [`Experiment`](@ref). Subsequent versions are accessed in this same
+order, using [`next`](@ref), until the bottom-most version, which is the
+experiment without any paired extension. 
 
-For this extension to actually work, `setup` must also be extended to add the column `:my_extension` to the data file.
+For this extension to actually work, `setup` must also be extended to add the
+column `:my_extension` to the data file.
 
 ```julia
 function setup(fn::Function,experiment::ExtendedExperiment{MyExtension})
@@ -65,24 +65,35 @@ function setup(fn::Function,experiment::ExtendedExperiment{MyExtension})
 end
 ```
 
-This demonstrates one last important concept. When calling `addcolumn`, the function `top` is called on the experiment to get the top-most version of the experiment, so that any functionality of versions above the current one will be utilized in the call to `addcolumn`.
+This demonstrates one last important concept. When calling `addcolumn`, the
+function [`top`](@ref) is called on the experiment to get the top-most version of the
+experiment, so that any functionality of versions above the current one will be
+utilized in the call to `addcolumn`.
 
 # The private interface of run-time objects.
 
-Most of the functionality above allows the extension of [setup-time](@ref setup_time) functionality. However, there are two ways to implement new run-time functionality: the generation of new kinds of events and the creation of new kinds of moments.
+Most of the functionality above is for the extension of [setup-time](@ref
+setup_time) functionality. However, there are two ways to implement new run-time
+functionality: the generation of new kinds of events and the creation of new
+kinds of moments.
 
 ## Custom Events
 
-Extensions to [`poll_events`](@ref) can be used to generate new subtypes of the abstract type `Weber.ExpEvent`. These events should be tagged with the `@event` macro, to ensure proper pre-compilation of moment functions. Such events can implement new methods for the existing [public functions on events](event.md) or their own new functions.
+Extensions to [`poll_events`](@ref) can be used to generate new subtypes of the
+abstract type `Weber.ExpEvent`. These events should be tagged with the [`@event`](@ref)
+macro, to ensure proper pre-compilation of moment functions. Such events can
+implement new methods for the existing [public functions on events](event.md) or
+their own new functions.
 
-If you define new functions, instead of leveraging the existing event methods, they should generally have some default behavior for all `ExpEvent` objects, so it is easy
-to call the method on any event a watcher moment receives.
+If you define new functions, instead of leveraging the existing event methods,
+they should generally have some default behavior for all `ExpEvent` objects, so
+it is easy to call the method on any event a watcher moment receives.
 
 ### Custom Key Events
 
 One approach, if you are implementing events for a hardware input device, is to
-leverage the existing methods [`iskeydown`](@ref). You can define your own type
-of keycode (which should be of some new custom type `<: Weber.Key`). You can
+implement methods for [`iskeydown`](@ref). You can define your own type
+of keycode (which should be of some new custom type `<: Weber.Key`). Then, you can
 then make use of the [`@key_str`](@ref) macro by adding entries to the
 `Weber.str_to_code` dictionary (a private global constant). So for example, you
 could add the following to the module implementing your extension.
@@ -96,32 +107,32 @@ Such key types should implement `==`, `hash` and `isless` so that the events can
 be ordered. This allows them to be displayed in an organized fashion when
 printed using [`listkeys`](@ref).
 
-You could then extend poll_events so that it generates events that return true
-for `iskeydown(myevent,key"my_button1")` (and a corresponding method for
-`iskeyup`). These buttons could then be used in code using your module by
+You can then extend [`poll_events`](@ref) so that it generates events that
+return true for `iskeydown(myevent,key"my_button1")` (and a corresponding method
+for `iskeyup`). These buttons could then be used in code using your module by
 calling `response` as follows.
 
 ```julia
 response(key"my_button1" => "button1_pressed",
-         key"my_button2" => button2_pressed)
+         key"my_button2" => "button2_pressed")
 ```
 
 ## Custom Moments
 
 You can create your own moment types, which must be `<: Weber.Moment`. These new
 moments will have to be generated using some newly defined function, or added
-automatically by extending `addtrial`. Once created, and added to trials, these
+automatically by extending [`addtrial`](@ref). Once created, and added to trials, these
 moments will be processed at run-time using the function [`handle`](@ref), which
 should define the moment's run-time behavior.
 
-A moment can also define [`delta_t`](@ref)---to define when it occurs---or
-[`prepare!`](@ref)---to have some sort of initialization occur before its
-onset---but these both have default implementations.
+A moment can also define [`delta_t`](@ref)--to define when it occurs--or
+[`prepare!`](@ref)--to have some sort of initialization occur before its
+onset--but these both have default implementations.
 
-Methods of `handle` should not make use of the extension machinery described
-above. What this means is that methods of `handle` should never dispatch on an
-extended experiment, and no calls to `top`, `next` or `extension` should occur
-on the experiment object. Further, each moment should belong to one specific
-extension, in which all functionality for that custom moment should be
-implemented.
+Methods of [`handle`](@ref) should not make use of the extension machinery
+described above. What this means is that methods of [`handle`](@ref) should
+never dispatch on an extended experiment, and no calls to [`top`](@ref),
+[`next`](@ref) or [`extension`](@ref) should occur on the experiment
+object. Further, each moment should belong to one specific extension, in which
+all functionality for that custom moment should be implemented.
 

@@ -85,7 +85,7 @@ function run_calibrate()
 end
 
 """
-   create_new_project(name,dir=".")
+    create_new_project(name,dir=".")
 
 Creates a set of files to help you get started on a new experiment.
 

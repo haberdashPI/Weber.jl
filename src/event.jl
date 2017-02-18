@@ -24,8 +24,8 @@ end
      Weber.poll_events(callback,experiment,time)
 
 Call the function `callback`, possibility multiple times, passing it an event
-object each time. The time at which the events have been polled is passed,
-allowing events to makred as having occured at a specific time.
+object each time. The time at which the events are polled is passed,
+allowing this time to be stored with the event.
 
 !!! warning
 

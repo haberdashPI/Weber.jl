@@ -2,10 +2,10 @@ using Distributions
 export levitt_adapter, bayesian_adapter, delta
 
 """
-Adpaters, created through their individual constructors, can be used to estiamte
+Adpaters, created through their individual constructors, can be used to estimate
 some delta at which listeners respond correctly at a given threshold (e.g. 80%
 correct). They must define `update`, `estimate` and `delta`. Generally
-user-code should call the [`response`](@ref) method specialized for adapters to
+user code should call the [`response`](@ref) method specialized for adapters to
 record responses and update the adapter.
 """
 abstract Adapter
@@ -40,7 +40,7 @@ function delta(adapter)
 end
 
 """
-    response([fn],track,[key1] => ["resp1"],...;correct=[resp],
+    response([fn],adapter,[key1] => ["resp1"],...;correct=[resp],
              [show_feedback=true],
              [feedback=Dict(true=>"Correct",false=>"Wrong!")]
              keys...)
@@ -48,8 +48,8 @@ end
 Record a response in a n-alternative forced choice task and update
 an adapter.
 
-The first response recieved is interprted as the actual response. Subsequent
-response will be recorded, without a delta or correct value set, and appending
+The first response recieved is interpreted as the actual response. Subsequent
+responses will be recorded, without a delta or correct value set, and appending
 "late_" to the specified response string.
 
 # Function Callback
@@ -59,12 +59,12 @@ provided response, and the correct response.
 
 # Keyword Arguments
 
-- `correct`: the response string corresponding to the correct response
+- `correct` the response string corresponding to the correct response
 - `show_feedback` (default = true): whether to show feedback to the
   participant after they respond.
-- `feedback` (default = Dict(true => "Correct!",false => "Wrong!"): the text
-  to display to a participant when they are correct (for the true key) or
-  incorrect (for the false key).
+- `feedback` the text to display to a participant when they are correct
+  (for the true key, defaults to "Correct!") or incorrect (for the false key,
+  defaults to "Wrong!").
 
 Any additional keyword arguments are added as column values when the
 response is recorded.
@@ -134,7 +134,7 @@ changed). This is the same approach described in Levitt (1971).
 - `big`: the amount delta changes by (up or down) at first
 - `big_reverse`: how many reveresals (up to down or down to up) must
   occur before `little` is used instead of `big`
-- 'little': the amount delat changes by (up or down) after
+- `little`: the amount delat changes by (up or down) after
   `big_reverse` reversals.
 - `min_reversals`: the smallest number of reversals that can
   be used to estimate a threshold.
@@ -316,29 +316,29 @@ wish to have any repeats, both values can be set to .
 
 # Keyword Arugments
 
-- first_delta: the delta to start measuring with
-- n_samples: the number of samples to use during importance sampling.
+- `first_delta`: the delta to start measuring with
+- `n_samples`: the number of samples to use during importance sampling.
   The algorithm for selecting new deltas is O(n²).
-- miss: the expected rate at which that listeners will make mistakes
+- `miss`: the expected rate at which that listeners will make mistakes
   even for easy to percieve differences.
-- threshold: the %-response threshold to be estimated
-- min_delta: the smallest possible delta
-- max_delta: the largest smallest possible delta
-- min_plausible_delta: the smallest plausible delta, should be > 0.
+- `threshold`: the %-response threshold to be estimated
+- `min_delta`: the smallest possible delta
+- `max_delta`: the largest smallest possible delta
+- `min_plausible_delta`: the smallest plausible delta, should be > 0.
   Used to define thresh_prior.
-- max_plausible_delta: the largest plausible delta, should be < max_delta.
+- `max_plausible_delta`: the largest plausible delta, should be < max_delta.
   Used to define thresh_prior.
-- thresh_prior: the prior probability distribution across thresholds.
+- `thresh_prior`: the prior probability distribution across thresholds.
   This influence the way the delta is adapted. By default this is defined in
   terms of max_plausible_delta.
-- inv_slope_prior: the prior probability distribution across inverse slopes.
-- thresh_d: the distribution over-which to draw samples for the threshold
+- `inv_slope_prior`: the prior probability distribution across inverse slopes.
+- `thresh_d`: the distribution over-which to draw samples for the threshold
   during importance sampling. This defaults to thresh_prior
-- inv_slope_d: the distribution over-which to draw samples for the inverse slope
+- `inv_slope_d`: the distribution over-which to draw samples for the inverse slope
   during importance sampling. This defaults to inv_slope_prior.
-- repeat2_thresh: the ratio of sd / mean for theta must suprass
+- `repeat2_thresh`: the ratio of sd / mean for theta must suprass
   to repeat each delta twice.
-- repeat3_thresh: the ratio of sd / mean for theta must surpass
+- `repeat3_thresh`: the ratio of sd / mean for theta must surpass
   to repeat each delta thrice.
 """
 function bayesian_adapter(;first_delta=0.1,
