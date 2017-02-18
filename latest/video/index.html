@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <meta name="author" content="haberdashPI">
+  <link rel="shortcut icon" href="../img/favicon.ico">
+  <title>Video - Weber.jl</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="../css/highlight.css">
+  <link href="../assets/Documenter.css" rel="stylesheet">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Video";
+    var mkdocs_page_input_path = "video.md";
+    var mkdocs_page_url = "/video/";
+  </script>
+  
+  <script src="../js/jquery-2.1.1.min.js"></script>
+  <script src="../js/modernizr-2.8.3.min.js"></script>
+  <script type="text/javascript" src="../js/highlight.pack.js"></script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href=".." class="icon icon-home"> Weber.jl</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="..">Introduction</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <ul class="subnav">
+    <li><span>User Guide</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../start/">Getting Started</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../trial_guide/">Trial Creation</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../advanced/">Advanced Experiments</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../extend/">Extending Weber</a>
+        
+    </li>
+
+        
+    </ul>
+<li>
+          
+            <li>
+    <ul class="subnav">
+    <li><span>Reference</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../experiment/">Experiments</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../trials/">Trials</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../sound/">Sound</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 current">
+        <a class="current" href="./">Video</a>
+        
+            <ul>
+            
+            </ul>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../event/">Events</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../extend_ref/">Extensions</a>
+        
+    </li>
+
+        
+    </ul>
+<li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="..">Weber.jl</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="..">Docs</a> &raquo;</li>
+    
+      
+        
+          <li>Reference &raquo;</li>
+        
+      
+    
+    <li>Video</li>
+    <li class="wy-breadcrumbs-aside">
+      
+        <a href="https://github.com/haberdashPI/Weber.jl/edit/master/docs/video.md"
+          class="icon icon-github"> Edit on GitHub</a>
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <p>Visual display is largely handled by the methods defined in <a href="http://juliaimages.github.io/latest/"><code>Images</code></a>. However, this objects must be prepared by Weber using <a href="./#Weber.visual"><code>visual</code></a> and then a call to <a href="./#Base.Multimedia.display"><code>display</code></a> is made to show the visual. The call to <a href="./#Weber.visual"><code>visual</code></a> is normally handled automatically for you when you call <a href="../trials/#Weber.moment"><code>moment</code></a>.</p>
+<p><a id='Base.Multimedia.display' href='#Base.Multimedia.display'>#</a>
+<strong><code>Base.Multimedia.display</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>display(r::SDLRendered;kwds...)
+</code></pre>
+
+<p>Displays anything rendered by <code>visual</code> onto the current experiment window.</p>
+<p>Any keyword arguments, available from <code>visual</code> are also available here.  They overload the arguments as specified during visual (but do not change them).</p>
+<pre><code>display(x;kwds...)
+</code></pre>
+
+<p>Short-hand for <code>display(visual(x);kwds...)</code>. Commonly used when calling display as part of an trial moment. For example:</p>
+<pre><code>moment(0.5,display,&quot;Hello, World!&quot;)
+</code></pre>
+
+<p>This code will show the text "Hello, World!" on the screen 0.5 seconds after the start of the previous moment.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Assuming your hardware and video drivers permit it, <code>display</code> sycnrhonizes to the screen refresh rate so long as the experiment window uses accelerated graphics (true by default). The display of a visual can be no more accurate than that permitted by this refresh rate. In particular display can block for up to the length of an entire refresh cycle. If you want accurate timing in your experiment, make sure that there is nothing you want to occur immediately after calling display. If you want to display multiple visuals at once remember that you can compose visuals using the <code>+</code> operator, do not call display multiple times and expect these visual to all display at the same time (also note that the default behavior of visuals is to disappear when the next visual is shown).</p>
+</div>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/e7f0efc9042dfee388f98bc9eb52eaf1488791fa/src/video.jl#L650-L682' class='documenter-source'>source</a><br></p>
+<pre><code>display(fn::Function;kwds...)
+</code></pre>
+
+<p>Display the visual returned by calling <code>fn</code>.</p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/e7f0efc9042dfee388f98bc9eb52eaf1488791fa/src/video.jl#L692-L696' class='documenter-source'>source</a><br></p>
+<p><a id='Weber.visual' href='#Weber.visual'>#</a>
+<strong><code>Weber.visual</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>visual(obj,[duration=0],[priority=0],keys...)
+</code></pre>
+
+<p>Render an object, allowing <code>display</code> to show the object in current experiment's window.</p>
+<p><strong>Arguments</strong></p>
+<ul>
+<li>duration: A positive duration means the object is displayed for the given duration, otherwise the object displays until a new object is displayed.</li>
+<li>priority: Higher priority objects are always visible above lower priority ones. Newer objects display over same-priority older objects.</li>
+</ul>
+<p>If coordinates are used they are in units of half screen widths (for x) and heights (for y), with (0,0) at the center of the screen.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>By using using the <code>+</code> operator, multiple visual objects can be composed into one object, so that they are displayed together</p>
+</div>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/e7f0efc9042dfee388f98bc9eb52eaf1488791fa/src/video.jl#L253-L273' class='documenter-source'>source</a><br></p>
+<pre><code>visual(color,[duration=0],[priority=0])
+</code></pre>
+
+<p>Render a color, across the entire screen.</p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/e7f0efc9042dfee388f98bc9eb52eaf1488791fa/src/video.jl#L293-L297' class='documenter-source'>source</a><br></p>
+<pre><code>visual(str::String, [font=nothing], [font_name=&quot;arial&quot;], [size=32],
+       [color=colorant&quot;white&quot;],
+       [wrap_width=0.8],[clean_whitespace=true],[x=0],[y=0],[duration=0],
+       [priority=0])
+</code></pre>
+
+<p>Render the given string as an image that can be displayed. An optional second argument can specify a font, loaded using the <code>font</code> function.</p>
+<p><strong>Arguments</strong></p>
+<ul>
+<li>wrap_width: the proporition of the screen that the text can utilize</li>
+</ul>
+<p>before wrapping.</p>
+<ul>
+<li>clean_whitespace: if true, replace all consecutive white space with a single space.</li>
+</ul>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/e7f0efc9042dfee388f98bc9eb52eaf1488791fa/src/video.jl#L390-L404' class='documenter-source'>source</a><br></p>
+<pre><code>visual(img::Array, [x=0],[y=0],[duration=0],[priority=0])
+</code></pre>
+
+<p>Prepare the color or gray scale image to be displayed to the screen.</p>
+<p>This utilizes all the conventions in the <code>Images</code> package for representing images. Internally, real-number 2d arrays are interpreted as gray scale images, and real-number 3d arrays as an RGB image or RGBA image, depending on whether size(img,1) is of size 3 or 4. A 3d array with a size(img,1) ∉ [3,4] results in an error.</p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/e7f0efc9042dfee388f98bc9eb52eaf1488791fa/src/video.jl#L487-L497' class='documenter-source'>source</a><br></p>
+<p><a id='Weber.instruct' href='#Weber.instruct'>#</a>
+<strong><code>Weber.instruct</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>instruct(str;keys...)
+</code></pre>
+
+<p>Presents some instructions to the participant.</p>
+<p>This adds "(Hit spacebar to continue...)" to the end of the text, and waits for the participant to press spacebar to move on. It records an "instructions" event to the data file.</p>
+<p>Any keyword arguments are passed onto to <code>visual</code>, which can be used to adjust how the instructions are displayed.</p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/e7f0efc9042dfee388f98bc9eb52eaf1488791fa/src/primitives.jl#L27-L38' class='documenter-source'>source</a><br></p>
+<p><a id='Weber.font' href='#Weber.font'>#</a>
+<strong><code>Weber.font</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>font(name,size,[dirs=os_default],[color=colorant&quot;white&quot;])
+</code></pre>
+
+<p>Creates an <code>SDLFont</code> object to be used for for rendering text as an image.</p>
+<p>By default this function looks in the current directory and then an os specific default font directory for a font with the given name (case insensitive). You can specify a different list of directories using the <code>dirs</code> parameter.</p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/e7f0efc9042dfee388f98bc9eb52eaf1488791fa/src/video.jl#L227-L236' class='documenter-source'>source</a><br></p>
+<p><a id='Weber.window' href='#Weber.window'>#</a>
+<strong><code>Weber.window</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>window([width=1024],[height=768];[fullscreen=true],[title=&quot;Experiment&quot;],
+       [accel=true])
+</code></pre>
+
+<p>Create a window to which various objects can be rendered. See the <code>visual</code> method.</p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/e7f0efc9042dfee388f98bc9eb52eaf1488791fa/src/video.jl#L123-L129' class='documenter-source'>source</a><br></p>
+<p><a id='Base.close' href='#Base.close'>#</a>
+<strong><code>Base.close</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>close(win::SDLWindow)
+</code></pre>
+
+<p>Closes a visible SDLWindow window.</p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/e7f0efc9042dfee388f98bc9eb52eaf1488791fa/src/video.jl#L193-L197' class='documenter-source'>source</a><br></p>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../event/" class="btn btn-neutral float-right" title="Events">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../sound/" class="btn btn-neutral" title="Sound"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+	  
+        </div>
+      </div>
+
+    </section>
+    
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+          <a href="https://github.com/haberdashPI/Weber.jl" class="icon icon-github" style="float: left; color: #fcfcfc"> GitHub</a>
+      
+      
+        <span><a href="../sound/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../event/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+    <script src="../js/theme.js"></script>
+      <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+      <script src="../assets/mathjaxhelper.js"></script>
+
+</body>
+</html>

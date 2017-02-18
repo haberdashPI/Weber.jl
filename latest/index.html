@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="A julia package for creating simple psychophysical experiments.">
+  <meta name="author" content="haberdashPI">
+  <link rel="shortcut icon" href="./img/favicon.ico">
+  <title>Introduction - Weber.jl</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="./css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="./css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="./css/highlight.css">
+  <link href="./assets/Documenter.css" rel="stylesheet">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Introduction";
+    var mkdocs_page_input_path = "index.md";
+    var mkdocs_page_url = "/";
+  </script>
+  
+  <script src="./js/jquery-2.1.1.min.js"></script>
+  <script src="./js/modernizr-2.8.3.min.js"></script>
+  <script type="text/javascript" src="./js/highlight.pack.js"></script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="." class="icon icon-home"> Weber.jl</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="./search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+          
+            <li>
+    <li class="toctree-l1 current">
+        <a class="current" href=".">Introduction</a>
+        
+            <ul>
+            
+                <li class="toctree-l3"><a href="#about">About</a></li>
+                
+            
+                <li class="toctree-l3"><a href="#installation">Installation</a></li>
+                
+                    <li><a class="toctree-l4" href="#1-install-julia-and-juno">1. Install Julia and Juno</a></li>
+                
+                    <li><a class="toctree-l4" href="#2-install-weber">2. Install Weber</a></li>
+                
+            
+            </ul>
+        
+    </li>
+<li>
+          
+            <li>
+    <ul class="subnav">
+    <li><span>User Guide</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="start/">Getting Started</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="trial_guide/">Trial Creation</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="advanced/">Advanced Experiments</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="extend/">Extending Weber</a>
+        
+    </li>
+
+        
+    </ul>
+<li>
+          
+            <li>
+    <ul class="subnav">
+    <li><span>Reference</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="experiment/">Experiments</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="trials/">Trials</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="sound/">Sound</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="video/">Video</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="event/">Events</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="extend_ref/">Extensions</a>
+        
+    </li>
+
+        
+    </ul>
+<li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href=".">Weber.jl</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Introduction</li>
+    <li class="wy-breadcrumbs-aside">
+      
+        <a href="https://github.com/haberdashPI/Weber.jl/edit/master/docs/index.md"
+          class="icon icon-github"> Edit on GitHub</a>
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <p><a id='About-1'></a></p>
+<h1 id="about">About</h1>
+<p>Weber is a <a href="http://julialang.org/">Julia</a> package that can be used to generate simple psychology experiments that present visual and auditory stimuli at precise times. Julia is a recent programming language designed specifically for technical computing.</p>
+<p>Weber has been built with the assumption that most of its users have only minimal programming experience. The hope is that such users should be able to get started quickly, making simple experiments today.</p>
+<p>Weber's emphasis is currently on auditory psychophysics, but the package has the features necessary to generate most visual stimuli one would desire as well, thanks to <a href="https://github.com/JuliaImages/Images.jl">Images.jl</a>. It is named after Ernst Weber. Weber runs on Windows and Mac OS X, and supports keyboard input or Cedrus response-pad input. Additional functionality can be added by making <a href="extend/">extensions</a></p>
+<p><a id='install-1'></a></p>
+<h1 id="installation">Installation</h1>
+<p>The following instructions are designed for those new to Julia, and coding in general.</p>
+<p><a id='.-Install-Julia-and-Juno-1'></a></p>
+<h2 id="1-install-julia-and-juno">1. Install Julia and Juno</h2>
+<p>To use Weber you will need to have Julia, and an appropriate code editor installed. <a href="https://github.com/JunoLab/uber-juno/blob/master/setup.md">Follow these instructions</a> to install Julia and the Juno IDE. Juno is an extension for the code editor Atom (which these instructions will also ask you to download).</p>
+<p><a id='.-Install-Weber-1'></a></p>
+<h2 id="2-install-weber">2. Install Weber</h2>
+<p>Once Julia and Juno are installed, open Atom. Go to "Open Console" under the Julia menu.</p>
+<p><img alt="Image of &quot;Open Console&quot; in Menu" src="./install1.png" /></p>
+<p>A console window will appear. Type <code>Pkg.add("Weber")</code> in the console and hit enter.</p>
+<p><img alt="Image of Pkg.add(&quot;Weber&quot;) in Console" src="./install2.png" /></p>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="start/" class="btn btn-neutral float-right" title="Getting Started">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+	  
+        </div>
+      </div>
+
+    </section>
+    
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+          <a href="https://github.com/haberdashPI/Weber.jl" class="icon icon-github" style="float: left; color: #fcfcfc"> GitHub</a>
+      
+      
+      
+        <span style="margin-left: 15px"><a href="start/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+    <script src="./js/theme.js"></script>
+      <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+      <script src="./assets/mathjaxhelper.js"></script>
+
+</body>
+</html>
+
+<!--
+MkDocs version : 0.16.1
+Build Date UTC : 2017-02-18 14:56:11
+-->
