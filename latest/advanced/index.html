@@ -201,7 +201,7 @@
                 <p>There are several concepts and techniques best avoided unless they are really necessary. These generally complicate the creation of experiments. </p>
 <p><a id='Long-form-moments-1'></a></p>
 <h1 id="long-form-moments">Long-form moments</h1>
-<p>Long-form moments generally follow the following pattern.</p>
+<p>Long-form moments generally fit the following pattern.</p>
 <pre><code class="julia">mysound = sound(tone(1000,1))
 myvisual = visual(&quot;Hello, World!&quot;)
 moment(0.5) do
@@ -229,7 +229,7 @@ end
 </code></pre>
 
 <p>Blocks of trials are useful for setting up state that will change during the trials. Such state can then be used in a subsequent @addtrials expression. In fact all other types of @addtrials expression will likely be nested inside blocks. The main reason to use such a block is to ensure that the offset counter is appropriately set with stateful trials.</p>
-<p>The offset counter is meant to refer to a well defined time during the experiment.  They can be used to fast forward through the expeirment by specifying an offset greater than 0.  However, if there is state that changes throughout the course of several trials, trials that follow these state changes cannot be reliably reproduced when those state-chaning trials are skipped because the user specifies an offset &gt; 0. Thus anytime you have a series of trials, some of which depend on the state of one another, those trials should be placed inside of an @addtrials let block if you want fast-forwarding through parts of the experiment to work as expected.</p>
+<p>The offset counter is meant to refer to a well defined time during the experiment.  They can be used to fast forward through the expeirment by specifying an offset greater than 0.  However, if there is state that changes throughout the course of several trials, those trials cannot reliably be reproduced when they are skipped using an offset &gt; 0. Anytime you have a series of trials, some of which depend on what happens earlier in an expeirment, such trials should be placed inside of an @addtrials let block. Otherwise experiment fast forwarding will result in unexpected behaviors.</p>
 <p><a id='Conditional-Trials-1'></a></p>
 <h2 id="conditional-trials">Conditional Trials</h2>
 <pre><code>@addtrials if [cond1]
@@ -260,7 +260,7 @@ end
 end
 </code></pre>
 
-<p>If <code>@addtrials if !y_hit</code> was replaced with <code>if !y_hit</code> in the above example, the second trial would always run. This is because the <code>if</code> expression would be evaluated before any trials were run (when <code>y_hit</code> is false).</p>
+<p>If <code>@addtrials if !y_hit</code> was replaced with <code>if !y_hit</code> in the above example, the second trial would always run. This is because the <code>if</code> expression would be run during setup-time, before any trials were run (when <code>y_hit</code> is false).</p>
 <p><a id='Looping-Trials-1'></a></p>
 <h2 id="looping-trials">Looping Trials</h2>
 <pre><code>@addtrials while expr
@@ -282,12 +282,22 @@ end
 <p>If <code>@addtrials while y_hit</code> was replaced with <code>while y_hit</code> in the above example, the while loop would never terminate, running an infinite loop, because <code>y_hit</code> is true before the experiment starts.</p>
 <p><a id='Run-time-stimulus-generation.-1'></a></p>
 <h1 id="run-time-stimulus-generation">Run-time stimulus generation.</h1>
-<p>When stimuli need to be generated during an experiment the standard short-form moment will not do. Rather than resorting to long-form moments, a short-form moment calling <code>play</code> or <code>display</code> can take a zero-argument function rather than a sound or a visual. This function should return a sound or visual (like all short form moments, these need not explicitly call <code>sound</code> or <code>visual</code>).</p>
-<p>For example:</p>
+<p>When stimuli need to be generated during an experiment the standard short-form moment will not do. For instance, if you want a tone's frequency to depend on some delta value that changes during the experimrent the following will not work.</p>
+<pre><code class="julia"># THIS WILL NOT WORK!!!
+moment(play,tone(1000+my_delta))
+</code></pre>
+
+<p>The basic problem here is that tone is used to generate a sound at <a href="../start/#setup_time-1">setup-time</a>. What we want is for the run-time value of <code>my_delta</code> to be used. To do this you can pass a function to play. This function will be used to generate a sound during runtime.</p>
 <pre><code class="julia">moment(play,() -&gt; tone(1000+my_delta,1))
 </code></pre>
 
-<p>This moment plays a one second tone at frequency 1000+my_delta. The key point is that my_delta can be modified during the experiment, thus altering what sound will be generated.</p>
+<p>Similarly, we can use a runtime value in display by passing a function to display.</p>
+<pre><code class="julia">moment(display,() -&gt; &quot;hello $my_name.&quot;)
+</code></pre>
+
+<p>When moments are created this way, the sound or visual is generated before the moment even begins, to eliminate any latency that would be introduced by loading the sound or visual into memory. Specifically, the stimulus is generated at the start of the prior moment. So for instance, in the following example, <code>mysound</code> will be generated 0.5 seconds before <code>play</code> is called, because the moment before the <code>play</code> moment occurs 0.5 seconds before.</p>
+<pre><code class="julia">addtrial(moment(display,&quot;Get ready!&quot;),moment(0.5,play,mysound))
+</code></pre>
               
             </div>
           </div>

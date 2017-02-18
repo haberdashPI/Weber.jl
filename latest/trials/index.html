@@ -190,12 +190,14 @@
 
 <p>Adds a trial to the experiment, consisting of the specified moments.</p>
 <p>Each trial records a "trial_start" code, and increments a counter tracking the number of trials, and (normally) an offset counter. These two numbers are reported on every line of the resulting data file (see <a href="./#Weber.record"><code>record</code></a>). They can be retrieved using <a href="../experiment/#Weber.trial"><code>Weber.trial()</code></a> and <a href="../experiment/#Weber.offset"><code>Weber.offset()</code></a>.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/e7f0efc9042dfee388f98bc9eb52eaf1488791fa/src/trial.jl#L311-L320' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/6faaefe653ac6bb11c58335065b198946f254b3b/src/trial.jl#L312-L321' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.addbreak' href='#Weber.addbreak'>#</a>
 <strong><code>Weber.addbreak</code></strong> &mdash; <em>Function</em>.</p>
-<p>addbreak(moments...)</p>
+<pre><code>addbreak(moments...)
+</code></pre>
+
 <p>Identical to <a href="./#Weber.addpractice"><code>addpractice</code></a>, but records "break_start" instead of "practice_start".</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/e7f0efc9042dfee388f98bc9eb52eaf1488791fa/src/trial.jl#L346-L350' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/6faaefe653ac6bb11c58335065b198946f254b3b/src/trial.jl#L347-L351' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.addbreak_every' href='#Weber.addbreak_every'>#</a>
 <strong><code>Weber.addbreak_every</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>addbreak_every(n,total,
@@ -204,12 +206,14 @@
 
 <p>Adds a break every <code>n</code> times this event is added given a known number of total such events.</p>
 <p>By default this waits for the user to hit spacebar to move on.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/e7f0efc9042dfee388f98bc9eb52eaf1488791fa/src/primitives.jl#L48-L56' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/6faaefe653ac6bb11c58335065b198946f254b3b/src/primitives.jl#L48-L56' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.addpractice' href='#Weber.addpractice'>#</a>
 <strong><code>Weber.addpractice</code></strong> &mdash; <em>Function</em>.</p>
-<p>addpractice(moments...)</p>
+<pre><code>addpractice(moments...)
+</code></pre>
+
 <p>Identical to <a href="./#Weber.addtrial"><code>addtrial</code></a>, except that it does not incriment the trial count, and records a "practice_start" instead of "trial_start" code.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/e7f0efc9042dfee388f98bc9eb52eaf1488791fa/src/trial.jl#L331-L336' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/6faaefe653ac6bb11c58335065b198946f254b3b/src/trial.jl#L332-L337' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.moment' href='#Weber.moment'>#</a>
 <strong><code>Weber.moment</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>moment([fn],[delta_t])
@@ -218,13 +222,13 @@ moment([delta_t],[fn],args...;keys...)
 
 <p>Create a moment that occurs <code>delta_t</code> (default 0) seconds after the onset of the previous moment, running the specified function.</p>
 <p>The function <code>fn</code> is passed zero arguments, or it is passed the arguments specified in <code>args</code> and <code>keys</code>.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/e7f0efc9042dfee388f98bc9eb52eaf1488791fa/src/trial.jl#L361-L370' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/6faaefe653ac6bb11c58335065b198946f254b3b/src/trial.jl#L362-L371' class='documenter-source'>source</a><br></p>
 <pre><code>moment(moments...)
 moment(moments::Array)
 </code></pre>
 
 <p>Create a single, compound moment by concatentating several moments togethor.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/e7f0efc9042dfee388f98bc9eb52eaf1488791fa/src/trial.jl#L403-L408' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/6faaefe653ac6bb11c58335065b198946f254b3b/src/trial.jl#L404-L409' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.response' href='#Weber.response'>#</a>
 <strong><code>Weber.response</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>response(key1 =&gt; response1,key2 =&gt; response2,...;kwds...)
@@ -232,43 +236,45 @@ moment(moments::Array)
 
 <p>Create a watcher moment that records press of <code>key[n]</code> as <code>record(response[n];kwds...)</code>.</p>
 <p>Key releases are suffixed, by default with "_up". This suffix can be changed using the <code>keyup_suffix</code> keyword argument.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/e7f0efc9042dfee388f98bc9eb52eaf1488791fa/src/primitives.jl#L6-L14' class='documenter-source'>source</a><br></p>
-<pre><code>response([fn],track,[key1] =&gt; [&quot;resp1&quot;],...;correct=[resp],
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/6faaefe653ac6bb11c58335065b198946f254b3b/src/primitives.jl#L6-L14' class='documenter-source'>source</a><br></p>
+<pre><code>response([fn],adapter,[key1] =&gt; [&quot;resp1&quot;],...;correct=[resp],
          [show_feedback=true],
          [feedback=Dict(true=&gt;&quot;Correct&quot;,false=&gt;&quot;Wrong!&quot;)]
          keys...)
 </code></pre>
 
 <p>Record a response in a n-alternative forced choice task and update an adapter.</p>
-<p>The first response recieved is interprted as the actual response. Subsequent response will be recorded, without a delta or correct value set, and appending "late_" to the specified response string.</p>
+<p>The first response recieved is interpreted as the actual response. Subsequent responses will be recorded, without a delta or correct value set, and appending "late_" to the specified response string.</p>
 <p><strong>Function Callback</strong></p>
 <p>Optionally, upon participant response, <code>fn</code> receives two arguments: the provided response, and the correct response.</p>
 <p><strong>Keyword Arguments</strong></p>
 <ul>
-<li><code>correct</code>: the response string corresponding to the correct response</li>
+<li><code>correct</code> the response string corresponding to the correct response</li>
 <li><code>show_feedback</code> (default = true): whether to show feedback to the participant after they respond.</li>
-<li><code>feedback</code> (default = Dict(true =&gt; "Correct!",false =&gt; "Wrong!"): the text to display to a participant when they are correct (for the true key) or incorrect (for the false key).</li>
+<li><code>feedback</code> the text to display to a participant when they are correct (for the true key, defaults to "Correct!") or incorrect (for the false key, defaults to "Wrong!").</li>
 </ul>
 <p>Any additional keyword arguments are added as column values when the response is recorded.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/e7f0efc9042dfee388f98bc9eb52eaf1488791fa/src/adaptive.jl#L42-L72' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/6faaefe653ac6bb11c58335065b198946f254b3b/src/adaptive.jl#L42-L72' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.await_response' href='#Weber.await_response'>#</a>
 <strong><code>Weber.await_response</code></strong> &mdash; <em>Function</em>.</p>
-<p>await_response(isresponse;[atleast=0.0])</p>
+<pre><code>await_response(isresponse;[atleast=0.0])
+</code></pre>
+
 <p>This moment starts when the <code>isresponse</code> function evaluates to true.</p>
 <p>The <code>isresponse</code> function will be called anytime an event occurs. It should take one parameter (the event that just occured).</p>
-<p>If the response is provided before <code>atleast</code> seconds, the moment does not start until <code>atleast</code> seconds.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/e7f0efc9042dfee388f98bc9eb52eaf1488791fa/src/trial.jl#L430-L440' class='documenter-source'>source</a><br></p>
+<p>If the response is provided before <code>atleast</code> seconds, the moment does not start until <code>atleast</code> seconds have passed.</p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/6faaefe653ac6bb11c58335065b198946f254b3b/src/trial.jl#L431-L441' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.record' href='#Weber.record'>#</a>
 <strong><code>Weber.record</code></strong> &mdash; <em>Function</em>.</p>
-<pre><code>record(code;column_values...)
+<pre><code>record(code;keys...)
 </code></pre>
 
 <p>Record a row to the experiment data file using a given <code>code</code>.</p>
-<p>Each event has a code which identifies it as being a particular type of experiment event. This is normally a string. By convention when you record something with the same code you should specify the same set of <code>column_values</code>.</p>
+<p>Each event has a code which identifies it as being a particular type of experiment event. This is normally a string. Each keyword argument is the value of a column. By convention when you record something with the same code you should specify the same set of columns.</p>
 <p>All calls to record also result in many additional values being written to the data file. The start time and date of the experiment, the trial and offset number, the version of Weber, and the time at which the last moment started are all stored.  Additional information can be added during creation of the experiment (see <code>Experiment</code>).</p>
 <p>Each call to record writes a new row to the data file used for the experiment, so there should be no loss of data if the program is terminated prematurely for some reason.</p>
 <div class="admonition note">
-<p class="admonition-title">Automatic Recorded Codes</p>
+<p class="admonition-title">Automaticlly Recorded Codes</p>
 <p>There are several codes that are automatically recorded by Weber. They include:</p>
 <ol>
 <li><strong>trial_start</strong> - recorded at the start of moments added by <code>addtrial</code></li>
@@ -277,7 +283,7 @@ moment(moments::Array)
 <li><strong>high_latency</strong> - recorded whenever a high latency warning is triggered. The "value" column is set to the error between the actual and the desired timing of a moment, in seconds.</li>
 </ol>
 </div>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/e7f0efc9042dfee388f98bc9eb52eaf1488791fa/src/trial.jl#L90-L120' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/6faaefe653ac6bb11c58335065b198946f254b3b/src/trial.jl#L90-L121' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.timeout' href='#Weber.timeout'>#</a>
 <strong><code>Weber.timeout</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>timeout(fn,isresposne,timeout,[atleast=0.0])
@@ -286,28 +292,28 @@ moment(moments::Array)
 <p>This moment starts when either <code>isresponse</code> evaluates to true or timeout time (in seconds) passes.</p>
 <p>If the moment times out, the function <code>fn</code> (with no arguments) will be called.</p>
 <p>If the response is provided before <code>atleast</code> seconds, the moment does not begin until <code>atleast</code> seconds (<code>fn</code> will not be called).</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/e7f0efc9042dfee388f98bc9eb52eaf1488791fa/src/trial.jl#L449-L459' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/6faaefe653ac6bb11c58335065b198946f254b3b/src/trial.jl#L450-L460' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.show_cross' href='#Weber.show_cross'>#</a>
 <strong><code>Weber.show_cross</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>show_cross([delta_t])
 </code></pre>
 
 <p>Creates a moment that shows a cross hair <code>delta_t</code> seconds after the start of the previous moment (defaults to 0 seconds).</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/e7f0efc9042dfee388f98bc9eb52eaf1488791fa/src/primitives.jl#L72-L77' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/6faaefe653ac6bb11c58335065b198946f254b3b/src/primitives.jl#L72-L77' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.when' href='#Weber.when'>#</a>
 <strong><code>Weber.when</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>when(condition,moments...)
 </code></pre>
 
 <p>This moment will begin at the <em>start</em> of the previous moment, and presents the following moments (possibly in nested iterable objects) if the <code>condition</code> function (which takes no arguments) evaluates to true.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/e7f0efc9042dfee388f98bc9eb52eaf1488791fa/src/trial.jl#L492-L498' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/6faaefe653ac6bb11c58335065b198946f254b3b/src/trial.jl#L493-L499' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.looping' href='#Weber.looping'>#</a>
 <strong><code>Weber.looping</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>looping(when=fn,moments...)
 </code></pre>
 
 <p>This moment will begin at the <em>start</em> of the previous moment, and repeats the listed moments (possibly in nested iterable objects) until the <code>when</code> function (which takes no arguments) evaluates to false.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/e7f0efc9042dfee388f98bc9eb52eaf1488791fa/src/trial.jl#L481-L487' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/6faaefe653ac6bb11c58335065b198946f254b3b/src/trial.jl#L482-L488' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.@addtrials' href='#Weber.@addtrials'>#</a>
 <strong><code>Weber.@addtrials</code></strong> &mdash; <em>Macro</em>.</p>
 <pre><code>@addtrials expr...
@@ -315,32 +321,32 @@ moment(moments::Array)
 
 <p>Marks a let block, a for loop, or an if expression as dependent on experiment run-time state, leaving the offset counter unincremented within that block.  The immediately proceeding loop or conditional logic will be run during experiment run-time rather than setup-time.</p>
 <p>Refer to the <a href="../advanced/"><code>Advanced Topics</code></a> of the manual section for more details.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/e7f0efc9042dfee388f98bc9eb52eaf1488791fa/src/trial.jl#L224-L234' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/6faaefe653ac6bb11c58335065b198946f254b3b/src/trial.jl#L225-L235' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.Adapter' href='#Weber.Adapter'>#</a>
 <strong><code>Weber.Adapter</code></strong> &mdash; <em>Type</em>.</p>
-<p>Adpaters, created through their individual constructors, can be used to estiamte some delta at which listeners respond correctly at a given threshold (e.g. 80% correct). They must define <code>update</code>, <code>estimate</code> and <code>delta</code>. Generally user-code should call the <a href="./#Weber.response"><code>response</code></a> method specialized for adapters to record responses and update the adapter.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/e7f0efc9042dfee388f98bc9eb52eaf1488791fa/src/adaptive.jl#L4-L10' class='documenter-source'>source</a><br></p>
+<p>Adpaters, created through their individual constructors, can be used to estimate some delta at which listeners respond correctly at a given threshold (e.g. 80% correct). They must define <code>update</code>, <code>estimate</code> and <code>delta</code>. Generally user code should call the <a href="./#Weber.response"><code>response</code></a> method specialized for adapters to record responses and update the adapter.</p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/6faaefe653ac6bb11c58335065b198946f254b3b/src/adaptive.jl#L4-L10' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.update!' href='#Weber.update!'>#</a>
 <strong><code>Weber.update!</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>Weber.update!(adapter,response,correct)
 </code></pre>
 
 <p>Updates any internal state for the adapter when the listener responds with <code>response</code> and the correct response is <code>correct</code>. Usually not called directly, but instead called within <code>response</code>, when the adapter is passed as the first argument.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/e7f0efc9042dfee388f98bc9eb52eaf1488791fa/src/adaptive.jl#L13-L20' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/6faaefe653ac6bb11c58335065b198946f254b3b/src/adaptive.jl#L13-L20' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.estimate' href='#Weber.estimate'>#</a>
 <strong><code>Weber.estimate</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>Weber.estimate(adapter)
 </code></pre>
 
 <p>Returns the mean and error of the adapters threshold estimate. May take some time to run.  Usually not called directly, but instead called within <code>response</code>, when the adapter is passed as the first argument.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/e7f0efc9042dfee388f98bc9eb52eaf1488791fa/src/adaptive.jl#L24-L30' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/6faaefe653ac6bb11c58335065b198946f254b3b/src/adaptive.jl#L24-L30' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.delta' href='#Weber.delta'>#</a>
 <strong><code>Weber.delta</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>delta(adapter)
 </code></pre>
 
 <p>Returns the next delta that should be tested to help estimate the threshold.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/e7f0efc9042dfee388f98bc9eb52eaf1488791fa/src/adaptive.jl#L34-L38' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/6faaefe653ac6bb11c58335065b198946f254b3b/src/adaptive.jl#L34-L38' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.levitt_adapter' href='#Weber.levitt_adapter'>#</a>
 <strong><code>Weber.levitt_adapter</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>levit_adapter([first_delta=0.1],[down=3],[up=1],
@@ -358,13 +364,13 @@ moment(moments::Array)
 <li><code>down</code>: how many correct responses in a row must occur for the delta to move down.</li>
 <li><code>big</code>: the amount delta changes by (up or down) at first</li>
 <li><code>big_reverse</code>: how many reveresals (up to down or down to up) must occur before <code>little</code> is used instead of <code>big</code></li>
-<li>'little': the amount delat changes by (up or down) after <code>big_reverse</code> reversals.</li>
+<li><code>little</code>: the amount delat changes by (up or down) after <code>big_reverse</code> reversals.</li>
 <li><code>min_reversals</code>: the smallest number of reversals that can be used to estimate a threshold.</li>
 <li><code>min_delta</code>: the smallest delta allowed</li>
 <li><code>max_delta</code>: the largest delta allowed</li>
 <li><code>mult</code>: whether the delta change should be additive (false) or  multiplicative (true).</li>
 </ul>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/e7f0efc9042dfee388f98bc9eb52eaf1488791fa/src/adaptive.jl#L113-L145' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/6faaefe653ac6bb11c58335065b198946f254b3b/src/adaptive.jl#L113-L145' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.bayesian_adapter' href='#Weber.bayesian_adapter'>#</a>
 <strong><code>Weber.bayesian_adapter</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>bayesian_adapter(;first_delta=0.1,
@@ -391,22 +397,22 @@ moment(moments::Array)
 <p>For stability and robustness, this adapter begins by repeating the same delta multiple times and only begins quickly changing deltas trial-by-trial when the ratio of standard deviation to the mean is small. This functionality can be adjusted using <code>repeat3_thresh</code> and <code>repeat2_thresh</code>, or, if you do not wish to have any repeats, both values can be set to .</p>
 <p><strong>Keyword Arugments</strong></p>
 <ul>
-<li>first_delta: the delta to start measuring with</li>
-<li>n_samples: the number of samples to use during importance sampling. The algorithm for selecting new deltas is O(n²).</li>
-<li>miss: the expected rate at which that listeners will make mistakes even for easy to percieve differences.</li>
-<li>threshold: the %-response threshold to be estimated</li>
-<li>min_delta: the smallest possible delta</li>
-<li>max_delta: the largest smallest possible delta</li>
-<li>min_plausible_delta: the smallest plausible delta, should be &gt; 0. Used to define thresh_prior.</li>
-<li>max_plausible_delta: the largest plausible delta, should be &lt; max_delta. Used to define thresh_prior.</li>
-<li>thresh_prior: the prior probability distribution across thresholds. This influence the way the delta is adapted. By default this is defined in terms of max_plausible_delta.</li>
-<li>inv_slope_prior: the prior probability distribution across inverse slopes.</li>
-<li>thresh_d: the distribution over-which to draw samples for the threshold during importance sampling. This defaults to thresh_prior</li>
-<li>inv_slope_d: the distribution over-which to draw samples for the inverse slope during importance sampling. This defaults to inv_slope_prior.</li>
-<li>repeat2_thresh: the ratio of sd / mean for theta must suprass to repeat each delta twice.</li>
-<li>repeat3_thresh: the ratio of sd / mean for theta must surpass to repeat each delta thrice.</li>
+<li><code>first_delta</code>: the delta to start measuring with</li>
+<li><code>n_samples</code>: the number of samples to use during importance sampling. The algorithm for selecting new deltas is O(n²).</li>
+<li><code>miss</code>: the expected rate at which that listeners will make mistakes even for easy to percieve differences.</li>
+<li><code>threshold</code>: the %-response threshold to be estimated</li>
+<li><code>min_delta</code>: the smallest possible delta</li>
+<li><code>max_delta</code>: the largest smallest possible delta</li>
+<li><code>min_plausible_delta</code>: the smallest plausible delta, should be &gt; 0. Used to define thresh_prior.</li>
+<li><code>max_plausible_delta</code>: the largest plausible delta, should be &lt; max_delta. Used to define thresh_prior.</li>
+<li><code>thresh_prior</code>: the prior probability distribution across thresholds. This influence the way the delta is adapted. By default this is defined in terms of max_plausible_delta.</li>
+<li><code>inv_slope_prior</code>: the prior probability distribution across inverse slopes.</li>
+<li><code>thresh_d</code>: the distribution over-which to draw samples for the threshold during importance sampling. This defaults to thresh_prior</li>
+<li><code>inv_slope_d</code>: the distribution over-which to draw samples for the inverse slope during importance sampling. This defaults to inv_slope_prior.</li>
+<li><code>repeat2_thresh</code>: the ratio of sd / mean for theta must suprass to repeat each delta twice.</li>
+<li><code>repeat3_thresh</code>: the ratio of sd / mean for theta must surpass to repeat each delta thrice.</li>
 </ul>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/e7f0efc9042dfee388f98bc9eb52eaf1488791fa/src/adaptive.jl#L271-L343' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/6faaefe653ac6bb11c58335065b198946f254b3b/src/adaptive.jl#L271-L343' class='documenter-source'>source</a><br></p>
               
             </div>
           </div>
