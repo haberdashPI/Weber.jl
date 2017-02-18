@@ -1,8 +1,8 @@
 using Documenter, Weber, Colors, Weber.Cedrus
 makedocs(modules = [Weber,Weber.Cedrus])
 deploydocs(
-  deps = Deps.pip("mkdocs","python-markdown-math"),
+  deps = Deps.pip("mkdocs","python-markdown-math","pygments"),
   repo = "github.com/haberdashPI/Weber.jl.git",
-  julia = "0.5",
+  julia = "release",
   osname = "osx"
 )
