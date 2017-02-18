@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <meta name="author" content="haberdashPI">
+  <link rel="shortcut icon" href="../img/favicon.ico">
+  <title>Extensions - Weber.jl</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="../css/highlight.css">
+  <link href="../assets/Documenter.css" rel="stylesheet">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Extensions";
+    var mkdocs_page_input_path = "extend_ref.md";
+    var mkdocs_page_url = "/extend_ref/";
+  </script>
+  
+  <script src="../js/jquery-2.1.1.min.js"></script>
+  <script src="../js/modernizr-2.8.3.min.js"></script>
+  <script type="text/javascript" src="../js/highlight.pack.js"></script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href=".." class="icon icon-home"> Weber.jl</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="..">Introduction</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <ul class="subnav">
+    <li><span>User Guide</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../start/">Getting Started</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../trial_guide/">Trial Creation</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../advanced/">Advanced Experiments</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../extend/">Extending Weber</a>
+        
+    </li>
+
+        
+    </ul>
+<li>
+          
+            <li>
+    <ul class="subnav">
+    <li><span>Reference</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../experiment/">Experiments</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../trials/">Trials</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../sound/">Sound</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../video/">Video</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../event/">Events</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 current">
+        <a class="current" href="./">Extensions</a>
+        
+            <ul>
+            
+                <li class="toctree-l3"><a href="#functions-operating-over-extensions">Functions operating over extensions</a></li>
+                
+            
+                <li class="toctree-l3"><a href="#extendable-private-functions">Extendable Private Functions</a></li>
+                
+            
+                <li class="toctree-l3"><a href="#private-moment-functions">Private Moment Functions</a></li>
+                
+            
+            </ul>
+        
+    </li>
+
+        
+    </ul>
+<li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="..">Weber.jl</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="..">Docs</a> &raquo;</li>
+    
+      
+        
+          <li>Reference &raquo;</li>
+        
+      
+    
+    <li>Extensions</li>
+    <li class="wy-breadcrumbs-aside">
+      
+        <a href="https://github.com/haberdashPI/Weber.jl/edit/master/docs/extend_ref.md"
+          class="icon icon-github"> Edit on GitHub</a>
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <p>The following functions are used when <a href="../extend/">extending experiments</a>.</p>
+<p><a id='Functions-operating-over-extensions-1'></a></p>
+<h1 id="functions-operating-over-extensions">Functions operating over extensions</h1>
+<p>These functions operate directly on an <code>ExtendedExperiment</code>.</p>
+<p><a id='Base.next-Tuple{Weber.ExtendedExperiment}' href='#Base.next-Tuple{Weber.ExtendedExperiment}'>#</a>
+<strong><code>Base.next</code></strong> &mdash; <em>Method</em>.</p>
+<pre><code> next(experiment::ExtendedExperiment)
+</code></pre>
+
+<p>Get the next extended version of this experiment.</p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/6faaefe653ac6bb11c58335065b198946f254b3b/src/types.jl#L543-L547' class='documenter-source'>source</a><br></p>
+<p><a id='DataStructures.top-Tuple{Weber.Experiment}' href='#DataStructures.top-Tuple{Weber.Experiment}'>#</a>
+<strong><code>DataStructures.top</code></strong> &mdash; <em>Method</em>.</p>
+<pre><code>top(experiment::Experiment)
+</code></pre>
+
+<p>Get the the top-most extended verison for this experiment, if any.</p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/6faaefe653ac6bb11c58335065b198946f254b3b/src/types.jl#L514-L518' class='documenter-source'>source</a><br></p>
+<p><a id='Weber.extension-Tuple{Weber.ExtendedExperiment}' href='#Weber.extension-Tuple{Weber.ExtendedExperiment}'>#</a>
+<strong><code>Weber.extension</code></strong> &mdash; <em>Method</em>.</p>
+<pre><code>extension(experiment::ExtendedExperiment)
+</code></pre>
+
+<p>Get the extension object for this extended expeirment</p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/6faaefe653ac6bb11c58335065b198946f254b3b/src/types.jl#L530-L534' class='documenter-source'>source</a><br></p>
+<p><a id='Extendable-Private-Functions-1'></a></p>
+<h1 id="extendable-private-functions">Extendable Private Functions</h1>
+<p><a id='Weber.poll_events' href='#Weber.poll_events'>#</a>
+<strong><code>Weber.poll_events</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code> Weber.poll_events(callback,experiment,time)
+</code></pre>
+
+<p>Call the function <code>callback</code>, possibility multiple times, passing it an event object each time. The time at which the events are polled is passed, allowing this time to be stored with the event.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>This function should never be called directly by user code. A new method of this function can be implemented to extend Weber, allowing it to report new kinds events.</p>
+</div>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/6faaefe653ac6bb11c58335065b198946f254b3b/src/event.jl#L23-L36' class='documenter-source'>source</a><br></p>
+<p><a id='Private-Moment-Functions-1'></a></p>
+<h1 id="private-moment-functions">Private Moment Functions</h1>
+<p>New <code>Weber.Moment</code> subtypes can define methods for the following functions to extend the possible runtime behavior of Weber.</p>
+<p><a id='Weber.prepare!' href='#Weber.prepare!'>#</a>
+<strong><code>Weber.prepare!</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>Weber.prepare!(m)
+</code></pre>
+
+<p>If there is anything the moment needs to do before it occurs, it is done during <code>prepare!</code>. This triggers immediately after the moment prior to the current one has finished.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This method is part of the private interface for moments. It should not be called directly, but implemented as part of an extension.</p>
+</div>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/6faaefe653ac6bb11c58335065b198946f254b3b/src/trial.jl#L507-L518' class='documenter-source'>source</a><br></p>
+<p><a id='Weber.handle' href='#Weber.handle'>#</a>
+<strong><code>Weber.handle</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>handle(exp,queue,moment,to_handle)
+</code></pre>
+
+<p>Internal method to handle the given moment object in a manner specific to the type of moment. The <code>to_handle</code> object is either a <code>Float64</code>, indicating the current time, or it is an <code>ExpEvent</code> indicating the event that just occured. A timed moment, for instance, will run when it recieves a <code>Float64</code> value. The queue is a <code>MomentQueue</code> object, which has the same interface as the <code>Dequeue</code> object (from the <code>DataStructures</code> package). Upon calling handle, <code>top(queue) == moment</code>.</p>
+<p>Handle returns a boolean indicating whether the event was "handled" or not. If unhandled, the moment should remain on top of the queue. If returning true, handle should <em>normally</em> remove the top moment from the queue. Exceptions exist (for instance, to allow for loops), but one does not normally need to implement custom moments that have such behavior.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This method is part of the private interface for moments. It should not be called directly, but implemented as part of an extension. It is called during the course of running an experiment.</p>
+</div>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/6faaefe653ac6bb11c58335065b198946f254b3b/src/trial.jl#L524-L547' class='documenter-source'>source</a><br></p>
+<p><a id='Weber.delta_t' href='#Weber.delta_t'>#</a>
+<strong><code>Weber.delta_t</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>delta_t(m::Moment)
+</code></pre>
+
+<p>Returns the time, since the start of the previous moment, at which this moment should begin.</p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/6faaefe653ac6bb11c58335065b198946f254b3b/src/types.jl#L333-L338' class='documenter-source'>source</a><br></p>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="../event/" class="btn btn-neutral" title="Events"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+	  
+        </div>
+      </div>
+
+    </section>
+    
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+          <a href="https://github.com/haberdashPI/Weber.jl" class="icon icon-github" style="float: left; color: #fcfcfc"> GitHub</a>
+      
+      
+        <span><a href="../event/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+    </span>
+</div>
+    <script src="../js/theme.js"></script>
+      <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+      <script src="../assets/mathjaxhelper.js"></script>
+
+</body>
+</html>
