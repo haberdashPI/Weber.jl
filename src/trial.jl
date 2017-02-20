@@ -145,17 +145,6 @@ function addmoment(q::Vector{Moment},m::Moment)
   push!(q,m)
 end
 
-"""
-    addmoment(experiment,moment)
-
-Adds a given moment object to the experiment.
-
-!!! warning
-
-    This function should never be called directly by user code. It
-    can be extended. This is useful, for example, when one wishes
-    to transform one type of moment to some custom type of moment.
-"""
 addmoment(e::Experiment,m) = addmoment(data(e).moments,m)
 addmoment(q::Array{MomentQueue},m::Moment) = addmoment(first(q),m)
 function addmoment(q::Union{ExpandingMoment,MomentQueue,Array{MomentQueue}},watcher::Function)
