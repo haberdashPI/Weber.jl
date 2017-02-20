@@ -6,6 +6,7 @@ noise
 silence
 harmonic_complex
 sound
+buffer
 ```
 
 # Sound Manipulation

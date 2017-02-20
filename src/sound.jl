@@ -273,7 +273,7 @@ end
 """
     buffer(s::Sound)
 
-Gets the `SampleBuf` associated with this sound.
+Gets the `SampleBuf` associated with this sound (c.f. `SampledSignals` package).
 """
 buffer(x::Sound) = x.buffer
 
