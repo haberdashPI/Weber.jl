@@ -210,7 +210,7 @@ does run during the experiment, during run-time, can do so in a timely manner. T
 only code that actually runs during the experiment is the behavior defined
 within each moment.
 
-# Where to go from here.
+# Where to go from here
 
 From here you can begin writing your own simple experiments. Take a look at some
 of the example experiments under Weber's example directory to see what you can
