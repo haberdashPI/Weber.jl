@@ -14,7 +14,17 @@ abstract ExpEvent
 
 const concrete_events = []
 
-# TODO: debug this macro
+"""
+    @Weber.event type [name] <: [ExpEvent or ExpEvent child]
+      [fields...]
+    end
+
+Marks a concrete type as being an experiment event.
+
+This tag is necessary to ensure that all watcher moments are properly
+precompiled. This macro adds the event to a list of concrete events
+for which each watcher method must have a precompiled method.
+"""
 macro event(type_form)
   if !isexpr(type_form,:type)
     error("@event expects a type or immutable")

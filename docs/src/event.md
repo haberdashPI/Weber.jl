@@ -1,8 +1,12 @@
 
-
+```@meta
+CurrentModule = Weber
+```
+    
 ```@docs
 @event
 @key_str
+time(::ExpEvent)
 keycode
 iskeydown
 iskeyup
@@ -15,6 +19,10 @@ endofpause
 
 A built in extension, as module `Weber.Cedrus`, is available, for listenting
 to cedrus response-pad input. Below are the available functions.
+
+```@meta
+CurrentModule = Main
+```
 
 ```@docs
 CedrusXID
