@@ -68,8 +68,8 @@ experiment piece-by-piece.
      cursor so it is next to the little icon of a page. Lastly, once the
      experiment starts up, you may have to use alt-tab (on Window) or
      command-tab (on Mac) to switch away from, and then switch back to the
-     experiment. Unforunately without doing this, Juno may capture input
-     instead of the experiment. These unforutunate interface problems will
+     experiment. Unfortunately without doing this, Juno may capture input
+     instead of the experiment. These unfortunate interface problems will
      eventually be fixed in a future version of Weber.
 
 # Read Experiment Parameters
@@ -81,7 +81,8 @@ sid,skip = @read_args("A simple frequency discrimination experiment.")
 
 The first line loads Weber. Then, when the script is run, the second line will read two important experimental parameters from the user: their subject ID, and an *offset*.
 
-Don't worry about the offset right now, by default it is set to 0. We'll talk about it later.
+Don't worry about the offset right now. (If you wish to learn more you can read
+about the [`Weber.offset`](@ref) function).
 
 # Stimulus Generation
 
