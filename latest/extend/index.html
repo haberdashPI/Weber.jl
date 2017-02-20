@@ -235,7 +235,7 @@ end
 <p>Most of the functionality above is for the extension of <a href="../start/#setup_time-1">setup-time</a> functionality. However, there are two ways to implement new run-time functionality: the generation of new kinds of events and the creation of new kinds of moments.</p>
 <p><a id='Custom-Events-1'></a></p>
 <h2 id="custom-events">Custom Events</h2>
-<p>Extensions to <a href="../extend_ref/#Weber.poll_events"><code>poll_events</code></a> can be used to generate new subtypes of the abstract type <code>Weber.ExpEvent</code>. These events should be tagged with the <a href="../@ref"><code>@event</code></a> macro, to ensure proper pre-compilation of moment functions. Such events can implement new methods for the existing <a href="../event/">public functions on events</a> or their own new functions.</p>
+<p>Extensions to <a href="../extend_ref/#Weber.poll_events"><code>poll_events</code></a> can be used to generate new subtypes of the abstract type <code>Weber.ExpEvent</code>. These events should be tagged with the <a href="../event/#Weber.@event"><code>@event</code></a> macro, to ensure proper pre-compilation of moment functions. Such events can implement new methods for the existing <a href="../event/">public functions on events</a> or their own new functions.</p>
 <p>If you define new functions, instead of leveraging the existing event methods, they should generally have some default behavior for all <code>ExpEvent</code> objects, so it is easy to call the method on any event a watcher moment receives.</p>
 <p><a id='Custom-Key-Events-1'></a></p>
 <h3 id="custom-key-events">Custom Key Events</h3>
