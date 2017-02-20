@@ -48,9 +48,9 @@ the experiment in exactly the same state it was on a previous run.
 !!! warning
 
     For offsets to be well defined, all calls to [`moment`](@ref) and
-    [`@addtrials`](@ref) must follow the guidlines specified in their respective
-    documentation. In particular, moments should not rely on state that changes
-    during the experiment unless they are wrapped in an @addtrials macro.
+    [`@addtrials`](@ref) must follow the guidlines in the user guide. In
+    particular, moments should not rely on state that changes during the
+    experiment unless they are wrapped in an @addtrials macro.
 
 """
 offset(exp) = data(exp).offset
