@@ -57,7 +57,22 @@ the Julia console is still open.
 After running the experiment on yourself, let's walk through the parts of this
 experiment piece-by-piece.
 
-# Experiment Setup
+!!! note "User Interface Annoyances"
+
+     Unfortunately, there are some annoyances to using Weber from Atom. In
+     particular, if the console is not open, you may sit there waiting while
+     nothing happens. **Make sure the Julia console is open**. Input will be
+     requested from you in this console. **Make sure you input your responses on
+     the appropriate line**. The current Juno tool for reading input is a little
+     finicky, and you may find that you have to change the location of your
+     cursor so it is next to the little icon of a page. Lastly, once the
+     experiment starts up, you may have to use alt-tab (on Window) or
+     command-tab (on Mac) to switch away from, and then switch back to the
+     experiment. Unforunately without doing this, Juno may capture input
+     instead of the experiment. These unforutunate interface problems will
+     eventually be fixed in a future version of Weber.
+
+# Read Experiment Parameters
 
 ```julia
 using Weber
