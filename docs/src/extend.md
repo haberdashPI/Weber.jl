@@ -1,4 +1,4 @@
-Functionality can be added to Weber via extensions. You can add multiple extensions to the same experiment. To handle multiple extensions properly, so that all extensions work, the following methods have special extension machinery.
+Functionality can be added to Weber via extensions. You can add multiple extensions to the same experiment. To handle multiple extensions properly, so that all extensions work, the following functions have special extension machinery.
 
 ```@meta
 CurrentModule = Weber
@@ -13,7 +13,7 @@ CurrentModule = Weber
 * [`addbreak`](@ref)
 * [`poll_events`](@ref)
 
-To extend one of these functions you define an extension type. For example:
+To extend one of these functions you must first define an extension type. For example:
 
 ```julia
 type MyExtension <: Weber.Extension
@@ -67,25 +67,31 @@ end
 
 This demonstrates one last important concept. When calling `addcolumn`, the
 function [`top`](@ref) is called on the experiment to get the top-most version of the
-experiment, so that any functionality of versions above the current one will be
+experiment. This is done so that any functionality of versions above the current one will be
 utilized in the call to `addcolumn`.
+
+!!! note "When to use `next` and `top`"
+
+    As a general rule, inside an extended method, when you call the same
+    function which that method implements, you should pass `next(experiment)`
+    while all other functions taking ane experiment argument should be passed
+    `top(experiment)`.
 
 # The private interface of run-time objects.
 
 Most of the functionality above is for the extension of [setup-time](@ref
-setup_time) functionality. However, there are two ways to implement new run-time
-functionality: the generation of new kinds of events and the creation of new
-kinds of moments.
+setup_time) behavior. However, there are two ways to implement new run-time
+behavior: the generation of custom events and custom moments.
 
 ## Custom Events
 
-Extensions to [`poll_events`](@ref) can be used to generate new subtypes of the
-abstract type `Weber.ExpEvent`. These events should be tagged with the [`@event`](@ref)
-macro, to ensure proper pre-compilation of moment functions. Such events can
-implement new methods for the existing [public functions on events](event.md) or
-their own new functions.
+Extensions to [`poll_events`](@ref) can be used to notify watcher functions
+ofnew kinds of events. An event is an object that inherits from `Weber.ExpEvent`
+and which is tagged with the [`@event`](@ref) macro. Custom events can implement
+new methods for the existing [public functions on events](event.md) or their own
+new functions.
 
-If you define new functions, instead of leveraging the existing event methods,
+If you define new functions, instead of leveraging the existing ones,
 they should generally have some default behavior for all `ExpEvent` objects, so
 it is easy to call the method on any event a watcher moment receives.
 
@@ -107,10 +113,11 @@ Such key types should implement `==`, `hash` and `isless` so that the events can
 be ordered. This allows them to be displayed in an organized fashion when
 printed using [`listkeys`](@ref).
 
-You can then extend [`poll_events`](@ref) so that it generates events that
-return true for `iskeydown(myevent,key"my_button1")` (and a corresponding method
-for `iskeyup`). These buttons could then be used in code using your module by
-calling `response` as follows.
+Once tese events are defined you can extend [`poll_events`](@ref) so that it
+generates events that return true for `iskeydown(myevent,key"my_button1")` (and
+a corresponding method for `iskeyup`). How this happens will depend on the
+specific hardware you are supporting. The buttons presses could then checked for
+during an experiment as follows.
 
 ```julia
 response(key"my_button1" => "button1_pressed",

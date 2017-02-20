@@ -344,7 +344,12 @@ abstract SimpleMoment <: Moment
     delta_t(m::Moment)
 
 Returns the time, since the start of the previous moment, at which this
-moment should begin.
+moment should begin. The default implementation returns zero.
+
+!!! note
+
+    This method is part of the private interface for moments. It
+    should not be called directly, but implemented as part of an extension.
 """
 delta_t(m::Moment) = 0.0
 required_delta_t(m::Moment) = delta_t(m)

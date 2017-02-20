@@ -498,7 +498,7 @@ end
 
 If there is anything the moment needs to do before it occurs, it
 is done during `prepare!`. This triggers immediately after the moment prior to
-the current one has finished.
+the current one has finished. The default implementation does nothing.
 
 !!! note
 
