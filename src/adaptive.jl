@@ -1,5 +1,5 @@
 using Distributions
-export levitt_adapter, bayesian_adapter, delta
+export levitt_adapter, bayesian_adapter, delta, estimate
 
 """
 Adpaters, created through their individual constructors, can be used to estimate
