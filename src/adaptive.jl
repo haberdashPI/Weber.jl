@@ -1,13 +1,6 @@
 using Distributions
 export levitt_adapter, bayesian_adapter, delta, estimate
 
-"""
-Adpaters, created through their individual constructors, can be used to estimate
-some delta at which listeners respond correctly at a given threshold (e.g. 80%
-correct). They must define `update`, `estimate` and `delta`. Generally
-user code should call the [`response`](@ref) method specialized for adapters to
-record responses and update the adapter.
-"""
 abstract Adapter
 
 """
@@ -16,7 +9,7 @@ abstract Adapter
 Updates any internal state for the adapter when the listener responds with
 `response` and the correct response is `correct`. Usually not called directly,
 but instead called within `response`, when the adapter is passed as the first
-argument.
+argument. May take a while to run.
 """
 function update!(adapter,response,correct)
 end
@@ -25,8 +18,7 @@ end
     Weber.estimate(adapter)
 
 Returns the mean and error of the adapters threshold estimate. May take some
-time to run.  Usually not called directly, but instead called within `response`,
-when the adapter is passed as the first argument.
+time to run.
 """
 function estimate(adapter)
 end

@@ -16,15 +16,13 @@ isresponse(e) = iskeydown(e,key"p") || iskeydown(e,key"q")
 standard = attenuate(ramp(tone(1000,0.1)),atten_dB)
 function one_trial(adapter)
   first_lower = rand(Bool)
-  early_resp = response(key"q" => "early_first_lower",
-                        key"p" => "early_second_lower")
   resp = response(adapter,key"q" => "first_lower",key"p" => "second_lower",
                   correct=(first_lower ? "first_lower" : "second_lower"))
 
   signal() = attenuate(ramp(tone(1000*(1-delta(adapter)),0.1)),atten_dB)
   stimuli = first_lower? [signal,standard] : [standard,signal]
 
-  [show_cross(),early_resp,
+  [show_cross(),
    moment(play,stimuli[1]),moment(0.9,play,stimuli[2]),
    moment(0.1 + 0.3,display,
           "Was the first [Q] or second sound [P] lower in pitch?"),
@@ -40,7 +38,7 @@ setup(exp) do
   addbreak(instruct("""
 
     On each trial, you will hear two beeps. Indicate which of the two beeps you
-hear was lower in pitch. Hit 'Q' if the first beep was lower, and 'P' if the
+heard was lower in pitch. Hit 'Q' if the first beep was lower, and 'P' if the
 second beep was lower.
 """))
 

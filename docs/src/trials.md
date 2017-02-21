@@ -1,9 +1,4 @@
 
-```@meta
-CurrentModule = Weber
-```
-
-
 ```@docs
 addtrial
 addbreak
@@ -18,10 +13,10 @@ show_cross
 when
 looping
 @addtrials
-Adapter
-update!
+Weber.update!
 estimate
 delta
 levitt_adapter
 bayesian_adapter
+constant_adapter
 ```
