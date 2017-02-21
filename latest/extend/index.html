@@ -190,7 +190,7 @@
           <div role="main">
             <div class="section">
               
-                <p>Functionality can be added to Weber via extensions. You can add multiple extensions to the same experiment. To handle multiple extensions properly, so that all extensions work, the following methods have special extension machinery.</p>
+                <p>Functionality can be added to Weber via extensions. You can add multiple extensions to the same experiment. To handle multiple extensions properly, so that all extensions work, the following functions have special extension machinery.</p>
 <ul>
 <li><a href="../experiment/#Weber.addcolumn"><code>addcolumn</code></a></li>
 <li><a href="../experiment/#Weber.setup"><code>setup</code></a></li>
@@ -201,7 +201,7 @@
 <li><a href="../trials/#Weber.addbreak"><code>addbreak</code></a></li>
 <li><a href="../extend_ref/#Weber.poll_events"><code>poll_events</code></a></li>
 </ul>
-<p>To extend one of these functions you define an extension type. For example:</p>
+<p>To extend one of these functions you must first define an extension type. For example:</p>
 <pre><code class="julia">type MyExtension &lt;: Weber.Extension
   my_value::String
 end
@@ -229,14 +229,18 @@ end
 end
 </code></pre>
 
-<p>This demonstrates one last important concept. When calling <code>addcolumn</code>, the function <a href="../extend_ref/#DataStructures.top-Tuple{Weber.Experiment}"><code>top</code></a> is called on the experiment to get the top-most version of the experiment, so that any functionality of versions above the current one will be utilized in the call to <code>addcolumn</code>.</p>
+<p>This demonstrates one last important concept. When calling <code>addcolumn</code>, the function <a href="../extend_ref/#DataStructures.top-Tuple{Weber.Experiment}"><code>top</code></a> is called on the experiment to get the top-most version of the experiment. This is done so that any functionality of versions above the current one will be utilized in the call to <code>addcolumn</code>.</p>
+<div class="admonition note">
+<p class="admonition-title">When to use <code>next</code> and <code>top</code></p>
+<p>As a general rule, inside an extended method, when you call the same function which that method implements, you should pass <code>next(experiment)</code> while all other functions taking ane experiment argument should be passed <code>top(experiment)</code>.</p>
+</div>
 <p><a id='The-private-interface-of-run-time-objects.-1'></a></p>
 <h1 id="the-private-interface-of-run-time-objects">The private interface of run-time objects.</h1>
-<p>Most of the functionality above is for the extension of <a href="../start/#setup_time-1">setup-time</a> functionality. However, there are two ways to implement new run-time functionality: the generation of new kinds of events and the creation of new kinds of moments.</p>
+<p>Most of the functionality above is for the extension of <a href="../start/#setup_time-1">setup-time</a> behavior. However, there are two ways to implement new run-time behavior: the generation of custom events and custom moments.</p>
 <p><a id='Custom-Events-1'></a></p>
 <h2 id="custom-events">Custom Events</h2>
-<p>Extensions to <a href="../extend_ref/#Weber.poll_events"><code>poll_events</code></a> can be used to generate new subtypes of the abstract type <code>Weber.ExpEvent</code>. These events should be tagged with the <a href="../event/#Weber.@event"><code>@event</code></a> macro, to ensure proper pre-compilation of moment functions. Such events can implement new methods for the existing <a href="../event/">public functions on events</a> or their own new functions.</p>
-<p>If you define new functions, instead of leveraging the existing event methods, they should generally have some default behavior for all <code>ExpEvent</code> objects, so it is easy to call the method on any event a watcher moment receives.</p>
+<p>Extensions to <a href="../extend_ref/#Weber.poll_events"><code>poll_events</code></a> can be used to notify watcher functions ofnew kinds of events. An event is an object that inherits from <code>Weber.ExpEvent</code> and which is tagged with the <a href="../event/#Weber.@event"><code>@event</code></a> macro. Custom events can implement new methods for the existing <a href="../event/">public functions on events</a> or their own new functions.</p>
+<p>If you define new functions, instead of leveraging the existing ones, they should generally have some default behavior for all <code>ExpEvent</code> objects, so it is easy to call the method on any event a watcher moment receives.</p>
 <p><a id='Custom-Key-Events-1'></a></p>
 <h3 id="custom-key-events">Custom Key Events</h3>
 <p>One approach, if you are implementing events for a hardware input device, is to implement methods for <a href="../event/#Weber.iskeydown"><code>iskeydown</code></a>. You can define your own type of keycode (which should be of some new custom type <code>&lt;: Weber.Key</code>). Then, you can then make use of the <a href="../event/#Weber.@key_str"><code>@key_str</code></a> macro by adding entries to the <code>Weber.str_to_code</code> dictionary (a private global constant). So for example, you could add the following to the module implementing your extension.</p>
@@ -245,7 +249,7 @@ Weber.str_to_code[&quot;my_button1&quot;] = MyHardwareKey(2)
 </code></pre>
 
 <p>Such key types should implement <code>==</code>, <code>hash</code> and <code>isless</code> so that the events can be ordered. This allows them to be displayed in an organized fashion when printed using <a href="../event/#Weber.listkeys"><code>listkeys</code></a>.</p>
-<p>You can then extend <a href="../extend_ref/#Weber.poll_events"><code>poll_events</code></a> so that it generates events that return true for <code>iskeydown(myevent,key"my_button1")</code> (and a corresponding method for <code>iskeyup</code>). These buttons could then be used in code using your module by calling <code>response</code> as follows.</p>
+<p>Once tese events are defined you can extend <a href="../extend_ref/#Weber.poll_events"><code>poll_events</code></a> so that it generates events that return true for <code>iskeydown(myevent,key"my_button1")</code> (and a corresponding method for <code>iskeyup</code>). How this happens will depend on the specific hardware you are supporting. The buttons presses could then checked for during an experiment as follows.</p>
 <pre><code class="julia">response(key&quot;my_button1&quot; =&gt; &quot;button1_pressed&quot;,
          key&quot;my_button2&quot; =&gt; &quot;button2_pressed&quot;)
 </code></pre>
