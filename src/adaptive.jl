@@ -102,6 +102,37 @@ function response(callback::Function,adapter::Adapter,responses::Pair...;
   end
 end
 
+type ConstantStimulus
+  stimuli::Vector{Float64}
+  index::Int
+  correct::Vector{Int}
+  response::Vector{Int}
+end
+
+"""
+    constant_adapter(stimuli)
+
+An adapter that can be used to implement the method of constant stimuli: the
+specified sequence of stimulus deltas is presented in order to participants.
+
+Strictly speaking, this is not an adaptive tracking procedure. However,
+it can be convienient to have the same programming interface for this method as
+for adaptive methods. In this way you can easily select between the method of
+constant stimuli or some kind of adaptive procedure.
+"""
+constant_adapter(stimuli) = ConstantStimulus(stimuli,1,Int[],Int[])
+delta(adapter::ConstantStimulus) = adapter.stimuli[adapter.index]
+function update!(adapter::ConstantStimulus,response,correct)
+  adapte.index += 1
+  nothing
+  # push!(adapter.correct,correct)
+  # push!(adapter.response,response)
+end
+function estimate(adapter::ConstantStimulus)
+  error("The `estimate` method for `ConstantStimulus` is not implemented!")
+  # TODO: fit a curve to the responses to estimate the threshold???
+end
+
 """
     levit_adapter([first_delta=0.1],[down=3],[up=1],
                   [big_reverse=3],[big=0.01],[little=0.005],
