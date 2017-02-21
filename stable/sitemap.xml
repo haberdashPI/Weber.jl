@@ -4,7 +4,7 @@
     
     <url>
      <loc>/</loc>
-     <lastmod>2017-02-18</lastmod>
+     <lastmod>2017-02-21</lastmod>
      <changefreq>daily</changefreq>
     </url>
     
@@ -13,25 +13,31 @@
         
     <url>
      <loc>/start/</loc>
-     <lastmod>2017-02-18</lastmod>
+     <lastmod>2017-02-21</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>/trial_guide/</loc>
-     <lastmod>2017-02-18</lastmod>
+     <lastmod>2017-02-21</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>/adaptive/</loc>
+     <lastmod>2017-02-21</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>/advanced/</loc>
-     <lastmod>2017-02-18</lastmod>
+     <lastmod>2017-02-21</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>/extend/</loc>
-     <lastmod>2017-02-18</lastmod>
+     <lastmod>2017-02-21</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
@@ -41,37 +47,37 @@
         
     <url>
      <loc>/experiment/</loc>
-     <lastmod>2017-02-18</lastmod>
+     <lastmod>2017-02-21</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>/trials/</loc>
-     <lastmod>2017-02-18</lastmod>
+     <lastmod>2017-02-21</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>/sound/</loc>
-     <lastmod>2017-02-18</lastmod>
+     <lastmod>2017-02-21</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>/video/</loc>
-     <lastmod>2017-02-18</lastmod>
+     <lastmod>2017-02-21</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>/event/</loc>
-     <lastmod>2017-02-18</lastmod>
+     <lastmod>2017-02-21</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>/extend_ref/</loc>
-     <lastmod>2017-02-18</lastmod>
+     <lastmod>2017-02-21</lastmod>
      <changefreq>daily</changefreq>
     </url>
         

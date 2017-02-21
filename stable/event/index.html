@@ -75,6 +75,13 @@
         
             
     <li class="toctree-l1 ">
+        <a class="" href="../adaptive/">Adaptive Tracks</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
         <a class="" href="../advanced/">Advanced Experiments</a>
         
     </li>
@@ -186,16 +193,82 @@
           <div role="main">
             <div class="section">
               
-                <pre><code>@event
-@key_str
-keycode
-iskeydown
-iskeyup
-listkeys
-run_keycode_helper
-endofpause
+                <p><a id='Weber.@event' href='#Weber.@event'>#</a>
+<strong><code>Weber.@event</code></strong> &mdash; <em>Macro</em>.</p>
+<pre><code>@Weber.event type [name] &lt;: [ExpEvent or ExpEvent child]
+  [fields...]
+end
 </code></pre>
 
+<p>Marks a concrete type as being an experiment event.</p>
+<p>This tag is necessary to ensure that all watcher moments are properly precompiled. This macro adds the event to a list of concrete events for which each watcher method must have a precompiled method.</p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/e2ef2a5328039ac19a6a609bc12aae203dba5339/src/types.jl#L17-L27' class='documenter-source'>source</a><br></p>
+<p><a id='Weber.@key_str' href='#Weber.@key_str'>#</a>
+<strong><code>Weber.@key_str</code></strong> &mdash; <em>Macro</em>.</p>
+<pre><code>key&quot;keyname&quot;
+</code></pre>
+
+<p>Generate a key code, using a single character (e.g. key"q" or key"]"), or some special key name surrounded by colons (e.g. :escape:).</p>
+<p>Note that keys are orderd, you can list all implemented keys in order, using <code>listkeys</code>. If you want to quickly see the name for a given button you can use <code>run_keycode_helper()</code>.</p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/e2ef2a5328039ac19a6a609bc12aae203dba5339/src/types.jl#L255-L264' class='documenter-source'>source</a><br></p>
+<p><a id='Base.Libc.time-Tuple{Weber.ExpEvent}' href='#Base.Libc.time-Tuple{Weber.ExpEvent}'>#</a>
+<strong><code>Base.Libc.time</code></strong> &mdash; <em>Method</em>.</p>
+<pre><code>time(e::ExpEvent)
+</code></pre>
+
+<p>Get the time an event occured relative to the start of the experiment. Resolution is limited by an expeirment's input_resolution (which can be specified upon initialization), and the response rate of the device. For instance, keyboards usually have a latency on the order of 20-30ms.</p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/e2ef2a5328039ac19a6a609bc12aae203dba5339/src/types.jl#L66-L73' class='documenter-source'>source</a><br></p>
+<p><a id='Weber.keycode' href='#Weber.keycode'>#</a>
+<strong><code>Weber.keycode</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>keycode(e::ExpEvent)
+</code></pre>
+
+<p>Report the key code for this event, if there is one.</p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/e2ef2a5328039ac19a6a609bc12aae203dba5339/src/types.jl#L274-L278' class='documenter-source'>source</a><br></p>
+<p><a id='Weber.iskeydown' href='#Weber.iskeydown'>#</a>
+<strong><code>Weber.iskeydown</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>iskeydown(event,[key])
+</code></pre>
+
+<p>Evalutes to true if the event indicates that the given key (or any key) was pressed down. (See <code>@key_str</code>)</p>
+<pre><code>iskeydown(key)
+</code></pre>
+
+<p>Returns a function which tests if an event indicates the given key was pressed down.</p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/e2ef2a5328039ac19a6a609bc12aae203dba5339/src/types.jl#L283-L293' class='documenter-source'>source</a><br></p>
+<p><a id='Weber.iskeyup' href='#Weber.iskeyup'>#</a>
+<strong><code>Weber.iskeyup</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>iskeyup(event,[key])
+</code></pre>
+
+<p>Evalutes to true if the event indicates that the given keyboard key (or any key) was released.  (See <code>@key_str</code>)</p>
+<pre><code>iskeyup(key)
+</code></pre>
+
+<p>Returns a function which tests if an event indicates the given key was released.</p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/e2ef2a5328039ac19a6a609bc12aae203dba5339/src/types.jl#L300-L309' class='documenter-source'>source</a><br></p>
+<p><a id='Weber.listkeys' href='#Weber.listkeys'>#</a>
+<strong><code>Weber.listkeys</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>listkeys()
+</code></pre>
+
+<p>Lists all available key codes in order.</p>
+<p>Also see <code>@key_str</code>.</p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/e2ef2a5328039ac19a6a609bc12aae203dba5339/src/types.jl#L246-L252' class='documenter-source'>source</a><br></p>
+<p><a id='Weber.run_keycode_helper' href='#Weber.run_keycode_helper'>#</a>
+<strong><code>Weber.run_keycode_helper</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>run_keycode_helper(;extensions=[])
+</code></pre>
+
+<p>Runs a program that will display the keycode for each key that you press.</p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/e2ef2a5328039ac19a6a609bc12aae203dba5339/src/helpers.jl#L4-L8' class='documenter-source'>source</a><br></p>
+<p><a id='Weber.endofpause' href='#Weber.endofpause'>#</a>
+<strong><code>Weber.endofpause</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>endofpause(event)
+</code></pre>
+
+<p>Evaluates to true if the event indicates the end of a pause requested by the user.</p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/e2ef2a5328039ac19a6a609bc12aae203dba5339/src/types.jl#L327-L332' class='documenter-source'>source</a><br></p>
 <p><a id='Cedrus-Response-pads-1'></a></p>
 <h1 id="cedrus-response-pads">Cedrus Response pads</h1>
 <p>A built in extension, as module <code>Weber.Cedrus</code>, is available, for listenting to cedrus response-pad input. Below are the available functions.</p>
@@ -208,7 +281,7 @@ endofpause
 <pre><code>run_keycode_helper(extensions=[CedrusXID()])
 </code></pre>
 
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/6faaefe653ac6bb11c58335065b198946f254b3b/src/cedrus.jl#L12-L22' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/e2ef2a5328039ac19a6a609bc12aae203dba5339/src/cedrus.jl#L12-L22' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.Cedrus.reset_response' href='#Weber.Cedrus.reset_response'>#</a>
 <strong><code>Weber.Cedrus.reset_response</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>reset_response(cedrus::CedrusXID)
@@ -216,14 +289,14 @@ endofpause
 
 <p>Reset the response timer for all Cedrus response-pad devices.</p>
 <p>This function will rarely need to be explicitly called. The response timer is automatically reset at the start of each trial.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/6faaefe653ac6bb11c58335065b198946f254b3b/src/cedrus.jl#L106-L113' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/e2ef2a5328039ac19a6a609bc12aae203dba5339/src/cedrus.jl#L106-L113' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.Cedrus.response_time' href='#Weber.Cedrus.response_time'>#</a>
 <strong><code>Weber.Cedrus.response_time</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>response_time(e::ExpEvent)
 </code></pre>
 
 <p>Get the response time an event occured at. Only meaningful for response pad events (returns NaN in other cases). The response time is normally measured from the start of a trial (see <code>reset_response</code>).</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/6faaefe653ac6bb11c58335065b198946f254b3b/src/cedrus.jl#L95-L101' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/e2ef2a5328039ac19a6a609bc12aae203dba5339/src/cedrus.jl#L95-L101' class='documenter-source'>source</a><br></p>
               
             </div>
           </div>

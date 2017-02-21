@@ -65,7 +65,7 @@
         
             <ul>
             
-                <li class="toctree-l3"><a href="#experiment-setup">Experiment Setup</a></li>
+                <li class="toctree-l3"><a href="#read-experiment-parameters">Read Experiment Parameters</a></li>
                 
             
                 <li class="toctree-l3"><a href="#stimulus-generation">Stimulus Generation</a></li>
@@ -81,12 +81,12 @@
                 <li class="toctree-l3"><a href="#experiment-definition">Experiment Definition</a></li>
                 
             
-                <li class="toctree-l3"><a href="#experiment-setup_1">Experiment Setup</a></li>
+                <li class="toctree-l3"><a href="#experiment-setup">Experiment Setup</a></li>
                 
                     <li><a class="toctree-l4" href="#setup-vs-run-time">Setup- vs. run-time</a></li>
                 
             
-                <li class="toctree-l3"><a href="#where-to-go-from-here">Where to go from here.</a></li>
+                <li class="toctree-l3"><a href="#where-to-go-from-here">Where to go from here</a></li>
                 
             
             </ul>
@@ -97,6 +97,13 @@
             
     <li class="toctree-l1 ">
         <a class="" href="../trial_guide/">Trial Creation</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../adaptive/">Adaptive Tracks</a>
         
     </li>
 
@@ -248,14 +255,18 @@ run(exp)
 
 <p>Finally click the run button (it is a big play symbol). You will need to enter some information into the console before the experiment begins, so make sure the Julia console is still open.</p>
 <p>After running the experiment on yourself, let's walk through the parts of this experiment piece-by-piece.</p>
-<p><a id='Experiment-Setup-1'></a></p>
-<h1 id="experiment-setup">Experiment Setup</h1>
+<div class="admonition note">
+<p class="admonition-title">User Interface Annoyances</p>
+<p>Unfortunately, there are some annoyances to using Weber from Atom. In  particular, if the console is not open, you may sit there waiting while  nothing happens. <strong>Make sure the Julia console is open</strong>. Input will be  requested from you in this console. <strong>Make sure you input your responses on  the appropriate line</strong>. The current Juno tool for reading input is a little  finicky, and you may find that you have to change the location of your  cursor so it is next to the little icon of a page.</p>
+</div>
+<p><a id='Read-Experiment-Parameters-1'></a></p>
+<h1 id="read-experiment-parameters">Read Experiment Parameters</h1>
 <pre><code class="julia">using Weber
 sid,skip = @read_args(&quot;A simple frequency discrimination experiment.&quot;)
 </code></pre>
 
 <p>The first line loads Weber. Then, when the script is run, the second line will read two important experimental parameters from the user: their subject ID, and an <em>offset</em>.</p>
-<p>Don't worry about the offset right now, by default it is set to 0. We'll talk about it later.</p>
+<p>Don't worry about the offset right now. (If you wish to learn more you can read about the <a href="../experiment/#Weber.offset"><code>Weber.offset</code></a> function).</p>
 <p><a id='Stimulus-Generation-1'></a></p>
 <h1 id="stimulus-generation">Stimulus Generation</h1>
 <pre><code class="julia">low = ramp(tone(1000,0.5))
@@ -299,8 +310,8 @@ end
 <p>This line creates the actual experiment. It creates a datafile with an appropriate name, and opens a window for the experiment to be displayed in.</p>
 <p>The code <code>columns</code> creates a number of columns. Some of these columns have fixed values, that are the same for each row of the data (e.g. <code>:sid =&gt; sid</code>) but one of them, <code>:correct</code>, is different on each line. Note that in the call to <code>response</code> in <code>one_trial</code>, the value of correct is set to the response listeners should have pressed during a trial.</p>
 <p>You can add as many columns as you want, either when you first create an experiment, as above, or using <a href="../experiment/#Weber.addcolumn"><code>addcolumn</code></a>. Trying to record values to a column you haven't added results in an error.</p>
-<p><a id='Experiment-Setup-2'></a></p>
-<h1 id="experiment-setup_1">Experiment Setup</h1>
+<p><a id='Experiment-Setup-1'></a></p>
+<h1 id="experiment-setup">Experiment Setup</h1>
 <pre><code class="julia">setup(exp) do
   addbreak(instruct(&quot;Press 'q' when you hear the low tone first and 'p' otherwise.&quot;))
   for trial in 1:10
@@ -316,8 +327,8 @@ end
 </code></pre>
 
 <p>This final part of the code actually runs the experiment. Note that none of the code in setup actually runs during the experiment. This is <em>important</em>! Weber is designed to run as much code as possible before the experiment starts, during setup. This is called setup-time. This ensures that code which does run during the experiment, during run-time, can do so in a timely manner. The only code that actually runs during the experiment is the behavior defined within each moment.</p>
-<p><a id='Where-to-go-from-here.-1'></a></p>
-<h1 id="where-to-go-from-here">Where to go from here.</h1>
+<p><a id='Where-to-go-from-here-1'></a></p>
+<h1 id="where-to-go-from-here">Where to go from here</h1>
 <p>From here you can begin writing your own simple experiments. Take a look at some of the example experiments under Weber's example directory to see what you can do. You can find the location of this directory by typing <code>Pkg.dir("Weber","examples")</code> in the julia console. To further your understanding of the details of Weber, you can also read through the rest of the user guide. Topics in the guide have been organized from simplest, and most useful, to the more advanced, least-frequently-necessary features.</p>
               
             </div>
