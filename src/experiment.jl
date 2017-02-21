@@ -268,7 +268,7 @@ end
 
 function pause(exp,message,time,firstpause=true)
   flags(exp).running = false
-  record(exp,"paused")
+  record(top(exp),"paused")
   if firstpause
     save_display(win(exp))
     pause_sounds()
@@ -278,7 +278,7 @@ function pause(exp,message,time,firstpause=true)
 end
 
 function unpause(exp,time)
-  record(exp,"unpaused")
+  record(top(exp),"unpaused")
   data(exp).pause_mode = Running
 
   restore_display(win(exp))
@@ -303,7 +303,7 @@ function watch_pauses(exp,e)
     pause(exp,"Waiting for window focus...",time(e))
     data(exp).pause_mode = Unfocused
   elseif data(exp).pause_mode == ToExit && iskeydown(e,key"y")
-    record(exp,"terminated")
+    record(top(exp),"terminated")
     data(exp).cleanup()
   elseif data(exp).pause_mode == ToExit && iskeydown(e,key"n")
     unpause(exp,time(e))

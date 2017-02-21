@@ -117,7 +117,10 @@ some reason.
     4. **high_latency** - recorded whenever a high latency warning is triggered.
        The "value" column is set to the error between the actual and the desired
        timing of a moment, in seconds.
-
+    5. **paused** - recorded when user hits 'escape' and the experiment is
+       paused.
+    6. **unpaused** - recorded when the user ends the pause, continuuing the
+       experiment.
 """
 function record(code;kwds...)
   record(get_experiment(),code;kwds...)
