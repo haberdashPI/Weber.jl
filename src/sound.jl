@@ -369,7 +369,11 @@ function verify_buffer_size(sample_rate_Hz,buffer_size)
 
     buffer_size
   else
-    256
+    @static if is_windows()
+      1024
+    else
+      256
+    end
   end
 end
 
@@ -394,6 +398,13 @@ sound is the same as that setup here, and no resampling of the sound is made.
 function setup_sound(;sample_rate_Hz=samplerate(sound_setup_state),
                      buffer_size=nothing)
   global sound_setup_state
+
+  @static if is_windows()
+    # use windows mm driver by default
+    if get(ENV,"SDL_AUDIODRIVER","none") == "none"
+      ENV["SDL_AUDIODRIVER"] = "winmm"
+    end
+  end
 
   if isready(sound_setup_state)
     ccall((:Mix_CloseAudio,_psycho_SDL2_mixer),Void,())
