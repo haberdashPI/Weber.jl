@@ -26,8 +26,8 @@ pages:
   - 'User Guide':
       - 'Getting Started': start.md
       - 'Trial Creation': trial_guide.md
-      - 'Adaptive Tracks': adaptive.md
       # - 'Testing': testing.md
+      - 'Adaptive Tracks': adaptive.md
       # - 'Calibration': calibrate.md
       - 'Advanced Experiments': advanced.md
       - 'Extending Weber': extend.md
