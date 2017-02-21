@@ -65,12 +65,7 @@ experiment piece-by-piece.
      requested from you in this console. **Make sure you input your responses on
      the appropriate line**. The current Juno tool for reading input is a little
      finicky, and you may find that you have to change the location of your
-     cursor so it is next to the little icon of a page. Lastly, once the
-     experiment starts up, you may have to use alt-tab (on Window) or
-     command-tab (on Mac) to switch away from, and then switch back to the
-     experiment. Unfortunately without doing this, Juno may capture input
-     instead of the experiment. These unfortunate interface problems will
-     eventually be fixed in a future version of Weber.
+     cursor so it is next to the little icon of a page. 
 
 # Read Experiment Parameters
 
