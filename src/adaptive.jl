@@ -1,5 +1,5 @@
 using Distributions
-export levitt_adapter, bayesian_adapter, delta, estimate
+export levitt_adapter, bayesian_adapter, constant_adapter, delta, estimate
 
 abstract Adapter
 
