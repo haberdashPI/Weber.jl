@@ -247,7 +247,7 @@ function collect_args(description,script_file;keys...)
       error = true
       while error
         print("Enter $kw ($(join(map(string,value),", "," or "))): ")
-        args[i] = chomp(readline())
+        args[i] = chomp(input())
         if Symbol(args[i]) ∉ value
           println("Expected $kw to be $(join(map(string,value),", "," or ")) "*
                   "but got $(args[i]).")
