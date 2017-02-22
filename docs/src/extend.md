@@ -21,7 +21,7 @@ type MyExtension <: Weber.Extension
 end
 ```
 
-For all fo the public functions above (everything but `poll_events`), you can
+For all of the public functions above (everything but `poll_events`), you can
 then define a new method of these functions that includes one additional
 argument beyond that listed in its documentation, located before all other
 arguments. This argument should be of type `ExtendedExperiment{MyExtension}`. To
@@ -74,7 +74,7 @@ utilized in the call to `addcolumn`.
 
     As a general rule, inside an extended method, when you call the same
     function which that method implements, you should pass `next(experiment)`
-    while all other functions taking ane experiment argument should be passed
+    while all other functions taking an experiment argument should be passed
     `top(experiment)`.
 
 # The private interface of run-time objects.
@@ -86,7 +86,7 @@ behavior: the generation of custom events and custom moments.
 ## Custom Events
 
 Extensions to [`poll_events`](@ref) can be used to notify watcher functions
-ofnew kinds of events. An event is an object that inherits from `Weber.ExpEvent`
+of new kinds of events. An event is an object that inherits from `Weber.ExpEvent`
 and which is tagged with the [`@event`](@ref) macro. Custom events can implement
 new methods for the existing [public functions on events](event.md) or their own
 new functions.
@@ -113,7 +113,7 @@ Such key types should implement `==`, `hash` and `isless` so that the events can
 be ordered. This allows them to be displayed in an organized fashion when
 printed using [`listkeys`](@ref).
 
-Once tese events are defined you can extend [`poll_events`](@ref) so that it
+Once these events are defined you can extend [`poll_events`](@ref) so that it
 generates events that return true for `iskeydown(myevent,key"my_button1")` (and
 a corresponding method for `iskeyup`). How this happens will depend on the
 specific hardware you are supporting. The buttons presses could then checked for
@@ -126,11 +126,12 @@ response(key"my_button1" => "button1_pressed",
 
 ## Custom Moments
 
-You can create your own moment types, which must be `<: Weber.Moment`. These new
-moments will have to be generated using some newly defined function, or added
-automatically by extending [`addtrial`](@ref). Once created, and added to trials, these
-moments will be processed at run-time using the function [`handle`](@ref), which
-should define the moment's run-time behavior.
+You can create your own moment types, which must be children of
+`Weber.Moment`. These new moments will have to be generated using some newly
+defined function, or added automatically by extending [`addtrial`](@ref). Once
+created, and added to trials, these moments will be processed at run-time using
+the function [`handle`](@ref), which should define the moment's run-time
+behavior.
 
 A moment can also define [`delta_t`](@ref)--to define when it occurs--or
 [`prepare!`](@ref)--to have some sort of initialization occur before its
