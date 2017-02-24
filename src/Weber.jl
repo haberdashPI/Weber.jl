@@ -42,7 +42,7 @@ try
                   "be reproduceable."))
   end
   global const version =
-    convert(VersionNumber,chomp(readstring(`git describe --tags`))*suffix)
+    convert(VersionNumber,chomp(readstring(`git describe --match v* --tags`))*suffix)
 catch
   try
     global const version = Pkg.installed("Weber")
