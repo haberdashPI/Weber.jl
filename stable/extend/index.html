@@ -214,7 +214,7 @@
 end
 </code></pre>
 
-<p>For all fo the public functions above (everything but <code>poll_events</code>), you can then define a new method of these functions that includes one additional argument beyond that listed in its documentation, located before all other arguments. This argument should be of type <code>ExtendedExperiment{MyExtension}</code>. To extend the private <code>poll_events</code> function, replace the <code>Experiment</code> argument with an <code>ExtendedExperiment{MyExtension}</code> argument.</p>
+<p>For all of the public functions above (everything but <code>poll_events</code>), you can then define a new method of these functions that includes one additional argument beyond that listed in its documentation, located before all other arguments. This argument should be of type <code>ExtendedExperiment{MyExtension}</code>. To extend the private <code>poll_events</code> function, replace the <code>Experiment</code> argument with an <code>ExtendedExperiment{MyExtension}</code> argument.</p>
 <div class="admonition warning">
 <p class="admonition-title">Don't extend unlisted functions</p>
 <p>These functions have specific machinery setup to make extension possible. Don't use the same approach with other functions and expect your extension to work.</p>
@@ -239,14 +239,14 @@ end
 <p>This demonstrates one last important concept. When calling <code>addcolumn</code>, the function <a href="../extend_ref/#DataStructures.top-Tuple{Weber.Experiment}"><code>top</code></a> is called on the experiment to get the top-most version of the experiment. This is done so that any functionality of versions above the current one will be utilized in the call to <code>addcolumn</code>.</p>
 <div class="admonition note">
 <p class="admonition-title">When to use <code>next</code> and <code>top</code></p>
-<p>As a general rule, inside an extended method, when you call the same function which that method implements, you should pass <code>next(experiment)</code> while all other functions taking ane experiment argument should be passed <code>top(experiment)</code>.</p>
+<p>As a general rule, inside an extended method, when you call the same function which that method implements, you should pass <code>next(experiment)</code> while all other functions taking an experiment argument should be passed <code>top(experiment)</code>.</p>
 </div>
 <p><a id='The-private-interface-of-run-time-objects.-1'></a></p>
 <h1 id="the-private-interface-of-run-time-objects">The private interface of run-time objects.</h1>
 <p>Most of the functionality above is for the extension of <a href="../start/#setup_time-1">setup-time</a> behavior. However, there are two ways to implement new run-time behavior: the generation of custom events and custom moments.</p>
 <p><a id='Custom-Events-1'></a></p>
 <h2 id="custom-events">Custom Events</h2>
-<p>Extensions to <a href="../extend_ref/#Weber.poll_events"><code>poll_events</code></a> can be used to notify watcher functions ofnew kinds of events. An event is an object that inherits from <code>Weber.ExpEvent</code> and which is tagged with the <a href="../event/#Weber.@event"><code>@event</code></a> macro. Custom events can implement new methods for the existing <a href="../event/">public functions on events</a> or their own new functions.</p>
+<p>Extensions to <a href="../extend_ref/#Weber.poll_events"><code>poll_events</code></a> can be used to notify watcher functions of new kinds of events. An event is an object that inherits from <code>Weber.ExpEvent</code> and which is tagged with the <a href="../event/#Weber.@event"><code>@event</code></a> macro. Custom events can implement new methods for the existing <a href="../event/">public functions on events</a> or their own new functions.</p>
 <p>If you define new functions, instead of leveraging the existing ones, they should generally have some default behavior for all <code>ExpEvent</code> objects, so it is easy to call the method on any event a watcher moment receives.</p>
 <p><a id='Custom-Key-Events-1'></a></p>
 <h3 id="custom-key-events">Custom Key Events</h3>
@@ -256,14 +256,14 @@ Weber.str_to_code[&quot;my_button1&quot;] = MyHardwareKey(2)
 </code></pre>
 
 <p>Such key types should implement <code>==</code>, <code>hash</code> and <code>isless</code> so that the events can be ordered. This allows them to be displayed in an organized fashion when printed using <a href="../event/#Weber.listkeys"><code>listkeys</code></a>.</p>
-<p>Once tese events are defined you can extend <a href="../extend_ref/#Weber.poll_events"><code>poll_events</code></a> so that it generates events that return true for <code>iskeydown(myevent,key"my_button1")</code> (and a corresponding method for <code>iskeyup</code>). How this happens will depend on the specific hardware you are supporting. The buttons presses could then checked for during an experiment as follows.</p>
+<p>Once these events are defined you can extend <a href="../extend_ref/#Weber.poll_events"><code>poll_events</code></a> so that it generates events that return true for <code>iskeydown(myevent,key"my_button1")</code> (and a corresponding method for <code>iskeyup</code>). How this happens will depend on the specific hardware you are supporting. The buttons presses could then checked for during an experiment as follows.</p>
 <pre><code class="julia">response(key&quot;my_button1&quot; =&gt; &quot;button1_pressed&quot;,
          key&quot;my_button2&quot; =&gt; &quot;button2_pressed&quot;)
 </code></pre>
 
 <p><a id='Custom-Moments-1'></a></p>
 <h2 id="custom-moments">Custom Moments</h2>
-<p>You can create your own moment types, which must be <code>&lt;: Weber.Moment</code>. These new moments will have to be generated using some newly defined function, or added automatically by extending <a href="../trials/#Weber.addtrial"><code>addtrial</code></a>. Once created, and added to trials, these moments will be processed at run-time using the function <a href="../extend_ref/#Weber.handle"><code>handle</code></a>, which should define the moment's run-time behavior.</p>
+<p>You can create your own moment types, which must be children of <code>Weber.Moment</code>. These new moments will have to be generated using some newly defined function, or added automatically by extending <a href="../trials/#Weber.addtrial"><code>addtrial</code></a>. Once created, and added to trials, these moments will be processed at run-time using the function <a href="../extend_ref/#Weber.handle"><code>handle</code></a>, which should define the moment's run-time behavior.</p>
 <p>A moment can also define <a href="../extend_ref/#Weber.delta_t"><code>delta_t</code></a>–to define when it occurs–or <a href="../extend_ref/#Weber.prepare!"><code>prepare!</code></a>–to have some sort of initialization occur before its onset–but these both have default implementations.</p>
 <p>Methods of <a href="../extend_ref/#Weber.handle"><code>handle</code></a> should not make use of the extension machinery described above. What this means is that methods of <a href="../extend_ref/#Weber.handle"><code>handle</code></a> should never dispatch on an extended experiment, and no calls to <a href="../extend_ref/#DataStructures.top-Tuple{Weber.Experiment}"><code>top</code></a>, <a href="../extend_ref/#Base.next-Tuple{Weber.ExtendedExperiment}"><code>next</code></a> or <a href="../extend_ref/#Weber.extension-Tuple{Weber.ExtendedExperiment}"><code>extension</code></a> should occur on the experiment object. Further, each moment should belong to one specific extension, in which all functionality for that custom moment should be implemented.</p>
               
