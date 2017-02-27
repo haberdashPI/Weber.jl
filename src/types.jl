@@ -258,9 +258,17 @@ listkeys() = foreach(println,values(str_to_code) |> unique |> collect |> sort)
 Generate a key code, using a single character (e.g. key"q" or key"]"), or
 some special key name surrounded by colons (e.g. :escape:).
 
-Note that keys are orderd, you can list all implemented keys in order, using
+Note that keys are orderd and you can list all implemented keys in order, using
 `listkeys`. If you want to quickly see the name for a given button you can use
 `run_keycode_helper()`.
+
+!!! note "Creating Custom Keycodes"
+
+    Extensions to Weber can define their own keycodes. Such codes must
+    but of some new type inheriting from `Weber.Key`, and can be added
+    to the list of codes this macro can generate by updating the
+    private constant `Weber.str_to_code`. See the section in the user guide
+    on extensions for more details.
 """
 
 macro key_str(key)

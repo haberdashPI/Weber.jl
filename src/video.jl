@@ -3,6 +3,7 @@ using FixedPointNumbers
 using Images
 using DataStructures
 using Lazy: @>>
+using LRUCache
 
 import Base: display, close, +, convert, promote_rule, convert, push!,
   filter!, length, collect, copy
@@ -434,32 +435,36 @@ end
 const w_ptr = 0x0000000000000010 # icxx"offsetof(SDL_Surface,w);"
 const h_ptr = 0x0000000000000014 # icxx"offsetof(SDL_Surface,h);"
 
+const text_cache = LRU{Tuple{String,UInt32,SDLFont},SDLText}(256)
+
 function visual(window::SDLWindow,x::Real,y::Real,font::SDLFont,color::RGB{N0f8},
                 wrap_width::UInt32,str::String,duration=0,priority=0)
-  surface = ccall((:TTF_RenderUTF8_Blended_Wrapped,_psycho_SDL2_ttf),Ptr{Void},
-                  (Ptr{Void},Cstring,RGBA{N0f8},UInt32),
-                  font.data,pointer(str),color,wrap_width)
-  if surface == C_NULL
-    error("Failed to render text: "*TTF_GetError())
+  get!(text_cache,(str,wrap_width,font)) do
+    surface = ccall((:TTF_RenderUTF8_Blended_Wrapped,_psycho_SDL2_ttf),Ptr{Void},
+                    (Ptr{Void},Cstring,RGBA{N0f8},UInt32),
+                    font.data,pointer(str),color,wrap_width)
+    if surface == C_NULL
+      error("Failed to render text: "*TTF_GetError())
+    end
+
+    texture = ccall((:SDL_CreateTextureFromSurface,_psycho_SDL2),Ptr{Void},
+                    (Ptr{Void},Ptr{Void}),window.renderer,surface)
+    if texture == C_NULL
+      error("Failed to create texture for render text: "*SDL_GetError())
+    end
+
+    w = at(surface,Cint,w_ptr)
+    h = at(surface,Cint,h_ptr)
+
+    xint,yint = as_screen_coordinates(window,x,y,w,h)
+
+    result = SDLText(str,texture,SDLRect(xint,yint,w,h),duration,priority,color)
+    finalizer(result,x ->
+              ccall((:SDL_DestroyTexture,_psycho_SDL2),Void,(Ptr{Void},),x.data))
+    ccall((:SDL_FreeSurface,_psycho_SDL2),Void,(Ptr{Void},),surface)
+
+    result
   end
-
-  texture = ccall((:SDL_CreateTextureFromSurface,_psycho_SDL2),Ptr{Void},
-                  (Ptr{Void},Ptr{Void}),window.renderer,surface)
-  if texture == C_NULL
-    error("Failed to create texture for render text: "*SDL_GetError())
-  end
-
-  w = at(surface,Cint,w_ptr)
-  h = at(surface,Cint,h_ptr)
-
-  xint,yint = as_screen_coordinates(window,x,y,w,h)
-
-  result = SDLText(str,texture,SDLRect(xint,yint,w,h),duration,priority,color)
-  finalizer(result,x ->
-            ccall((:SDL_DestroyTexture,_psycho_SDL2),Void,(Ptr{Void},),x.data))
-  ccall((:SDL_FreeSurface,_psycho_SDL2),Void,(Ptr{Void},),surface)
-
-  result
 end
 
 type SDLImage <: SDLTextured
@@ -484,6 +489,8 @@ function update_arguments(img::SDLImage;w=NaN,h=NaN,duration=img.duration,
   SDLImage(img.dat,img.img,rect,duration,priority)
 end
 
+const convert_cache = LRU{Array,Array{RGBA{N0f8}}}(256)
+const image_cache = LRU{Array{RGBA{N0f8}},SDLWindow}(256)
 """
     visual(img::Array, [x=0],[y=0],[duration=0],[priority=0])
 
@@ -496,48 +503,56 @@ size(img,1) is of size 3 or 4. A 3d array with a size(img,1) ∉ [3,4] results i
 an error.
 """
 function visual{T <: AbstractFloat}(window::SDLWindow,img::Array{T};keys...)
-  if length(size(img)) == 3
-    if size(img,1) == 3
-      visual(window,n0f8.(colorview(RGB,image)))
-    elseif size(img,1) == 4
-      visual(window,n0f8.(colorview(RGBA,image)))
-    else
-      error("Could not interpret array of size $(size(imge)) as a color image.")
+  converted = get!(convert_cache,img) do
+    if length(size(img)) == 3
+      if size(img,1) == 3
+        n0f8.(colorview(RGB,image))
+      elseif size(img,1) == 4
+        n0f8.(colorview(RGBA,image))
+      else
+        error("Could not interpret array of size $(size(imge)) as a color image.")
+      end
+    elseif length(size(img)) == 2
+      n0f8.(colorview(Gray,image))
     end
-  elseif length(size(img)) == 2
-    visual(window,n0f8.(colorview(Gray,image)))
   end
+  visual(window,converted;keys...)
 end
 
 function visual(window::SDLWindow,img::Array;keys...)
-  visual(window,convert(RGBA,n0f8.(img));keys...)
+  converted = get!(convert_cache,img) do
+    convert(RGBA,n0f8.(img))
+  end
+  visual(window,converted;keys...)
 end
 
 function visual(window::SDLWindow,img::Array{RGBA{N0f8}};
                 x=0,y=0,duration=0,priority=0)
-  surface = ccall((:SDL_CreateRGBSurfaceFrom,_psycho_SDL2),Ptr{Void},
-                  (Ptr{Void},Cint,Cint,Cint,Cint,UInt32,UInt32,UInt32,UInt32),
-                  pointer(img),size(img,2),size(img,1),32,
-                  4size(img,2),0,0,0,0)
-  if surface == C_NULL
-    error("Failed to create image surface: "*SDL_GetError())
+  get!(image_cache,img) do
+    surface = ccall((:SDL_CreateRGBSurfaceFrom,_psycho_SDL2),Ptr{Void},
+                    (Ptr{Void},Cint,Cint,Cint,Cint,UInt32,UInt32,UInt32,UInt32),
+                    pointer(img),size(img,2),size(img,1),32,
+                    4size(img,2),0,0,0,0)
+    if surface == C_NULL
+      error("Failed to create image surface: "*SDL_GetError())
+    end
+
+    texture = ccall((:SDL_CreateTextureFromSurface,_psycho_SDL2),Ptr{Void},
+                    (Ptr{Void},Ptr{Void}),window.renderer,surface)
+    if texture == C_NULL
+      error("Failed to create texture from image surface: "*SDL_GetError())
+    end
+
+    h,w = size(img)
+    xint,yint = as_screen_coordinates(window,x,y,w,h)
+
+    result = SDLImage(texture,img,SDLRect(xint,yint,w,h),duration,priority)
+    finalizer(result,x ->
+              ccall((:SDL_DestroyTexture,_psycho_SDL2),Void,(Ptr{Void},),x.data))
+    ccall((:SDL_FreeSurface,_psycho_SDL2),Void,(Ptr{Void},),surface)
+
+    result
   end
-
-  texture = ccall((:SDL_CreateTextureFromSurface,_psycho_SDL2),Ptr{Void},
-                  (Ptr{Void},Ptr{Void}),window.renderer,surface)
-  if texture == C_NULL
-    error("Failed to create texture from image surface: "*SDL_GetError())
-  end
-
-  h,w = size(img)
-  xint,yint = as_screen_coordinates(window,x,y,w,h)
-
-  result = SDLImage(texture,img,SDLRect(xint,yint,w,h),duration,priority)
-  finalizer(result,x ->
-            ccall((:SDL_DestroyTexture,_psycho_SDL2),Void,(Ptr{Void},),x.data))
-  ccall((:SDL_FreeSurface,_psycho_SDL2),Void,(Ptr{Void},),surface)
-
-  result
 end
 
 # Below is a scratch implementation that uses Compose rendering. My

@@ -29,6 +29,7 @@ play
 pause
 stop
 duration
+samplerate
 pause_sounds
 resume_sounds
 current_sound_latency

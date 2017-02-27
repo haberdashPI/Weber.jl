@@ -3,13 +3,15 @@ using DSP
 using LibSndFile # TODO: test this
 using FixedPointNumbers
 using FileIO
+using LRUCache
 import FileIO: load, save
 import SampledSignals: samplerate
+import Base: length
 
 export match_lengths, mix, mult, silence, noise, highpass, lowpass, bandpass,
 	tone, ramp, harmonic_complex, attenuate, sound, play, pause, stop,
   savesound, duration, setup_sound, current_sound_latency, buffer,
-  resume_sounds, pause_sounds, load, save
+  resume_sounds, pause_sounds, load, save, samplerate, length
 
 """
     match_lengths(x,y,...)
@@ -188,37 +190,6 @@ function attenuate(x,atten_dB=20)
 	10^(-atten_dB/20) * x/sqrt(mean(x.^2))
 end
 
-"""
-    sound(x::Array,[sample_rate_Hz=44100])
-
-Creates a sound object from an arbitrary array.
-
-For real numbers, assumes 1 is the loudest and -1 the softest. Assumes 16-bit
-PCM for integers. The array should be 1d for mono signals, or an array of size
-(N,2) for stereo sounds.
-
-!!! note "Called Implicitly"
-
-    This function is normally called implicitly in a call to
-    `play(x)`, where x is an arbitrary array, so it need not normally
-    be called.
-"""
-function sound{T <: Number}(x::Array{T};
-                            sample_rate_Hz=samplerate(sound_setup_state))
-  bounded = max(min(x,typemax(Fixed{Int16,15})),typemin(Fixed{Int16,15}))
-  sound(SampleBuf(Fixed{Int16,15}.(bounded),sample_rate_Hz))
-end
-
-"""
-    sound(x::SampleBuff)
-
-Creates a sound object from a `SampleBuf` (from the `SampledSignals` module).
-"""
-function sound(x::SampleBuf)
-  bounded = max(min(x.data,typemax(Fixed{Int16,15})),typemin(Fixed{Int16,15}))
-  sound(SampleBuf(Fixed{Int16,15}.(bounded),samplerate(x)))
-end
-
 immutable MixChunk
   allocated::Cint
   buffer::Ptr{Fixed{Int16,15}}
@@ -237,6 +208,43 @@ immutable Sound
   end
 end
 sound(x::Sound) = x
+samplerate(x::Sound) = samplerate(x.buffer)
+length(x::Sound) = length(x.buffer)
+
+const sound_cache = LRU{Array,Sound}(256)
+
+"""
+    sound(x::Array,[sample_rate_Hz=44100])
+
+Creates a sound object from an arbitrary array.
+
+For real numbers, assumes 1 is the loudest and -1 the softest. Assumes 16-bit
+PCM for integers. The array should be 1d for mono signals, or an array of size
+(N,2) for stereo sounds.
+
+!!! note "Called Implicitly"
+
+    This function is normally called implicitly in a call to
+    `play(x)`, where x is an arbitrary array, so it need not normally
+    be called.
+"""
+function sound{T <: Number}(x::Array{T};
+                            sample_rate_Hz=samplerate(sound_setup_state))
+  get!(sound_cache,x) do
+    bounded = max(min(x,typemax(Fixed{Int16,15})),typemin(Fixed{Int16,15}))
+    sound(SampleBuf(Fixed{Int16,15}.(bounded),sample_rate_Hz))
+  end
+end
+
+"""
+    sound(x::SampleBuff)
+
+Creates a sound object from a `SampleBuf` (from the `SampledSignals` module).
+"""
+function sound(x::SampleBuf)
+  bounded = max(min(x.data,typemax(Fixed{Int16,15})),typemin(Fixed{Int16,15}))
+  sound(SampleBuf(Fixed{Int16,15}.(bounded),samplerate(x)))
+end
 
 save(f::File,sound::Sound) = save(f,sound.buffer)
 

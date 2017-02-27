@@ -1,6 +1,7 @@
 __precompile__()
 
 module Weber
+export resize_cache!
 
 # helper function for clean info and warn output
 function cleanstr(strs...;width=70)
@@ -94,6 +95,12 @@ sdl_is_setup[] = false
 include(joinpath(dirname(@__FILE__),"timing.jl"))
 include(joinpath(dirname(@__FILE__),"video.jl"))
 include(joinpath(dirname(@__FILE__),"sound.jl"))
+
+function resize_cache!(size)
+  resize!(sound_cache,size)
+  resize!(image_cache,size)
+  resize!(convert_cache,size)
+end
 
 include(joinpath(dirname(@__FILE__),"types.jl"))
 include(joinpath(dirname(@__FILE__),"event.jl"))
