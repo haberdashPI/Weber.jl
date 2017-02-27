@@ -100,7 +100,7 @@ is hit.
 
 Refer to the documentation for [Events](event.md) for full details on how to respond to events.
 
-## Condition Moments
+## Conditional Moments
 
 Conditional moments are a more advanced technique for creating moments and aren't normally necessary. They run a function only when a certain condition is true (the [`when`](@ref) moment) or repeat a function until a condition is false (the [`looping`](@ref) moment). They require a good understanding of the difference between [setup- and run-time](@ref setup_time), [anonymous functions](http://docs.julialang.org/en/stable/manual/functions/#anonymous-functions), and [scoping rules](http://docs.julialang.org/en/stable/manual/variables-and-scoping/) in julia.
 
