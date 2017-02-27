@@ -1,6 +1,6 @@
 using SampledSignals
 using DSP
-using LibSndFile # TODO: test this
+using LibSndFile
 using FixedPointNumbers
 using FileIO
 using LRUCache
