@@ -95,6 +95,14 @@ If you define new functions, instead of leveraging the existing ones,
 they should generally have some default behavior for all `ExpEvent` objects, so
 it is easy to call the method on any event a watcher moment receives.
 
+### Event Timing
+
+To specify event timing, you must define a `time` method for your custom event.
+You can simply store the time passed to [`poll_events`](@ref) in your custom
+event, or, if you have more precise timing information for your hardware you can
+store it here. Internally, the value returend by `time` is used to determine
+when to run the next moment when a prior moment triggers on the event.
+
 ### Custom Key Events
 
 One approach, if you are implementing events for a hardware input device, is to
