@@ -138,12 +138,12 @@ function window(width=1024,height=768;fullscreen=true,
     return NullWindow(width,height,false)
   end
 
-  if !ccall((:SDL_SetHint,_psycho_SDL2),Bool,(Cstring,Cstring),
+  if !ccall((:SDL_SetHint,weber_SDL2),Bool,(Cstring,Cstring),
             "SDL_RENDER_SCALE_QUALITY","1")
     warn("Linear texture filtering not enabled.")
   end
 
-  if ccall((:TTF_Init,_psycho_SDL2_ttf),Cint,()) == -1
+  if ccall((:TTF_Init,weber_SDL2_ttf),Cint,()) == -1
     error("Failed to initialize SDL_ttf: "*TTF_GetError())
   end
 
@@ -151,7 +151,7 @@ function window(width=1024,height=768;fullscreen=true,
   flags = (fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0x0) |
     SDL_WINDOW_INPUT_GRABBED | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_MOUSE_FOCUS
 
-  win = ccall((:SDL_CreateWindow,_psycho_SDL2),Ptr{Void},
+  win = ccall((:SDL_CreateWindow,weber_SDL2),Ptr{Void},
               (Cstring,Cint,Cint,Cint,Cint,UInt32),
               pointer(title),x,y,width,height,flags)
   if win == C_NULL
@@ -164,12 +164,12 @@ function window(width=1024,height=768;fullscreen=true,
 
   fallback_flags = SDL_RENDERER_SOFTWARE
 
-  rend = ccall((:SDL_CreateRenderer,_psycho_SDL2),Ptr{Void},
+  rend = ccall((:SDL_CreateRenderer,weber_SDL2),Ptr{Void},
                (Ptr{Void},Cint,UInt32),win,-1,(accel ? flags : fallback_flags))
   if rend == C_NULL
     accel_error = SDL_GetError()
     if accel
-      rend = ccall((:SDL_CreateRenderer,_psycho_SDL2),Ptr{Void},
+      rend = ccall((:SDL_CreateRenderer,weber_SDL2),Ptr{Void},
                    (Ptr{Void},Cint,UInt32),win,-1,fallback_flags)
       if rend == C_NULL
         error("Failed to create a renderer: "*SDL_GetError())
@@ -181,9 +181,9 @@ function window(width=1024,height=768;fullscreen=true,
   end
 
   wh = Array{Cint}(2)
-  ccall((:SDL_GetWindowSize,_psycho_SDL2),Void,
+  ccall((:SDL_GetWindowSize,weber_SDL2),Void,
         (Ptr{Void},Ptr{Cint},Ptr{Cint}),win,pointer(wh,1),pointer(wh,2))
-  ccall((:SDL_ShowCursor,_psycho_SDL2),Void,(Cint,),0)
+  ccall((:SDL_ShowCursor,weber_SDL2),Void,(Cint,),0)
 
   x = SDLWindow(win,rend,wh[1],wh[2],false,DisplayStack())
   finalizer(x,x -> (x.closed ? nothing : close(x)))
@@ -197,9 +197,9 @@ end
 Closes a visible SDLWindow window.
 """
 function close(win::SDLWindow)
-  ccall((:SDL_DestroyRenderer,_psycho_SDL2),Void,(Ptr{Void},),win.renderer)
-  ccall((:SDL_DestroyWindow,_psycho_SDL2),Void,(Ptr{Void},),win.data)
-  ccall((:SDL_ShowCursor,_psycho_SDL2),Void,(Cint,),1)
+  ccall((:SDL_DestroyRenderer,weber_SDL2),Void,(Ptr{Void},),win.renderer)
+  ccall((:SDL_DestroyWindow,weber_SDL2),Void,(Ptr{Void},),win.data)
+  ccall((:SDL_ShowCursor,weber_SDL2),Void,(Cint,),1)
 
   win.closed = true
 end
@@ -210,12 +210,12 @@ function clear(window,color::Color)
 end
 
 function clear(window::SDLWindow,color::RGB{N0f8}=colorant"gray")
-  ccall((:SDL_SetRenderDrawColor,_psycho_SDL2),Void,
+  ccall((:SDL_SetRenderDrawColor,weber_SDL2),Void,
         (Ptr{Void},UInt8,UInt8,UInt8),window.renderer,
         reinterpret(UInt8,red(color)),
         reinterpret(UInt8,green(color)),
         reinterpret(UInt8,blue(color)))
-  ccall((:SDL_RenderClear,_psycho_SDL2),Void,(Ptr{Void},),window.renderer)
+  ccall((:SDL_RenderClear,weber_SDL2),Void,(Ptr{Void},),window.renderer)
   nothing
 end
 clear(win::NullWindow,color) = nothing
@@ -237,14 +237,14 @@ can specify a different list of directories using the `dirs` parameter.
 """
 function font(name::String,size;dirs=font_dirs,color=colorant"white")
   file = find_font(name,dirs)
-  font = ccall((:TTF_OpenFont,_psycho_SDL2_ttf),Ptr{Void},(Cstring,Cint),
+  font = ccall((:TTF_OpenFont,weber_SDL2_ttf),Ptr{Void},(Cstring,Cint),
                pointer(file),size)
   if font == C_NULL
     error("Failed to load the font $file: "*TTF_GetError())
   end
 
   x = SDLFont(font,color)
-  finalizer(x,x -> ccall((:TTF_CloseFont,_psycho_SDL2_ttf),Void,
+  finalizer(x,x -> ccall((:TTF_CloseFont,weber_SDL2_ttf),Void,
                          (Ptr{Void},),x.data))
   x
 end
@@ -350,7 +350,7 @@ end
 abstract SDLTextured <: SDLSimpleRendered
 
 function draw(window::SDLWindow,texture::SDLTextured)
-  ccall((:SDL_RenderCopy,_psycho_SDL2),Void,
+  ccall((:SDL_RenderCopy,weber_SDL2),Void,
         (Ptr{Void},Ptr{Void},Ptr{Void},Ptr{SDLRect}),
         window.renderer,data(texture),C_NULL,Ref(rect(texture)))
   nothing
@@ -440,14 +440,14 @@ const text_cache = LRU{Tuple{String,UInt32,SDLFont},SDLText}(256)
 function visual(window::SDLWindow,x::Real,y::Real,font::SDLFont,color::RGB{N0f8},
                 wrap_width::UInt32,str::String,duration=0,priority=0)
   get!(text_cache,(str,wrap_width,font)) do
-    surface = ccall((:TTF_RenderUTF8_Blended_Wrapped,_psycho_SDL2_ttf),Ptr{Void},
+    surface = ccall((:TTF_RenderUTF8_Blended_Wrapped,weber_SDL2_ttf),Ptr{Void},
                     (Ptr{Void},Cstring,RGBA{N0f8},UInt32),
                     font.data,pointer(str),color,wrap_width)
     if surface == C_NULL
       error("Failed to render text: "*TTF_GetError())
     end
 
-    texture = ccall((:SDL_CreateTextureFromSurface,_psycho_SDL2),Ptr{Void},
+    texture = ccall((:SDL_CreateTextureFromSurface,weber_SDL2),Ptr{Void},
                     (Ptr{Void},Ptr{Void}),window.renderer,surface)
     if texture == C_NULL
       error("Failed to create texture for render text: "*SDL_GetError())
@@ -460,8 +460,8 @@ function visual(window::SDLWindow,x::Real,y::Real,font::SDLFont,color::RGB{N0f8}
 
     result = SDLText(str,texture,SDLRect(xint,yint,w,h),duration,priority,color)
     finalizer(result,x ->
-              ccall((:SDL_DestroyTexture,_psycho_SDL2),Void,(Ptr{Void},),x.data))
-    ccall((:SDL_FreeSurface,_psycho_SDL2),Void,(Ptr{Void},),surface)
+              ccall((:SDL_DestroyTexture,weber_SDL2),Void,(Ptr{Void},),x.data))
+    ccall((:SDL_FreeSurface,weber_SDL2),Void,(Ptr{Void},),surface)
 
     result
   end
@@ -529,7 +529,7 @@ end
 function visual(window::SDLWindow,img::Array{RGBA{N0f8}};
                 x=0,y=0,duration=0,priority=0)
   get!(image_cache,img) do
-    surface = ccall((:SDL_CreateRGBSurfaceFrom,_psycho_SDL2),Ptr{Void},
+    surface = ccall((:SDL_CreateRGBSurfaceFrom,weber_SDL2),Ptr{Void},
                     (Ptr{Void},Cint,Cint,Cint,Cint,UInt32,UInt32,UInt32,UInt32),
                     pointer(img),size(img,2),size(img,1),32,
                     4size(img,2),0,0,0,0)
@@ -537,7 +537,7 @@ function visual(window::SDLWindow,img::Array{RGBA{N0f8}};
       error("Failed to create image surface: "*SDL_GetError())
     end
 
-    texture = ccall((:SDL_CreateTextureFromSurface,_psycho_SDL2),Ptr{Void},
+    texture = ccall((:SDL_CreateTextureFromSurface,weber_SDL2),Ptr{Void},
                     (Ptr{Void},Ptr{Void}),window.renderer,surface)
     if texture == C_NULL
       error("Failed to create texture from image surface: "*SDL_GetError())
@@ -548,8 +548,8 @@ function visual(window::SDLWindow,img::Array{RGBA{N0f8}};
 
     result = SDLImage(texture,img,SDLRect(xint,yint,w,h),duration,priority)
     finalizer(result,x ->
-              ccall((:SDL_DestroyTexture,_psycho_SDL2),Void,(Ptr{Void},),x.data))
-    ccall((:SDL_FreeSurface,_psycho_SDL2),Void,(Ptr{Void},),surface)
+              ccall((:SDL_DestroyTexture,weber_SDL2),Void,(Ptr{Void},),x.data))
+    ccall((:SDL_FreeSurface,weber_SDL2),Void,(Ptr{Void},),surface)
 
     result
   end
@@ -600,14 +600,14 @@ Width and height are specified as a proportion of the full width and height.
     Compose.draw(png,comp)
     cairo_surface = png.surface
 
-    surface = ccall((:SDL_CreateRGBSurfaceFrom,_psycho_SDL2),Ptr{Void},
+    surface = ccall((:SDL_CreateRGBSurfaceFrom,weber_SDL2),Ptr{Void},
                     (Ptr{Void},Cint,Cint,Cint,Cint,UInt32,UInt32,UInt32,UInt32),
                     cairo_surface.ptr,w,h,8,4w,0,0,0,0)
     if surface == C_NULL
       error("Failed to create surface for Compose.Context: "*SDL_GetError())
     end
 
-    texture = ccall((:SDL_CreateTextureFromSurface,_psycho_SDL2),Ptr{Void},
+    texture = ccall((:SDL_CreateTextureFromSurface,weber_SDL2),Ptr{Void},
                     (Ptr{Void},Ptr{Void}),window.renderer,surface)
     if texture == C_NULL
       error("Failed to create texture from Compose.Context surface: "*SDL_GetError())
@@ -618,7 +618,7 @@ Width and height are specified as a proportion of the full width and height.
     result = SDLComposed(texture,cairo_surface,SDLRect(xint,yint,w,h),
                          duraiton,priority)
     finalizer(result,x ->
-              ccall((:SDL_DestroyTexture,_psycho_SDL2),Void,(Ptr{Void},),x.data))
+              ccall((:SDL_DestroyTexture,weber_SDL2),Void,(Ptr{Void},),x.data))
 
     result
   end
@@ -636,20 +636,20 @@ end
 =#
 
 function show_drawn(window::SDLWindow)
-  ccall((:SDL_RenderPresent,_psycho_SDL2),Void,(Ptr{Void},),window.renderer)
+  ccall((:SDL_RenderPresent,weber_SDL2),Void,(Ptr{Void},),window.renderer)
   nothing
 end
 show_drawn(win::NullWindow) = nothing
 
 const SDL_INIT_VIDEO = 0x00000020
 function setup_display()
-  init = ccall((:SDL_Init,_psycho_SDL2),Cint,(UInt32,),SDL_INIT_VIDEO)
+  init = ccall((:SDL_Init,weber_SDL2),Cint,(UInt32,),SDL_INIT_VIDEO)
   if init < 0
     error("Failed to initialize SDL: "*SDL_GetError())
   end
   if !sdl_is_setup[]
     sdl_is_setup[] = true
-    atexit(() -> ccall((:SDL_Quit,_psycho_SDL2),Void,()))
+    atexit(() -> ccall((:SDL_Quit,weber_SDL2),Void,()))
   end
 
   #=
@@ -821,6 +821,6 @@ end
 restore_display(win::NullWindow) = nothing
 
 function focus(window::SDLWindow)
-  ccall((:SDL_RaiseWindow,_psycho_SDL2),Void,(Ptr{Void},),window.data)
+  ccall((:SDL_RaiseWindow,weber_SDL2),Void,(Ptr{Void},),window.data)
 end
 focus(win::NullWindow) = nothing

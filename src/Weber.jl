@@ -73,7 +73,7 @@ end
 
 # setup error reporting functions (these are the only calls to SDL that occur
 # all that often, so they're the only calls I've wrapped directly).
-SDL_GetError() = unsafe_string(ccall((:SDL_GetError,_psycho_SDL2),Cstring,()))
+SDL_GetError() = unsafe_string(ccall((:SDL_GetError,weber_SDL2),Cstring,()))
 Mix_GetError = SDL_GetError
 TTF_GetError = SDL_GetError
 

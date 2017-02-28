@@ -301,16 +301,16 @@ end
 
 function ws_if_error(msg)
   if sound_setup_state.state != C_NULL
-    if ccall((:ws_is_error,__weber_sound),Cint,
+    if ccall((:ws_is_error,weber_sound),Cint,
              (Ptr{Void},),sound_setup_state.state) == true
-      error(msg*": "*unsafe_string(ccall((:ws_error_str,__weber_sound),Cstring,
+      error(msg*": "*unsafe_string(ccall((:ws_error_str,weber_sound),Cstring,
                                          (Ptr{Void},),sound_setup_state.state)))
     end
   end
 end
 
 function isplaying()
-  ccall((:ws_isplaying,__weber_sound),Cint,
+  ccall((:ws_isplaying,weber_sound),Cint,
         (Ptr{Void},),sound_setup_state.state) == true
 end
 
@@ -336,17 +336,17 @@ sound is the same as that setup here, and no resampling of the sound is made.
 function setup_sound(;sample_rate_Hz=samplerate(sound_setup_state),
                      buffer_size=nothing)
   if isready(sound_setup_state)
-    ccall((:ws_close,__weber_sound),Void,(Ptr{Void},),sound_setup_state.state)
+    ccall((:ws_close,weber_sound),Void,(Ptr{Void},),sound_setup_state.state)
     ws_if_error("Error closing old audio stream during setup")
   else
 
     if !weber_sound_is_setup[]
       weber_sound_is_setup[] = true
       atexit() do
-        ccall((:ws_close,__weber_sound),Void,
+        ccall((:ws_close,weber_sound),Void,
               (Ptr{Void},),sound_setup_state.state)
         ws_if_error("Error closing audio stream at exit.")
-        ccall((:ws_free,__weber_sound),Void,
+        ccall((:ws_free,weber_sound),Void,
               (Ptr{Void},),sound_setup_state.state)
       end
     end
@@ -359,7 +359,7 @@ function setup_sound(;sample_rate_Hz=samplerate(sound_setup_state),
   end
 
   sound_setup_state.samplerate = sample_rate_Hz
-  sound_setup_state.state = ccall((:ws_setup,__weber_sound),Ptr{Void},
+  sound_setup_state.state = ccall((:ws_setup,weber_sound),Ptr{Void},
                                   (Cint,),sample_rate_Hz)
   ws_if_error("Failed to initialize sound")
 end
@@ -410,7 +410,7 @@ function play(x::Sound,wait::Bool=false,time::Float64=0.0)
 
   # verify the sound can be played when we want to
   if time > 0.0
-    size = ccall((:ws_cur_buffer_size,__weber_sound),UInt64,
+    size = ccall((:ws_cur_buffer_size,weber_sound),UInt64,
                  (Ptr{Void},),sound_setup_state.state)
     min_dist = (2*size)/samplerate(sound_setup_state)
     now = Weber.tick()
@@ -423,7 +423,7 @@ function play(x::Sound,wait::Bool=false,time::Float64=0.0)
     end
   end
 
-  ccall((:ws_play,__weber_sound),Void,
+  ccall((:ws_play,weber_sound),Void,
         (Cdouble,Cdouble,Ref{WS_Sound},Ptr{Void}),
         Weber.tick(),time,x.chunk,sound_setup_state.state)
   ws_if_error("Error playing sound")
@@ -452,7 +452,7 @@ function play(x::PlayingSound;wait=false)
 
   end
 
-  ccall((:ws_play_from,__weber_sound),Void,
+  ccall((:ws_play_from,weber_sound),Void,
         (Cint,Ref{WS_Sound},Ptr{Void}),
         x.offset,x.sound.chunk,sound_setup_state.state)
   ws_if_error("Failed to resume playing sound")
@@ -462,7 +462,7 @@ function play(x::PlayingSound;wait=false)
     x
   else
     sleep(duration(x.sound) - (x.offset / samplerate(sound_setup_state))-0.01)
-    while ccall((:ws_isplaying,__weber_sound),Cint,
+    while ccall((:ws_isplaying,weber_sound),Cint,
                 (Ptr{Void},),sound_setup_state.state)
     end
     nothing
@@ -480,7 +480,7 @@ function pause(x::PlayingSound)
     return x
   end
 
-  x.offset = ccall((:ws_stop,__weber_sound),Cint,
+  x.offset = ccall((:ws_stop,weber_sound),Cint,
                    (Ptr{Void},),sound_setup_state.state)
   ws_if_error("Failed to pause sound")
   x
@@ -493,7 +493,7 @@ Stop playback of the sound.
 """
 function stop(x::PlayingSound)
   unregister_sound(x.sound)
-  ccall((:ws_stop,__weber_sound),Cint,(Ptr{Void},),sound_setup_state.state)
+  ccall((:ws_stop,weber_sound),Cint,(Ptr{Void},),sound_setup_state.state)
   ws_if_error("Failed to stop sound")
 
   nothing
@@ -505,7 +505,7 @@ end
 Pause all sounds that are playing.
 """
 function pause_sounds()
-  ccall((:ws_stop,__weber_sound),Cint,(Ptr{Void},),sound_setup_state.state)
+  ccall((:ws_stop,weber_sound),Cint,(Ptr{Void},),sound_setup_state.state)
   ws_if_error("Failed to pause sounds")
 end
 
@@ -515,7 +515,7 @@ end
 Resume all sounds that have been paused.
 """
 function resume_sounds()
-  ccall((:ws_resume,__weber_sound),Void,(Ptr{Void},),sound_setup_state.state)
+  ccall((:ws_resume,weber_sound),Void,(Ptr{Void},),sound_setup_state.state)
   ws_if_error("Failed to resume playing sounds")
 end
 

@@ -36,7 +36,6 @@ SDL2_ttf = "UNKNOWN"
   end
   try
     SDL2 = setupbin("SDL2","https://www.libsdl.org/release/SDL2-2.0.5-win32-x64.zip")
-    SDL2_mixer = setupbin("SDL2_mixer","https://www.libsdl.org/projects/SDL_mixer/release/SDL2_mixer-2.0.1-win32-x64.zip")
     SDL2_ttf = setupbin("SDL2_ttf","https://www.libsdl.org/projects/SDL_ttf/release/SDL2_ttf-2.0.14-win32-x64.zip")
   finally
     rm(downloaddir,recursive=true,force=true)
@@ -46,17 +45,27 @@ elseif is_apple()
   using Homebrew
 
   Homebrew.add("sdl2")
-  Homebrew.add("sdl2_mixer")
   Homebrew.add("sdl2_ttf")
+  Homebrew.add("portaudio")
 
   prefix = joinpath(Homebrew.prefix(),"lib")
   SDL2 = joinpath(prefix,"libSDL2-2.0.0.dylib")
-  SDL2_mixer = joinpath(prefix,"libSDL2_mixer-2.0.0.dylib")
   SDL2_ttf = joinpath(prefix,"libSDL2_ttf-2.0.0.dylib")
+  portaudio = joinpath(prefix,"libportaudio.2.dylib")
 
+  weber_build = joinpath(dirname(@__FILE__),"build","libweber-sound.0.dylib")
+  prefix =
+  weber_sound = joinpath(bindir,"libweber-sound.0.dylib")
+  if isfile(weber_build)
+    cp(weber_build,weber_sound)
+  else
+    original_path = "/usr/local/opt/portaudio/lib/libportaudio.2.dylib"
+    download("http://haberdashpi.github.io/libweber-sound.0.dylib",weber_sound)
+    run(`install_name_tool -change $original_path $portaudio $weber_sound`)
+  end
 elseif is_linux()
     error("Weber does not support Linux. You can try manually installing ",
-          "SDL2, SDL2_mixer, and SDL2_ttf, and then creating an appropriate ",
+          "SDL2 and SDL2_ttf, and then creating an appropriate ",
           "deps.jl file in $(dirname(@__FILE__)). Be warned however that ",
           "I have encountered strange runtime errors with the linux ",
           "implementation, possibly related to SDL2 problems.")
@@ -73,13 +82,17 @@ else
 end
 
 @assert SDL2 != "UNKNOWN"
-@assert SDL2_mixer != "UNKNOWN"
 @assert SDL2_ttf != "UNKNOWN"
+@assert portaudio != "UNKNOWN"
+@assert weber_sound != "UNKNOWN"
 
 deps = joinpath(dirname(@__FILE__),"deps.jl")
 open(deps,"w") do s
-  for (var,val) in [:SDL2 => SDL2, :SDL2_mixer => SDL2_mixer,:SDL2_ttf => SDL2_ttf]
-    println(s,"const _psycho_$var = \"$val\"")
+  for (var,val) in [:weber_SDL2 => SDL2,
+                    :weber_portaudio => portaudio,
+                    :weber_sound => weber_sound,
+                    :weber_SDL2_ttf => SDL2_ttf]
+    println(s,"const $var = \"$val\"")
   end
 end
 

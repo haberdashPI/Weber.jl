@@ -38,7 +38,7 @@ function poll_events{T <: BaseExperiment{SDLWindow}}(callback,exp::T,time::Float
   event_bytes = Array{Int8}(event_size)
   event = reinterpret(Ptr{Void},pointer(event_bytes))
 
-  while ccall((:SDL_PollEvent,_psycho_SDL2),Cint,(Ptr{Void},),event) != 0
+  while ccall((:SDL_PollEvent,weber_SDL2),Cint,(Ptr{Void},),event) != 0
     etype = at(event,UInt32,type_ptr)
     if etype == SDL_KEYDOWN
       code = at(event,UInt32,keysym_ptr + sym_ptr)
