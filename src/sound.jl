@@ -190,28 +190,27 @@ function attenuate(x,atten_dB=20)
 	10^(-atten_dB/20) * x/sqrt(mean(x.^2))
 end
 
-immutable MixChunk
-  allocated::Cint
+immutable WS_Sound
   buffer::Ptr{Fixed{Int16,15}}
-  byte_length::UInt32
-  volume::UInt8
+  len::Cint
 end
 
 immutable Sound
-  chunk::MixChunk
+  time::Float64
+  chunk::WS_Sound
   buffer::SampleBuf
-  function Sound(c::MixChunk,b::SampleBuf)
+  function Sound(time::Float64,c::WS_Sound,b::SampleBuf)
     if !isready(sound_setup_state)
       setup_sound()
     end
-    new(c,b)
+    new(time,c,b)
   end
 end
 sound(x::Sound) = x
 samplerate(x::Sound) = samplerate(x.buffer)
 length(x::Sound) = length(x.buffer)
 
-const sound_cache = LRU{Array,Sound}(256)
+const sound_cache = LRU{Union{SampleBuf,Array},Sound}(256)
 
 """
     sound(x::Array,[sample_rate_Hz=44100])
@@ -232,6 +231,9 @@ function sound{T <: Number}(x::Array{T};
                             sample_rate_Hz=samplerate(sound_setup_state))
   get!(sound_cache,x) do
     bounded = max(min(x,typemax(Fixed{Int16,15})),typemin(Fixed{Int16,15}))
+    if ndims(x) == 1
+      bounded = hcat(bounded,bounded)
+    end
     sound(SampleBuf(Fixed{Int16,15}.(bounded),sample_rate_Hz))
   end
 end
@@ -242,8 +244,13 @@ end
 Creates a sound object from a `SampleBuf` (from the `SampledSignals` module).
 """
 function sound(x::SampleBuf)
-  bounded = max(min(x.data,typemax(Fixed{Int16,15})),typemin(Fixed{Int16,15}))
-  sound(SampleBuf(Fixed{Int16,15}.(bounded),samplerate(x)))
+  get!(sound_cache,x) do
+    bounded = max(min(x.data,typemax(Fixed{Int16,15})),typemin(Fixed{Int16,15}))
+    if ndims(x) == 1
+      bounded = hcat(bounded,bounded)
+    end
+    sound(SampleBuf(Fixed{Int16,15}.(bounded),samplerate(x)))
+  end
 end
 
 save(f::File,sound::Sound) = save(f,sound.buffer)
@@ -274,8 +281,14 @@ save(f::File,sound::Sound) = save(f,sound.buffer)
 #             samplerate(sound_setup_state))
 # end
 
-function sound(x::SampleBuf{Fixed{Int16,15}})
-  Sound(MixChunk(0,pointer(x.data),sizeof(x.data),128),x)
+function sound(x::SampleBuf{Fixed{Int16,15},1})
+  get!(sound_cache,x) do
+    sound(hcat(x,x))
+  end
+end
+
+function sound(x::SampleBuf{Fixed{Int16,15},2})
+  Sound(0.0,WS_Sound(pointer(x.data),size(x.data,1)),x)
 end
 
 """
@@ -285,16 +298,13 @@ Gets the `SampleBuf` associated with this sound (c.f. `SampledSignals` package).
 """
 buffer(x::Sound) = x.buffer
 
-const SDL_INIT_AUDIO = 0x00000010
-const AUDIO_S16 = 0x8010
-
 const default_sample_rate = 44100
 type SoundSetupState
   samplerate::Int
-  buffer_size::Int
-  playing::Dict{Sound,Float64}
+  playing::Nullable{Sound}
+  state::Ptr{Void}
 end
-SoundSetupState() = SoundSetupState(0,256,Dict())
+SoundSetupState() = SoundSetupState(0,Nullable(),C_NULL)
 function samplerate(s::SoundSetupState)
   if s.samplerate == 0
     default_sample_rate
@@ -308,95 +318,42 @@ samplerate(x::Matrix) = samplerate(sound_setup_state)
 
 const sound_setup_state = SoundSetupState()
 
-# manages sounds, so they don't get garbage collected before
-# they're done playing
 function register_sound(current::Sound,play_from=0)
-  setstate = sound_setup_state
-  setstate.playing[current] = precise_time() + duration(current) - play_from
-  for s in keys(setstate.playing)
-    stop_at = setstate.playing[s]
-    if stop_at > precise_time()
-      delete!(setstate.playing,s)
-    end
-  end
+  sound_setup_state.playing = Nullable(current)
 end
 
 function unregister_sound(current::Sound)
-  delete!(setstate.playing,current)
+  sound_setup_state.playing = Nullable()
 end
 
-  # purge any sounds no longer playing
-
-"""
-    current_sound_latency()
-
-Reports the current latency of audio playback. This is the minimum expected
-error in playback timing that could possibly be achieved with the given sound
-settings. If you wish to have a lower latency you can call `setup_sound` and use
-a smaller buffer size. Note however that a buffer size that is too small for
-your hardware will corrupt the sound.
-"""
-function current_sound_latency()
-  sound_setup_state.buffer_size / samplerate(sound_setup_state)
-end
-
-type SDLAudioSpec
-  freq::Cint
-  format::UInt16
-  channels::UInt8
-  silence::UInt8
-  buffer_size::UInt16
-  size::UInt32
-  callback::Ptr{Void}
-  user::Ptr{Void}
-end
-
-function empty_callback(udata::Ptr{Void},stream::Ptr{UInt8},len::Cint)
-  nothing
-end
-
-function verify_buffer_size(sample_rate_Hz,buffer_size)
-  if buffer_size != nothing
-    ec = cfunction(empty_callback,Void,(Ptr{Void},Ptr{UInt8},Cint))
-    requested = SDLAudioSpec(sample_rate_Hz,AUDIO_S16,2,0,buffer_size,
-                             2buffer_size,ec,C_NULL)
-    given = SDLAudioSpec(sample_rate_Hz,AUDIO_S16,2,0,0,0,ec,C_NULL)
-    sdl_init = ccall((:SDL_OpenAudio,_psycho_SDL2),Cint,
-                     (Ptr{SDLAudioSpec},Ptr{SDLAudioSpec}),
-                     Ref(requested),Ref(given))
-    if sdl_init < 0
-      error("Failed to initialize sound: "*SDL_GetError())
-    end
-    if requested.buffer_size != given.buffer_size
-      ccall((:SDL_CloseAudio,_psycho_SDL2),Void,())
-      error("The requested buffer size $buffer_size cannot be provided.")
-    else
-      info("Using audio buffer size of $buffer_size")
-    end
-    ccall((:SDL_CloseAudio,_psycho_SDL2),Void,())
-
-    buffer_size
-  else
-    @static if is_windows()
-      1024
-    else
-      256
+function ws_if_error(msg)
+  if sound_setup_state.state != C_NULL
+    if ccall((:ws_is_error,__weber_sound),Cint,
+             (Ptr{Void},),sound_setup_state.state) == true
+      error(msg*": "*unsafe_string(ccall((:ws_error_str,__weber_sound),Cstring,
+                                         (Ptr{Void},),sound_setup_state.state)))
     end
   end
 end
 
+function isplaying()
+  ccall((:ws_isplaying,__weber_sound),Cint,
+        (Ptr{Void},),sound_setup_state.state) == true
+end
+
+function isplaying(sound::Sound)
+  isplaying() && !isnull(sound_setup_state.playing) &&
+    get(sound_setup_state.playing) == sound
+end
 """
-    setup_sound([sample_rate_Hz=44100],[buffer_size=256])
+    setup_sound([sample_rate_Hz=44100])
 
 Initialize format for audio playback.
 
 This function is called automatically the first time a `Sound` object is created
 (normally by using the `sound` function). It need not normally be called
-explicitly, unless you wish to change the play-back sample rate or buffer
-size. Sample rate determines the maximum playable frequency (max freq is ≈
-sample_rate/2). The buffer size determines audio latency, so the shorter this is
-the better. However, when this size is too small, audio playback will be
-corrupted.
+explicitly, unless you wish to change the play-back sample rate. Sample rate
+determines the maximum playable frequency (max freq is ≈ sample_rate/2).
 
 Changing the sample rate from the default 44100 to a new value will also change
 the default sample rate sounds will be created at, to match this new sample
@@ -405,25 +362,20 @@ sound is the same as that setup here, and no resampling of the sound is made.
 """
 function setup_sound(;sample_rate_Hz=samplerate(sound_setup_state),
                      buffer_size=nothing)
-  global sound_setup_state
-
-  @static if is_windows()
-    # use windows mm driver by default
-    if get(ENV,"SDL_AUDIODRIVER","none") == "none"
-      ENV["SDL_AUDIODRIVER"] = "winmm"
-    end
-  end
-
   if isready(sound_setup_state)
-    ccall((:Mix_CloseAudio,_psycho_SDL2_mixer),Void,())
+    ccall((:ws_close,__weber_sound),Void,(Ptr{Void},),sound_setup_state.state)
+    ws_if_error("Error closing old audio stream during setup")
   else
-    init = ccall((:SDL_Init,_psycho_SDL2),Cint,(UInt32,),SDL_INIT_AUDIO)
-    if init < 0
-      error("Failed to initialize SDL: "*SDL_GetError())
-    end
-    if !sdl_is_setup[]
-      sdl_is_setup[] = true
-      atexit(() -> ccall((:SDL_Quit,_psycho_SDL2),Void,()))
+
+    if !weber_sound_is_setup[]
+      weber_sound_is_setup[] = true
+      atexit() do
+        ccall((:ws_close,__weber_sound),Void,
+              (Ptr{Void},),sound_setup_state.state)
+        ws_if_error("Error closing audio stream at exit.")
+        ccall((:ws_free,__weber_sound),Void,
+              (Ptr{Void},),sound_setup_state.state)
+      end
     end
   end
   if samplerate(sound_setup_state) != sample_rate_Hz
@@ -434,24 +386,15 @@ function setup_sound(;sample_rate_Hz=samplerate(sound_setup_state),
   end
 
   sound_setup_state.samplerate = sample_rate_Hz
-  buffer_size = sound_setup_state.buffer_size =
-    verify_buffer_size(sample_rate_Hz,buffer_size)
-
-  mixer_init = ccall((:Mix_OpenAudio,_psycho_SDL2_mixer),
-                     Cint,(Cint,UInt16,Cint,Cint),
-                     round(Cint,sample_rate_Hz/2),AUDIO_S16,2,buffer_size)
-  if mixer_init < 0
-    error("Failed to initialize sound: "*Mix_GetError())
-  end
-  atexit(() -> ccall((:Mix_CloseAudio,_psycho_SDL2_mixer),Void,()))
+  sound_setup_state.state = ccall((:ws_setup,__weber_sound),Ptr{Void},
+                                  (Cint,),sample_rate_Hz)
+  @show sound_setup_state.state
+  ws_if_error("Failed to initialize sound")
 end
 
 type PlayingSound
-  channel::Int
-  start::Float64
-  paused::Float64
   sound::Sound
-  times::Int
+  offset::Cint
 end
 
 function play(x;keys...)
@@ -469,7 +412,7 @@ function _play(x;keys...)
 end
 
 """
-    play(x;[wait=false],[times=1])
+    play(x,[wait=false])
 
 Plays a sound (created via `sound`).
 
@@ -480,23 +423,44 @@ multiple times using `times`.
 
 For convenience, play can also can be called on any object that can be turned
 into a sound (via `sound`).
-"""
 
-function play(x::Sound;wait=false,times=1)
-  channel = ccall((:Mix_PlayChannelTimed,_psycho_SDL2_mixer),Cint,
-                  (Cint,Ref{MixChunk},Cint,Cint),
-                  -1,x.chunk,times-1,-1)
-  if channel < 0
-    error("Failed to play sound: "*Mix_GetError())
+!!! info "Playing Multiple Sounds"
+
+    If one sound is already playing this function will block until the sound
+    has finished playing before starting the next sound. If you want
+    to play multiple sounds over one another, create a single mixture
+    of those sounds--using [`mix`](@ref)--and call play on the mixture.
+
+"""
+function play(x::Sound,wait=false)
+
+  # verify the sound can be played when we want to
+  if x.time > 0.0
+    size = ccall((:ws_cur_buffer_size,__weber_sound),UInt64,
+                 (Ptr{Void},),sound_setup_state.state)
+    min_dist = (2*size)/samplerate(sound_setup_state.state)
+    now = precise_time()
+    if now + min_dist > x.time
+      warning("Sounds are placed too close to one another. ",
+              "Latency will not be reliable. If you want to play sounds ",
+              "closer than $(round(1000*min_dist,2))ms to each other, ",
+              "fuse them into one sound, and then play the single, ",
+              "longer sound.")
+      record("high_latency",value=(now + min_dist) - x.time)
+    end
   end
+
+  ccall((:ws_play,__weber_sound),Void,
+        (Cdouble,Cdouble,Ref{WS_Sound},Ptr{Void}),
+        precise_time(),x.time,x.chunk,sound_setup_state.state)
+  ws_if_error("Error playing sound")
 
   if !wait
     register_sound(x)
-    PlayingSound(channel,precise_time(),NaN,x,times)
+    PlayingSound(x,0)
   else
     sleep(times*duration(x)-0.01)
-    while ccall((:Mix_Playing,_psycho_SDL2_mixer),Cint,(Cint,),channel) > 0
-    end
+    while isplaying() end
     nothing
   end
 end
@@ -511,20 +475,22 @@ function play(fn::Function;keys...)
 end
 
 function play(x::PlayingSound;wait=false)
-  played = 0.0
-  if !isnan(x.paused)
-    ccall((:Mix_Resume,_psycho_SDL2_mixer),Void,(Cint,),x.channel)
-    played = (x.paused - x.start)
-    x.start = precise_time() - played
-    x.paused = NaN
+  if isplaying() && !isplaying(x.sound)
+
   end
 
+  ccall((:ws_play_from,__weber_sound),Void,
+        (Cint,Ref{WS_Sound},Ptr{Void}),
+        x.offset,x.sound.chunk,sound_setup_state.state)
+  ws_if_error("Failed to resume playing sound")
+
   if !wait
-    register_sound(x.sound,played)
+    register_sound(x.sound)
     x
   else
-    sleep(duration(x) - (precise_time() - x.start) - 0.01)
-    while ccall((:Mix_Playing,_psycho_SDL2_mixer),Cint,(Cint,),x.channel) > 0
+    sleep(duration(x.sound) - (x.offset / samplerate(sound_setup_state))-0.01)
+    while ccall((:ws_isplaying,__weber_sound),Cint,
+                (Ptr{Void},),sound_setup_state.state)
     end
     nothing
   end
@@ -536,8 +502,14 @@ end
 Pause playback of the sound. Resume by calling `play` on the sound again.
 """
 function pause(x::PlayingSound)
-  ccall((:Mix_Pause,_psycho_SDL2_mixer),Void,(Cint,),x.channel)
-  x.paused = precise_time()
+  if (isnull(sound_setup_state.playing) ||
+      get(sound_setup_state.playing) != x.sound)
+    return x
+  end
+
+  x.offset = ccall((:ws_stop,__weber_sound),Cint,
+                   (Ptr{Void},),sound_setup_state.state)
+  ws_if_error("Failed to pause sound")
   x
 end
 
@@ -548,7 +520,9 @@ Stop playback of the sound.
 """
 function stop(x::PlayingSound)
   unregister_sound(x.sound)
-  ccall((:Mix_HaltChannel,_psycho_SDL2_mixer),Void,(Cint,),x.channel)
+  ccall((:ws_stop,__weber_sound),Cint,(Ptr{Void},),sound_setup_state.state)
+  ws_if_error("Failed to stop sound")
+
   nothing
 end
 
@@ -558,10 +532,8 @@ end
 Pause all sounds that are playing.
 """
 function pause_sounds()
-  ccall((:Mix_Pause,_psycho_SDL2_mixer),Void,(Cint,),-1)
-  for s in keys(sound_setup_state.playing)
-    sound_setup_state.playing[s] = Inf
-  end
+  ccall((:ws_stop,__weber_sound),Cint,(Ptr{Void},),sound_setup_state.state)
+  ws_if_error("Failed to pause sounds")
 end
 
 """
@@ -570,16 +542,8 @@ end
 Resume all sounds that have been paused.
 """
 function resume_sounds()
-  ccall((:Mix_Resume,_psycho_SDL2_mixer),Void,(Cint,),-1)
-  for s in keys(sound_setup_state.playing)
-    if isinf(sound_setup_state.playing[s])
-      # note: this is a conservative time when sounds can be removed from
-      # playing registry. It could be sooner, but that requires a lot of work to
-      # figure out, and it's fine if the sounds stick around for a bit after
-      # they're done playing.
-      sound_setup_state.playing[s] = precise_time() + duration(s)
-    end
-  end
+  ccall((:ws_resume,__weber_sound),Void,(Ptr{Void},),sound_setup_state.state)
+  ws_if_error("Failed to resume playing sounds")
 end
 
 
