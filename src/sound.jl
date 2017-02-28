@@ -196,14 +196,13 @@ immutable WS_Sound
 end
 
 immutable Sound
-  time::Float64
   chunk::WS_Sound
   buffer::SampleBuf
-  function Sound(time::Float64,c::WS_Sound,b::SampleBuf)
+  function Sound(c::WS_Sound,b::SampleBuf)
     if !isready(sound_setup_state)
       setup_sound()
     end
-    new(time,c,b)
+    new(c,b)
   end
 end
 sound(x::Sound) = x
@@ -288,7 +287,7 @@ function sound(x::SampleBuf{Fixed{Int16,15},1})
 end
 
 function sound(x::SampleBuf{Fixed{Int16,15},2})
-  Sound(0.0,WS_Sound(pointer(x.data),size(x.data,1)),x)
+  Sound(WS_Sound(pointer(x.data),size(x.data,1)),x)
 end
 
 """
@@ -388,7 +387,6 @@ function setup_sound(;sample_rate_Hz=samplerate(sound_setup_state),
   sound_setup_state.samplerate = sample_rate_Hz
   sound_setup_state.state = ccall((:ws_setup,__weber_sound),Ptr{Void},
                                   (Cint,),sample_rate_Hz)
-  @show sound_setup_state.state
   ws_if_error("Failed to initialize sound")
 end
 
@@ -397,29 +395,31 @@ type PlayingSound
   offset::Cint
 end
 
-function play(x;keys...)
+function play(x;wait=false,time=0.0)
   if in_experiment() && !experiment_running()
     error("You cannot call `play` during experiment `setup`. During `setup`",
           " you should add play to a trial (e.g. ",
           "`addtrial(moment(play,my_sound))`).")
   end
   warn("Calling play outside of an experiment.")
-  _play(x;keys...)
+  _play(x,wait,time)
 end
 
-function _play(x;keys...)
-  play(sound(x);keys...)
+function _play(x,wait=false,time=0.0)
+  play(sound(x),wait,time)
 end
 
 """
-    play(x,[wait=false])
+    play(x,[wait=false],[time=0.0])
 
 Plays a sound (created via `sound`).
 
-If `wait` == false, returns an object that can be used to `stop`, or `pause` the
+If `wait == false`, returns an object that can be used to `stop`, or `pause` the
 sound. One can also call play(x,wait=true) on this object to wait for the sound
 to finish. The sound will normally play only once, but can be repeated
 multiple times using `times`.
+
+If `time > 0`, plays the sound at the given time (in seconds from epoch).
 
 For convenience, play can also can be called on any object that can be turned
 into a sound (via `sound`).
@@ -432,34 +432,33 @@ into a sound (via `sound`).
     of those sounds--using [`mix`](@ref)--and call play on the mixture.
 
 """
-function play(x::Sound,wait=false)
+function play(x::Sound,wait::Bool=false,time::Float64=0.0)
 
   # verify the sound can be played when we want to
-  if x.time > 0.0
+  if time > 0.0
     size = ccall((:ws_cur_buffer_size,__weber_sound),UInt64,
                  (Ptr{Void},),sound_setup_state.state)
-    min_dist = (2*size)/samplerate(sound_setup_state.state)
-    now = precise_time()
-    if now + min_dist > x.time
-      warning("Sounds are placed too close to one another. ",
-              "Latency will not be reliable. If you want to play sounds ",
-              "closer than $(round(1000*min_dist,2))ms to each other, ",
-              "fuse them into one sound, and then play the single, ",
-              "longer sound.")
-      record("high_latency",value=(now + min_dist) - x.time)
+    min_dist = (2*size)/samplerate(sound_setup_state)
+    now = Weber.tick()
+    if now + min_dist > time
+      warn("Sounds are placed too close to one another. ",
+           "Latency will not be reliable. If you want to play sounds ",
+           "closer than $(round(1000*min_dist,2))ms to each other, ",
+           "fuse them into one sound, and then play the single, ",
+           "longer sound.")
     end
   end
 
   ccall((:ws_play,__weber_sound),Void,
         (Cdouble,Cdouble,Ref{WS_Sound},Ptr{Void}),
-        precise_time(),x.time,x.chunk,sound_setup_state.state)
+        Weber.tick(),time,x.chunk,sound_setup_state.state)
   ws_if_error("Error playing sound")
 
   if !wait
     register_sound(x)
     PlayingSound(x,0)
   else
-    sleep(times*duration(x)-0.01)
+    sleep(duration(x)-0.01)
     while isplaying() end
     nothing
   end
@@ -553,7 +552,7 @@ end
 Get the duration of the given sound.
 """
 duration(s::Sound) = duration(s.buffer)
-duration(s::PlayingSound) = duration(s.sound)*s.times
+duration(s::PlayingSound) = duration(s.sound)
 duration(s::SampleBuf) = length(s) / samplerate(s)
 function duration(s::Array{Float64};
                   sample_rate_Hz=samplerate(sound_setup_state))
