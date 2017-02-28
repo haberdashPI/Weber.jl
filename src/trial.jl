@@ -373,16 +373,12 @@ end
 moment(delta_t::Number) = TimedMoment(delta_t,()->nothing)
 moment() = TimedMoment(0,()->nothing)
 
-function moment(fn::Function,delta_t::Number)
-  moment(delta_t,fn)
-end
-
 const PlayFunction = typeof(play)
-function moment(delta_t::Number,::PlayFunction,x;keys...)
-  PlayMoment(delta_t,sound(x),keys)
+function moment(delta_t::Number,::PlayFunction,x,wait=false)
+  PlayMoment(delta_t,sound(x),wait)
 end
-function moment(delta_t::Number,::PlayFunction,fn::Function;keys...)
-  PlayFunctionMoment(delta_t,fn,keys)
+function moment(delta_t::Number,::PlayFunction,fn::Function,wait=false)
+  PlayFunctionMoment(delta_t,fn,wait)
 end
 
 const DisplayFunction = typeof(display)
@@ -497,21 +493,41 @@ function when(condition::Function,moments...;loop=false,update_offset=false)
 end
 
 """
-    Weber.prepare!(m)
+    Weber.prepare!(m,[last_moment])
 
 If there is anything the moment needs to do before it occurs, it
 is done during `prepare!`. This triggers immediately after the moment prior to
 the current one has finished. The default implementation does nothing.
 
+Prepare accepts an optional second argument used to indicate when the previous
+moment began (in seconds from expeirment start). This can permit prepare to set
+up precise timing even when event latency is high, if that latency can be
+predicted, and accounted for.
+
 !!! note
 
     This method is part of the private interface for moments. It
     should not be called directly, but implemented as part of an extension.
+    You need only extend the method taking a single arugment unless you
+    intend to use this information during prepartion.
 """
+prepare!(m::Moment,last_moment::Float64) = prepare!(m)
 prepare!(m::Moment) = nothing
-prepare!(m::DisplayFunctionMoment) = m.visual = Nullable(visual(m.fn();m.keys...))
-prepare!(m::PlayFunctionMoment) = m.sound = Nullable(sound(m.fn()))
-prepare!(m::MomentSequence) = foreach(prepare!,m.data)
+function prepare!(ms::MomentSequence,last_moment::Float64)
+  for m in ms.data prepare!(m,last_moment) end
+end
+
+function prepare!(m::DisplayFunctionMoment)
+  m.visual = Nullable(visual(m.fn();m.keys...))
+end
+
+function prepare!(m::PlayMoment,last_moment::Float64)
+  play(m.sound,m.wait,m.delta_t > 0.0 ? m.delta_t + last_moment : 0.0)
+end
+
+function prepare!(m::PlayFunctionMoment,last_moment::Float64)
+  play(sound(m.fn()),m.wait,m.delta_t + last_moment)
+end
 
 """
     handle(exp,queue,moment,to_handle)
@@ -552,9 +568,9 @@ end
 
 run(exp,q,m::TimedMoment) = m.run()
 run(exp,q,m::OffsetStartMoment) = m.run()
-run(exp,q,m::PlayMoment) = _play(m.sound;m.keys...)
+run(exp,q,m::PlayMoment) = nothing
 run(exp,q,m::DisplayMoment) = display(win(exp),m.visual)
-run(exp,q,m::PlayFunctionMoment) = _play(get(m.sound);m.keys...)
+run(exp,q,m::PlayFunctionMoment) = nothing
 run(exp,q,m::DisplayFunctionMoment) = display(win(exp),get(m.visual))
 run(exp,q,m::MomentSequence) = foreach(x -> run(exp,q,x),m.data)
 

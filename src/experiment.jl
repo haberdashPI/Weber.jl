@@ -449,7 +449,7 @@ function process(exp::Experiment,queue::MomentQueue,event::ExpEvent)
     handled = handle(exp,queue,moment,event)
     if handled
       if !isempty(queue)
-        prepare!(front(queue))
+        prepare!(front(queue),time(event))
       end
       data(exp).next_moment = minimum(map(next_moment_time,data(exp).moments))
     end
@@ -477,7 +477,7 @@ function process(exp::Experiment,queue::MomentQueue,t::Float64)
       if handle(exp,queue,moment,run_time)
         d = required_delta_t(moment)
         if !isempty(queue)
-          prepare!(front(queue))
+          prepare!(front(queue),run_time)
         end
 
         latency = run_time - event_time
