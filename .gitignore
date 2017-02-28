@@ -3,6 +3,7 @@
 *.jl.mem
 .#*
 *~
+.DS_Store
 examples/data
 deps/deps.jl
 deps/usr/
