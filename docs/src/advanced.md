@@ -1,58 +1,5 @@
 There are several concepts and techniques best avoided unless they are really necessary. These generally complicate the creation of experiments. 
 
-# Precomputed Sounds and Visuals
-
-Normally when you call [`play`](@ref) or [`display`](@ref) the object you pass
-is automatically converted into a sound or visual that can be presented to the
-listener. The results of this conversion are cached, so if you pass the same
-object multiple times to play or display, this conversion will not occur
-multiple times, minimizing memory usage. The cache can hold up to 256 items in
-it. If you need the cache to be larger you can always call
-[`resize_cache!`](@ref). To ensure low-latency presentation, conversion and
-caching occurs during setup-time, or during [`prepare`](@ref) for stimuli
-generated during runtime.
-
-However, in some cases you may wish to manually prepare a sound or visual to be
-presented. You can use [`sound`](ref) or [`visual`](@ref) to do this. Call one
-of these funtions on the object and store the result to a variable during
-setup. Then call display or play directly on this prepared stimulus. Like so:
-
-```julia
-setup(exp) do
-  preprepared = visual("Hello, World!")
-  addtrial(display,preprepared)
-end
-```
-This is rarely necessary, though long-form moments require it.
-
-# Long-form moments
-
-Long-form moments generally fit the following pattern.
-
-```julia
-mysound = sound(tone(1000,1))
-myvisual = visual("Hello, World!")
-moment(0.5) do
-  play(mysound)
-  display(myvisual)
-end
-```
-
-Note that this particular moment could just as easily be created as follows.
-
-```julia
-[moment(play,tone(1000,1)),moment(display,"Hello, World!")]
-```
-
-This demonstrates the key difference in long-form moments: visuals and sounds must
-be explicitly prepared using [`sound`](@ref) and [`visual`](@ref). This should normally occur
-during start-up time. Short form moments dispatch on the type of function specified
-and so can automatically call sound and visual.
-
-Long-form moments can make it easier to specify more complicated
-functionality. Just remember to explicitly prepare stimuli when taking this
-approach.
-
 # Stateful Trials
 
 Some experiments require that what trials present depend on responses to
