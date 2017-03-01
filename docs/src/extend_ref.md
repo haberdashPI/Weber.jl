@@ -2,7 +2,10 @@
 
 Extensions provide additional functionality.
 
-Currently the only available extension is [WeberCedrus](https://github.com/haberdashPI/WeberCedrus.jl.git).
+Currently there are two extensions availble:
+
+* [WeberCedrus](https://github.com/haberdashPI/WeberCedrus.jl.git).
+* [WeberDAQmx](https://github.com/haberdashPI/WeberDAQmx.jl.git).
 
 # Creating Extensions
 
