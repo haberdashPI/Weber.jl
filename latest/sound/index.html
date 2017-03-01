@@ -207,21 +207,21 @@
 </code></pre>
 
 <p>Creates a pure tone of the given frequency and length (in seconds).</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/de696257f0e57a7a9ee661936d7c8276eda6b459/src/sound.jl#L73-L77' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/ff34bdff3df7a3ac651f2d4f8681c8d1872c09cb/src/sound.jl#L73-L77' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.noise' href='#Weber.noise'>#</a>
 <strong><code>Weber.noise</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>noise(length,[sample_rate_Hz=44100])
 </code></pre>
 
 <p>Creates a period of white noise of the given length (in seconds).</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/de696257f0e57a7a9ee661936d7c8276eda6b459/src/sound.jl#L64-L68' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/ff34bdff3df7a3ac651f2d4f8681c8d1872c09cb/src/sound.jl#L64-L68' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.silence' href='#Weber.silence'>#</a>
 <strong><code>Weber.silence</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>silence(length,[sample_rate_Hz=44100])
 </code></pre>
 
 <p>Creates period of silence of the given length (in seconds).</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/de696257f0e57a7a9ee661936d7c8276eda6b459/src/sound.jl#L55-L59' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/ff34bdff3df7a3ac651f2d4f8681c8d1872c09cb/src/sound.jl#L55-L59' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.harmonic_complex' href='#Weber.harmonic_complex'>#</a>
 <strong><code>Weber.harmonic_complex</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>harmonic_complex(f0,harmonics,amps,length,
@@ -229,7 +229,7 @@
 </code></pre>
 
 <p>Creates a harmonic complex of the given length, with the specified harmonics at the given amplitudes. This implementation is somewhat superior to simply summing a number of pure tones generated using <code>tone</code>, because it avoids beating in the sound that may occur due floating point errors.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/de696257f0e57a7a9ee661936d7c8276eda6b459/src/sound.jl#L84-L92' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/ff34bdff3df7a3ac651f2d4f8681c8d1872c09cb/src/sound.jl#L84-L92' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.sound' href='#Weber.sound'>#</a>
 <strong><code>Weber.sound</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>sound(x::Array,[sample_rate_Hz=44100])
@@ -241,19 +241,19 @@
 <p class="admonition-title">Called Implicitly</p>
 <p>This function is normally called implicitly in a call to <code>play(x)</code>, where x is an arbitrary array, so it need not normally be called.</p>
 </div>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/de696257f0e57a7a9ee661936d7c8276eda6b459/src/sound.jl#L214-L228' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/ff34bdff3df7a3ac651f2d4f8681c8d1872c09cb/src/sound.jl#L214-L228' class='documenter-source'>source</a><br></p>
 <pre><code>sound(x::SampleBuff)
 </code></pre>
 
 <p>Creates a sound object from a <code>SampleBuf</code> (from the <code>SampledSignals</code> module).</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/de696257f0e57a7a9ee661936d7c8276eda6b459/src/sound.jl#L240-L244' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/ff34bdff3df7a3ac651f2d4f8681c8d1872c09cb/src/sound.jl#L240-L244' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.buffer' href='#Weber.buffer'>#</a>
 <strong><code>Weber.buffer</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>buffer(s::Sound)
 </code></pre>
 
 <p>Gets the <code>SampleBuf</code> associated with this sound (c.f. <code>SampledSignals</code> package).</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/de696257f0e57a7a9ee661936d7c8276eda6b459/src/sound.jl#L267-L271' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/ff34bdff3df7a3ac651f2d4f8681c8d1872c09cb/src/sound.jl#L267-L271' class='documenter-source'>source</a><br></p>
 <p><a id='Sound-Manipulation-1'></a></p>
 <h1 id="sound-manipulation">Sound Manipulation</h1>
 <p><a id='Weber.highpass' href='#Weber.highpass'>#</a>
@@ -263,26 +263,26 @@
 
 <p>High-pass filter the sound at the specified frequency.</p>
 <p>Filtering uses a butterworth filter of the given order.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/de696257f0e57a7a9ee661936d7c8276eda6b459/src/sound.jl#L150-L156' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/ff34bdff3df7a3ac651f2d4f8681c8d1872c09cb/src/sound.jl#L150-L156' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.lowpass' href='#Weber.lowpass'>#</a>
 <strong><code>Weber.lowpass</code></strong> &mdash; <em>Function</em>.</p>
 <p>lowpass(x,low,[order=5],[sample_rate_Hz=samplerate(x)])</p>
 <p>Low-pass filter the sound at the specified frequency.</p>
 <p>Filtering uses a butterworth filter of the given order.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/de696257f0e57a7a9ee661936d7c8276eda6b459/src/sound.jl#L137-L143' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/ff34bdff3df7a3ac651f2d4f8681c8d1872c09cb/src/sound.jl#L137-L143' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.bandpass' href='#Weber.bandpass'>#</a>
 <strong><code>Weber.bandpass</code></strong> &mdash; <em>Function</em>.</p>
 <p>bandpass(x,low,high,[order=5],[sample_rate_Hz=samplerate(x)])</p>
 <p>Band-pass filter the sound at the specified frequencies.</p>
 <p>Filtering uses a butterworth filter of the given order.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/de696257f0e57a7a9ee661936d7c8276eda6b459/src/sound.jl#L123-L129' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/ff34bdff3df7a3ac651f2d4f8681c8d1872c09cb/src/sound.jl#L123-L129' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.ramp' href='#Weber.ramp'>#</a>
 <strong><code>Weber.ramp</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>ramp(x,[ramp_s=0.005];[sample_rate_Hz=samplerate(x)])
 </code></pre>
 
 <p>Applies a half cosine ramp to the sound. Prevents click sounds at the start of tones.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/de696257f0e57a7a9ee661936d7c8276eda6b459/src/sound.jl#L163-L168' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/ff34bdff3df7a3ac651f2d4f8681c8d1872c09cb/src/sound.jl#L163-L168' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.attenuate' href='#Weber.attenuate'>#</a>
 <strong><code>Weber.attenuate</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>attenuate(x,atten_dB)
@@ -290,28 +290,28 @@
 
 <p>Apply the given decibels of attenuation to the sound relative to a power level of 1.</p>
 <p>This function normalizes the sound to have a root mean squared value of 1 and then reduces the sound by a factor of $10^{-a/20}$, where $a$ = <code>atten_dB</code>.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/de696257f0e57a7a9ee661936d7c8276eda6b459/src/sound.jl#L180-L188' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/ff34bdff3df7a3ac651f2d4f8681c8d1872c09cb/src/sound.jl#L180-L188' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.mix' href='#Weber.mix'>#</a>
 <strong><code>Weber.mix</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>mix(x,y,...)
 </code></pre>
 
 <p>Mix several sounds together so that they play at the same time.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/de696257f0e57a7a9ee661936d7c8276eda6b459/src/sound.jl#L35-L39' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/ff34bdff3df7a3ac651f2d4f8681c8d1872c09cb/src/sound.jl#L35-L39' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.mult' href='#Weber.mult'>#</a>
 <strong><code>Weber.mult</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>mult(x,y,...)
 </code></pre>
 
 <p>Mutliply several sounds together. Typically used to apply an amplitude envelope.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/de696257f0e57a7a9ee661936d7c8276eda6b459/src/sound.jl#L45-L49' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/ff34bdff3df7a3ac651f2d4f8681c8d1872c09cb/src/sound.jl#L45-L49' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.match_lengths' href='#Weber.match_lengths'>#</a>
 <strong><code>Weber.match_lengths</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>match_lengths(x,y,...)
 </code></pre>
 
 <p>Ensure that all sounds have exactly the same length by adding silence to the end of shorter sounds.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/de696257f0e57a7a9ee661936d7c8276eda6b459/src/sound.jl#L16-L21' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/ff34bdff3df7a3ac651f2d4f8681c8d1872c09cb/src/sound.jl#L16-L21' class='documenter-source'>source</a><br></p>
 <p><a id='Playback-1'></a></p>
 <h1 id="playback">Playback</h1>
 <pre><code>play
