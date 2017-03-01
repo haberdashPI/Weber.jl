@@ -10,7 +10,7 @@
 
 #ifdef MACOS
 #define EXPORT __attribute__((visibility("default")))
-#define Int16 __int_16_t
+#define Int16 __int16_t
 #endif
 #ifdef WINDOWS
 #define EXPORT __declspec(dllexport)
@@ -38,6 +38,8 @@ typedef struct{
 typedef struct{
   PaError errcode;
   int started;
+  int old_len;
+  int old_offset;
   TimedSound* sound;
   PaStream* stream;
 }WsState;
@@ -124,6 +126,8 @@ WsState* ws_setup(int samplerate){
   }
 
   state->started = 0;
+  state->old_len = 0;
+  state->old_offset = 0;
   state->sound = (TimedSound*)malloc(sizeof(TimedSound));
   state->sound->offset = 0;
   state->sound->len = 0;
@@ -218,18 +222,16 @@ void ws_play_from(int offset,Sound* toplay,WsState* state){
 
 EXPORT
 int ws_stop(WsState* state){
-  if(state->started){
-    if(paNoError != (state->errcode = Pa_StopStream(state->stream))) return 0;
-    state->started = FALSE;
-  }
-  return state->sound->offset;
+  state->old_offset = state->sound->offset;
+  state->sound->len = 0;
+  return state->old_offset;
 }
 
 EXPORT
 void ws_resume(WsState* state){
-  if(state->started == FALSE){
-    state->started = TRUE;
-    if(paNoError != (state->errcode = Pa_StartStream(state->stream))) return;
+  if(state->sound->len == 0){
+    state->sound->offset = state->old_offset;
+    state->sound->len = state->old_len;
   }
 }
 
