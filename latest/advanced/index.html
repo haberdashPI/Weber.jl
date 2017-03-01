@@ -86,12 +86,6 @@
         
             <ul>
             
-                <li class="toctree-l3"><a href="#precomputed-sounds-and-visuals">Precomputed Sounds and Visuals</a></li>
-                
-            
-                <li class="toctree-l3"><a href="#long-form-moments">Long-form moments</a></li>
-                
-            
                 <li class="toctree-l3"><a href="#stateful-trials">Stateful Trials</a></li>
                 
                     <li><a class="toctree-l4" href="#blocks-of-trials">Blocks of Trials</a></li>
@@ -209,34 +203,6 @@
             <div class="section">
               
                 <p>There are several concepts and techniques best avoided unless they are really necessary. These generally complicate the creation of experiments. </p>
-<p><a id='Precomputed-Sounds-and-Visuals-1'></a></p>
-<h1 id="precomputed-sounds-and-visuals">Precomputed Sounds and Visuals</h1>
-<p>Normally when you call <a href="../sound/#Weber.play"><code>play</code></a> or <a href="../video/#Base.Multimedia.display"><code>display</code></a> the object you pass is automatically converted into a sound or visual that can be presented to the listener. The results of this conversion are cached, so if you pass the same object multiple times to play or display, this conversion will not occur multiple times, minimizing memory usage. The cache can hold up to 256 items in it. If you need the cache to be larger you can always call <a href="../@ref"><code>resize_cache!</code></a>. To ensure low-latency presentation, conversion and caching occurs during setup-time, or during <a href="../@ref"><code>prepare</code></a> for stimuli generated during runtime.</p>
-<p>However, in some cases you may wish to manually prepare a sound or visual to be presented. You can use <a href="../ref"><code>sound</code></a> or <a href="../video/#Weber.visual"><code>visual</code></a> to do this. Call one of these funtions on the object and store the result to a variable during setup. Then call display or play directly on this prepared stimulus. Like so:</p>
-<pre><code class="julia">setup(exp) do
-  preprepared = visual(&quot;Hello, World!&quot;)
-  addtrial(display,preprepared)
-end
-</code></pre>
-
-<p>This is rarely necessary, though long-form moments require it.</p>
-<p><a id='Long-form-moments-1'></a></p>
-<h1 id="long-form-moments">Long-form moments</h1>
-<p>Long-form moments generally fit the following pattern.</p>
-<pre><code class="julia">mysound = sound(tone(1000,1))
-myvisual = visual(&quot;Hello, World!&quot;)
-moment(0.5) do
-  play(mysound)
-  display(myvisual)
-end
-</code></pre>
-
-<p>Note that this particular moment could just as easily be created as follows.</p>
-<pre><code class="julia">[moment(play,tone(1000,1)),moment(display,&quot;Hello, World!&quot;)]
-</code></pre>
-
-<p>This demonstrates the key difference in long-form moments: visuals and sounds must be explicitly prepared using <a href="../sound/#Weber.sound"><code>sound</code></a> and <a href="../video/#Weber.visual"><code>visual</code></a>. This should normally occur during start-up time. Short form moments dispatch on the type of function specified and so can automatically call sound and visual.</p>
-<p>Long-form moments can make it easier to specify more complicated functionality. Just remember to explicitly prepare stimuli when taking this approach.</p>
 <p><a id='Stateful-Trials-1'></a></p>
 <h1 id="stateful-trials">Stateful Trials</h1>
 <p>Some experiments require that what trials present depend on responses to previous trials. For instance, adaptive tracking to find a discrimination threshold.</p>
