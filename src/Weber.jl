@@ -114,8 +114,6 @@ include(joinpath(dirname(@__FILE__),"primitives.jl"))
 include(joinpath(dirname(@__FILE__),"helpers.jl"))
 include(joinpath(dirname(@__FILE__),"adaptive.jl"))
 
-include(joinpath(dirname(@__FILE__),"cedrus.jl"))
-
 include(joinpath(dirname(@__FILE__),"precompile.jl"))
 
 function __init__()
