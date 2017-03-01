@@ -1,4 +1,9 @@
-Functionality can be added to Weber via extensions. You can add multiple extensions to the same experiment. To handle multiple extensions properly, so that all extensions work, the following functions have special extension machinery.
+Functionality can be added to Weber via extensions. You can add multiple
+extensions to the same experiment. The [reference](extend_ref.md) provides a
+list of available extensions. Here we'll cover how to create new extensions.
+
+To handle multiple extensions properly, so that all extensions work, the
+following functions have special extension machinery.
 
 ```@meta
 CurrentModule = Weber
