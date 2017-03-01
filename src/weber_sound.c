@@ -3,21 +3,30 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdint.h>
 
 #define TRUE 1
 #define FALSE 0
 
-// TODO: os specific, change for windows
+#ifdef MACOS
 #define EXPORT __attribute__((visibility("default")))
+#define Int16 __int_16_t
+#endif
+#ifdef WINDOWS
+#define EXPORT __declspec(dllexport)
+#define Int16 int16_t
+#endif
+
+// TODO: os specific, change for windows
 
 typedef struct{
-  __int16_t* buffer;
+  Int16* buffer;
   int len;
 }Sound;
 
 typedef struct{
   int locked;
-  __int16_t* buffer;
+  Int16* buffer;
   PaTime start;
   int offset;
   int len;
@@ -41,8 +50,8 @@ static int ws_callback(const void* in,void* out,unsigned long len,
   // len will be 0 (since this is the first field set), so we won't play
   // any of the sound in this case.
   TimedSound* sound = (TimedSound*)user_data;
-  __int16_t* output_buffer = (__int16_t*)out;
-  __int16_t* sound_buffer = sound->buffer;
+  Int16* output_buffer = (Int16*)out;
+  Int16* sound_buffer = sound->buffer;
   PaTime start = sound->start;
   int offset = sound->offset;
   int sound_len = sound->len;

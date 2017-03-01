@@ -13,8 +13,9 @@ end
 # install SDL2 and plugins
 
 SDL2 = "UNKNOWN"
-SDL2_mixer = "UNKNOWN"
 SDL2_ttf = "UNKNOWN"
+weber_sound = "UNKNOWN"
+portaudio = "UNKNOWN"
 
 @static if is_windows()
   # WinRPM lacks SDL2_ttf and SDL2_mixer binaries, so I'm just directly
@@ -41,6 +42,20 @@ SDL2_ttf = "UNKNOWN"
     rm(downloaddir,recursive=true,force=true)
   end
 
+  weber_build = joinpath(dirname(@__FILE__),"build","libweber-sound.0.dll")
+  weber_sound = joinpath(bindir,"libweber-sound.0.dll")
+  portaudio_build = joinpath(dirname(@__FILE__),"lib","portaudio_x64.dll")
+  portaudio = joinpath(bindir,"portaudio_x64.dll")
+  if isfile(weber_build)
+    mv(weber_build,weber_sound)
+    mv(portaudio_build,portaudio)
+  else
+    download("http://haberdashpi.github.io/libweber-sound.0.dll",weber_sound)
+    download("http://haberdashpi.github.io/portaudio_x64.dll",portaudio)
+  end
+
+  weber_sound = replace(weber_sound,"\\","\\\\")
+  portaudio = replace(portaudio,"\\","\\\\")
 elseif is_apple()
   using Homebrew
 
@@ -54,7 +69,6 @@ elseif is_apple()
   portaudio = joinpath(prefix,"libportaudio.2.dylib")
 
   weber_build = joinpath(dirname(@__FILE__),"build","libweber-sound.0.dylib")
-  prefix =
   weber_sound = joinpath(bindir,"libweber-sound.0.dylib")
   if isfile(weber_build)
     cp(weber_build,weber_sound)
