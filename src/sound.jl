@@ -286,6 +286,18 @@ function samplerate(s::SoundSetupState)
   end
 end
 isready(s::SoundSetupState) = s.samplerate != 0
+
+"""
+    samplerate(sound)
+
+Report the sampling rate of the sound or of any object
+that can be turned into a sound.
+
+The sampling rate of object determines how many samples per second
+are used to represent the sound. Objects that can be converted to sounds
+assume the sampling rate of the current hardware settings as defined
+by [`setup_sound`](@ref).
+"""
 samplerate(x::Vector) = samplerate(sound_setup_state)
 samplerate(x::Matrix) = samplerate(sound_setup_state)
 
@@ -323,10 +335,11 @@ end
 
 Initialize format for audio playback.
 
-This function is called automatically the first time a `Sound` object is created
-(normally by using the `sound` function). It need not normally be called
-explicitly, unless you wish to change the play-back sample rate. Sample rate
-determines the maximum playable frequency (max freq is ≈ sample_rate/2).
+This function is called automatically (using the default sampling rate) the
+first time a `Sound` object is created (normally by using the `sound`
+function). It need not normally be called explicitly, unless you wish to change
+the play-back sample rate. Sample rate determines the maximum playable frequency
+(max freq is ≈ sample_rate/2).
 
 Changing the sample rate from the default 44100 to a new value will also change
 the default sample rate sounds will be created at, to match this new sample
