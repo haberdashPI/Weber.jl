@@ -352,14 +352,12 @@ function addbreak{T <: BaseExperiment}(exp::T,moments...;keys...)
 end
 
 """
-    moment([fn],[delta_t])
     moment([delta_t],[fn],args...;keys...)
 
 Create a moment that occurs `delta_t` (default 0) seconds after the onset of
 the previous moment, running the specified function.
 
-The function `fn` is passed zero arguments, or it is passed the arguments
-specified in `args` and `keys`.
+The function `fn` is passed the arguments specified in `args` and `keys`.
 """
 function moment(delta_t::Number,fn::Function,args...;keys...)
   precompile(fn,map(typeof,args))
@@ -436,7 +434,7 @@ function await_response(fn::Function;atleast=0.0)
 end
 
 """
-    timeout(fn,isresposne,timeout,[atleast=0.0])
+    timeout(fn,isresponse,timeout,[atleast=0.0])
 
 This moment starts when either `isresponse` evaluates to true or
 timeout time (in seconds) passes.

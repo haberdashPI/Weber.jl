@@ -95,8 +95,8 @@ example, the while loop would never terminate, running an infinite loop, because
 
 # Run-time stimulus generation.
 
-When stimuli need to be generated during an experiment the standard short-form
-moment will not do. For instance, if you want a tone's frequency to depend
+When stimuli need to be generated during an experiment the normal approach will
+not work. For instance, if you want a tone's frequency to depend
 on some delta value that changes during the experimrent the following will not work.
 
 ```julia

@@ -57,15 +57,13 @@ the Julia console is still open.
 After running the experiment on yourself, let's walk through the parts of this
 experiment piece-by-piece.
 
-!!! note "User Interface Annoyances"
+!!! note "Juno User Interface"
 
      Unfortunately, there are some annoyances to using Weber from Atom. In
      particular, if the console is not open, you may sit there waiting while
      nothing happens. **Make sure the Julia console is open**. Input will be
-     requested from you in this console. **Make sure you input your responses on
-     the appropriate line**. The current Juno tool for reading input is a little
-     finicky, and you may find that you have to change the location of your
-     cursor so it is next to the little icon of a page. 
+     requested from you in this console. Read the instructions to **make sure
+     you input your responses on the appropriate line**.
 
 # Read Experiment Parameters
 
@@ -87,10 +85,8 @@ high = ramp(tone(1100,0.5))
 ```
 
 These next two lines create two stimuli. A 1000 Hz tone (`low`) and a 1100 Hz
-tone (`hight`) each 0.5 seconds long. The [`ramp`](@ref) function adds a tapering of the
-sound from 0 to the loudest level at the start of the sound over the course of 5
-milliseconds, using the cosine function, and then a tapering back to 0 at the
-end of the sound.
+tone (`high`) each 0.5 seconds long. The [`ramp`](@ref) function tapers the
+start and end of a sound to avoid click sounds.
 
 You can generate many simple stimuli in Weber, or you can use `load("sound.wav")`
 to open a sound file on your computer. Refer to the documentation in
@@ -188,9 +184,9 @@ end
 Once the experiment is defined, you can setup any trials and instructions that
 you want the experiment to have. The above code adds a break providing
 instructions for the listeners, and 10 trials, created using the `one_trial`
-function we defined above. Please refer to the [`Trial Creation`](trial_guide.md) section
-of the user guide and the [`Trials`](trials.md) section of the reference for more
-details on how to add trials.
+function we defined above. Please refer to the
+[`Trial Creation`](trial_guide.md) section of the user guide for more details on
+how to add trials.
 
 ## [Setup- vs. run-time](@id setup_time)
 

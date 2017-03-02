@@ -42,7 +42,9 @@ trial() = trial(get_experiment())
 
 Returns the current offset. The offset represents a well defined time in the
 experiment. Rerunning the experiemnt and skipping to a given offset will restart
-the experiment in exactly the same state it was on a previous run.
+the experiment in exactly the same state it was on a previous run. The offset
+is typically incremented once for every call to [`addpractice`](@ref) and
+[`addtrial`](@ref) unless you use [`@addtrials`](@ref).
 
 !!! warning
 

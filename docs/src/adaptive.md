@@ -2,12 +2,16 @@ Some experiments require the use of an adaptive adjustment of a stimulus based o
 
 # Using an Adaptive Track
 
-To use an adaptive track in your experiment, you need to make use of some of the [advanced features](advanced.md) of Weber. 
+To use an adaptive track in your experiment, you need to make use of some of the
+[advanced features](advanced.md) of Weber. In this section we'll walk through
+the necessary steps, using a simple frequency discrimination experiment.
 
-In this section we'll walk through the necessary steps, using a simple frequency discrimination experiment. In this experiment, on each trial, listeners hear a low and a high tone, separated in frequency by an adaptively adjusted delta. Their task is to indicate which tone is lower, and the delta is adjusted to determine the difference in frequency at which listeners respond with 79% accuracy. The entire example code is provided below. 
+In this experiment, on each trial, listeners hear a low and a high tone, separated in frequency by an adaptively adjusted delta. Their task is to indicate which tone is lower, and the delta is adjusted to determine the difference in frequency at which listeners respond with 79% accuracy. The entire example code is provided below. 
 
 ```julia
 using Weber
+sid,trial_skip,adapt = @read_args("Frequency Discrimination ($version).",
+                                  adapt=[:levitt,:bayes])
 
 n_trials = 60
 isresponse(e) = iskeydown(e,key"p") || iskeydown(e,key"q")

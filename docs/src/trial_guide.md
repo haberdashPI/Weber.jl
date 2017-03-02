@@ -2,25 +2,20 @@ We'll look in detail at how to create trials of an experiment. For a broad overv
 
 # Defining Moments
 
-There are several types of moments: timed moments, compound moments, watcher
-moments, and conditional moments.
+Trials are composed of moments. There are several types of moments: timed
+moments, compound moments, watcher moments, and conditional moments.
 
 ## Timed Moments
 
 Timed moments are the simplest kind of moment. They are are normally created by calling [`moment`](@ref).
 
 ```julia
-moment([fn],[delta_t])
 moment([delta_t],[fn],args...;keys...)
 ```
 
-The moment waits `delta_t` seconds after the onset of the previous moment, and
+A timed moment waits `delta_t` seconds after the onset of the previous moment, and
 then runs the specified function (`fn`), if any, passing it any `args` and
-`keys` provided. The short form (when `fn` is the second argument) is the most
-common type of moment to define, and allows for moments to run one specific
-function at a specific time. Long-form moments aren't normally necessary, and
-are a more [advanced topic](advanced.md). Below is an example of a short-form
-moment.
+`keys` provided. Below is an example of creating a timed moment.
 
 ```julia
 moment(0.5,play,mysound)
@@ -33,32 +28,48 @@ calling [`moment`](@ref). Specifically, [`timeout`](@ref) and
 [`await_response`](@ref) wait for a particular event to occur (such as a key
 press) before they begin.
 
-### Guidlines for low-latency trials
+### Guidlines for low-latency moments
 
-Weber aims to present trials at low latencies for accurate experiments.
+Weber aims to present moments at low latencies for accurate experiments.
 
 To maintain low latency, as much of the experimental logic as possible should be
 precomputed, outside of trial moments, during [setup-time](@ref setup_time). The
-following operations are generally safe to perform during a moment:
+following operations are definitely safe to perform during a moment:
 
 1. Calls to [`play`](@ref) to present a sound
 2. Calls to [`display`](@ref) to present a visual.
 3. Calls to [`record`](@ref) to save something to a data file (usually after any calls
    to [`play`](@ref) or [`display`](@ref))
 
-Note that Julia compiles functions on demand (known as JIT compilation), which
-can lead to very slow runtimes the first time a function runs.  To minimize JIT
-compilation during an experiment, any functions called directly by a moment are
-first precompiled. 
+Note that Julia compiles functions on demand (known as just-in-time or JIT
+compilation), which can lead to very slow runtimes the first time a function
+runs.  To minimize JIT compilation during an experiment, any functions called
+directly by a moment are first precompiled.
 
 !!! warning "Keep Moments Short"
 
     Long running moments will lead to latency issues. Make sure all
-    functions that run in a moment terminate relatively quickly. 
+    functions that run in a moment terminate relatively quickly.
+
+!!! warning "Play sounds after a delay."
+
+    To get the most accurate timing when playing a sound make sure it occurs by
+    itself, during a moment that has some non-zero delta. That is, do not call
+    `moment(play,mysound)`, *do* call `moment(SOA,play,mysound)`. This
+    ensures that there is sufficient time to prepare the sound for presentation
+    so that it occurs exactly when you want it to. The exact amount of delay
+    necessary to play the sound accurately will depend on your hardware and
+    operating system. 
+
+!!! warning "Sync visuals to the refresh rate."
+
+    Visuals synchronize to the screen refresh rate. You can 
+    find more details about this in the documentation of [`display`](@ref)
 
 ## Compound Moments
 
-You can create more complicated moments by concatenating simpler moments together using the `>>` operator or `moment(momoment1,moment2,...)`.
+You can create more complicated moments by concatenating simpler moments
+together using the `>>` operator or `moment(momoment1,moment2,...)`.
 
 A concatenation of moments starts immediately, proceeding through each of the
 moments in order. This is useful for playing several moments in parallel. For
@@ -68,7 +79,7 @@ screen if no keyboard key is pressed 150ms after the start of the trial.
 
 ```julia
 addtrial(moment(0.1,play,soundA) >> moment(0.1,play,soundB),
-         timeout(0.15,iskeydown,x -> display("Too Late!")))
+         timeout(() -> display("Too Late!"),iskeydown,0.15))
 ```
 
 ## Watcher Moments
@@ -83,19 +94,19 @@ form is most common, since generally one wishes to listen to all events during a
 trial. A watcher moments is simply a function that takes one argument: the event
 to be processed.
 
-If the watcher is the first moment in a trial, a convenient `do` block syntax is possible.
+If the watcher is the first moment in a trial, the convenient `do` block syntax is possible.
 
 ```julia
 message = visual("You hit spacebar!")
 addtrial(moment2,moment3) do event
   if iskeydown(key":space:")
-    display(message)
+    display(message,duration=0.500)
     record()
   end
 end
 ```
 
-In the above example, "You hit spacebar!" is displayed every time the spacebar
+In the above example, "You hit spacebar!" is displayed for 500ms every time the spacebar
 is hit.
 
 Refer to the documentation for [Events](event.md) for full details on how to respond to events.
