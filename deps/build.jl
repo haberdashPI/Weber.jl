@@ -77,9 +77,9 @@ elseif is_apple()
   end
 elseif is_linux()
     error("Weber does not support Linux. You can try manually installing ",
-          "SDL2 and SDL2_ttf, and then creating an appropriate ",
+          "SDL2, SDL2_ttf and portaudio and then creating an appropriate ",
           "deps.jl file in $(dirname(@__FILE__)). Be warned however that ",
-          "I have encountered strange runtime errors with the linux ",
+          "I have encountered strange llvm runtime errors with the linux ",
           "implementation, possibly related to SDL2 problems.")
   # function getdir(lib)
   #   dir = readlines(`dpkg -L $lib-0`)
