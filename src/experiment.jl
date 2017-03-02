@@ -1,6 +1,5 @@
 import Base: run
 export Experiment, setup, run, addcolumn
-import Juno
 
 const default_moment_resolution = 0.0015
 const default_input_resolution = 1/60
@@ -347,8 +346,19 @@ never be set to true in this case.
 """
 run(exp::ExtendedExperiment;keys...) = run(next(exp);keys...)
 function run{T <: BaseExperiment}(exp::T;await_input=!Juno.isactive())
-  if Juno.isactive() && await_input
-    error("`await_input` must be false when Juno is active.")
+  if Juno.isactive()
+    if await_input
+      error("`await_input` must be false when Juno is active.")
+    else
+      warn("""
+        Running Weber experiment directly in Juno. Consider using @read_args.
+        When runing directly in Juno, the experiment may not respond to input
+        correctly.  To solve this problem on Windows, once the experiment
+        begins, hit alt-tab to switch away from the expeirment, and then hit
+        alt-tab again to switch back to the experiment. On Mac you can use
+        command-tab to do the same thing.
+      """)
+    end
   end
 
   warmup_run(exp)

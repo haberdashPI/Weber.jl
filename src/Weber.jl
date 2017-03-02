@@ -1,6 +1,7 @@
 __precompile__()
 
 module Weber
+using Juno
 export resize_cache!
 
 # helper function for clean info and warn output

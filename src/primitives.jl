@@ -227,6 +227,11 @@ macro read_args(description,keys...)
 end
 
 function collect_args(description,script_file;keys...)
+  if Juno.isactive()
+    info("Please type your responses next the image of a page. "*
+              "Entering them next to the '>' will not work.")
+  end
+
   print("Enter subject id: ")
   sid = chomp(input())
   args = Array{Any}(length(keys))
@@ -265,26 +270,23 @@ function collect_args(description,script_file;keys...)
   else
     skip = parse(Int,str)
   end
-  println("Running...")
 
   if Juno.isactive()
     info("Spawning experiment in new child process...")
+    info("If you need to debug your experiment, don't call @read_args."*
+         " Set your experiment parameters manually inside your script "*
+         " add `cd(dirname(@__FILE__))` to a new line, and then run the script.")
     timestr = Dates.format(now(),"yyyy-mm-dd__HH_MM_SS")
     logfile = "weber_$timestr.log"
     child = spawn(pipeline(`$(joinpath(JULIA_HOME,"julia")) $script_file $sid $args $skip`,
                            stdout=logfile,stderr=logfile))
-    info("Experiment log written to $logfile.")
+    info("Experiment log will be written to $logfile. The experiment should begin shortly...")
     wait(child)
-    if get(ENV,"WEBER_DEBUG","false") == "false"
-      info("Closing julia to ensure clean experiment startup. ",
-           "You can set ENV[\"WEBER_DEBUG\"] = \"true\" to prevent this.")
-      exit()
-    else
-      # keeps the rest of the scrpt from running, but leaves
-      # julia state intact.
-      error("Experiment run completed. Switching to Weber debug mode.")
-    end
+    info("Experiment complete. Terminating julia, so the next run of an "*
+         "expeirment runs cleanly.")
+    exit()
   else
+    info("Running...")
     (sid,skip,args...)
   end
 end
