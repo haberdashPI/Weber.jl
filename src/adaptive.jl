@@ -139,9 +139,9 @@ end
                   [min_reversals=7],[min_delta=-Inf],[max_delta=Inf],
                   [mult=false])
 
-An adapter that finds a threshold according to a non-parametric statistical procedure. This
-approach makes fewer explicit assumptions than `bayesian_adapter` but may be
-slower to converge to a threshold.
+An adapter that finds a threshold according to a non-parametric statistical
+procedure. This approach makes fewer explicit assumptions than
+`bayesian_adapter` but may be slower to converge to a threshold.
 
 This finds a threshold by moving the delta down after three correct responses
 and up after one incorrect response (these default up and down counts can be
@@ -247,17 +247,17 @@ function update!(adapter::Levitt,response,correct)
   adapter
 end
 
-estimate_helper(a::Levitt{:add}) = mean(a),sd(a)
-estimate_helper(a::Levitt{:mult}) = exp(mean(log(a))),exp(sd(log(a)))
+estimate_helper(a::Levitt{:add},rev) = mean(rev),sd(rev)
+estimate_helper(a::Levitt{:mult},rev) = exp(mean(log(rev))),exp(sd(log(rev)))
 
 function estimate(adapter::Levitt)
   if length(adapter.reversals) < adapter.min_reversals
     NaN,NaN
   else
     if isodd(length(adapter.reversals))
-      estimate_helper(adapter.reversals[adapter.drop_reversals:end])
+      estimate_helper(adapter,adapter.reversals[adapter.drop_reversals:end])
     else
-      estimate_helper(adapter.reversals[adapter.drop_reversals+1:end])
+      estimate_helper(adapter,adapter.reversals[adapter.drop_reversals+1:end])
     end
   end
 end
