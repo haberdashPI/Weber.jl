@@ -207,9 +207,11 @@
                 <p>Some experiments require the use of an adaptive adjustment of a stimulus based on participant responses. There are several basic adaptive tracking algorithms built into Weber, and you can also implement your own as well.</p>
 <p><a id='Using-an-Adaptive-Track-1'></a></p>
 <h1 id="using-an-adaptive-track">Using an Adaptive Track</h1>
-<p>To use an adaptive track in your experiment, you need to make use of some of the <a href="../advanced/">advanced features</a> of Weber. </p>
-<p>In this section we'll walk through the necessary steps, using a simple frequency discrimination experiment. In this experiment, on each trial, listeners hear a low and a high tone, separated in frequency by an adaptively adjusted delta. Their task is to indicate which tone is lower, and the delta is adjusted to determine the difference in frequency at which listeners respond with 79% accuracy. The entire example code is provided below. </p>
+<p>To use an adaptive track in your experiment, you need to make use of some of the <a href="../advanced/">advanced features</a> of Weber. In this section we'll walk through the necessary steps, using a simple frequency discrimination experiment.</p>
+<p>In this experiment, on each trial, listeners hear a low and a high tone, separated in frequency by an adaptively adjusted delta. Their task is to indicate which tone is lower, and the delta is adjusted to determine the difference in frequency at which listeners respond with 79% accuracy. The entire example code is provided below. </p>
 <pre><code class="julia">using Weber
+sid,trial_skip,adapt = @read_args(&quot;Frequency Discrimination ($version).&quot;,
+                                  adapt=[:levitt,:bayes])
 
 n_trials = 60
 isresponse(e) = iskeydown(e,key&quot;p&quot;) || iskeydown(e,key&quot;q&quot;)

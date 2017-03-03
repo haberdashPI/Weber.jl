@@ -269,7 +269,7 @@ end
 <p>If <code>@addtrials while y_hit</code> was replaced with <code>while y_hit</code> in the above example, the while loop would never terminate, running an infinite loop, because <code>y_hit</code> is true before the experiment starts.</p>
 <p><a id='Run-time-stimulus-generation.-1'></a></p>
 <h1 id="run-time-stimulus-generation">Run-time stimulus generation.</h1>
-<p>When stimuli need to be generated during an experiment the standard short-form moment will not do. For instance, if you want a tone's frequency to depend on some delta value that changes during the experimrent the following will not work.</p>
+<p>When stimuli need to be generated during an experiment the normal approach will not work. For instance, if you want a tone's frequency to depend on some delta value that changes during the experimrent the following will not work.</p>
 <pre><code class="julia"># THIS WILL NOT WORK!!!
 moment(play,tone(1000+my_delta))
 </code></pre>

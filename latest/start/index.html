@@ -256,8 +256,8 @@ run(exp)
 <p>Finally click the run button (it is a big play symbol). You will need to enter some information into the console before the experiment begins, so make sure the Julia console is still open.</p>
 <p>After running the experiment on yourself, let's walk through the parts of this experiment piece-by-piece.</p>
 <div class="admonition note">
-<p class="admonition-title">User Interface Annoyances</p>
-<p>Unfortunately, there are some annoyances to using Weber from Atom. In  particular, if the console is not open, you may sit there waiting while  nothing happens. <strong>Make sure the Julia console is open</strong>. Input will be  requested from you in this console. <strong>Make sure you input your responses on  the appropriate line</strong>. The current Juno tool for reading input is a little  finicky, and you may find that you have to change the location of your  cursor so it is next to the little icon of a page.</p>
+<p class="admonition-title">Juno User Interface</p>
+<p>Unfortunately, there are some annoyances to using Weber from Atom. In  particular, if the console is not open, you may sit there waiting while  nothing happens. <strong>Make sure the Julia console is open</strong>. Input will be  requested from you in this console. Read the instructions to <strong>make sure  you input your responses on the appropriate line</strong>.</p>
 </div>
 <p><a id='Read-Experiment-Parameters-1'></a></p>
 <h1 id="read-experiment-parameters">Read Experiment Parameters</h1>
@@ -273,7 +273,7 @@ sid,skip = @read_args(&quot;A simple frequency discrimination experiment.&quot;)
 high = ramp(tone(1100,0.5))
 </code></pre>
 
-<p>These next two lines create two stimuli. A 1000 Hz tone (<code>low</code>) and a 1100 Hz tone (<code>hight</code>) each 0.5 seconds long. The <a href="../sound/#Weber.ramp"><code>ramp</code></a> function adds a tapering of the sound from 0 to the loudest level at the start of the sound over the course of 5 milliseconds, using the cosine function, and then a tapering back to 0 at the end of the sound.</p>
+<p>These next two lines create two stimuli. A 1000 Hz tone (<code>low</code>) and a 1100 Hz tone (<code>high</code>) each 0.5 seconds long. The <a href="../sound/#Weber.ramp"><code>ramp</code></a> function tapers the start and end of a sound to avoid click sounds.</p>
 <p>You can generate many simple stimuli in Weber, or you can use <code>load("sound.wav")</code> to open a sound file on your computer. Refer to the documentation in <a href="../sound/"><code>Sound</code></a>.</p>
 <p><a id='Creating-a-trial-1'></a></p>
 <h1 id="creating-a-trial">Creating a trial</h1>
@@ -320,7 +320,7 @@ end
 end
 </code></pre>
 
-<p>Once the experiment is defined, you can setup any trials and instructions that you want the experiment to have. The above code adds a break providing instructions for the listeners, and 10 trials, created using the <code>one_trial</code> function we defined above. Please refer to the <a href="../trial_guide/"><code>Trial Creation</code></a> section of the user guide and the <a href="../trials/"><code>Trials</code></a> section of the reference for more details on how to add trials.</p>
+<p>Once the experiment is defined, you can setup any trials and instructions that you want the experiment to have. The above code adds a break providing instructions for the listeners, and 10 trials, created using the <code>one_trial</code> function we defined above. Please refer to the <a href="../trial_guide/"><code>Trial Creation</code></a> section of the user guide for more details on how to add trials.</p>
 <p><a id='setup_time-1'></a></p>
 <h2 id="setup-vs-run-time">Setup- vs. run-time</h2>
 <pre><code class="julia">run(exp)

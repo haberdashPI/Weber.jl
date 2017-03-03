@@ -207,57 +207,64 @@
                 <p>We'll look in detail at how to create trials of an experiment. For a broad overview of trial creation refer to <a href="../start/">Getting Started</a>. The two basic steps to creating a trial are (1) defining a set of moments and (2) add moments to a trial. </p>
 <p><a id='Defining-Moments-1'></a></p>
 <h1 id="defining-moments">Defining Moments</h1>
-<p>There are several types of moments: timed moments, compound moments, watcher moments, and conditional moments.</p>
+<p>Trials are composed of moments. There are several types of moments: timed moments, compound moments, watcher moments, and conditional moments.</p>
 <p><a id='Timed-Moments-1'></a></p>
 <h2 id="timed-moments">Timed Moments</h2>
 <p>Timed moments are the simplest kind of moment. They are are normally created by calling <a href="../trials/#Weber.moment"><code>moment</code></a>.</p>
-<pre><code class="julia">moment([fn],[delta_t])
-moment([delta_t],[fn],args...;keys...)
+<pre><code class="julia">moment([delta_t],[fn],args...;keys...)
 </code></pre>
 
-<p>The moment waits <code>delta_t</code> seconds after the onset of the previous moment, and then runs the specified function (<code>fn</code>), if any, passing it any <code>args</code> and <code>keys</code> provided. The short form (when <code>fn</code> is the second argument) is the most common type of moment to define, and allows for moments to run one specific function at a specific time. Long-form moments aren't normally necessary, and are a more <a href="../advanced/">advanced topic</a>. Below is an example of a short-form moment.</p>
+<p>A timed moment waits <code>delta_t</code> seconds after the onset of the previous moment, and then runs the specified function (<code>fn</code>), if any, passing it any <code>args</code> and <code>keys</code> provided. Below is an example of creating a timed moment.</p>
 <pre><code class="julia">moment(0.5,play,mysound)
 </code></pre>
 
 <p>This moment plays <code>mysound</code> 0.5 seconds after the onset of the previous moment.</p>
 <p>There are several other kinds of timed moments, other than those created by calling <a href="../trials/#Weber.moment"><code>moment</code></a>. Specifically, <a href="../trials/#Weber.timeout"><code>timeout</code></a> and <a href="../trials/#Weber.await_response"><code>await_response</code></a> wait for a particular event to occur (such as a key press) before they begin.</p>
-<p><a id='Guidlines-for-low-latency-trials-1'></a></p>
-<h3 id="guidlines-for-low-latency-trials">Guidlines for low-latency trials</h3>
-<p>Weber aims to present trials at low latencies for accurate experiments.</p>
-<p>To maintain low latency, as much of the experimental logic as possible should be precomputed, outside of trial moments, during <a href="../start/#setup_time-1">setup-time</a>. The following operations are generally safe to perform during a moment:</p>
+<p><a id='Guidlines-for-low-latency-moments-1'></a></p>
+<h3 id="guidlines-for-low-latency-moments">Guidlines for low-latency moments</h3>
+<p>Weber aims to present moments at low latencies for accurate experiments.</p>
+<p>To maintain low latency, as much of the experimental logic as possible should be precomputed, outside of trial moments, during <a href="../start/#setup_time-1">setup-time</a>. The following operations are definitely safe to perform during a moment:</p>
 <ol>
 <li>Calls to <a href="../sound/#Weber.play"><code>play</code></a> to present a sound</li>
 <li>Calls to <a href="../video/#Base.Multimedia.display"><code>display</code></a> to present a visual.</li>
 <li>Calls to <a href="../trials/#Weber.record"><code>record</code></a> to save something to a data file (usually after any calls to <a href="../sound/#Weber.play"><code>play</code></a> or <a href="../video/#Base.Multimedia.display"><code>display</code></a>)</li>
 </ol>
-<p>Note that Julia compiles functions on demand (known as JIT compilation), which can lead to very slow runtimes the first time a function runs.  To minimize JIT compilation during an experiment, any functions called directly by a moment are first precompiled. </p>
+<p>Note that Julia compiles functions on demand (known as just-in-time or JIT compilation), which can lead to very slow runtimes the first time a function runs.  To minimize JIT compilation during an experiment, any functions called directly by a moment are first precompiled.</p>
 <div class="admonition warning">
 <p class="admonition-title">Keep Moments Short</p>
 <p>Long running moments will lead to latency issues. Make sure all functions that run in a moment terminate relatively quickly.</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Play sounds after a delay.</p>
+<p>To get the most accurate timing when playing a sound make sure it occurs by itself, during a moment that has some non-zero delta. That is, do not call <code>moment(play,mysound)</code>, <em>do</em> call <code>moment(SOA,play,mysound)</code>. This ensures that there is sufficient time to prepare the sound for presentation so that it occurs exactly when you want it to. The exact amount of delay necessary to play the sound accurately will depend on your hardware and operating system.</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Sync visuals to the refresh rate.</p>
+<p>Visuals synchronize to the screen refresh rate. You can  find more details about this in the documentation of <a href="../video/#Base.Multimedia.display"><code>display</code></a></p>
 </div>
 <p><a id='Compound-Moments-1'></a></p>
 <h2 id="compound-moments">Compound Moments</h2>
 <p>You can create more complicated moments by concatenating simpler moments together using the <code>&gt;&gt;</code> operator or <code>moment(momoment1,moment2,...)</code>.</p>
 <p>A concatenation of moments starts immediately, proceeding through each of the moments in order. This is useful for playing several moments in parallel. For example, the following code will present two sounds, one at 100ms, the other at 200ms after the start of the trial. It will also display "Too Late!" on the screen if no keyboard key is pressed 150ms after the start of the trial.</p>
 <pre><code class="julia">addtrial(moment(0.1,play,soundA) &gt;&gt; moment(0.1,play,soundB),
-         timeout(0.15,iskeydown,x -&gt; display(&quot;Too Late!&quot;)))
+         timeout(() -&gt; display(&quot;Too Late!&quot;),iskeydown,0.15))
 </code></pre>
 
 <p><a id='Watcher-Moments-1'></a></p>
 <h2 id="watcher-moments">Watcher Moments</h2>
 <p>Watcher moments are used to respond to events. Often, watcher moments need not be directly used. Instead, the higher level <a href="../trials/#Weber.response"><code>response</code></a> method can be used.</p>
 <p>As long as a watcher moment is active it occurs any time an event is triggered. A watcher moment becomes active at the start of the preceding moment, or at the start of a trial (if it's the first moment in a trial). This latter form is most common, since generally one wishes to listen to all events during a trial. A watcher moments is simply a function that takes one argument: the event to be processed.</p>
-<p>If the watcher is the first moment in a trial, a convenient <code>do</code> block syntax is possible.</p>
+<p>If the watcher is the first moment in a trial, the convenient <code>do</code> block syntax is possible.</p>
 <pre><code class="julia">message = visual(&quot;You hit spacebar!&quot;)
 addtrial(moment2,moment3) do event
   if iskeydown(key&quot;:space:&quot;)
-    display(message)
+    display(message,duration=0.500)
     record()
   end
 end
 </code></pre>
 
-<p>In the above example, "You hit spacebar!" is displayed every time the spacebar is hit.</p>
+<p>In the above example, "You hit spacebar!" is displayed for 500ms every time the spacebar is hit.</p>
 <p>Refer to the documentation for <a href="../event/">Events</a> for full details on how to respond to events.</p>
 <p><a id='Conditional-Moments-1'></a></p>
 <h2 id="conditional-moments">Conditional Moments</h2>
