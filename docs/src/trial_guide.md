@@ -59,7 +59,8 @@ directly by a moment are first precompiled.
     ensures that there is sufficient time to prepare the sound for presentation
     so that it occurs exactly when you want it to. The exact amount of delay
     necessary to play the sound accurately will depend on your hardware and
-    operating system. 
+    operating system. You will recieve warnings about delays that are too fast
+    to handle.
 
 !!! warning "Sync visuals to the refresh rate."
 

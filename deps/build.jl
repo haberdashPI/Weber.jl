@@ -40,15 +40,16 @@ portaudio = "UNKNOWN"
     rm(downloaddir,recursive=true,force=true)
   end
 
-  weber_build = joinpath(dirname(@__FILE__),"build","libweber-sound.0.dll")
-  weber_sound = joinpath(bindir,"libweber-sound.0.dll")
+  weber_build = joinpath(dirname(@__FILE__),"build","libweber-sound.1.dll")
+  weber_sound = joinpath(bindir,"libweber-sound.1.dll")
   portaudio_build = joinpath(dirname(@__FILE__),"lib","portaudio_x64.dll")
   portaudio = joinpath(bindir,"portaudio_x64.dll")
   if isfile(weber_build)
+    info("Using Makefile generated libraries $weber_build and $portaudio_build.")
     mv(weber_build,weber_sound)
     mv(portaudio_build,portaudio)
   else
-    download("http://haberdashpi.github.io/libweber-sound.0.dll",weber_sound)
+    download("http://haberdashpi.github.io/libweber-sound.1.dll",weber_sound)
     download("http://haberdashpi.github.io/portaudio_x64.dll",portaudio)
   end
 
@@ -66,13 +67,14 @@ elseif is_apple()
   SDL2_ttf = joinpath(prefix,"libSDL2_ttf-2.0.0.dylib")
   portaudio = joinpath(prefix,"libportaudio.2.dylib")
 
-  weber_build = joinpath(dirname(@__FILE__),"build","libweber-sound.0.dylib")
-  weber_sound = joinpath(bindir,"libweber-sound.0.dylib")
+  weber_build = joinpath(dirname(@__FILE__),"build","libweber-sound.1.dylib")
+  weber_sound = joinpath(bindir,"libweber-sound.1.dylib")
   if isfile(weber_build)
+    info("Using Makefile generated library $weber_build.")
     cp(weber_build,weber_sound)
   else
     original_path = "/usr/local/opt/portaudio/lib/libportaudio.2.dylib"
-    download("http://haberdashpi.github.io/libweber-sound.0.dylib",weber_sound)
+    download("http://haberdashpi.github.io/libweber-sound.1.dylib",weber_sound)
     run(`install_name_tool -change $original_path $portaudio $weber_sound`)
   end
 elseif is_linux()

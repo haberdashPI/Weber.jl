@@ -423,16 +423,18 @@ function play(x::Sound,wait::Bool=false,time::Float64=0.0)
 
   # verify the sound can be played when we want to
   if time > 0.0
-    size = ccall((:ws_cur_buffer_size,weber_sound),UInt64,
+    latency = ccall((:ws_cur_latency,weber_sound),Cdouble,
                  (Ptr{Void},),sound_setup_state.state)
-    min_dist = (2*size)/samplerate(sound_setup_state)
     now = Weber.tick()
-    if now + min_dist > time
-      warn("Sounds are placed too close to one another. ",
+    if now + latency > time
+      warn("Sound played too quickly. ",
            "Latency will not be reliable. If you want to play sounds ",
-           "closer than $(round(1000*min_dist,2))ms to each other, ",
+           "closer than $(round(1000*latency,2))ms to each other, ",
            "fuse them into one sound, and then play the single, ",
            "longer sound.")
+      if experiment_running()
+        record("high_latency",value=(now + latency) - x.time)
+      end
     end
   end
 

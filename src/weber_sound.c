@@ -31,6 +31,7 @@ typedef struct{
   int offset;
   int len;
   unsigned long last_buffer_size;
+  PaTime last_latency;
   double samplerate;
   double samplelen; // redundant, but reduces calculations in callback
 }TimedSound;
@@ -66,6 +67,7 @@ static int ws_callback(const void* in,void* out,unsigned long len,
   int new_offset = 0;
 
   sound->last_buffer_size = len;
+  sound->last_latency = time_info->outputBufferDacTime - time_info->currentTime;
 
   // if the sound has yet to start...
   if(offset == 0){
@@ -75,7 +77,6 @@ static int ws_callback(const void* in,void* out,unsigned long len,
       should_start = TRUE;
     }
 
-    // printf("padding: %d\n",zero_padding);
     if(zero_padding > 0){
       for(i=0;i<zero_padding;i++){
         output_buffer[(i<<1)] = 0;
@@ -85,15 +86,15 @@ static int ws_callback(const void* in,void* out,unsigned long len,
   }
   // copy samples as needed
   if((offset > 0 || should_start) && offset < sound_len){
-    copylen = len-zero_padding;
-    for(;i<copylen && i < sound_len - offset;i++){
-      output_buffer[(i<<1)] = sound_buffer[i+offset];
-      output_buffer[(i<<1)+1] = sound_buffer[i+sound_len+offset];
+    for(;i < len && i-zero_padding < sound_len - offset;i++){
+      output_buffer[(i<<1)] = sound_buffer[i-zero_padding+offset];
+      output_buffer[(i<<1)+1] = sound_buffer[i-zero_padding+sound_len+offset];
     }
-    sound->offset = copylen + offset;
+    new_offset = len-zero_padding + offset;
     // lockless multithreading: if the sound length has changed to zero
     // (meaning new buffer is about to be specified), don't update the offset
-    if(sound->len == 0) sound->offset = 0;
+    if(sound_buffer == sound->buffer && sound->len != 0)
+      sound->offset = new_offset;
   }
 
   // pad the remaing buffer (possibly everything) with zeros
@@ -236,8 +237,9 @@ void ws_resume(WsState* state){
 }
 
 EXPORT
-unsigned long ws_cur_buffer_size(WsState* state){
-  return state->sound->last_buffer_size;
+double ws_cur_latency(WsState* state){
+  return state->sound->last_buffer_size / state->sound->samplerate +
+    state->sound->last_latency;
 }
 
 EXPORT

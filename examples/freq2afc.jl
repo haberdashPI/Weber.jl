@@ -7,7 +7,6 @@ sid,trial_skip,adapt = @read_args("Frequency Discrimination ($version).",
                                   adapt=[:levitt,:bayes])
 
 const ms = 1/1000
-const st = 1/12
 atten_dB = 30
 n_trials = 60
 
