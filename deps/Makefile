@@ -22,7 +22,7 @@ ifeq ($(UNAME), Darwin)
 else
 	COMPILE = gcc -shared ../src/weber_sound.c \
 		-o build/libweber-sound.$(MAJOR_VERSION).dll \
-		-lportaudio -Iinclude -Llib -DWINDOWS
+		-lportaudio_x64 -Iinclude -Llib -DWINDOWS
 	WGET = wget "https://github.com/haberdashPI/haberdashPI.github.io/raw/master/portaudio_x64.dll"
 	MVLIB = mv portaudio_x64.dll lib/portaudio_x64.dll
 endif
