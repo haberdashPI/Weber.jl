@@ -228,8 +228,8 @@ end
 
 function collect_args(description,script_file;keys...)
   if Juno.isactive()
-    info("Please type your responses next the image of a page. "*
-              "Entering them next to the '>' will not work.")
+    info("Please type your responses directly below the prompt."*
+         "Entering them further down (next to the '>') will not work.")
   end
 
   print("Enter subject id: ")
