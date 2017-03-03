@@ -210,12 +210,12 @@
 <p class="admonition-title">Warning</p>
 <p>Assuming your hardware and video drivers permit it, <code>display</code> sycnrhonizes to the screen refresh rate so long as the experiment window uses accelerated graphics (true by default). The display of a visual can be no more accurate than that permitted by this refresh rate. In particular display can block for up to the length of an entire refresh cycle. If you want accurate timing in your experiment, make sure that there is nothing you want to occur immediately after calling display. If you want to display multiple visuals at once remember that you can compose visuals using the <code>+</code> operator, do not call display multiple times and expect these visual to all display at the same time (also note that the default behavior of visuals is to disappear when the next visual is shown).</p>
 </div>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/91298849f522b54a990bdf104bb6e287ac2acf76/src/video.jl#L665-L697' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/1a4b2948ae765c1d6ed34dbe532543bd366751a3/src/video.jl#L665-L697' class='documenter-source'>source</a><br></p>
 <pre><code>display(fn::Function;kwds...)
 </code></pre>
 
 <p>Display the visual returned by calling <code>fn</code>.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/91298849f522b54a990bdf104bb6e287ac2acf76/src/video.jl#L707-L711' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/1a4b2948ae765c1d6ed34dbe532543bd366751a3/src/video.jl#L707-L711' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.visual' href='#Weber.visual'>#</a>
 <strong><code>Weber.visual</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>visual(obj,[duration=0],[priority=0],keys...)
@@ -232,12 +232,12 @@
 <p class="admonition-title">Note</p>
 <p>By using using the <code>+</code> operator, multiple visual objects can be composed into one object, so that they are displayed together</p>
 </div>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/91298849f522b54a990bdf104bb6e287ac2acf76/src/video.jl#L254-L274' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/1a4b2948ae765c1d6ed34dbe532543bd366751a3/src/video.jl#L254-L274' class='documenter-source'>source</a><br></p>
 <pre><code>visual(color,[duration=0],[priority=0])
 </code></pre>
 
 <p>Render a color, across the entire screen.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/91298849f522b54a990bdf104bb6e287ac2acf76/src/video.jl#L294-L298' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/1a4b2948ae765c1d6ed34dbe532543bd366751a3/src/video.jl#L294-L298' class='documenter-source'>source</a><br></p>
 <pre><code>visual(str::String, [font=nothing], [font_name=&quot;arial&quot;], [size=32],
        [color=colorant&quot;white&quot;],
        [wrap_width=0.8],[clean_whitespace=true],[x=0],[y=0],[duration=0],
@@ -253,13 +253,13 @@
 <ul>
 <li>clean_whitespace: if true, replace all consecutive white space with a single space.</li>
 </ul>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/91298849f522b54a990bdf104bb6e287ac2acf76/src/video.jl#L391-L405' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/1a4b2948ae765c1d6ed34dbe532543bd366751a3/src/video.jl#L391-L405' class='documenter-source'>source</a><br></p>
 <pre><code>visual(img::Array, [x=0],[y=0],[duration=0],[priority=0])
 </code></pre>
 
 <p>Prepare the color or gray scale image to be displayed to the screen.</p>
 <p>This utilizes all the conventions in the <code>Images</code> package for representing images. Internally, real-number 2d arrays are interpreted as gray scale images, and real-number 3d arrays as an RGB image or RGBA image, depending on whether size(img,1) is of size 3 or 4. A 3d array with a size(img,1) ∉ [3,4] results in an error.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/91298849f522b54a990bdf104bb6e287ac2acf76/src/video.jl#L494-L504' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/1a4b2948ae765c1d6ed34dbe532543bd366751a3/src/video.jl#L494-L504' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.instruct' href='#Weber.instruct'>#</a>
 <strong><code>Weber.instruct</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>instruct(str;keys...)
@@ -268,7 +268,7 @@
 <p>Presents some instructions to the participant.</p>
 <p>This adds "(Hit spacebar to continue...)" to the end of the text, and waits for the participant to press spacebar to move on. It records an "instructions" event to the data file.</p>
 <p>Any keyword arguments are passed onto to <code>visual</code>, which can be used to adjust how the instructions are displayed.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/91298849f522b54a990bdf104bb6e287ac2acf76/src/primitives.jl#L27-L38' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/1a4b2948ae765c1d6ed34dbe532543bd366751a3/src/primitives.jl#L27-L38' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.font' href='#Weber.font'>#</a>
 <strong><code>Weber.font</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>font(name,size,[dirs=os_default],[color=colorant&quot;white&quot;])
@@ -276,7 +276,7 @@
 
 <p>Creates an <code>SDLFont</code> object to be used for for rendering text as an image.</p>
 <p>By default this function looks in the current directory and then an os specific default font directory for a font with the given name (case insensitive). You can specify a different list of directories using the <code>dirs</code> parameter.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/91298849f522b54a990bdf104bb6e287ac2acf76/src/video.jl#L228-L237' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/1a4b2948ae765c1d6ed34dbe532543bd366751a3/src/video.jl#L228-L237' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.window' href='#Weber.window'>#</a>
 <strong><code>Weber.window</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>window([width=1024],[height=768];[fullscreen=true],[title=&quot;Experiment&quot;],
@@ -284,14 +284,14 @@
 </code></pre>
 
 <p>Create a window to which various objects can be rendered. See the <code>visual</code> method.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/91298849f522b54a990bdf104bb6e287ac2acf76/src/video.jl#L124-L130' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/1a4b2948ae765c1d6ed34dbe532543bd366751a3/src/video.jl#L124-L130' class='documenter-source'>source</a><br></p>
 <p><a id='Base.close' href='#Base.close'>#</a>
 <strong><code>Base.close</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>close(win::SDLWindow)
 </code></pre>
 
 <p>Closes a visible SDLWindow window.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/91298849f522b54a990bdf104bb6e287ac2acf76/src/video.jl#L194-L198' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/1a4b2948ae765c1d6ed34dbe532543bd366751a3/src/video.jl#L194-L198' class='documenter-source'>source</a><br></p>
               
             </div>
           </div>
