@@ -1,3 +1,6 @@
+In addition to functions available below you can also call [`FileIO.jl`]'s
+`load` and `save` functions for common audio file formats (e.g. "wav").
+
 # Sound Creation
 
 ```@docs
@@ -5,6 +8,8 @@ tone
 noise
 silence
 harmonic_complex
+asstream
+stream_unit
 sound
 buffer
 ```
@@ -16,6 +21,8 @@ highpass
 lowpass
 bandpass
 ramp
+rampon
+rampoff
 attenuate
 mix
 mult
@@ -25,14 +32,15 @@ match_lengths
 # Playback
 
 ```@docs
+setup_sound 
 play
-pause
-stop
 duration
+stream
+stop
 samplerate
+current_sound_latency
 pause_sounds
 resume_sounds
-setup_sound
 run_calibrate
 ```
 

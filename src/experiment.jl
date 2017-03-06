@@ -184,11 +184,12 @@ function Experiment(;skip=0,columns=Symbol[],debug=false,
   next_moment = 0.0
   pause_mode = Running
   moments = [MomentQueue(Deque{Moment}(),0.0)]
+  streamers = Dict{Int,Streamer}()
   cleanup = () -> error("no cleanup function available!")
   last_good_delta = -1.0
   last_bad_delta = -1.0
   data = ExperimentData(offset,trial,skip,last_time,next_moment,trial_watcher,
-                        pause_mode,moments,cleanup,last_good_delta,
+                        pause_mode,moments,streamers,cleanup,last_good_delta,
                         last_bad_delta)
 
   running = processing = false
@@ -385,10 +386,17 @@ function run{T <: BaseExperiment}(
         process(exp,data(exp).moments,tick)
       end
 
-      # handle all input events (handles pauses, and notifys moments of events)
+      # handle all events (handles pauses, and notifys moments of events)
       if tick - last_input > info(exp).input_resolution
         poll_events(process_event,top(exp),tick)
         last_input = tick
+      end
+
+      # handle auditory streams
+      for streamer in values(data(exp).streamers)
+        if tick > streamer.next_stream
+          process(streamer)
+        end
       end
 
       # # report on any irregularity in the timing of moments
@@ -485,7 +493,6 @@ function process(exp::Experiment,queue::MomentQueue,t::Float64)
         run_time = offset + precise_time()
       end
       data(exp).last_time = run_time
-      last = queue.last
       if handle(exp,queue,moment,run_time)
         d = required_delta_t(moment)
         if !isempty(queue)

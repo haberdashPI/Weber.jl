@@ -4,191 +4,18 @@ using LibSndFile
 using FixedPointNumbers
 using FileIO
 using LRUCache
+using Lazy
 import FileIO: load, save
 import SampledSignals: samplerate
-import Base: length
+import Base: show, length, start, done, next
 
 export match_lengths, mix, mult, silence, noise, highpass, lowpass, bandpass,
-	tone, ramp, harmonic_complex, attenuate, sound, play, pause, stop,
-  savesound, duration, setup_sound, current_sound_latency, buffer,
-  resume_sounds, pause_sounds, load, save, samplerate, length
+	tone, ramp, harmonic_complex, attenuate, sound, asstream, play, stream, stop,
+  duration, setup_sound, current_sound_latency, buffer,
+  resume_sounds, pause_sounds, load, save, samplerate, length, channel,
+  rampon, rampoff, stream_unit
 
-"""
-    match_lengths(x,y,...)
-
-Ensure that all sounds have exactly the same length by adding silence
-to the end of shorter sounds.
-"""
-function match_lengths(xs...)
-	max_length = maximum(map(x -> size(x,1), xs))
-
-  map(xs) do x
-    if size(x,1) < max_length
-      vcat(x,SampleBuf(zeros(eltype(x),
-                             max_length - size(x,1),size(x,2)),samplerate(x)))
-    else
-      x
-    end
-  end
-end
-
-"""
-    mix(x,y,...)
-
-Mix several sounds together so that they play at the same time.
-"""
-function mix(xs...)
-  xs = match_lengths(xs...)
-  reduce(+,xs)
-end
-
-"""
-    mult(x,y,...)
-
-Mutliply several sounds together. Typically used to apply an amplitude envelope.
-"""
-function mult(xs...)
-	xs = match_lengths(xs...)
-	reduce(.*,xs)
-end
-
-"""
-    silence(length,[sample_rate_Hz=44100])
-
-Creates period of silence of the given length (in seconds).
-"""
-function silence(length_s;sample_rate_Hz=samplerate(sound_setup_state))
-	SampleBuf(zeros(floor(Int,sample_rate_Hz * length_s)),sample_rate_Hz)
-end
-
-"""
-    noise(length,[sample_rate_Hz=44100])
-
-Creates a period of white noise of the given length (in seconds).
-"""
-function noise(length_s;sample_rate_Hz=samplerate(sound_setup_state))
-	return SampleBuf(1-2rand(floor(Int,length_s*sample_rate_Hz)),sample_rate_Hz)
-end
-
-"""
-    tone(freq,length,[sample_rate_Hz=44100],[phase=0])
-
-Creates a pure tone of the given frequency and length (in seconds).
-"""
-function tone(freq_Hz,length_s;sample_rate_Hz=samplerate(sound_setup_state),
-              phase=0)
-	t = linspace(0,length_s,round(Int,length_s*sample_rate_Hz))
-	return SampleBuf(sin(2π*t * freq_Hz + phase),sample_rate_Hz)
-end
-
-"""
-    harmonic_complex(f0,harmonics,amps,length,
-                     [sample_rate_Hz=44100],[phases=zeros(length(harmonics))])
-
-Creates a harmonic complex of the given length, with the specified harmonics
-at the given amplitudes. This implementation is somewhat superior
-to simply summing a number of pure tones generated using `tone`, because
-it avoids beating in the sound that may occur due floating point errors.
-"""
-function harmonic_complex(f0,harmonics,amps,length_s;
-						              sample_rate_Hz=samplerate(sound_setup_state),
-                          phases=zeros(length(harmonics)))
-  @assert all(0 .<= phases) && all(phases .< 2π)
-	n = maximum(harmonics)+1
-
-  # generate single cycle of complex
-  unit_length_s = 1/f0
-  unit_length = floor(Int,sample_rate_Hz*unit_length_s)
-  unit = zeros(unit_length)
-
-	highest_freq = tone(f0,2n*unit_length_s;sample_rate_Hz=sample_rate_Hz)
-
-	for (amp,harm,phase) in zip(amps,harmonics,phases)
-		phase_offset = round(Int,n*phase/2π*sample_rate_Hz/f0)
-    wave = highest_freq[(1:unit_length) * (n-harm) + phase_offset]
-		unit += amp*wave[1:length(unit)]
-	end
-
-  # repeate the cycle as many times as necessary
-  full_length = round(Int,length_s*sample_rate_Hz)
-  full_sound = zeros(full_length)
-  for i0 in 1:unit_length:full_length
-    i1 = min(i0+unit_length-1,full_length)
-    full_sound[i0:i1] = unit[1:i1-i0+1]
-  end
-
-	SampleBuf(full_sound,sample_rate_Hz)
-end
-
-"""
-   bandpass(x,low,high,[order=5],[sample_rate_Hz=samplerate(x)])
-
-Band-pass filter the sound at the specified frequencies.
-
-Filtering uses a butterworth filter of the given order.
-"""
-function bandpass(x,low,high;order=5,sample_rate_Hz=samplerate(x))
-	ftype = Bandpass(float(low),float(high),fs=sample_rate_Hz)
-	f = digitalfilter(ftype,Butterworth(order))
-	SampleBuf(filt(f,x),sample_rate_Hz)
-end
-
-
-"""
-   lowpass(x,low,[order=5],[sample_rate_Hz=samplerate(x)])
-
-Low-pass filter the sound at the specified frequency.
-
-Filtering uses a butterworth filter of the given order.
-"""
-function lowpass(x,low;order=5,sample_rate_Hz=samplerate(x))
-	ftype = Lowpass(float(low),fs=sample_rate_Hz)
-	f = digitalfilter(ftype,Butterworth(order))
-	SampleBuf(filt(f,x),sample_rate_Hz)
-end
-
-"""
-    highpass(x,high,[order=5],[sample_rate_Hz=samplerate(x)])
-
-High-pass filter the sound at the specified frequency.
-
-Filtering uses a butterworth filter of the given order.
-"""
-function highpass(x,high;order=5,sample_rate_Hz=samplerate(x))
-	ftype = Highpass(float(high),fs=sample_rate_Hz)
-	f = digitalfilter(ftype,Butterworth(order))
-	SampleBuf(filt(f,x),sample_rate_Hz)
-end
-
-"""
-    ramp(x,[ramp_s=0.005];[sample_rate_Hz=samplerate(x)])
-
-Applies a half cosine ramp to the sound. Prevents click sounds at the start of
-tones.
-"""
-function ramp(x,ramp_s=0.005;sample_rate_Hz=samplerate(x))
-	ramp_len = floor(Int,sample_rate_Hz * ramp_s)
-	@assert size(x,1) > 2ramp_len
-
-	ramp_t = (1.0:ramp_len) / ramp_len
-	up = -0.5cos(π*ramp_t)+0.5
-	down = -0.5cos(π*ramp_t+π)+0.5
-	envelope = [up; ones(size(x,1) - 2*ramp_len); down]
-	mult(x,envelope)
-end
-
-"""
-    attenuate(x,atten_dB)
-
-Apply the given decibels of attenuation to the sound relative to a power level
-of 1.
-
-This function normalizes the sound to have a root mean squared value of 1 and
-then reduces the sound by a factor of ``10^{-a/20}``, where ``a`` = `atten_dB`.
-"""
-function attenuate(x,atten_dB=20)
-	10^(-atten_dB/20) * x/sqrt(mean(x.^2))
-end
+# TODO: test on a real experiment
 
 immutable WS_Sound
   buffer::Ptr{Fixed{Int16,15}}
@@ -252,8 +79,6 @@ function sound(x::SampleBuf)
   end
 end
 
-save(f::File,sound::Sound) = save(f,sound.buffer)
-
 function sound(x::SampleBuf{Fixed{Int16,15},1})
   get!(sound_cache,x) do
     sound(hcat(x,x))
@@ -264,6 +89,8 @@ function sound(x::SampleBuf{Fixed{Int16,15},2})
   Sound(WS_Sound(pointer(x.data),size(x.data,1)),x)
 end
 
+save(f::File,sound::Sound) = save(f,sound.buffer)
+
 """
     buffer(s::Sound)
 
@@ -271,94 +98,536 @@ Gets the `SampleBuf` associated with this sound (c.f. `SampledSignals` package).
 """
 buffer(x::Sound) = x.buffer
 
+"""
+    match_lengths(x,y,...)
+
+Ensure that all sounds have exactly the same length by adding silence
+to the end of shorter sounds.
+"""
+function match_lengths(xs...)
+	max_length = maximum(map(x -> size(x,1), xs))
+
+  map(xs) do x
+    if size(x,1) < max_length
+      vcat(x,SampleBuf(zeros(eltype(x),
+                             max_length - size(x,1),size(x,2)),samplerate(x)))
+    else
+      x
+    end
+  end
+end
+
+"""
+    mix(x,y,...)
+
+Mix several sounds together so that they play at the same time.
+"""
+function mix(xs::Union{SampleBuf,Array}...)
+  xs = match_lengths(xs...)
+  reduce(+,xs)
+end
+
+function mix(itrs...)
+  lazymap(itrs...) do xs...
+    reduce(+,xs)
+  end
+end
+
+"""
+    mult(x,y,...)
+
+Mutliply several sounds together. Typically used to apply an amplitude envelope.
+"""
+function mult(xs::Union{SampleBuf,Array}...)
+  xs = match_lengths(xs...)
+  reduce(+,xs)
+end
+
+function mult(itrs...)
+  lazymap(itrs...) do xs...
+    reduce(.*,xs)
+  end
+end
+
+"""
+    silence(length,[sample_rate_Hz=44100])
+
+Creates period of silence of the given length (in seconds).
+"""
+function silence(length_s;sample_rate_Hz=samplerate(sound_setup_state))
+	SampleBuf(zeros(floor(Int,sample_rate_Hz * length_s)),sample_rate_Hz)
+end
+
+
+immutable NoiseStream
+  rng::RandomDevice
+  length::Int
+  samplerate::Int
+end
+show(io::IO,as::NoiseStream) = write(io,"NoiseStream()")
+start(ns::NoiseStream) = nothing
+done(ns::NoiseStream,::Void) = false
+
+"""
+    noise(length,[sample_rate_Hz=44100])
+
+Creates a period of white noise of the given length (in seconds).
+
+You can create an infinite stream of noise (playable with [`stream`](@ref)) by
+passing a length of Inf, or leaving out the length entirely.
+"""
+function noise(length_s=Inf;sample_rate_Hz=samplerate(sound_setup_state))
+  if length_s < Inf
+	  SampleBuf(1-2rand(floor(Int,length_s*sample_rate_Hz)),sample_rate_Hz)
+  else
+    NoiseStream(RandomDevice(),stream_unit(),sample_rate_Hz)
+  end
+end
+
+function next(ns::NoiseStream,::Void)
+  SampleBuf(1-2rand(ns.rng,ns.length),ns.samplerate), nothing
+end
+
+tone_helper(t,freq,phase) = sin(2π*t * freq + phase)
+
+
+immutable ToneStream
+  freq::Float64
+  phase::Float64
+  length::Int
+  samplerate::Int
+end
+show(io::IO,as::ToneStream) = write(io,"ToneStream($(freq)Hz)")
+start(ts::ToneStream) = 1
+done(ts::ToneStream,i::Int) = false
+
+"""
+    tone(freq,length,[sample_rate_Hz=44100],[phase=0])
+
+Creates a pure tone of the given frequency and length (in seconds).
+
+You can create an infinitely long tone (playable with [`stream`](@ref)) by
+passing a length of Inf, or leaving out the length entirely.
+"""
+function tone(freq_Hz,length_s=Inf;sample_rate_Hz=samplerate(sound_setup_state),
+              phase=0)
+  if length_s < Inf
+	  t = linspace(0,length_s,round(Int,length_s*sample_rate_Hz))
+	  SampleBuf(tone_helper(t,freq_Hz,phase),sample_rate_Hz)
+  else
+    ToneStream(freq_Hz,phase,stream_unit(),sample_rate_Hz)
+  end
+end
+
+function next(ts::ToneStream,i::Int)
+  t = (ts.length*(i-1):ts.length*i-1) ./ ts.samplerate
+  SampleBuf(tone_helper(t,ts.freq,ts.phase),ts.samplerate), i+1
+end
+
+function complex_cycle(f0,harmonics,amps,sample_rate_Hz,phases)
+  @assert all(0 .<= phases) && all(phases .< 2π)
+	n = maximum(harmonics)+1
+
+  # generate single cycle of complex
+  cycle_length_s = 1/f0
+  cycle_length = floor(Int,sample_rate_Hz*cycle_length_s)
+  cycle = zeros(cycle_length)
+
+	highest_freq = tone(f0,2n*cycle_length_s;sample_rate_Hz=sample_rate_Hz)
+
+	for (amp,harm,phase) in zip(amps,harmonics,phases)
+		phase_offset = round(Int,n*phase/2π*sample_rate_Hz/f0)
+    wave = highest_freq[(1:cycle_length) * (n-harm) + phase_offset]
+		cycle += amp*wave[1:length(cycle)]
+	end
+
+  cycle
+end
+
+immutable ComplexStream
+  cycle::SampleBuf
+  length::Int
+  samplerate::Int
+end
+show(io::IO,as::ComplexStream) = write(io,"ComplexStream(...)")
+start(cs::ComplexStream) = 0
+done(cs::ComplexStream,i::Int) = false
+
+"""
+    harmonic_complex(f0,harmonics,amps,length,
+                     [sample_rate_Hz=44100],[phases=zeros(length(harmonics))])
+
+Creates a harmonic complex of the given length, with the specified harmonics
+at the given amplitudes. This implementation is somewhat superior
+to simply summing a number of pure tones generated using `tone`, because
+it avoids beating in the sound that may occur due floating point errors.
+
+You can create an infinitely long complex (playable with [`stream`](@ref)) by
+passing a length of Inf, or leaving out the length entirely.
+"""
+function harmonic_complex(f0,harmonics,amps,length_s=Inf;
+						              sample_rate_Hz=samplerate(sound_setup_state),
+                          phases=zeros(length(harmonics)))
+  cycle = complex_cycle(f0,harmonics,amps,sample_rate_Hz,phases)
+
+  if length_s < Inf
+    full_length = round(Int,length_s*sample_rate_Hz)
+    cycle[(0:full_length-1) .% length(cycle) + 1]
+  else
+    ComplexStream(cycle,stream_unit(),sample_rate_Hz)
+  end
+end
+
+function next(cs::ComplexStream,i::Int)
+  sound = cs.cycle[(i:i+cs.length-1) .% length(cs.cycle) + 1]
+  sound, i+cs.length
+end
+
+# TODO: after basic streaming is working
+# figure out how to stream these filters
+"""
+   bandpass(x,low,high,[order=5],[sample_rate_Hz=samplerate(x)])
+
+Band-pass filter the sound at the specified frequencies.
+
+Filtering uses a butterworth filter of the given order.
+"""
+bandpass(x::Sound,low,high;keys...) = sound(bandpass_helper(x.buffer,low,high;keys...))
+bandpass(x::Array,low,high;keys...) = bandpass_helper(x,low,high;keys...)
+bandpass(x::SampleBuf,low,high;keys...) = bandpass_helper(x,low,high;keys...)
+function bandpass_helper(x,low,high;order=5,sample_rate_Hz=samplerate(x))
+	ftype = Bandpass(float(low),float(high),fs=sample_rate_Hz)
+	f = digitalfilter(ftype,Butterworth(order))
+	SampleBuf(filt(f,x),sample_rate_Hz)
+end
+
+function bandpass(itr,low,high;order=5,sample_rate_Hz=samplerate(first(itr)))
+	ftype = Bandpass(float(low),float(high),fs=sample_rate_Hz)
+	f = DF2TFilter(digitalfilter(ftype,Butterworth(order)))
+  lazymap(itr) do sound
+    SampleBuf(filt(f,sound),sample_rate_Hz)
+  end
+end
+
+"""
+   lowpass(x,low,[order=5],[sample_rate_Hz=samplerate(x)])
+
+Low-pass filter the sound at the specified frequency.
+
+Filtering uses a butterworth filter of the given order.
+"""
+lowpass(x::Sound,low;keys...) = sound(lowpass_helper(x.buffer,low;keys...))
+lowpass(x::Array,low;keys...) = lowpass_helper(x,low;keys...)
+lowpass(x::SampleBuf,low;keys...) = lowpass_helper(x,low;keys...)
+function lowpass_helper(x,low;order=5,sample_rate_Hz=samplerate(x))
+	ftype = Lowpass(float(low),fs=sample_rate_Hz)
+	f = digitalfilter(ftype,Butterworth(order))
+	SampleBuf(filt(f,x),sample_rate_Hz)
+end
+
+function lowpass(itr,low;order=5,sample_rate_Hz=samplerate(first(itr)))
+  ftype = Lowpass(float(low),fs=sample_rate_Hz)
+	f = DF2TFilter(digitalfilter(ftype,Butterworth(order)))
+  lazymap(itr) do sound
+    SampleBuf(filt(f,sound),sample_rate_Hz)
+  end
+end
+
+# TODO: implement high and band pass streaming filters
+
+"""
+    highpass(x,high,[order=5],[sample_rate_Hz=samplerate(x)])
+
+High-pass filter the sound at the specified frequency.
+
+Filtering uses a butterworth filter of the given order.
+"""
+highpass(x::Sound,high;keys...) = sound(highpass_helper(x.buffer,high;keys...))
+highpass(x::Array,high;keys...) = highpass_helper(x,high;keys...)
+highpass(x::SampleBuf,high;keys...) = highpass_helper(x,high;keys...)
+function highpass_helper(x,high;order=5,sample_rate_Hz=samplerate(x))
+	ftype = Highpass(float(high),fs=sample_rate_Hz)
+	f = digitalfilter(ftype,Butterworth(order))
+	SampleBuf(filt(f,x),sample_rate_Hz)
+end
+
+function highpass(itr,high;order=5,sample_rate_Hz=samplerate(first(itr)))
+  ftype = Highpass(float(high),fs=sample_rate_Hz)
+	f = DF2TFilter(digitalfilter(ftype,Butterworth(order)))
+  lazymap(itr) do sound
+    SampleBuf(filt(f,sound),sample_rate_Hz)
+  end
+end
+
+# TODO: after basic streaming is working
+# figure out how to apply ramps for some period of the stream
+"""
+    ramp(x,[ramp_s=0.005];[sample_rate_Hz=samplerate(x)])
+
+Applies a half cosine ramp to start and end of the sound.
+
+Ramps prevent clicks at the start and end of sounds.
+"""
+function ramp(x,ramp_s=0.005;sample_rate_Hz=samplerate(x))
+	ramp_len = floor(Int,sample_rate_Hz * ramp_s)
+	@assert size(x,1) > 2ramp_len
+
+	ramp_t = (1.0:ramp_len) / ramp_len
+	up = -0.5cos(π*ramp_t)+0.5
+	down = -0.5cos(π*ramp_t+π)+0.5
+	envelope = [up; ones(size(x,1) - 2*ramp_len); down]
+	mult(x,envelope)
+end
+
+immutable FnStream
+  fn::Function
+  length::Int
+  samplerate::Int
+end
+start(fs::FnStream) = 1
+done(fs::FnStream,i::Int) = false
+function next(fs::FnStream,i::Int)
+  t = (fs.length*(i-1):fs.length*i-1) ./ fs.samplerate
+  SampleBuf(fs.fn.(t),fs.samplerate), i+1
+end
+
+"""
+    asstream(fn;[sample_rate_Hz=44100])
+
+Converts the function `fn` into a sound stream.
+
+The function `fn` should take a single argument--the time in seconds from the
+start of the stream--and should return a number between -1 and 1.
+"""
+function asstream(fn;sample_rate_Hz=samplerate(sound_setup_state))
+  FnStream(fn,stream_unit(),sample_rate_Hz)
+end
+
+"""
+    rampon(stream,[ramp_s=0.005])
+
+Applies a half consine ramp to start of the stream.
+"""
+function rampon(stream,ramp_s=0.005)
+  sample_rate_Hz = samplerate(first(stream))
+  ramp = asstream(sample_rate_Hz=sample_rate_Hz) do t
+    t < ramp_s ? -0.5cos(π*(t/ramp_s))+0.5 : 1
+  end
+  mult(stream,ramp)
+end
+
+"""
+    rampoff(stream,[ramp_s=0.005],[after=0])
+
+Applies a half consine ramp to the stream after `after` seconds, ending the
+stream at that point.
+"""
+function rampoff(itr,ramp_s=0.005,after=0)
+  sample_rate_Hz=samplerate(first(itr))
+  len = size(first(itr),1)
+  ramp = asstream(sample_rate_Hz=sample_rate_Hz) do t
+    if t < after
+      1
+    elseif after <= t < after+ramp_s
+      -0.5cos(π*(t - after)/ramp_s + π)+0.5
+    else
+      0
+    end
+  end
+  num_units = ceil(Int,(after+ramp_s)*sample_rate_Hz / len)
+  mult(itr,take(ramp,num_units))
+end
+
+# TODO: after basic streaming is working
+# figure out how to attenuate the stream
+"""
+    attenuate(x,atten_dB)
+
+Apply the given decibels of attenuation to the sound (or stream) relative to a
+power level of 1.
+
+This function normalizes the sound to have a root mean squared value of 1 and
+then reduces the sound by a factor of ``10^{-a/20}``, where ``a`` = `atten_dB`.
+
+If `x` is a stream, attenuate takes an additional keyword argument
+`time_constant`. This determines the time across which the sound is
+normalized to power 1, which defaults to 1 second.
+"""
+attenuate(x::Array,atten=20) = attenuate_helper(x,atten)
+attenuate(x::SampleBuf,atten=20) = attenuate_helper(x,atten)
+attenuate(x::Sound,atten=20) = sound(attenuate_helper(x.buffer,atten))
+function attenuate_helper(x,atten_dB)
+	10^(-atten_dB/20) * x/sqrt(mean(x.^2))
+end
+
+immutable AttenStream{T}
+  itr::T
+  atten_dB::Float64
+  decay::Float64
+end
+
+immutable AttenState{T}
+  itr_state::T
+  μ²::Float64
+  N::Float64
+end
+show(io::IO,as::AttenStream) = write(io,"AttenStream(...,$(as.atten_dB),$(as.decay))")
+start{T}(as::AttenStream{T}) = AttenState(start(as.itr),1.0,1.0)
+done(as::AttenStream,s::AttenState) = done(as.itr,s.itr_state)
+function next{T,S}(as::AttenStream{T},s::AttenState{S})
+  xs, itr_state = next(as.itr,s.itr_state)
+  ys = similar(xs)
+  for i in 1:size(xs,1)
+    ys[i,:] = 10^(-as.atten_dB/20) * xs[i,:] ./ sqrt(s.μ² ./ s.N)
+    s = AttenState(itr_state,as.decay*s.μ² + mean(xs[i,:])^2,as.decay*s.N + 1)
+  end
+
+  ys, s
+end
+
+function attenuate(itr,atten_dB=20;time_constant=1)
+  sr = samplerate(first(itr))
+  AttenStream(itr,float(atten_dB),1 - 1 / (time_constant*sr))
+end
+
 const default_sample_rate = 44100
 type SoundSetupState
   samplerate::Int
-  playing::Nullable{Sound}
+  playing::Dict{Sound,Float64}
   state::Ptr{Void}
+  num_channels::Int
+  queue_size::Int
+  stream_unit::Int
 end
-SoundSetupState() = SoundSetupState(0,Nullable(),C_NULL)
-function samplerate(s::SoundSetupState)
+const default_stream_unit = 2^14
+const sound_setup_state = SoundSetupState(0,Dict(),C_NULL,0,0,default_stream_unit)
+isready(s::SoundSetupState) = s.samplerate != 0
+
+"""
+    stream_unit()
+
+Report the length in samples of each unit that a sound stream generates.
+"""
+stream_unit(s::SoundSetupState=sound_setup_state) = s.stream_unit
+
+"""
+    samplerate([sound])
+
+Report the sampling rate of the sound or of any object
+that can be turned into a sound.
+
+If no sound is passed, the curent playback sampling rate is reported (as
+determiend by [`setup_sound`](@ref)).  The sampling rate of object determines
+how many samples per second are used to represent the sound. Objects that can be
+converted to sounds assume the sampling rate of the current hardware settings as
+defined by [`setup_sound`](@ref).
+"""
+samplerate(x::Vector) = samplerate(sound_setup_state)
+samplerate(x::Matrix) = samplerate(sound_setup_state)
+function samplerate(s::SoundSetupState=sound_setup_state)
   if s.samplerate == 0
     default_sample_rate
   else
     s.samplerate
   end
 end
-isready(s::SoundSetupState) = s.samplerate != 0
 
-"""
-    samplerate(sound)
+# Give some time after the sound stops playing to clean it up.
+# This ensures that even when there is some latency
+# the sound will not be GC'ed until it is done playing.
+const sound_cleanup_wait = 2
 
-Report the sampling rate of the sound or of any object
-that can be turned into a sound.
-
-The sampling rate of object determines how many samples per second
-are used to represent the sound. Objects that can be converted to sounds
-assume the sampling rate of the current hardware settings as defined
-by [`setup_sound`](@ref).
-"""
-samplerate(x::Vector) = samplerate(sound_setup_state)
-samplerate(x::Matrix) = samplerate(sound_setup_state)
-
-const sound_setup_state = SoundSetupState()
-
-function register_sound(current::Sound,play_from=0)
-  sound_setup_state.playing = Nullable(current)
-end
-
-function unregister_sound(current::Sound)
-  sound_setup_state.playing = Nullable()
-end
-
-function ws_if_error(msg)
-  if sound_setup_state.state != C_NULL
-    if ccall((:ws_is_error,weber_sound),Cint,
-             (Ptr{Void},),sound_setup_state.state) == true
-      error(msg*": "*unsafe_string(ccall((:ws_error_str,weber_sound),Cstring,
-                                         (Ptr{Void},),sound_setup_state.state)))
+# register_sound: ensures that sounds are not GC'ed while they are
+# playing. Whenever a new sound is registered it removes sounds that are no
+# longer playing. This is called internally by all methods that send requests to
+# play sounds to the weber-sound library (implemented in weber_sound.c)
+function register_sound(current::Sound,done_at::Float64)
+  setstate = sound_setup_state
+  setstate.playing[current] = done_at
+  for s in keys(setstate.playing)
+    done_at = setstate.playing[s]
+    if done_at + sound_cleanup_wait > precise_time()
+      delete!(setstate.playing,s)
     end
   end
 end
 
-function isplaying()
-  ccall((:ws_isplaying,weber_sound),Cint,
-        (Ptr{Void},),sound_setup_state.state) == true
+function ws_if_error(msg)
+  if sound_setup_state.state != C_NULL
+    str = unsafe_string(ccall((:ws_error_str,weber_sound),Cstring,
+                              (Ptr{Void},),sound_setup_state.state))
+    if !isempty(str) error(msg*" - "*str) end
+
+    str = unsafe_string(ccall((:ws_warn_str,weber_sound),Cstring,
+                              (Ptr{Void},),sound_setup_state.state))
+    if !isempty(str) warn(msg*" - "*str) end
+  end
 end
 
-function isplaying(sound::Sound)
-  isplaying() && !isnull(sound_setup_state.playing) &&
-    get(sound_setup_state.playing) == sound
-end
 """
-    setup_sound([sample_rate_Hz=44100])
+    setup_sound([sample_rate_Hz=44100],[num_channels=8],[queue_size=8],
+                [stream_unit=default_stream_unit])
 
-Initialize format for audio playback.
+Initialize format and capacity of audio playback.
 
-This function is called automatically (using the default sampling rate) the
-first time a `Sound` object is created (normally by using the `sound`
-function). It need not normally be called explicitly, unless you wish to change
-the play-back sample rate. Sample rate determines the maximum playable frequency
-(max freq is ≈ sample_rate/2).
+This function is called automatically (using the default settings) the first
+time a `Sound` object is created (normally during [`play`](@ref) or
+[`stream`](@ref)).  It need not normally be called explicitly, unless you wish
+to change one of the default settings.
 
-Changing the sample rate from the default 44100 to a new value will also change
-the default sample rate sounds will be created at, to match this new sample
-rate. Upon playback, there is no check to ensure that the sample rate of a given
-sound is the same as that setup here, and no resampling of the sound is made.
+# Sample Rate
+
+Sample rate determines the maximum playable frequency (max freq is ≈
+sample_rate/2). Changing the sample rate from the default 44100 to a new value
+will also change the default sample rate sounds will be created at, to match
+this new sample rate.
+
+!!! warn "There is no check for sampling rate"
+
+    Upon playback, there is no check to ensure that the sample rate of a given
+    sound is the same as that setup here, and no resampling of the sound is
+    made, so it will play incorrectly if the sample rates differ.
+    This minimizes the latency of audio playback.
+
+# Channel Number
+
+The number of channels determines the number of sounds and streams that can be
+played concurrently. Note that discrete sounds and streams use a distinct set of
+channels.
+
+# Queue Size
+
+Sounds can be queued to play ahead of time (using the `time` parameter of
+[`play`](@ref)). When you request that a sound be played it may be queued to
+play on a channel where a sound is already playing. The number of sounds that
+can be queued to play at once is determined by queue size. The number of
+channels times the queue size determines the number of sounds that you can queue
+up to play ahead of time.
+
+# Stream Unit
+
+The stream unit determines the number of samples that are streamed at one time.
+Iterators to be used as streams should generate this many samples at a time.  If
+this value is two small for your hardware, streams will sound jumpy. However the
+latency for changing from one stream to another will increase as the stream unit
+increases.
+
 """
 function setup_sound(;sample_rate_Hz=samplerate(sound_setup_state),
-                     buffer_size=nothing)
+                     buffer_size=nothing,queue_size=8,num_channels=8,
+                     stream_unit=default_stream_unit)
   if isready(sound_setup_state)
     ccall((:ws_close,weber_sound),Void,(Ptr{Void},),sound_setup_state.state)
-    ws_if_error("Error closing old audio stream during setup")
+    ws_if_error("While closing old audio stream during setup")
   else
 
     if !weber_sound_is_setup[]
       weber_sound_is_setup[] = true
       atexit() do
+        sleep(0.1)
         ccall((:ws_close,weber_sound),Void,
               (Ptr{Void},),sound_setup_state.state)
-        ws_if_error("Error closing audio stream at exit.")
+        ws_if_error("While closing audio stream at exit.")
         ccall((:ws_free,weber_sound),Void,
               (Ptr{Void},),sound_setup_state.state)
       end
@@ -373,65 +642,77 @@ function setup_sound(;sample_rate_Hz=samplerate(sound_setup_state),
 
   sound_setup_state.samplerate = sample_rate_Hz
   sound_setup_state.state = ccall((:ws_setup,weber_sound),Ptr{Void},
-                                  (Cint,),sample_rate_Hz)
-  ws_if_error("Failed to initialize sound")
+                                  (Cint,Cint,Cint,),sample_rate_Hz,
+                                  num_channels,queue_size)
+  sound_setup_state.num_channels = num_channels
+  sound_setup_state.queue_size = queue_size
+  sound_setup_state.stream_unit = stream_unit
+  ws_if_error("While trying to initialize sound")
 end
 
-type PlayingSound
-  sound::Sound
-  offset::Cint
-end
-
-function play(x;wait=false,time=0.0)
+function play(x;time=0.0,channel=0)
   if in_experiment() && !experiment_running()
     error("You cannot call `play` during experiment `setup`. During `setup`",
           " you should add play to a trial (e.g. ",
           "`addtrial(moment(play,my_sound))`).")
   end
   warn("Calling play outside of an experiment.")
-  _play(x,wait,time)
+  _play(x,time,channel)
 end
 
-function _play(x,wait=false,time=0.0)
-  play(sound(x),wait,time)
+function _play(x,time=0.0,channel=0)
+  play(sound(x),time,channel)
 end
 
 """
-    play(x,[wait=false],[time=0.0])
+    current_sound_latency()
+
+Reports the current, minimum latency of audio playback.
+
+The current latency depends on your hardware and software drivers. This
+estimate does not include the time it takes for a sound to travel from
+your sound card to speakers or headphones. This latency estimate is used
+internally by `play` to present sounds at accurate times.
+"""
+function current_sound_latency()
+  ccall((:ws_cur_latency,weber_sound),Cdouble,
+        (Ptr{Void},),sound_setup_state.state)
+end
+
+"""
+    play(x;[time=0.0],[channel=0])
 
 Plays a sound (created via `sound`).
-
-If `wait == false`, returns an object that can be used to `stop`, or `pause` the
-sound. One can also call play(x,wait=true) on this object to wait for the sound
-to finish. The sound will normally play only once, but can be repeated
-multiple times using `times`.
-
-If `time > 0`, plays the sound at the given time (in seconds from epoch).
 
 For convenience, play can also can be called on any object that can be turned
 into a sound (via `sound`).
 
-!!! info "Playing Multiple Sounds"
+This function returns immediately with the channel the sound is playing on. You
+may provide a specific channel that the sound plays on: only one sound can be
+played per channel. Normally it is unecessary to specify a channel, because an
+appriate channel is selected for you. However, pausing and resuming of
+sounds occurs on a per channel basis, so if you plan to pause a specific
+sound, you can do so by specifiying its channel.
 
-    If one sound is already playing this function will block until the sound
-    has finished playing before starting the next sound. If you want
-    to play multiple sounds over one another, create a single mixture
-    of those sounds--using [`mix`](@ref)--and call play on the mixture.
-
+If `time > 0`, the sound plays at the given time (in seconds from epoch, or
+seconds from experiment start if an experiment is running), otherwise the sound
+plays as close to right now as is possible.
 """
-function play(x::Sound,wait::Bool=false,time::Float64=0.0)
-
-  # verify the sound can be played when we want to
+function play(x::Sound,time::Float64=0.0,channel::Int=0)
+  @assert 1 <= channel <= sound_setup_state.num_channels || channel <= 0
+  # first, verify the sound can be played when we want to
   if time > 0.0
-    latency = ccall((:ws_cur_latency,weber_sound),Cdouble,
-                 (Ptr{Void},),sound_setup_state.state)
+    latency = current_sound_latency()
     now = Weber.tick()
     if now + latency > time
-      warn("Sound played too quickly. ",
-           "Latency will not be reliable. If you want to play sounds ",
-           "closer than $(round(1000*latency,2))ms to each other, ",
-           "fuse them into one sound, and then play the single, ",
-           "longer sound.")
+      if latency > 0
+        warn("Requested timing of sound cannot be achieved. ",
+             "With your hardware you cannot request the playback of a sound ",
+             "< $(round(1000*latency,2))ms before it begins.")
+      else
+        warn("Requested timing of sound cannot be achieved. ",
+             "Give more time for the sound to be played.")
+      end
       if experiment_running()
         record("high_latency",value=(now + latency) - time)
       end
@@ -441,19 +722,169 @@ function play(x::Sound,wait::Bool=false,time::Float64=0.0)
          "so the sound can be properly prepared.")
   end
 
-  ccall((:ws_play,weber_sound),Void,
-        (Cdouble,Cdouble,Ref{WS_Sound},Ptr{Void}),
-        Weber.tick(),time,x.chunk,sound_setup_state.state)
-  ws_if_error("Error playing sound")
+  # play the sound
+  channel = ccall((:ws_play,weber_sound),Cint,
+                  (Cdouble,Cdouble,Cint,Ref{WS_Sound},Ptr{Void}),
+                  Weber.tick(),time,channel-1,x.chunk,
+                  sound_setup_state.state) + 1
+  ws_if_error("While playing sound")
+  register_sound(x,(time > 0.0 ? time : Weber.tick()) + duration(x))
 
-  if !wait
-    register_sound(x)
-    PlayingSound(x,0)
-  else
-    sleep(duration(x)-0.01)
-    while isplaying() end
-    nothing
+  channel
+end
+
+type Streamer
+  next_stream::Float64
+  channel::Int
+  itr_state
+  itr
+end
+show(stream::IO,streamer::Streamer) =
+  write(stream,"<Streamer channel: $(streamer.channel)>")
+
+function setup_streamers()
+  streamers[-1] = Streamer(0.0,0,nothing,nothing)
+  Timer(1/60,1/60) do timer
+    for streamer in values(streamers)
+      if streamer.itr != nothing
+        process(streamer)
+      end
+    end
   end
+end
+
+const num_channels = 8
+const streamers = Dict{Int,Streamer}()
+"""
+    stream([itr | fn],channel=1)
+
+Plays sounds continuously on a given channel by reading from the iterator `itr`
+whenever more data is required. The iterator should return objects that can be
+turned into sounds (via [`sound`](@ref)). The number of available streaming
+channels is determined by [`setup_sound`](@ref).
+
+Alternatively a `fn` can be streamed: this transforms a previously streamed itr
+into a new iterator by calling `fn(itr)`. If no stream already exists on the
+given channel, `fn` is passed the result of `countfrom()`.
+
+A stream stops playing if the iterator is finished. There can only be one stream
+per channel.  Streaming a new iterator on the same channel as another stream
+stops the older stream. The channels for `stream` are separate from the channels
+for `play`. That is, `play(mysound,channel=1)` plays a sound on a channel
+separate from `stream(mystream,1)`.
+
+Returns the time at which the stream will start playing.
+
+!!! "Streaming delays the start of a moment."
+
+    When stream is called as a moment, (e.g. `moment(stream,itr,channel)`) it
+    will delay the start of the moment so that it begins at the start of the
+    stream. The amount of delay depends on how long any currently playing unit
+    of an older stream takes to finish playing on the given channel. This delay
+    ensures that subsequent moments are synchronized to the start of the stream,
+    allowing all events to be well timed with respect to streaming events.
+
+    In general the latency of changing from one stream to another depends
+    on how long each sound returned by the iterator is. Streams cannot
+    be stopped in the middle of playing back a given unit returned by
+    the iterator. This in turn is normally determined by the stream_unit
+    value set during the initial call to [`setup_sound`](@ref), which can
+    be retrieved using [`stream_unit`](@ref).
+
+"""
+
+function stream(itr,channel::Int=1)
+  !isready(sound_setup_state) ? setup_sound() : nothing
+  @assert 1 <= channel <= sound_setup_state.num_channels
+  itr_state = start(itr)
+  obj, itr_state = next(itr,itr_state)
+  x = sound(obj)
+  done_at = -1.0
+  stop(channel)
+
+  while (done_at = ccall((:ws_play_next,weber_sound),Cdouble,
+                         (Cdouble,Cint,Ref{WS_Sound},Ptr{Void}),
+                         tick(),channel-1,x.chunk,sound_setup_state.state)) < 0
+    sleep(0.001);
+  end
+  ws_if_error("While playing sound")
+  register_sound(x,done_at)
+
+  if in_experiment()
+    data(get_experiment()).streamers[channel] =
+      Streamer(done_at - 0.95duration(x),channel,itr_state,itr)
+  else
+    if isempty(streamers)
+      setup_streamers()
+    end
+    streamers[channel] =
+      Streamer(done_at - 0.95duration(x),channel,itr_state,itr)
+  end
+
+  (done_at - duration(x))
+end
+
+function stream(fn::Function,channel::Int)
+  @assert 1 <= channel <= sound_setup_state.num_channels
+  dict = in_experiment() ? data(get_experiment()).streamers : streamers
+  itr = if channel in keys(dict)
+    streamer = dict[channel]
+    delete!(dict,channel)
+    rest(streamer.itr,streamer.itr_state)
+  else
+    countfrom()
+  end
+
+  stream(fn(itr),channel)
+end
+
+"""
+    stop(channel)
+
+Stop the stream that is playing on the given channel.
+"""
+function stop(channel::Int)
+  @assert 1 <= channel <= sound_setup_state.num_channels
+  if in_experiment()
+    delete!(data(get_experiment()).streamers,channel)
+  else
+    delete!(streamers,channel)
+  end
+  nothing
+end
+
+function process(streamer::Streamer)
+  if !done(streamer.itr,streamer.itr_state)
+    obj, next_state = next(streamer.itr,streamer.itr_state)
+    x = sound(obj)
+    done_at = -1.0
+
+    if tick() > streamer.next_stream + 0.75duration(x)
+      warn(cleanstr("""
+
+Stream unit was played late. There may be a skip. This often happens at the
+start of an experiment, but if it continues to happen throughout the experiment,
+you should increase the stream unit size using `setup_sound()`.
+
+      """))
+    end
+
+    done_at = ccall((:ws_play_next,weber_sound),Cdouble,
+                    (Cdouble,Cint,Ref{WS_Sound},Ptr{Void}),
+                    tick(),streamer.channel-1,x.chunk,
+                    sound_setup_state.state)
+    ws_if_error("While playing sound")
+    if done_at < 0
+      # sound not ready to be queued for playing, wait a bit and try again
+      streamer.next_stream += 0.001
+    else
+      # sound was queued to play, wait until this queued sound actually
+      # starts playing to queue the next stream unit
+      register_sound(x,done_at)
+      streamer.next_stream = done_at - duration(x)
+      streamer.itr_state = next_state
+    end
+  else stop(streamer.channel) end
 end
 
 """
@@ -465,78 +896,33 @@ function play(fn::Function;keys...)
   play(fn();keys...)
 end
 
-function play(x::PlayingSound;wait=false)
-  if isplaying() && !isplaying(x.sound)
+"""
+    pause_sounds([channel],[isstream])
 
-  end
+Pause all sounds (or a stream) playing on a given channel.
 
-  ccall((:ws_play_from,weber_sound),Void,
-        (Cint,Ref{WS_Sound},Ptr{Void}),
-        x.offset,x.sound.chunk,sound_setup_state.state)
-  ws_if_error("Failed to resume playing sound")
-
-  if !wait
-    register_sound(x.sound)
-    x
-  else
-    sleep(duration(x.sound) - (x.offset / samplerate(sound_setup_state))-0.01)
-    while ccall((:ws_isplaying,weber_sound),Cint,
-                (Ptr{Void},),sound_setup_state.state)
-    end
-    nothing
-  end
+If no channel is specified, then all sounds are paused.
+"""
+function pause_sounds(channel=-1,isstream=false)
+  @assert 1 <= channel <= sound_setup_state.num_channels || channel <= 0
+  ccall((:ws_pause,weber_sound),Void,(Ptr{Void},Cint,Cint,Cint),
+        sound_setup_state.state,channel-1,isstream,true)
+  ws_if_error("While pausing sounds")
 end
 
 """
-    pause(x)
+    resume_sounds([channel],[isstream])
 
-Pause playback of the sound. Resume by calling `play` on the sound again.
+Resume all sounds (or a stream) playing on a given channel.
+
+If no channel is specified, then all sounds are resumed.
 """
-function pause(x::PlayingSound)
-  if (isnull(sound_setup_state.playing) ||
-      get(sound_setup_state.playing) != x.sound)
-    return x
-  end
-
-  x.offset = ccall((:ws_stop,weber_sound),Cint,
-                   (Ptr{Void},),sound_setup_state.state)
-  ws_if_error("Failed to pause sound")
-  x
+function resume_sounds(channel=-1,isstream=false)
+  @assert 1 <= channel <= sound_setup_state.num_channels || channel <= 0
+  ccall((:ws_pause,weber_sound),Void,(Ptr{Void},Cint,Cint,Cint),
+        sound_setup_state.state,channel-1,isstream,false)
+  ws_if_error("While resuming audio playback")
 end
-
-"""
-    stop(x)
-
-Stop playback of the sound.
-"""
-function stop(x::PlayingSound)
-  unregister_sound(x.sound)
-  ccall((:ws_stop,weber_sound),Cint,(Ptr{Void},),sound_setup_state.state)
-  ws_if_error("Failed to stop sound")
-
-  nothing
-end
-
-"""
-    pause_sounds()
-
-Pause all sounds that are playing.
-"""
-function pause_sounds()
-  ccall((:ws_stop,weber_sound),Cint,(Ptr{Void},),sound_setup_state.state)
-  ws_if_error("Failed to pause sounds")
-end
-
-"""
-    resume_sounds()
-
-Resume all sounds that have been paused.
-"""
-function resume_sounds()
-  ccall((:ws_resume,weber_sound),Void,(Ptr{Void},),sound_setup_state.state)
-  ws_if_error("Failed to resume playing sounds")
-end
-
 
 """
     duration(x)
@@ -544,7 +930,6 @@ end
 Get the duration of the given sound.
 """
 duration(s::Sound) = duration(s.buffer)
-duration(s::PlayingSound) = duration(s.sound)
 duration(s::SampleBuf) = size(s,1) / samplerate(s)
 function duration(s::Array{Float64};
                   sample_rate_Hz=samplerate(sound_setup_state))

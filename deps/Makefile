@@ -1,8 +1,16 @@
-MAJOR_VERSION = 1
+MAJOR_VERSION = 2
 MINOR_VERSION = 0.0
+DEBUG = "yes"
+$(info [Debug: ${DEBUG}])
 
 UNAME := $(shell uname)
 $(info [${UNAME}])
+
+ifeq ($(DEBUG), "yes")
+	COMPILE_FLAGS = -O0 -g
+else
+	COMPILE_FLAGS = -O3
+endif
 
 # On mac osx, run "brew install portaudio", or some other means of installing
 # portaudio
@@ -16,13 +24,13 @@ ifeq ($(UNAME), Darwin)
 		-L/usr/local/lib -Iinclude -lportaudio \
 		-framework CoreAudio -framework AudioToolbox \
 		-framework AudioUnit -framework CoreServices \
-		-framework Carbon -g
+		-framework Carbon $(COMPILE_FLAGS)
 	WGET = ''
 	MVLIB = ''
 else
 	COMPILE = gcc -shared ../src/weber_sound.c \
 		-o build/libweber-sound.$(MAJOR_VERSION).dll \
-		-lportaudio_x64 -Iinclude -Llib -DWINDOWS
+		-lportaudio_x64 -Iinclude -Llib -DWINDOWS $(COMPILE_FLAGS)
 	WGET = wget "https://github.com/haberdashPI/haberdashPI.github.io/raw/master/portaudio_x64.dll"
 	MVLIB = mv portaudio_x64.dll lib/portaudio_x64.dll
 endif

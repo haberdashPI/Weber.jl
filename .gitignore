@@ -7,5 +7,7 @@
 examples/data
 deps/deps.jl
 deps/usr/
+deps/build/
+deps/lib/
 docs/build/
 docs/site/

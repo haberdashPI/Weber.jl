@@ -398,7 +398,6 @@ sequenceable(m::OffsetStartMoment) = false
 type PlayMoment <: AbstractTimedMoment
   delta_t::Float64
   sound::Sound
-  wait::Bool
 end
 delta_t(m::PlayMoment) = m.delta_t
 sequenceable(m::PlayMoment) = true
@@ -406,12 +405,21 @@ sequenceable(m::PlayMoment) = true
 type PlayFunctionMoment <: AbstractTimedMoment
   delta_t::Float64
   fn::Function
-  wait::Bool
   sound::Nullable{Sound}
 end
-PlayFunctionMoment(d,f,k) = PlayFunctionMoment(d,f,k,Nullable())
+PlayFunctionMoment(d,f) = PlayFunctionMoment(d,f,Nullable())
 delta_t(m::PlayFunctionMoment) = m.delta_t
 sequenceable(m::PlayFunctionMoment) = true
+
+type StreamMoment <: AbstractTimedMoment
+  delta_t::Float64
+  itr
+  channel::Int
+end
+delta_t(m::StreamMoment) = delta_t
+required_delta_t(m::StreamMoment) = Inf
+isimmediate(m::StreamMoment) = false
+sequenceable(m::StreamMoment) = false
 
 type DisplayMoment <: AbstractTimedMoment
   delta_t::Float64
@@ -509,6 +517,7 @@ type ExperimentData
   trial_watcher::Function
   pause_mode::Int
   moments::Array{MomentQueue,1}
+  streamers::Dict{Int,Streamer}
   cleanup::Function
   last_good_delta::Float64
   last_bad_delta::Float64

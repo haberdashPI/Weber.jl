@@ -363,11 +363,16 @@ moment(delta_t::Number) = TimedMoment(delta_t,()->nothing)
 moment() = TimedMoment(0,()->nothing)
 
 const PlayFunction = typeof(play)
-function moment(delta_t::Number,::PlayFunction,x,wait=false)
-  PlayMoment(delta_t,sound(x),wait)
+function moment(delta_t::Number,::PlayFunction,x)
+  PlayMoment(delta_t,sound(x))
 end
-function moment(delta_t::Number,::PlayFunction,fn::Function,wait=false)
-  PlayFunctionMoment(delta_t,fn,wait)
+function moment(delta_t::Number,::PlayFunction,fn::Function)
+  PlayFunctionMoment(delta_t,fn)
+end
+
+const StreamFunction = typeof(stream)
+function moment(delta_t::Number,::StreamFunction,itr,channel::Int)
+  StreamMoment(delta_t,itr,channel)
 end
 
 const DisplayFunction = typeof(display)
@@ -511,11 +516,11 @@ function prepare!(m::DisplayFunctionMoment)
 end
 
 function prepare!(m::PlayMoment,last_moment::Float64)
-  play(m.sound,m.wait,m.delta_t > 0.0 ? m.delta_t + last_moment : 0.0)
+  play(m.sound,m.delta_t > 0.0 ? m.delta_t + last_moment : 0.0)
 end
 
 function prepare!(m::PlayFunctionMoment,last_moment::Float64)
-  play(sound(m.fn()),m.wait,m.delta_t + last_moment)
+  play(sound(m.fn()),m.delta_t + last_moment)
 end
 
 """
@@ -565,9 +570,15 @@ run(exp,q,m::MomentSequence) = foreach(x -> run(exp,q,x),m.data)
 
 function handle(exp::Experiment,q::MomentQueue,
                 moment::AbstractTimedMoment,time::Float64)
-  data(exp).last_time = time
   run(exp,q,moment)
   q.last = time
+  dequeue!(q)
+  true
+end
+
+function handle(exp::Experiment,q::MomentQueue,
+                moment::StreamMoment,time::Float64)
+  q.last = stream(moment.itr,moment.channel)
   dequeue!(q)
   true
 end
