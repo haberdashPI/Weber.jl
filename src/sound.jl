@@ -436,6 +436,9 @@ function play(x::Sound,wait::Bool=false,time::Float64=0.0)
         record("high_latency",value=(now + latency) - x.time)
       end
     end
+  elseif experiment_running()
+    warn("Cannot play a sound immediately. Make sure there is a delay ",
+         "so the sound can be properly prepared.")
   end
 
   ccall((:ws_play,weber_sound),Void,
