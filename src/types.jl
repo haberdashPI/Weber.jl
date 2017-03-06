@@ -1,5 +1,5 @@
 import Base: show, isempty, time, >>, length, unshift!, promote_rule, convert,
-  hash, ==, isless, pop!, info, next
+  hash, ==, isless, pop!, info, next, start, done, next, getindex
 import DataStructures: front, back, top
 using MacroTools
 
@@ -359,7 +359,6 @@ moment should begin. The default implementation returns zero.
     This method is part of the private interface for moments. It
     should not be called directly, but implemented as part of an extension.
 """
-
 delta_t(m::AbstractMoment) = 0.0
 required_delta_t(m::AbstractMoment) = delta_t(m)
 isimmediate(m::AbstractMoment) = false
@@ -379,6 +378,7 @@ isimmediate(m::ResponseMoment) = false
 
 abstract AbstractTimedMoment <: SimpleMoment
 sequenceable(m::AbstractTimedMoment) = true
+isimmediate(m::AbstractTimedMoment) = delta_t(m) == 0.0
 
 type TimedMoment <: AbstractTimedMoment
   delta_t::Float64
@@ -400,7 +400,9 @@ type PlayMoment <: AbstractTimedMoment
   delta_t::Float64
   sound::Sound
   channel::Int
+  prepared::Bool
 end
+PlayMoment(d,f,c) = PlayMoment(d,f,c,false)
 delta_t(m::PlayMoment) = m.delta_t
 sequenceable(m::PlayMoment) = true
 
@@ -408,7 +410,9 @@ type PlayFunctionMoment <: AbstractTimedMoment
   delta_t::Float64
   fn::Function
   channel::Int
+  prepared::Nullable{Sound}
 end
+PlayFunctionMoment(d,f,c) = PlayFunctionMoment(d,f,c,Nullable())
 delta_t(m::PlayFunctionMoment) = m.delta_t
 sequenceable(m::PlayFunctionMoment) = true
 
@@ -477,18 +481,120 @@ end
 delta_t(m::ExpandingMoment) = 0.0
 isimmediate(m::ExpandingMoment) = false
 
+type EmptyMoment <: AbstractMoment end
+empty_moment = EmptyMoment()
+
 type MomentQueue
-  data::Deque{AbstractMoment}
+  data::Vector{AbstractMoment}
   last::Float64
+  start_index::Int
+  end_index::Int
+  very_first::Bool
 end
-isempty(m::MomentQueue) = isempty(m.data)
-length(m::MomentQueue) = length(m.data)
-enqueue!(m::MomentQueue,x) = push!(m.data,x)
-dequeue!(m::MomentQueue) = shift!(m.data)
-unshift!(m::MomentQueue,x) = unshift!(m.data,x)
-pop!(m::MomentQueue) = pop!(m.data)
-front(m::MomentQueue) = front(m.data)
-back(m::MomentQueue) = back(m.data)
+show(io::IO,q::MomentQueue) = write(io,"MomentQueue[$(join(q,","))]")
+start(m::MomentQueue) = 1
+done(m::MomentQueue,i::Int) = i > length(m)
+next(m::MomentQueue,i::Int) = m[i], i+1
+@inline function getindex(m::MomentQueue,i)
+  @boundscheck 0 < i <= length(m)
+  real_index = i + m.start_index - 1
+  real_index <= length(m.data) ? real_index : real_index - length(m.data)
+  @inbounds return m.data[real_index]
+end
+
+function MomentQueue(xs,last::Float64)
+  size = 2^ceil(Int,log(length(xs))/log(2))
+  data = repeat(AbstractMoment[empty_moment],inner=[size])
+  data[1:length(xs)] = xs
+  MomentQueue(data,last,1,length(xs),true)
+end
+
+MomentQueue(size=256) =
+  MomentQueue(repeat(AbstractMoment[empty_moment],inner=[size]),0.0,1,1,true)
+isempty(m::MomentQueue) = m.data[m.start_index] == empty_moment
+function length(m::MomentQueue)
+  if m.start_index < m.end_index
+    m.end_index - m.start_index + 1
+  elseif m.start_index > m.end_index
+    length(m.data) - m.start_index + m.end_index + 1
+  else
+    Int(m.data[m.start_index] != empty_moment)
+  end
+end
+
+function resize!(mq::MomentQueue,n)
+  new_data = repeat(AbstractMoment[empty_moment],inner=[n])
+  @inbounds for (i,m) in enumerate(mq)
+    new_data[i] = m
+  end
+  mq.data = new_data
+  end_index = length(mq)
+  mq.start_index = 1
+  mq.end_index = end_index
+
+  mq
+end
+
+function enqueue!(mq::MomentQueue,x)
+  if isempty(mq)
+    mq.data[mq.start_index] = x
+  elseif length(mq) < length(mq.data)
+    mq.end_index == length(mq.data) ? mq.end_index = 1 : mq.end_index += 1
+    mq.data[mq.end_index] = x
+  else enqueue!(resize!(mq,2*length(mq.data)),x) end
+  mq
+end
+
+function dequeue!(m::MomentQueue)
+  @assert !isempty(m)
+  result = m.data[m.start_index]
+
+  if length(m) > 1
+    m.data[m.start_index] = empty_moment
+    if m.start_index < length(m.data)
+      m.start_index += 1
+    else
+      m.start_index = 1
+    end
+  else
+    m.data[m.start_index] = empty_moment
+  end
+
+  m.very_first = false
+  result
+end
+
+function unshift!(m::MomentQueue,x)
+  if isempty(m)
+    m.data[m.start_index] = x
+  elseif length(m) < length(m.data)
+    m.start_index > 1 ? m.start_index -= 1 : m.start_index = length(m.data)
+    m.data[m.start_index] = x
+  else unshift!(resize!(m,2*length(m.data)),x) end
+  m
+end
+
+function pop!(m::MomentQueue)
+  @assert !isempty(m)
+  result = m.data[m.end_index]
+
+  if length(m) > 1
+    m.data[m.end_index] = empty_moment
+    if m.end_index == 1
+      m.end_index = length(m.data)
+    else
+      m.end_index -= 1
+    end
+  else
+    m.data[m.end_index] = empty_moment
+  end
+
+  result
+end
+
+front(m::MomentQueue) = m.data[m.start_index]
+back(m::MomentQueue) = m.data[m.end_index]
+very_first(m::MomentQueue) = m.very_first
 function next_moment_time(m::MomentQueue)
   (isempty(m) ? Inf : m.last + delta_t(front(m)))
 end

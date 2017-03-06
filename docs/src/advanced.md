@@ -123,12 +123,13 @@ moment(display,() -> "hello $my_name.")
 
 When moments are created this way, the sound or visual is generated before the
 moment even begins, to eliminate any latency that would be introduced by loading
-the sound or visual into memory. Specifically, the stimulus is
-generated at the start of the prior moment. So for instance, in the following
-example, `mysound` will be generated 0.5 seconds before `play` is called,
-because the moment before the `play` moment occurs 0.5 seconds before.
+the sound or visual into memory. Specifically, the stimulus is generated during
+the most recent non-zero pause occuring before a moment. So for instance, in the
+following example, `mysound` will be generated ~0.5 seconds before play is
+called right after "Get ready!" is displayed.
 
 ```julia
-addtrial(moment(display,"Get ready!"),moment(0.5,play,mysound))
+addtrial(moment(display,"Get ready!"),moment(0.5),
+         moment(display,"Here we go!"),moment(play,mysound))
 ```
 

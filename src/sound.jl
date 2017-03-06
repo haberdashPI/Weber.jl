@@ -753,8 +753,9 @@ function play(x::Sound,time::Float64=0.0,channel::Int=0)
       end
     end
   elseif experiment_running()
-    warn("Cannot play a sound immediately. Make sure there is a delay ",
-         "so the sound can be properly prepared.")
+    warn("On trial $(Weber.trial()), offset $(Weber.offset()): Cannot guarntee",
+         " the timing of a sound. Add a delay to the sound if precise timing",
+         " is required.")
   end
 
   # play the sound

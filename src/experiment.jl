@@ -1,3 +1,4 @@
+using Lazy: @>, takewhile
 import Base: run
 export Experiment, setup, run, addcolumn
 
@@ -183,7 +184,7 @@ function Experiment(;skip=0,columns=Symbol[],debug=false,
   last_time = 0.0
   next_moment = 0.0
   pause_mode = Running
-  moments = [MomentQueue(Deque{AbstractMoment}(),0.0)]
+  moments = [MomentQueue()]
   streamers = Dict{Int,Streamer}()
   cleanup = () -> error("no cleanup function available!")
   last_good_delta = -1.0
@@ -232,6 +233,7 @@ function setup{T <: BaseExperiment}(fn::Function,exp::T)
 
     # setup all trial moments for this experiment
     experiment_context[] = Nullable(top(exp))
+    addmoment(top(exp),moment())
     fn()
     experiment_context[] = Nullable{Experiment}()
 
@@ -378,6 +380,7 @@ function run{T <: BaseExperiment}(
 
     start = precise_time()
     tick = data(exp).last_time = last_input = last_delta = 0.0
+    prepare!(data(exp).moments[1],Inf)
     while flags(exp).processing
       tick = data(exp).last_time = precise_time() - start
 
@@ -461,6 +464,19 @@ function skip_offsets(exp,queue)
   end
 end
 
+function prepare!(queue::MomentQueue,t::Float64)
+  if required_delta_t(front(queue)) > 0.0 || very_first(queue)
+    delta_t = required_delta_t(front(queue))
+    prepare!(front(queue),t + delta_t)
+
+    @_ queue begin
+      drop(_,1)
+      takewhile(m -> required_delta_t(m) == 0.0,_)
+      foreach(m -> prepare!(m,t + delta_t),_)
+    end
+  end
+end
+
 function process(exp::Experiment,queue::MomentQueue,event::ExpEvent)
   skip_offsets(exp,queue)
 
@@ -468,9 +484,7 @@ function process(exp::Experiment,queue::MomentQueue,event::ExpEvent)
     moment = front(queue)
     handled = handle(exp,queue,moment,event)
     if handled
-      if !isempty(queue)
-        prepare!(front(queue),time(event))
-      end
+      prepare!(queue,time(event))
       data(exp).next_moment = minimum(map(next_moment_time,data(exp).moments))
     end
   end
@@ -495,9 +509,7 @@ function process(exp::Experiment,queue::MomentQueue,t::Float64)
       data(exp).last_time = run_time
       if handle(exp,queue,moment,run_time)
         d = required_delta_t(moment)
-        if !isempty(queue)
-          prepare!(front(queue),run_time)
-        end
+        prepare!(queue,run_time)
 
         latency = run_time - event_time
 

@@ -435,6 +435,9 @@ end
 This moment starts when either `isresponse` evaluates to true or
 timeout time (in seconds) passes.
 
+The `isresponse` function will be called anytime an event occurs. It should
+take one parameter (the event that just occured).
+
 If the moment times out, the function `fn` (with no arguments) will be called.
 
 If the response is provided before `atleast` seconds, the moment does not begin
@@ -489,14 +492,22 @@ end
 """
     Weber.prepare!(m,[last_moment])
 
-If there is anything the moment needs to do before it occurs, it
-is done during `prepare!`. This triggers immediately after the moment prior to
-the current one has finished. The default implementation does nothing.
+If there is anything the moment needs to do before it occurs, it is done during
+`prepare!`. Prepare can be used to set up precise timing even when hardware
+latency is high, if that latency can be predicted, and accounted for. A moment's
+prepare! method is called just before the first non-zero pause between moments
+that occurs before this moment: in the simplest case, when this moment has a
+non-zero value for [`delta_t`](@ref), preapre! will occur `delta_t` seconds
+before this moment. However, if several moments with no pause occur, prepare!
+will occur before all of those moments as well.
 
-Prepare accepts an optional second argument used to indicate when the previous
-moment began (in seconds from expeirment start). This can permit prepare to set
-up precise timing even when event latency is high, if that latency can be
-predicted, and accounted for.
+Prepare accepts an optional second argument used to indicate the time, in
+seconds from the start of the experiemnt when this moment will begin.
+This argument may be Inf, indicating that it is not possible to predict
+when the moment will occur at this point, because the timing depends on
+some stateful information (e.g. a participant's response). It is accetable
+in this case to throw an error, explaining that this kind of moment
+must be able to know when it occurs sooner.
 
 !!! note
 
@@ -516,11 +527,19 @@ function prepare!(m::DisplayFunctionMoment)
 end
 
 function prepare!(m::PlayMoment,last_moment::Float64)
-  play(m.sound,m.delta_t > 0.0 ? m.delta_t + last_moment : 0.0,m.channel)
+  if !isinf(last_moment)
+    play(m.sound,last_moment,m.channel)
+  else
+    m.prepared = true
+  end
 end
 
 function prepare!(m::PlayFunctionMoment,last_moment::Float64)
-  play(sound(m.fn()),m.delta_t + last_moment,m.channel)
+  if !isinf(last_moment)
+    play(sound(m.fn()),last_moment,m.channel)
+  else
+    m.prepared = Nullable(sound(m.fn()))
+  end
 end
 
 """
@@ -531,8 +550,8 @@ type of moment. The `to_handle` object is either a `Float64`, indicating the
 current time, or it is an `ExpEvent` indicating the event that just occured. A
 timed moment, for instance, will run when it recieves a `Float64` value. The
 queue is a `MomentQueue` object, which has the same interface as the `Dequeue`
-object (from the `DataStructures` package). Upon calling handle, `top(queue) ==
-moment`.
+object (from the `DataStructures` package) but it is also iterable. Upon calling
+handle, `top(queue) == moment`.
 
 Handle returns a boolean indicating whether the event was "handled" or not. If
 unhandled, the moment should remain on top of the queue. If returning true,
@@ -562,11 +581,24 @@ end
 
 run(exp,q,m::TimedMoment) = m.run()
 run(exp,q,m::OffsetStartMoment) = m.run()
-run(exp,q,m::PlayMoment) = nothing
-run(exp,q,m::DisplayMoment) = display(win(exp),m.visual)
-run(exp,q,m::PlayFunctionMoment) = nothing
-run(exp,q,m::DisplayFunctionMoment) = display(win(exp),get(m.visual))
 run(exp,q,m::MomentSequence) = foreach(x -> run(exp,q,x),m.data)
+
+run(exp,q,m::DisplayMoment) = display(win(exp),m.visual)
+run(exp,q,m::DisplayFunctionMoment) = display(win(exp),get(m.visual))
+
+function run(exp,q,m::PlayMoment)
+  if m.prepared
+    m.prepared = false
+    play(m.sound,0.0,m.channel)
+  end
+end
+
+function run(exp,q,m::PlayFunctionMoment)
+  if !isnull(m.prepared)
+    play(get(m.prepared),0.0,m.channel)
+    m.prepared = Nullable()
+  end
+end
 
 function handle(exp::Experiment,q::MomentQueue,
                 moment::AbstractTimedMoment,time::Float64)
@@ -611,11 +643,9 @@ function handle(exp::Experiment,q::MomentQueue,m::ResponseMoment,event::ExpEvent
 end
 
 function handle(exp::Experiment,q::MomentQueue,moments::CompoundMoment,x)
-  queue = Deque{AbstractMoment}()
-  for moment in moments.data
-    push!(queue,moment)
-  end
-  push!(data(exp).moments,MomentQueue(queue,q.last))
+  compq = MomentQueue(moments.data,q.last)
+  push!(data(exp).moments,compq)
+  prepare!(compq,q.last)
   dequeue!(q)
   true
 end
@@ -627,7 +657,7 @@ function handle(exp::Experiment,q::MomentQueue,m::ExpandingMoment,x)
     end
 
     for x in m.data
-      unshift!(q.data,x)
+      unshift!(q,x)
     end
   else
     dequeue!(q)

@@ -1,8 +1,6 @@
 using Weber
 using Base.Test
-
-# NOTE: much of the code is interactive and multimedia driven, none of which can
-# be tested here. I'm just testing some of the timing of experiments here.
+import Weber: prepare!, handle
 
 # this allows a test of timing for an experiment without setting up any
 # multimedia resources, so it can be run just about anywhere.
@@ -10,6 +8,7 @@ function find_timing(fn;keys...)
   empty!(Weber.null_record)
   exp = Experiment(;null_window=true,hide_output=true,keys...)
   setup(() -> fn(),exp)
+
   run(exp,await_input=false)
 
   nostarts = filter(x -> !endswith(string(x[:code]),"_start") &&
@@ -44,9 +43,9 @@ seq_trial_index = map(x -> x[:trial],rows)
 # warm up JIT...
 find_timing() do
   addtrial(moment(0.05,() -> record(:a)),
-           moment(0.1,() -> record(:b)) >>
-             moment(0.1,() -> record(:d)),
-           moment(0.15,() -> record(:c)))
+           moment(0.05,() -> record(:b)) >> moment(0.1,() -> record(:d)),
+           moment(0.1,() -> record(:c)),
+           moment(0.1,() -> record(:e)))
 end
 
 comp_events,comp_times,_ = find_timing() do
@@ -103,6 +102,41 @@ elseif_events,_,_ = find_timing() do
     else
       addtrial(moment(() -> record(:c)))
     end
+  end
+end
+
+type TestPrepareMoment <: Weber.SimpleMoment
+  event::Symbol
+end
+function handle(exp::Weber.Experiment,queue::Weber.MomentQueue,
+                moment::TestPrepareMoment,x)
+  Weber.dequeue!(queue)
+  true
+end
+
+prepare!(moment::TestPrepareMoment) = record(moment.event)
+
+ks,vs,_ = find_timing() do
+  addtrial(TestPrepareMoment(:a),moment(0.5),moment(),moment(),
+           TestPrepareMoment(:b),moment(record,:b_post),moment(0.5))
+  addtrial(moment(),TestPrepareMoment(:c),moment(record,:c_post),
+           timeout(() -> nothing,iskeydown,0.5),TestPrepareMoment(:d))
+  addtrial(moment(0.1),TestPrepareMoment(:e) >> TestPrepareMoment(:f))
+end
+prepare_timing = Dict(k => v for (k,v) in zip(ks,vs))
+
+type TestPrepareError <: Weber.SimpleMoment end
+function handle(exp::Weber.Experiment,queue::Weber.MomentQueue,
+                moment::TestPrepareError,x)
+  Weber.dequeue!(queue)
+  true
+end
+type TestPrepareException <: Exception end
+prepare!(moment::TestPrepareError,time) = isinf(time) ? throw(TestPrepareException()) : nothing
+
+function cause_prepare_error1()
+  find_timing() do
+    addtrial(moment(0.5),timeout(() -> nothing,iskeydown,0.5),TestPrepareError())
   end
 end
 
@@ -187,6 +221,16 @@ const moment_eps = 1e-3
         comp_diff = maximum(diff(comp_times) - 0.05)
         @test comp_diff < moment_eps
       end
+    end
+
+    @testset "Moment Preparation" begin
+      @test :a in keys(prepare_timing)
+      @test :d in keys(prepare_timing)
+      @test :e in keys(prepare_timing)
+      @test :f in keys(prepare_timing)
+      @test abs(prepare_timing[:b_post] - prepare_timing[:b] - 0.5) < 0.25
+      @test abs(prepare_timing[:c_post] - prepare_timing[:c] - 0.5) < 0.25
+      @test_throws TestPrepareException cause_prepare_error1()
     end
 
     @testset "Looping Moments" begin
