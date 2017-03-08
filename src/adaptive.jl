@@ -248,7 +248,8 @@ function update!(adapter::Levitt,response,correct)
 end
 
 estimate_helper(a::Levitt{:add},rev) = mean(rev),std(rev)
-estimate_helper(a::Levitt{:mult},rev) = exp(mean(log(rev))),exp(std(log(rev)))
+estimate_helper(a::Levitt{:mult},rev) =
+  exp(mean(log(rev))),exp(mean(log(rev)))*(1-exp(-std(log(rev))))
 
 function estimate(adapter::Levitt)
   if length(adapter.reversals) < adapter.min_reversals
