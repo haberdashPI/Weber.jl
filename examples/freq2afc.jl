@@ -2,7 +2,7 @@
 
 using Weber
 
-version = v"0.0.1"
+version = v"0.0.2"
 sid,trial_skip,adapt = @read_args("Frequency Discrimination ($version).",
                                   adapt=[:levitt,:bayes])
 
@@ -28,8 +28,15 @@ function one_trial(adapter)
    resp,await_response(isresponse),moment(0.75)]
 end
 
-exp = Experiment(sid = sid,condition = "example",version = version,
-                 skip=trial_skip,standard=1000)
+exp = Experiment(
+  skip=trial_skip,
+  columns = [
+    :sid => sid,
+    :condition => "example",
+    :version => version,
+    :standard => 1000
+  ]
+)
 
 setup(exp) do
   addbreak(moment(record,"start"))
