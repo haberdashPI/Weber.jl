@@ -165,10 +165,6 @@ function Experiment(;skip=0,columns=Symbol[],debug=false,
                   "documentation for `Experiment`)."))
   end
 
-  if :value ∉ columns
-    push!(columns,:value)
-  end
-
   meta = Dict{Symbol,Any}()
   start_time = precise_time()
   start_date = now()
@@ -200,7 +196,9 @@ function Experiment(;skip=0,columns=Symbol[],debug=false,
 
   win = window(width,height,fullscreen=!debug,accel=!debug,null=null_window)
 
-  extend(UnextendedExperiment(einfo,data,flags,win),extensions)
+  final_exp = extend(UnextendedExperiment(einfo,data,flags,win),extensions)
+  addcolumn(final_exp,:value)
+  final_exp
 end
 
 
