@@ -433,7 +433,7 @@ function play(x::Sound,wait::Bool=false,time::Float64=0.0)
            "fuse them into one sound, and then play the single, ",
            "longer sound.")
       if experiment_running()
-        record("high_latency",value=(now + latency) - x.time)
+        record("high_latency",value=(now + latency) - time)
       end
     end
   elseif experiment_running()
