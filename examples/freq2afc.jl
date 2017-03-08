@@ -9,23 +9,26 @@ sid,trial_skip,adapt = @read_args("Frequency Discrimination ($version).",
 const ms = 1/1000
 atten_dB = 30
 n_trials = 60
+feedback_delay = 750ms
 
 isresponse(e) = iskeydown(e,key"p") || iskeydown(e,key"q")
 
-standard = attenuate(ramp(tone(1000,0.1)),atten_dB)
+standard_freq = 1000
+standard = attenuate(ramp(tone(standard_freq,0.1)),atten_dB)
 function one_trial(adapter)
   first_lower = rand(Bool)
   resp = response(adapter,key"q" => "first_lower",key"p" => "second_lower",
                   correct=(first_lower ? "first_lower" : "second_lower"))
 
-  signal() = attenuate(ramp(tone(1000*(1-delta(adapter)),0.1)),atten_dB)
+  signal() = attenuate(ramp(tone(standard_freq*(1-delta(adapter)),0.1)),atten_dB)
   stimuli = first_lower? [signal,standard] : [standard,signal]
 
-  [show_cross(),
-   moment(play,stimuli[1]),moment(0.9,play,stimuli[2]),
+  [moment(feedback_delay,play,stimuli[1]),
+   show_cross(),
+   moment(0.9,play,stimuli[2]),
    moment(0.1 + 0.3,display,
           "Was the first [Q] or second sound [P] lower in pitch?"),
-   resp,await_response(isresponse),moment(0.75)]
+   resp,await_response(isresponse)]
 end
 
 exp = Experiment(
@@ -34,7 +37,7 @@ exp = Experiment(
     :sid => sid,
     :condition => "example",
     :version => version,
-    :standard => 1000
+    :standard => standard_freq
   ]
 )
 
@@ -59,7 +62,25 @@ second beep was lower.
     for trial in 1:n_trials
       addtrial(one_trial(a))
     end
+
+    # define this string during experiment setup
+    # when we know what block we're on...
+
+    function threshold_report()
+      mean,sd = estimate(adapter)
+      thresh = round(mean,3)*standard_freq
+      thresh_sd = round(sd,3)*standard_freq
+
+      # define this string during run time when we know
+      # what the threshold estimate is.
+      "Threshold $(thresh)Hz (SD: $thresh_sd)\n"*
+      "Hit spacebar to continue..."
+    end
+
+    addbreak(moment(display,threshold_report,clean_whitespace=false),
+             await_response(iskeydown(key":space:")))
   end
+
 end
 
 play(attenuate(ramp(tone(1000,1)),atten_dB))
