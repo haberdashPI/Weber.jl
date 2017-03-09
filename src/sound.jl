@@ -545,7 +545,7 @@ Get the duration of the given sound.
 """
 duration(s::Sound) = duration(s.buffer)
 duration(s::PlayingSound) = duration(s.sound)
-duration(s::SampleBuf) = length(s) / samplerate(s)
+duration(s::SampleBuf) = size(s,1) / samplerate(s)
 function duration(s::Array{Float64};
                   sample_rate_Hz=samplerate(sound_setup_state))
   length(s) / sample_rate_Hz
