@@ -1,10 +1,11 @@
 using Distributions
-export levitt_adapter, bayesian_adapter, constant_adapter, delta, estimate
+export levitt_adapter, bayesian_adapter, constant_adapter, delta, estimate,
+  update!
 
 abstract Adapter
 
 """
-    Weber.update!(adapter,response,correct)
+    update!(adapter,response,correct)
 
 Updates any internal state for the adapter when the listener responds with
 `response` and the correct response is `correct`. Usually not called directly,
@@ -15,7 +16,7 @@ function update!(adapter,response,correct)
 end
 
 """
-    Weber.estimate(adapter)
+    estimate(adapter)
 
 Returns the mean and error of the adapters threshold estimate. May take some
 time to run.
