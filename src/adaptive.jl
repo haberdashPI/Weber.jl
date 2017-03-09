@@ -336,26 +336,28 @@ For stability and robustness, this adapter begins by repeating the same delta
 multiple times and only begins quickly changing deltas trial-by-trial when the
 ratio of standard deviation to the mean is small. This functionality can be
 adjusted using `repeat3_thresh` and `repeat2_thresh`, or, if you do not
-wish to have any repeats, both values can be set to .
+wish to have any repeats, both values can be set to Inf.
 
 # Keyword Arugments
 
 - `first_delta`: the delta to start measuring with
 - `n_samples`: the number of samples to use during importance sampling.
   The algorithm for selecting new deltas is O(n²).
-- `miss`: the expected rate at which that listeners will make mistakes
+- `miss`: the expected rate at which listeners will make mistakes
   even for easy to percieve differences.
 - `threshold`: the %-response threshold to be estimated
 - `min_delta`: the smallest possible delta
-- `max_delta`: the largest smallest possible delta
+- `max_delta`: the largest possible delta
 - `min_plausible_delta`: the smallest plausible delta, should be > 0.
-  Used to define thresh_prior.
+  Used to define a reasonable value for thresh_prior and inv_slope_prior.
 - `max_plausible_delta`: the largest plausible delta, should be < max_delta.
-  Used to define thresh_prior.
+  Used to define a reasonable value for thresh_prior and inv_slope_prior.
 - `thresh_prior`: the prior probability distribution across thresholds.
   This influence the way the delta is adapted. By default this is defined in
-  terms of max_plausible_delta.
+  terms of min_plausible_delta and max_plausible_delta.
 - `inv_slope_prior`: the prior probability distribution across inverse slopes.
+  By default this is defined in terms of min_plausible_delta and
+  max_plausible_delta.
 - `thresh_d`: the distribution over-which to draw samples for the threshold
   during importance sampling. This defaults to thresh_prior
 - `inv_slope_d`: the distribution over-which to draw samples for the inverse slope
@@ -376,7 +378,8 @@ function bayesian_adapter(;first_delta=0.1,
                                               log(max_plausible_delta/
                                                   min_plausible_delta/2)),
                                     min_delta,max_delta),
-                          inv_slope_prior=TruncatedNormal(0,0.25,0,Inf),
+                          inv_slope_prior=
+                          TruncatedNormal(0,2max_plausible_delta,0,Inf),
                           thresh_d=thresh_prior,
                           inv_slope_d=inv_slope_prior)
   delta = first_delta
