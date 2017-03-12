@@ -345,7 +345,9 @@ is if run is called form within Juno: await_input should
 never be set to true in this case.
 """
 run(exp::ExtendedExperiment;keys...) = run(next(exp);keys...)
-function run{T <: BaseExperiment}(exp::T;await_input=!Juno.isactive())
+function run{T <: BaseExperiment}(
+  exp::T;await_input=!Juno.isactive() && !is_apple())
+
   if Juno.isactive()
     if await_input
       error("`await_input` must be false when Juno is active.")
