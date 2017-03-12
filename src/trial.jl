@@ -197,23 +197,6 @@ function addmoments(exp,moments)
   end
 end
 
-function addtrial_helper(exp::Experiment,trial_count,moments)
-  start_trial = offset_start_moment(trial_count) do
-    #gc_enable(false)
-    if trial_count
-      record("trial_start")
-    else
-      record("practice_start")
-    end
-  end
-
-  end_trial = moment() do
-    #gc_enable(true)
-  end
-
-  addmoments(exp,[start_trial,moments,end_trial])
-end
-
 """
     @addtrials expr...
 
@@ -318,8 +301,17 @@ end
 
 addtrial(exp::ExtendedExperiment,moments...) = addtrial(next(exp),moments...)
 function addtrial{T <: BaseExperiment}(exp::T,moments...)
-  addtrial_helper(exp,true,moments)
+  addtrial_helper(exp,"trial_start",moments)
 end
+
+function addtrial_helper(exp::Experiment,start_code,moments)
+  start_trial = offset_start_moment(start_code == "trial_start") do
+    record(start_code)
+  end
+
+  addmoments(exp,[start_trial,moments])
+end
+
 
 """
     addpractice(moments...)
@@ -327,13 +319,13 @@ end
 Identical to [`addtrial`](@ref), except that it does not incriment the trial count,
 and records a "practice_start" instead of "trial_start" code.
 """
-function addpractice(moments...;keys...)
+function addpractice(moments...)
   addtrial_helper(get_experiment(),false,moments)
 end
 
 addpractice(exp::ExtendedExperiment,moments...) = addpractice(next(exp),moments...)
 function addpractice{T <: BaseExperiment}(exp::T,moments...)
-  addtrial_helper(exp,false,moments...)
+  addtrial_helper(exp,"practice_start",moments...)
 end
 
 """
@@ -341,14 +333,13 @@ end
 
 Identical to [`addpractice`](@ref), but records "break_start" instead of "practice_start".
 """
-function addbreak(moments...;keys...)
-  addbreak(get_experiment(),moments...;keys...)
+function addbreak(moments...)
+  addbreak(get_experiment(),moments...)
 end
 
 addbreak(exp::ExtendedExperiment,moments...) = addbreak(next(exp),moments...)
-function addbreak{T <: BaseExperiment}(exp::T,moments...;keys...)
-  addmoments(exp,[offset_start_moment(() -> record("break_start")),moments];
-             keys...)
+function addbreak{T <: BaseExperiment}(exp::T,moments...)
+  addtrial_helper(exp,"break_start",moments)
 end
 
 """
