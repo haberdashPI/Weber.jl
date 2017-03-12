@@ -1,6 +1,6 @@
 MAJOR_VERSION = 2
 MINOR_VERSION = 0.0
-DEBUG = "yes"
+DEBUG = "no"
 $(info [Debug: ${DEBUG}])
 
 UNAME := $(shell uname)
