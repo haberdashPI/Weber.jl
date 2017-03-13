@@ -582,7 +582,7 @@ sample_rate/2). Changing the sample rate from the default 44100 to a new value
 will also change the default sample rate sounds will be created at, to match
 this new sample rate.
 
-!!! warn "There is no check for sampling rate"
+!!! warning "There is no check for sampling rate"
 
     Upon playback, there is no check to ensure that the sample rate of a given
     sound is the same as that setup here, and no resampling of the sound is
@@ -775,7 +775,7 @@ separate from `stream(mystream,1)`.
 
 Returns the time at which the stream will start playing.
 
-!!! "Streaming delays the start of a moment."
+!!! warning "Streaming delays the start of a moment."
 
     When stream is called as a moment, (e.g. `moment(stream,itr,channel)`) it
     will delay the start of the moment so that it begins at the start of the
