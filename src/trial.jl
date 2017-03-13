@@ -296,7 +296,7 @@ retrieved using [`Weber.trial()`](@ref) and [`Weber.offset()`](@ref).
 """
 
 function addtrial(moments...)
-  addtrial_helper(get_experiment(),true,moments)
+  addtrial_helper(get_experiment(),"trial_start",moments)
 end
 
 addtrial(exp::ExtendedExperiment,moments...) = addtrial(next(exp),moments...)
@@ -320,7 +320,7 @@ Identical to [`addtrial`](@ref), except that it does not incriment the trial cou
 and records a "practice_start" instead of "trial_start" code.
 """
 function addpractice(moments...)
-  addtrial_helper(get_experiment(),false,moments)
+  addtrial_helper(get_experiment(),"practice_start",moments)
 end
 
 addpractice(exp::ExtendedExperiment,moments...) = addpractice(next(exp),moments...)
