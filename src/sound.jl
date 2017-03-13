@@ -140,7 +140,7 @@ Mutliply several sounds together. Typically used to apply an amplitude envelope.
 """
 function mult(xs::Union{SampleBuf,Array}...)
   xs = match_lengths(xs...)
-  reduce(+,xs)
+  reduce(.*,xs)
 end
 
 function mult(itrs...)
