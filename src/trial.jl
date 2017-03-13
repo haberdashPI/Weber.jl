@@ -363,11 +363,11 @@ moment(delta_t::Number) = TimedMoment(delta_t,()->nothing)
 moment() = TimedMoment(0,()->nothing)
 
 const PlayFunction = typeof(play)
-function moment(delta_t::Number,::PlayFunction,x)
-  PlayMoment(delta_t,sound(x))
+function moment(delta_t::Number,::PlayFunction,x;channel=0)
+  PlayMoment(delta_t,sound(x),channel)
 end
-function moment(delta_t::Number,::PlayFunction,fn::Function)
-  PlayFunctionMoment(delta_t,fn)
+function moment(delta_t::Number,::PlayFunction,fn::Function,channel=0)
+  PlayFunctionMoment(delta_t,fn,channel)
 end
 
 const StreamFunction = typeof(stream)
@@ -516,11 +516,11 @@ function prepare!(m::DisplayFunctionMoment)
 end
 
 function prepare!(m::PlayMoment,last_moment::Float64)
-  play(m.sound,m.delta_t > 0.0 ? m.delta_t + last_moment : 0.0)
+  play(m.sound,m.delta_t > 0.0 ? m.delta_t + last_moment : 0.0,m.channel)
 end
 
 function prepare!(m::PlayFunctionMoment,last_moment::Float64)
-  play(sound(m.fn()),m.delta_t + last_moment)
+  play(sound(m.fn()),m.delta_t + last_moment,m.channel)
 end
 
 """

@@ -398,6 +398,7 @@ sequenceable(m::OffsetStartMoment) = false
 type PlayMoment <: AbstractTimedMoment
   delta_t::Float64
   sound::Sound
+  channel::Int
 end
 delta_t(m::PlayMoment) = m.delta_t
 sequenceable(m::PlayMoment) = true
@@ -405,9 +406,8 @@ sequenceable(m::PlayMoment) = true
 type PlayFunctionMoment <: AbstractTimedMoment
   delta_t::Float64
   fn::Function
-  sound::Nullable{Sound}
+  channel::Int
 end
-PlayFunctionMoment(d,f) = PlayFunctionMoment(d,f,Nullable())
 delta_t(m::PlayFunctionMoment) = m.delta_t
 sequenceable(m::PlayFunctionMoment) = true
 
