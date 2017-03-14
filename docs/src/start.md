@@ -50,20 +50,23 @@ end
 run(exp)
 ```
 
-Finally click the run button (it is a big play symbol). You will need to
-enter some information into the console before the experiment begins, so make sure
-the Julia console is still open.
+Finally, [open the julia console](@ref install), and enter the following:
+
+```juila
+include("run_simple.jl")
+```
+
+!!! note "Make sure you're in the correct directory"
+
+    You may get an error that looks like "could not open file [file name here]".
+    This probably means Julia's working directory is not set correctly. Open
+    run_simple.jl in Atom, make sure you are focused on this file (by clicking
+    inside the file), and then, in the menu, click "Julia" > "Working Directory" >
+    "Current File's Folder". This will set Julia's working directory to
+    run_simple.jl's directory.
 
 After running the experiment on yourself, let's walk through the parts of this
 experiment piece-by-piece.
-
-!!! note "Juno User Interface"
-
-     Unfortunately, there are some annoyances to using Weber from Atom. In
-     particular, if the console is not open, you may sit there waiting while
-     nothing happens. **Make sure the Julia console is open**. Input will be
-     requested from you in this console. Read the instructions to **make sure
-     you input your responses on the appropriate line**.
 
 # Read Experiment Parameters
 

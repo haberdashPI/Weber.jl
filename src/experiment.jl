@@ -41,17 +41,17 @@ trial() = trial(get_experiment())
     Weber.offset()
 
 Returns the current offset. The offset represents a well defined time in the
-experiment. Rerunning the experiemnt and skipping to a given offset will restart
-the experiment in exactly the same state it was on a previous run. The offset
-is typically incremented once for every call to [`addpractice`](@ref) and
-[`addtrial`](@ref) unless you use [`@addtrials`](@ref).
+experiment. The offset is typically incremented once for every call to
+[`addpractice`](@ref) [`addtrial`](@ref) and [`addbreak`](@ref), unless you use
+[`@addtrials`](@ref). You can use the offset to restart the experiment from a
+well defined location.
 
 !!! warning
 
     For offsets to be well defined, all calls to [`moment`](@ref) and
-    [`@addtrials`](@ref) must follow the guidlines in the user guide. In
-    particular, moments should not rely on state that changes during the
-    experiment unless they are wrapped in an @addtrials macro.
+    [`@addtrials`](@ref) must follow the [guidlines](advanced.md) in the user
+    guide. In particular, moments should not rely on state that changes during
+    the experiment unless they are wrapped in an @addtrials macro.
 
 """
 offset(exp) = data(exp).offset

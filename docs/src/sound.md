@@ -1,5 +1,6 @@
-In addition to functions available below you can also call [`FileIO.jl`]'s
-`load` and `save` functions for common audio file formats (e.g. "wav").
+In addition to functions available below you can also call
+[`FileIO.jl`](https://github.com/JuliaIO/FileIO.jl)'s `load` and `save`
+functions for common audio file formats (e.g. "wav", "aiff", "ogg").
 
 # Sound Creation
 

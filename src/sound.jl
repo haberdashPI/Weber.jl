@@ -120,7 +120,7 @@ end
 """
     mix(x,y,...)
 
-Mix several sounds together so that they play at the same time.
+Mix several sounds (or streams) together so that they play at the same time.
 """
 function mix(xs::Union{SampleBuf,Array}...)
   xs = match_lengths(xs...)
@@ -136,7 +136,8 @@ end
 """
     mult(x,y,...)
 
-Mutliply several sounds together. Typically used to apply an amplitude envelope.
+Mutliply several sounds (or streams) together. Typically used to apply an
+amplitude envelope.
 """
 function mult(xs::Union{SampleBuf,Array}...)
   xs = match_lengths(xs...)
@@ -286,7 +287,7 @@ end
 # TODO: after basic streaming is working
 # figure out how to stream these filters
 """
-   bandpass(x,low,high,[order=5],[sample_rate_Hz=samplerate(x)])
+    bandpass(x,low,high,[order=5],[sample_rate_Hz=samplerate(x)])
 
 Band-pass filter the sound at the specified frequencies.
 
@@ -310,7 +311,7 @@ function bandpass(itr,low,high;order=5,sample_rate_Hz=samplerate(first(itr)))
 end
 
 """
-   lowpass(x,low,[order=5],[sample_rate_Hz=samplerate(x)])
+    lowpass(x,low,[order=5],[sample_rate_Hz=samplerate(x)])
 
 Low-pass filter the sound at the specified frequency.
 
@@ -506,7 +507,7 @@ isready(s::SoundSetupState) = s.samplerate != 0
 """
     stream_unit()
 
-Report the length in samples of each unit that a sound stream generates.
+Report the length in samples of each unit that all sound streams should generate.
 """
 stream_unit(s::SoundSetupState=sound_setup_state) = s.stream_unit
 
@@ -566,7 +567,7 @@ end
 
 """
     setup_sound([sample_rate_Hz=44100],[num_channels=8],[queue_size=8],
-                [stream_unit=default_stream_unit])
+                [stream_unit=2^14])
 
 Initialize format and capacity of audio playback.
 
@@ -672,7 +673,7 @@ Reports the current, minimum latency of audio playback.
 The current latency depends on your hardware and software drivers. This
 estimate does not include the time it takes for a sound to travel from
 your sound card to speakers or headphones. This latency estimate is used
-internally by `play` to present sounds at accurate times.
+internally by [`play`](@ref) to present sounds at accurate times.
 """
 function current_sound_latency()
   ccall((:ws_cur_latency,weber_sound),Cdouble,
@@ -761,7 +762,8 @@ const streamers = Dict{Int,Streamer}()
 Plays sounds continuously on a given channel by reading from the iterator `itr`
 whenever more data is required. The iterator should return objects that can be
 turned into sounds (via [`sound`](@ref)). The number of available streaming
-channels is determined by [`setup_sound`](@ref).
+channels is determined by [`setup_sound`](@ref). The size, in samples, of each
+sound returned by this iterator should be equal to [`stream_unit`](@ref).
 
 Alternatively a `fn` can be streamed: this transforms a previously streamed itr
 into a new iterator by calling `fn(itr)`. If no stream already exists on the

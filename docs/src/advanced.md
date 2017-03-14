@@ -20,17 +20,19 @@ conditionals and loops.
 Blocks of trials are useful for setting up state that will change during the
 trials. Such state can then be used in a subsequent @addtrials expression. In
 fact all other types of @addtrials expression will likely be nested inside
-blocks. The main reason to use such a block is to ensure that the offset counter
-is appropriately set with stateful trials.
+blocks. The main reason to use such a block is to ensure that 
+[`Weber.offset`](@ref) is well defined.
 
-The offset counter is meant to refer to a well defined time during the
-experiment.  They can be used to fast forward through the expeirment by
-specifying an offset greater than 0.  However, if there is state that changes
-throughout the course of several trials, those trials cannot reliably be
-reproduced when they are skipped using an offset > 0. Anytime you have a series
-of trials, some of which depend on what happens earlier in an expeirment, such
-trials should be placed inside of an @addtrials let block. Otherwise experiment
-fast forwarding will result in unexpected behaviors.
+The offset counter is used to fast-forward through the expeirment by specifying
+an offset greater than 0.  However, if there is state that changes throughout
+the course of several trials, those trials cannot reliably be reproduced when
+only some of them are skipped. Either all or none of the trials that depend on
+one another should be skipped.
+
+Anytime you have a series of trials, some of which depend on what happens
+earlier in an expeirment, such trials should be placed inside of an @addtrials
+let block. Otherwise experiment fast forwarding will result in unexpected
+behaviors.
 
 ## Conditional Trials
 

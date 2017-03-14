@@ -120,4 +120,7 @@ Conditional moments are a more advanced technique for creating moments and aren'
 
 Normally, to add moments to a trial you simply call [`addtrial`](@ref). There is also [`addpractice`](@ref), and [`addbreak`](@ref). These functions are nearly identical to [`addtrial`](@ref) but differ in how they update the trial and offset counters, and what they automatically [`record`](@ref) to a data file.
 
-All of these functions take a iterable object of moments. For convience these iterables can be nested, allowing functions that return multiple moments themselves to be easily passed to [`addtrial`](@ref). 
+All of these functions take a series of iterable objects of moments. The moments
+of all arguments are added in sequence. For convience these iterables can be
+nested, allowing functions that return multiple moments themselves to be easily
+passed to [`addtrial`](@ref).
