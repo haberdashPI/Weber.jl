@@ -46,122 +46,89 @@
 
       <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
 	<ul class="current">
+	  
           
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="..">Introduction</a>
-        
-    </li>
-<li>
+            <li class="toctree-l1">
+		
+    <a class="" href="..">Introduction</a>
+	    </li>
           
-            <li>
+            <li class="toctree-l1">
+		
+    <span class="caption-text">User Guide</span>
     <ul class="subnav">
-    <li><span>User Guide</span></li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../start/">Getting Started</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../trial_guide/">Trial Creation</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../adaptive/">Adaptive Tracks</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../advanced/">Advanced Experiments</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../extend/">Extending Weber</a>
-        
-    </li>
-
-        
+                <li class="">
+                    
+    <a class="" href="../start/">Getting Started</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../trial_guide/">Trial Creation</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../adaptive/">Adaptive Tracks</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../advanced/">Advanced Experiments</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../extend/">Extending Weber</a>
+                </li>
     </ul>
-<li>
+	    </li>
           
-            <li>
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Reference</span>
     <ul class="subnav">
-    <li><span>Reference</span></li>
+                <li class="">
+                    
+    <a class="" href="../experiment/">Experiments</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../trials/">Trials</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../sound/">Sound</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../video/">Video</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../event/">Events</a>
+                </li>
+                <li class=" current">
+                    
+    <a class="current" href="./">Extensions</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l3"><a href="#available-extensions">Available Extensions</a></li>
+    
 
+    <li class="toctree-l3"><a href="#creating-extensions">Creating Extensions</a></li>
+    
+        <ul>
         
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../experiment/">Experiments</a>
+            <li><a class="toctree-l4" href="#functions-operating-over-extensions">Functions operating over extensions</a></li>
         
-    </li>
+            <li><a class="toctree-l4" href="#extendable-private-functions">Extendable Private Functions</a></li>
+        
+            <li><a class="toctree-l4" href="#private-moment-functions">Private Moment Functions</a></li>
+        
+        </ul>
+    
 
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../trials/">Trials</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../sound/">Sound</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../video/">Video</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../event/">Events</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 current">
-        <a class="current" href="./">Extensions</a>
-        
-            <ul>
-            
-                <li class="toctree-l3"><a href="#available-extensions">Available Extensions</a></li>
-                
-            
-                <li class="toctree-l3"><a href="#creating-extensions">Creating Extensions</a></li>
-                
-                    <li><a class="toctree-l4" href="#functions-operating-over-extensions">Functions operating over extensions</a></li>
-                
-                    <li><a class="toctree-l4" href="#extendable-private-functions">Extendable Private Functions</a></li>
-                
-                    <li><a class="toctree-l4" href="#private-moment-functions">Private Moment Functions</a></li>
-                
-            
-            </ul>
-        
-    </li>
-
-        
     </ul>
-<li>
+                </li>
+    </ul>
+	    </li>
           
         </ul>
       </div>
@@ -222,21 +189,21 @@
 </code></pre>
 
 <p>Get the next extended version of this experiment.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/daf69a743a26925b2c226d91394cbd18337a3aba/src/types.jl#L575-L579' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/d9adeee93625f4bbaa5882b501769e41465963a1/src/types.jl#L575-L579' class='documenter-source'>source</a><br></p>
 <p><a id='DataStructures.top-Tuple{Weber.Experiment}' href='#DataStructures.top-Tuple{Weber.Experiment}'>#</a>
 <strong><code>DataStructures.top</code></strong> &mdash; <em>Method</em>.</p>
 <pre><code>top(experiment::Experiment)
 </code></pre>
 
 <p>Get the the top-most extended verison for this experiment, if any.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/daf69a743a26925b2c226d91394cbd18337a3aba/src/types.jl#L546-L550' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/d9adeee93625f4bbaa5882b501769e41465963a1/src/types.jl#L546-L550' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.extension-Tuple{Weber.ExtendedExperiment}' href='#Weber.extension-Tuple{Weber.ExtendedExperiment}'>#</a>
 <strong><code>Weber.extension</code></strong> &mdash; <em>Method</em>.</p>
 <pre><code>extension(experiment::ExtendedExperiment)
 </code></pre>
 
 <p>Get the extension object for this extended expeirment</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/daf69a743a26925b2c226d91394cbd18337a3aba/src/types.jl#L562-L566' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/d9adeee93625f4bbaa5882b501769e41465963a1/src/types.jl#L562-L566' class='documenter-source'>source</a><br></p>
 <p><a id='Extendable-Private-Functions-1'></a></p>
 <h2 id="extendable-private-functions">Extendable Private Functions</h2>
 <p><a id='Weber.poll_events' href='#Weber.poll_events'>#</a>
@@ -249,7 +216,7 @@
 <p class="admonition-title">Warning</p>
 <p>This function should never be called directly by user code. A new method of this function can be implemented to extend Weber, allowing it to report new kinds events.</p>
 </div>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/daf69a743a26925b2c226d91394cbd18337a3aba/src/event.jl#L23-L36' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/d9adeee93625f4bbaa5882b501769e41465963a1/src/event.jl#L23-L36' class='documenter-source'>source</a><br></p>
 <p><a id='Private-Moment-Functions-1'></a></p>
 <h2 id="private-moment-functions">Private Moment Functions</h2>
 <p>New <code>Weber.Moment</code> subtypes can define methods for the following functions to extend the possible runtime behavior of Weber.</p>
@@ -264,7 +231,7 @@
 <p class="admonition-title">Note</p>
 <p>This method is part of the private interface for moments. It should not be called directly, but implemented as part of an extension. You need only extend the method taking a single arugment unless you intend to use this information during prepartion.</p>
 </div>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/daf69a743a26925b2c226d91394cbd18337a3aba/src/trial.jl#L489-L507' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/d9adeee93625f4bbaa5882b501769e41465963a1/src/trial.jl#L489-L507' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.handle' href='#Weber.handle'>#</a>
 <strong><code>Weber.handle</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>handle(exp,queue,moment,to_handle)
@@ -276,7 +243,7 @@
 <p class="admonition-title">Note</p>
 <p>This method is part of the private interface for moments. It should not be called directly, but implemented as part of an extension. It is called during the course of running an experiment.</p>
 </div>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/daf69a743a26925b2c226d91394cbd18337a3aba/src/trial.jl#L526-L549' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/d9adeee93625f4bbaa5882b501769e41465963a1/src/trial.jl#L526-L549' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.delta_t' href='#Weber.delta_t'>#</a>
 <strong><code>Weber.delta_t</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>delta_t(m::Moment)
@@ -287,7 +254,7 @@
 <p class="admonition-title">Note</p>
 <p>This method is part of the private interface for moments. It should not be called directly, but implemented as part of an extension.</p>
 </div>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/daf69a743a26925b2c226d91394cbd18337a3aba/src/types.jl#L351-L361' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/d9adeee93625f4bbaa5882b501769e41465963a1/src/types.jl#L351-L361' class='documenter-source'>source</a><br></p>
               
             </div>
           </div>
@@ -321,7 +288,7 @@
   <div class="rst-versions" role="note" style="cursor: pointer">
     <span class="rst-current-version" data-toggle="rst-current-version">
       
-          <a href="https://github.com/haberdashPI/Weber.jl" class="icon icon-github" style="float: left; color: #fcfcfc"> GitHub</a>
+          <a href="https://github.com/haberdashPI/Weber.jl" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
       
       
         <span><a href="../event/" style="color: #fcfcfc;">&laquo; Previous</a></span>
