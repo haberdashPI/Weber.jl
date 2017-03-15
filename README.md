@@ -18,7 +18,8 @@ technical computing.
 
 Weber has been built with the assumption that most of its users have only
 minimal programming experience. The hope is that such users should be able to
-get started quickly, making simple experiments today.
+get started quickly, making simple experiments today. You can start by reading
+the [manual](https://haberdashPI.github.io/Weber.jl/stable).
 
 Weber's emphasis is currently on auditory psychophysics, but the package has the
 features necessary to generate most visual stimuli one would desire as well,
