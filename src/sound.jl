@@ -46,9 +46,16 @@ samplerate(x::Sound) = samplerate(x.buffer)
 length(x::Sound) = length(x.buffer)
 
 const sound_cache = LRU{Union{SampleBuf,Array},Sound}(256)
+function with_cache(fn,usecache,x)
+  if usecache
+    get!(fn,sound_cache,x)
+  else
+    fn()
+  end
+end
 
 """
-    sound(x::Array,[sample_rate_Hz=44100])
+    sound(x::Array,[cache=true];[sample_rate_Hz=44100])
 
 Creates a sound object from an arbitrary array.
 
@@ -56,15 +63,18 @@ For real numbers, assumes 1 is the loudest and -1 the softest. Assumes 16-bit
 PCM for integers. The array should be 1d for mono signals, or an array of size
 (N,2) for stereo sounds.
 
+When cache is set to true, sound will cache its results thus avoiding repeatedly
+creating a new sound for the same object.
+
 !!! note "Called Implicitly"
 
     This function is normally called implicitly in a call to
     `play(x)`, where x is an arbitrary array, so it need not normally
     be called.
 """
-function sound{T <: Number}(x::Array{T};
+function sound{T <: Number}(x::Array{T},cache=true;
                             sample_rate_Hz=samplerate(sound_setup_state))
-  get!(sound_cache,x) do
+  with_cache(cache,x) do
     bounded = max(min(x,typemax(Fixed{Int16,15})),typemin(Fixed{Int16,15}))
     if ndims(x) == 1
       bounded = hcat(bounded,bounded)
@@ -74,12 +84,12 @@ function sound{T <: Number}(x::Array{T};
 end
 
 """
-    sound(x::SampleBuff)
+    sound(x::SampleBuff,[cache=true])
 
 Creates a sound object from a `SampleBuf` (from the `SampledSignals` module).
 """
-function sound(x::SampleBuf)
-  get!(sound_cache,x) do
+function sound(x::SampleBuf,cache=true)
+  with_cache(cache,x) do
     bounded = max(min(x.data,typemax(Fixed{Int16,15})),typemin(Fixed{Int16,15}))
     if ndims(x) == 1
       bounded = hcat(bounded,bounded)
@@ -88,8 +98,8 @@ function sound(x::SampleBuf)
   end
 end
 
-function sound(x::SampleBuf{Fixed{Int16,15},1})
-  get!(sound_cache,x) do
+function sound(x::SampleBuf{Fixed{Int16,15},1},cache=true)
+  with_cache(cache,x) do
     sound(hcat(x,x))
   end
 end
@@ -809,7 +819,7 @@ function stream(itr,channel::Int=1)
   @assert 1 <= channel <= sound_setup_state.num_channels
   itr_state = start(itr)
   obj, itr_state = next(itr,itr_state)
-  x = sound(obj)
+  x = sound(obj,false)
   done_at = -1.0
   stop(channel)
 
@@ -867,7 +877,7 @@ end
 function process(streamer::Streamer)
   if !done(streamer.itr,streamer.itr_state)
     obj, next_state = next(streamer.itr,streamer.itr_state)
-    x = sound(obj)
+    x = sound(obj,false)
     done_at = -1.0
 
     if tick() > streamer.next_stream + 0.75duration(x)
