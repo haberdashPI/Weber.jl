@@ -106,11 +106,6 @@ elseif_events,_,_ = find_timing() do
   end
 end
 
-# situations to test:
-# two overlapping methods
-# non-overlapping methods in separate extensions
-# modified poll_events
-
 type ExtensionA <: Weber.Extension end
 type ExtensionB <: Weber.Extension end
 type ExtensionC <: Weber.Extension
