@@ -303,12 +303,26 @@ function next(cs::ComplexStream,i::Int)
   sound, i+cs.length
 end
 
+immutable FilterStream{T}
+  filt
+  stream::T
+  samplerate::Int
+end
+show(io::IO,filt::FilterStream) = write(io,"FilterStream($filt,$stream)")
+start(fs::FilterStream) = DF2TFilter(fs.filt), start(fs.stream)
+done{T,S}(fs::FilterStream{T},x::Tuple{DF2TFilter,S}) = done(fs.stream,x[2])
+function next{T,S}(fs::FilterStream{T},x::Tuple{DF2TFilter,S})
+  filt_state, state = x
+  sound, state = next(fs.stream,state)
+  SampleBuf(filt(filt_state,sound),samplerate(sound)), (filt_state, state)
+end
+
 # TODO: after basic streaming is working
 # figure out how to stream these filters
 """
     bandpass(x,low,high,[order=5],[sample_rate_Hz=samplerate(x)])
 
-Band-pass filter the sound at the specified frequencies.
+Band-pass filter the sound (or stream) at the specified frequencies.
 
 Filtering uses a butterworth filter of the given order.
 """
@@ -323,16 +337,14 @@ end
 
 function bandpass(itr,low,high;order=5,sample_rate_Hz=samplerate(first(itr)))
 	ftype = Bandpass(float(low),float(high),fs=sample_rate_Hz)
-	f = DF2TFilter(digitalfilter(ftype,Butterworth(order)))
-  lazymap(itr) do sound
-    SampleBuf(filt(f,sound),sample_rate_Hz)
-  end
+	f = digitalfilter(ftype,Butterworth(order))
+  FilterStream(f,itr,Int(sample_rate_Hz))
 end
 
 """
     lowpass(x,low,[order=5],[sample_rate_Hz=samplerate(x)])
 
-Low-pass filter the sound at the specified frequency.
+Low-pass filter the sound (or stream) at the specified frequency.
 
 Filtering uses a butterworth filter of the given order.
 """
@@ -347,10 +359,8 @@ end
 
 function lowpass(itr,low;order=5,sample_rate_Hz=samplerate(first(itr)))
   ftype = Lowpass(float(low),fs=sample_rate_Hz)
-	f = DF2TFilter(digitalfilter(ftype,Butterworth(order)))
-  lazymap(itr) do sound
-    SampleBuf(filt(f,sound),sample_rate_Hz)
-  end
+  f = digitalfilter(ftype,Butterworth(order))
+	FilterStream(f,itr,Int(sample_rate_Hz))
 end
 
 # TODO: implement high and band pass streaming filters
@@ -358,7 +368,7 @@ end
 """
     highpass(x,high,[order=5],[sample_rate_Hz=samplerate(x)])
 
-High-pass filter the sound at the specified frequency.
+High-pass filter the sound (or stream) at the specified frequency.
 
 Filtering uses a butterworth filter of the given order.
 """
@@ -373,10 +383,8 @@ end
 
 function highpass(itr,high;order=5,sample_rate_Hz=samplerate(first(itr)))
   ftype = Highpass(float(high),fs=sample_rate_Hz)
-	f = DF2TFilter(digitalfilter(ftype,Butterworth(order)))
-  lazymap(itr) do sound
-    SampleBuf(filt(f,sound),sample_rate_Hz)
-  end
+	f = digitalfilter(ftype,Butterworth(order))
+  FilterStream(f,itr,Int(sample_rate_Hz))
 end
 
 # TODO: after basic streaming is working
