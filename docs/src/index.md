@@ -12,9 +12,8 @@ get started quickly, making simple experiments today.
 Weber's emphasis is currently on auditory psychophysics, but the package has the
 features necessary to generate most visual stimuli one would desire as well,
 thanks to [Images.jl](https://github.com/JuliaImages/Images.jl). It is named
-after Ernst Weber. Weber runs on Windows and Mac OS X, and supports keyboard
-input or Cedrus response-pad input. Additional functionality can be added by
-making [extensions](extend.md)
+after Ernst Weber. Weber runs on Windows and Mac OS X. Additional functionality
+can be added through [extensions](extend.md)
 
 # [Installation](@id install)
 
