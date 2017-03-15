@@ -556,7 +556,7 @@ function register_sound(current::Sound,done_at::Float64)
   setstate.playing[current] = done_at
   for s in keys(setstate.playing)
     done_at = setstate.playing[s]
-    if done_at + sound_cleanup_wait > precise_time()
+    if done_at > Weber.tick() + sound_cleanup_wait
       delete!(setstate.playing,s)
     end
   end
