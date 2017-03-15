@@ -15,7 +15,16 @@ export match_lengths, mix, mult, silence, noise, highpass, lowpass, bandpass,
   resume_sounds, pause_sounds, load, save, samplerate, length, channel,
   rampon, rampoff, stream_unit
 
-# TODO: test on a real experiment
+const weber_sound_version = 2
+
+let
+  version_in_file =
+    match(r"libweber-sound\.([0-9]+)\.(dylib|dll)",weber_sound).captures[1]
+  if parse(Int,version_in_file) != weber_sound_version
+    error("Versions for weber sound driver do not match. Please run ",
+          "Pkg.build(\"Weber\").")
+  end
+end
 
 immutable WS_Sound
   buffer::Ptr{Fixed{Int16,15}}
