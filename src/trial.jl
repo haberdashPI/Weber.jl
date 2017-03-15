@@ -281,7 +281,7 @@ function trial_block(exp::Experiment,body::Function,condition::Function;loop=fal
   body()
   pop!(addtrial_block)
 
-  addmoment(exp,moment)
+  addmoments(exp,[moment])
 end
 
 """
