@@ -366,7 +366,7 @@ const PlayFunction = typeof(play)
 function moment(delta_t::Number,::PlayFunction,x;channel=0)
   PlayMoment(delta_t,sound(x),channel)
 end
-function moment(delta_t::Number,::PlayFunction,fn::Function,channel=0)
+function moment(delta_t::Number,::PlayFunction,fn::Function;channel=0)
   PlayFunctionMoment(delta_t,fn,channel)
 end
 
