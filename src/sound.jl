@@ -313,8 +313,9 @@ start(fs::FilterStream) = DF2TFilter(fs.filt), start(fs.stream)
 done{T,S}(fs::FilterStream{T},x::Tuple{DF2TFilter,S}) = done(fs.stream,x[2])
 function next{T,S}(fs::FilterStream{T},x::Tuple{DF2TFilter,S})
   filt_state, state = x
+  new_filt_state = deepcopy(filt_state)
   sound, state = next(fs.stream,state)
-  SampleBuf(filt(filt_state,sound),samplerate(sound)), (filt_state, state)
+  SampleBuf(filt(new_filt_state,sound),fs.samplerate), (new_filt_state, state)
 end
 
 # TODO: after basic streaming is working
