@@ -189,21 +189,21 @@
 </code></pre>
 
 <p>Get the next extended version of this experiment.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/5823c4f64714954b5181d5aa4ba5962ceebac95a/src/types.jl#L575-L579' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/c4b24d50aff854292165774be24d11b8d7b53c14/src/types.jl#L575-L579' class='documenter-source'>source</a><br></p>
 <p><a id='DataStructures.top-Tuple{Weber.Experiment}' href='#DataStructures.top-Tuple{Weber.Experiment}'>#</a>
 <strong><code>DataStructures.top</code></strong> &mdash; <em>Method</em>.</p>
 <pre><code>top(experiment::Experiment)
 </code></pre>
 
 <p>Get the the top-most extended verison for this experiment, if any.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/5823c4f64714954b5181d5aa4ba5962ceebac95a/src/types.jl#L546-L550' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/c4b24d50aff854292165774be24d11b8d7b53c14/src/types.jl#L546-L550' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.extension-Tuple{Weber.ExtendedExperiment}' href='#Weber.extension-Tuple{Weber.ExtendedExperiment}'>#</a>
 <strong><code>Weber.extension</code></strong> &mdash; <em>Method</em>.</p>
 <pre><code>extension(experiment::ExtendedExperiment)
 </code></pre>
 
 <p>Get the extension object for this extended expeirment</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/5823c4f64714954b5181d5aa4ba5962ceebac95a/src/types.jl#L562-L566' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/c4b24d50aff854292165774be24d11b8d7b53c14/src/types.jl#L562-L566' class='documenter-source'>source</a><br></p>
 <p><a id='Extendable-Private-Functions-1'></a></p>
 <h2 id="extendable-private-functions">Extendable Private Functions</h2>
 <p><a id='Weber.poll_events' href='#Weber.poll_events'>#</a>
@@ -216,7 +216,7 @@
 <p class="admonition-title">Warning</p>
 <p>This function should never be called directly by user code. A new method of this function can be implemented to extend Weber, allowing it to report new kinds events.</p>
 </div>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/5823c4f64714954b5181d5aa4ba5962ceebac95a/src/event.jl#L23-L36' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/c4b24d50aff854292165774be24d11b8d7b53c14/src/event.jl#L23-L36' class='documenter-source'>source</a><br></p>
 <p><a id='Private-Moment-Functions-1'></a></p>
 <h2 id="private-moment-functions">Private Moment Functions</h2>
 <p>New <code>Weber.Moment</code> subtypes can define methods for the following functions to extend the possible runtime behavior of Weber.</p>
@@ -231,7 +231,7 @@
 <p class="admonition-title">Note</p>
 <p>This method is part of the private interface for moments. It should not be called directly, but implemented as part of an extension. You need only extend the method taking a single arugment unless you intend to use this information during prepartion.</p>
 </div>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/5823c4f64714954b5181d5aa4ba5962ceebac95a/src/trial.jl#L489-L507' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/c4b24d50aff854292165774be24d11b8d7b53c14/src/trial.jl#L489-L507' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.handle' href='#Weber.handle'>#</a>
 <strong><code>Weber.handle</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>handle(exp,queue,moment,to_handle)
@@ -243,7 +243,7 @@
 <p class="admonition-title">Note</p>
 <p>This method is part of the private interface for moments. It should not be called directly, but implemented as part of an extension. It is called during the course of running an experiment.</p>
 </div>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/5823c4f64714954b5181d5aa4ba5962ceebac95a/src/trial.jl#L526-L549' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/c4b24d50aff854292165774be24d11b8d7b53c14/src/trial.jl#L526-L549' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.delta_t' href='#Weber.delta_t'>#</a>
 <strong><code>Weber.delta_t</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>delta_t(m::Moment)
@@ -254,7 +254,7 @@
 <p class="admonition-title">Note</p>
 <p>This method is part of the private interface for moments. It should not be called directly, but implemented as part of an extension.</p>
 </div>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/5823c4f64714954b5181d5aa4ba5962ceebac95a/src/types.jl#L351-L361' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/c4b24d50aff854292165774be24d11b8d7b53c14/src/types.jl#L351-L361' class='documenter-source'>source</a><br></p>
               
             </div>
           </div>
