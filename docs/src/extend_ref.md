@@ -33,8 +33,8 @@ Weber.poll_events
 
 ## Private Moment Functions
 
-New `Weber.Moment` subtypes can define methods for the following functions to extend
-the possible runtime behavior of Weber.
+New `Weber.SimpleMoment` subtypes can define methods for the following functions to extend
+the runtime behavior of Weber.
 
 ```@docs
 Weber.prepare!

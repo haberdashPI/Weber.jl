@@ -140,7 +140,7 @@ response(key"my_button1" => "button1_pressed",
 ## Custom Moments
 
 You can create your own moment types, which must be children of
-`Weber.Moment`. These new moments will have to be generated using some newly
+`Weber.SimpleMoment`. These new moments will have to be generated using some newly
 defined function, or added automatically by extending [`addtrial`](@ref). Once
 created, and added to trials, these moments will be processed at run-time using
 the function [`handle`](@ref), which should define the moment's run-time

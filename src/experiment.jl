@@ -183,7 +183,7 @@ function Experiment(;skip=0,columns=Symbol[],debug=false,
   last_time = 0.0
   next_moment = 0.0
   pause_mode = Running
-  moments = [MomentQueue(Deque{Moment}(),0.0)]
+  moments = [MomentQueue(Deque{AbstractMoment}(),0.0)]
   streamers = Dict{Int,Streamer}()
   cleanup = () -> error("no cleanup function available!")
   last_good_delta = -1.0

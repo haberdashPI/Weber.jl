@@ -345,11 +345,11 @@ time(event::EndPauseEvent) = event.time
 ################################################################################
 # trial types
 
-abstract Moment
-abstract SimpleMoment <: Moment
+abstract AbstractMoment
+abstract SimpleMoment <: AbstractMoment
 
 """
-    delta_t(m::Moment)
+    delta_t(m::AbstractMoment)
 
 Returns the time, since the start of the previous moment, at which this
 moment should begin. The default implementation returns zero.
@@ -359,10 +359,11 @@ moment should begin. The default implementation returns zero.
     This method is part of the private interface for moments. It
     should not be called directly, but implemented as part of an extension.
 """
-delta_t(m::Moment) = 0.0
-required_delta_t(m::Moment) = delta_t(m)
-isimmediate(m::Moment) = delta_t(m) == 0.0
-sequenceable(m::Moment) = false
+
+delta_t(m::AbstractMoment) = 0.0
+required_delta_t(m::AbstractMoment) = delta_t(m)
+isimmediate(m::AbstractMoment) = false
+sequenceable(m::AbstractMoment) = false
 
 type ResponseMoment <: SimpleMoment
   respond::Function
@@ -445,31 +446,31 @@ delta_t(moment::FinalMoment) = 0.0
 isimmediate(m::FinalMoment) = true
 
 
-type CompoundMoment <: Moment
-  data::Array{Moment}
+type CompoundMoment <: AbstractMoment
+  data::Array{AbstractMoment}
 end
 delta_t(m::CompoundMoment) = 0.0
 isimmediate(m::CompoundMoment) = false
 >>(a::SimpleMoment,b::SimpleMoment) = CompoundMoment([a,b])
 >>(a::CompoundMoment,b::CompoundMoment) = CompoundMoment(vcat(a.data,b.data))
->>(a::Moment,b::Moment) = >>(promote(a,b)...)
->>(a::Moment,b::Moment,c::Moment,d::Moment...) = moment(a,b,c,d...)
+>>(a::AbstractMoment,b::AbstractMoment) = >>(promote(a,b)...)
+>>(a::AbstractMoment,b::AbstractMoment,c::AbstractMoment,d::AbstractMoment...) = moment(a,b,c,d...)
 promote_rule{T <: SimpleMoment}(::Type{CompoundMoment},::Type{T}) = CompoundMoment
 convert(::Type{CompoundMoment},x::SimpleMoment) = CompoundMoment([x])
 
 # optimize a seequence of moments that can occur, immediately, one after
 # the other
 type MomentSequence <: AbstractTimedMoment
-  data::Vector{Moment}
+  data::Vector{AbstractMoment}
 end
 delta_t(m::MomentSequence) = delta_t(m.data[1])
 push!(m::MomentSequence,x) = push!(m.data,x)
-sequence(m1::Moment,m2::Moment) = MomentSequence([m1,m2])
-sequence(ms::MomentSequence,m::Moment) = (push!(ms.data,m); ms)
+sequence(m1::AbstractMoment,m2::AbstractMoment) = MomentSequence([m1,m2])
+sequence(ms::MomentSequence,m::AbstractMoment) = (push!(ms.data,m); ms)
 
-type ExpandingMoment <: Moment
+type ExpandingMoment <: AbstractMoment
   condition::Function
-  data::Stack{Moment}
+  data::Stack{AbstractMoment}
   repeat::Bool
   update_offset::Bool
 end
@@ -477,7 +478,7 @@ delta_t(m::ExpandingMoment) = 0.0
 isimmediate(m::ExpandingMoment) = false
 
 type MomentQueue
-  data::Deque{Moment}
+  data::Deque{AbstractMoment}
   last::Float64
 end
 isempty(m::MomentQueue) = isempty(m.data)

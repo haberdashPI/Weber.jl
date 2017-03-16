@@ -126,7 +126,7 @@ function record(code;kwds...)
   record(get_experiment(),code;kwds...)
 end
 
-function addmoment(q::ExpandingMoment,m::Moment)
+function addmoment(q::ExpandingMoment,m::AbstractMoment)
   m = flag_expanding(m)
   if !isempty(q.data) && isimmediate(m) && sequenceable(top(q.data))
     m = sequence(pop!(q.data),m)
@@ -134,14 +134,14 @@ function addmoment(q::ExpandingMoment,m::Moment)
   push!(q.data,m)
 end
 
-function addmoment(q::MomentQueue,m::Moment)
+function addmoment(q::MomentQueue,m::AbstractMoment)
   if !isempty(q) && isimmediate(m) && sequenceable(back(q))
     m = sequence(pop!(q),m)
   end
   enqueue!(q,m)
 end
 
-function addmoment(q::Vector{Moment},m::Moment)
+function addmoment(q::Vector{AbstractMoment},m::AbstractMoment)
   if !isempty(q) && isimmediate(m) && sequenceable(last(q))
     m = sequence(pop!(q),m)
   end
@@ -149,7 +149,7 @@ function addmoment(q::Vector{Moment},m::Moment)
 end
 
 addmoment(e::Experiment,m) = addmoment(data(e).moments,m)
-addmoment(q::Array{MomentQueue},m::Moment) = addmoment(first(q),m)
+addmoment(q::Array{MomentQueue},m::AbstractMoment) = addmoment(first(q),m)
 function addmoment(q::Union{ExpandingMoment,MomentQueue,Array{MomentQueue}},watcher::Function)
   for t in concrete_events
     precompile(watcher,(t,))
@@ -158,7 +158,7 @@ function addmoment(q::Union{ExpandingMoment,MomentQueue,Array{MomentQueue}},watc
 end
 function addmoment(q,ms)
   function handle_error()
-    if !(typeof(ms) <: Moment || typeof(ms) <: Function)
+    if !(typeof(ms) <: AbstractMoment || typeof(ms) <: Function)
       error("Expected some kind of moment, but got a value of type",
             " $(typeof(ms)) instead.")
     else
@@ -276,7 +276,7 @@ function trial_block(body,condition;keys...)
 end
 
 function trial_block(exp::Experiment,body::Function,condition::Function;loop=false)
-  moment = ExpandingMoment(condition,Stack(Moment),loop,true)
+  moment = ExpandingMoment(condition,Stack(AbstractMoment),loop,true)
   push!(addtrial_block,moment)
   body()
   pop!(addtrial_block)
@@ -390,7 +390,7 @@ end
 Create a single, compound moment by concatentating several moments togethor.
 """
 moment(moments...) = moment(collect(moments))
-moment(moments::Array) = CompoundMoment(addmoment(Array{Moment,1}(),moments))
+moment(moments::Array) = CompoundMoment(addmoment(Array{AbstractMoment,1}(),moments))
 function moment(moments)
   try
     start(moments)
@@ -449,7 +449,7 @@ function timeout(fn::Function,isresponse::Function,timeout;atleast=0.0)
   ResponseMoment(isresponse,fn,timeout,atleast)
 end
 
-flag_expanding(m::Moment) = m
+flag_expanding(m::AbstractMoment) = m
 function flag_expanding(m::OffsetStartMoment)
   OffsetStartMoment(m.run,m.count_trials,true)
 end
@@ -481,7 +481,7 @@ function (which takes no arguments) evaluates to true.
 """
 function when(condition::Function,moments...;loop=false,update_offset=false)
   precompile(condition,())
-  e = ExpandingMoment(condition,Stack(Moment),loop,update_offset)
+  e = ExpandingMoment(condition,Stack(AbstractMoment),loop,update_offset)
   foreach(m -> addmoment(e,m),moments)
   e
 end
@@ -505,8 +505,8 @@ predicted, and accounted for.
     You need only extend the method taking a single arugment unless you
     intend to use this information during prepartion.
 """
-prepare!(m::Moment,last_moment::Float64) = prepare!(m)
-prepare!(m::Moment) = nothing
+prepare!(m::AbstractMoment,last_moment::Float64) = prepare!(m)
+prepare!(m::AbstractMoment) = nothing
 function prepare!(ms::MomentSequence,last_moment::Float64)
   for m in ms.data prepare!(m,last_moment) end
 end
@@ -611,7 +611,7 @@ function handle(exp::Experiment,q::MomentQueue,m::ResponseMoment,event::ExpEvent
 end
 
 function handle(exp::Experiment,q::MomentQueue,moments::CompoundMoment,x)
-  queue = Deque{Moment}()
+  queue = Deque{AbstractMoment}()
   for moment in moments.data
     push!(queue,moment)
   end
@@ -635,7 +635,7 @@ function handle(exp::Experiment,q::MomentQueue,m::ExpandingMoment,x)
   true
 end
 
-is_moment_skipped(exp,moment::Moment) = data(exp).offset < data(exp).skip_offsets
+is_moment_skipped(exp,moment::AbstractMoment) = data(exp).offset < data(exp).skip_offsets
 function is_moment_skipped(exp,moment::OffsetStartMoment)
   if !moment.expanding
     data(exp).offset += 1
