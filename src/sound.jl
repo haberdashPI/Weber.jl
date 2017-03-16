@@ -888,16 +888,6 @@ function process(streamer::Streamer)
     x = sound(obj,false)
     done_at = -1.0
 
-    if tick() > streamer.next_stream + 0.75duration(x)
-      warn(cleanstr("""
-
-Stream unit was played late. There may be a skip. This often happens at the
-start of an experiment, but if it continues to happen throughout the experiment,
-you should increase the stream unit size using `setup_sound()`.
-
-      """))
-    end
-
     done_at = ccall((:ws_play_next,weber_sound),Cdouble,
                     (Cdouble,Cint,Ref{WS_Sound},Ptr{Void}),
                     tick(),streamer.channel-1,x.chunk,
