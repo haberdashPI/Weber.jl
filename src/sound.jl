@@ -463,7 +463,7 @@ function rampoff(itr,ramp_s=0.005,after=0)
     end
   end
   num_units = ceil(Int,(after+ramp_s)*sample_rate_Hz / len)
-  mult(itr,take(ramp,num_units))
+  take(mult(itr,ramp),num_units)
 end
 
 # TODO: after basic streaming is working
