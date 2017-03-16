@@ -136,6 +136,22 @@ function match_lengths(xs...)
   end
 end
 
+immutable OpStream
+  streams::Tuple
+  op::Function
+end
+start(ms::OpStream) = map(start,ms.streams)
+done(ms::OpStream,state::Tuple) = all(map(done,ms.streams,state))
+function next(ms::OpStream,state::Tuple)
+  state = state[find(map((itr,st) -> !done(itr,st),ms.streams,state))]
+
+  nexts = map(next,ms.streams,state)
+  sounds = map(x -> x[1],nexts)
+  states = map(x -> x[2],nexts)
+
+  reduce(ms.op,sounds), states
+end
+
 """
     mix(x,y,...)
 
@@ -145,12 +161,7 @@ function mix(xs::Union{SampleBuf,Array}...)
   xs = match_lengths(xs...)
   reduce(+,xs)
 end
-
-function mix(itrs...)
-  lazymap(itrs...) do xs...
-    reduce(+,xs)
-  end
-end
+mix(itrs...) = OpStream(itrs,+)
 
 """
     mult(x,y,...)
@@ -162,12 +173,7 @@ function mult(xs::Union{SampleBuf,Array}...)
   xs = match_lengths(xs...)
   reduce(.*,xs)
 end
-
-function mult(itrs...)
-  lazymap(itrs...) do xs...
-    reduce(.*,xs)
-  end
-end
+mult(itrs...) = OpStream(itrs,.*)
 
 """
     silence(length,[sample_rate_Hz=44100])
