@@ -396,9 +396,11 @@ function run{T <: BaseExperiment}(
       end
 
       # handle auditory streams
+      next_stream = Inf
       for streamer in values(data(exp).streamers)
         if tick > streamer.next_stream
           process(streamer)
+          next_stream = min(next_stream,streamer.next_stream)
         end
       end
 
@@ -414,16 +416,18 @@ function run{T <: BaseExperiment}(
       # if after all this processing there's still plenty of time left
       # then sleep for a little while. (pausing also sleeps the loop)
       new_tick = precise_time() - start
+      stream_len = stream_unit()/samplerate()
       if !flags(exp).running
         gc()
         sleep(sleep_amount)
       elseif ((new_tick - last_delta) > sleep_resolution &&
               (new_tick - last_input) > sleep_resolution &&
+              new_tick + 0.2stream_len < next_stream &&
               (data(exp).next_moment - new_tick) > sleep_resolution)
         if (data(exp).next_moment - new_tick) > gc_time
           gc()
         end
-        sleep(sleep_amount)
+        sleep(min(sleep_amount,0.05stream_len))
       end
     end
   catch e
