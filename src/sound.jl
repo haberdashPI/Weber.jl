@@ -528,7 +528,7 @@ type SoundSetupState
   queue_size::Int
   stream_unit::Int
 end
-const default_stream_unit = 2^14
+const default_stream_unit = 2^12
 const sound_setup_state = SoundSetupState(0,Dict(),C_NULL,0,0,default_stream_unit)
 isready(s::SoundSetupState) = s.samplerate != 0
 
@@ -896,12 +896,12 @@ function process(streamer::Streamer)
     ws_if_error("While playing sound")
     if done_at < 0
       # sound not ready to be queued for playing, wait a bit and try again
-      streamer.next_stream += 0.001
+      streamer.next_stream += 0.05duration(x)
     else
       # sound was queued to play, wait until this queued sound actually
       # starts playing to queue the next stream unit
       register_sound(x,done_at)
-      streamer.next_stream = done_at - duration(x)
+      streamer.next_stream += 0.75duration(x)
       streamer.itr_state = next_state
     end
   else stop(streamer.channel) end

@@ -252,17 +252,15 @@ double ws_play_next(double now,int channel,Sound* toplay,WsState* state){
   // play_next uses a spearate set of channels
   channel = state->channels->len/2 + channel;
 
-  // create the sound
-  PaTime pa_now = Pa_GetStreamTime(state->stream);
-  TimedSound* sound = newTimedSound((TimedSound*)malloc(sizeof(TimedSound)),toplay,-1);
-
   // add the sound to this channel, unpausing if necessary
   Sounds* sounds = state->channels->data + channel;
   if(sounds->paused){
-    TimedSound* paused_sound = sounds->data[sounds->consumer_index];
-    paused_sound->offset = paused_sound->len;
-    sounds->paused = FALSE;
+    return -1.0;
   }
+
+  // create the sound
+  PaTime pa_now = Pa_GetStreamTime(state->stream);
+  TimedSound* sound = newTimedSound((TimedSound*)malloc(sizeof(TimedSound)),toplay,-1);
 
   double done_at = sounds->done_at + toplay->len*state->channels->samplelen;
   if(!sounds->data[sounds->producer_index]){
