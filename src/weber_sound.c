@@ -259,11 +259,10 @@ double ws_play_next(double now,int channel,Sound* toplay,WsState* state){
   }
 
   // create the sound
-  PaTime pa_now = Pa_GetStreamTime(state->stream);
-  TimedSound* sound = newTimedSound((TimedSound*)malloc(sizeof(TimedSound)),toplay,-1);
-
-  double done_at = sounds->done_at + toplay->len*state->channels->samplelen;
   if(!sounds->data[sounds->producer_index]){
+    PaTime pa_now = Pa_GetStreamTime(state->stream);
+    double done_at = sounds->done_at + toplay->len*state->channels->samplelen;
+    TimedSound* sound = newTimedSound((TimedSound*)malloc(sizeof(TimedSound)),toplay,-1);
     sounds->data[sounds->producer_index] = sound;
 
     sounds->producer_index++;
