@@ -273,6 +273,8 @@ and heights (for y), with (0,0) at the center of the screen.
     into one object, so that they are displayed together
 """
 visual(x,args...;keys...) = visual(win(get_experiment()),x,args...;keys...)
+visual(win::SDLWindow,x,args...;keys...) =
+  throw(MethodError(visual,typeof((win,x))))
 
 function draw(r::SDLRendered)
   draw(win(get_experiment()),r)
@@ -486,11 +488,11 @@ function update_arguments(img::SDLImage;w=NaN,h=NaN,duration=img.duration,
   end
 
   rect = update_arguments(img.rect;kwds...)
-  SDLImage(img.dat,img.img,rect,duration,priority)
+  SDLImage(img.data,img.img,rect,duration,priority)
 end
 
 const convert_cache = LRU{Array,Array{RGBA{N0f8}}}(256)
-const image_cache = LRU{Array{RGBA{N0f8}},SDLWindow}(256)
+const image_cache = LRU{Array{RGBA{N0f8}},SDLImage}(256)
 """
     visual(img::Array, [x=0],[y=0],[duration=0],[priority=0])
 
@@ -506,14 +508,14 @@ function visual{T <: AbstractFloat}(window::SDLWindow,img::Array{T};keys...)
   converted = get!(convert_cache,img) do
     if length(size(img)) == 3
       if size(img,1) == 3
-        n0f8.(colorview(RGB,image))
+        n0f8.(colorview(RGB,img))
       elseif size(img,1) == 4
-        n0f8.(colorview(RGBA,image))
+        n0f8.(colorview(RGBA,img))
       else
         error("Could not interpret array of size $(size(imge)) as a color image.")
       end
     elseif length(size(img)) == 2
-      n0f8.(colorview(Gray,image))
+      n0f8.(colorview(Gray,img))
     end
   end
   visual(window,converted;keys...)
@@ -531,8 +533,8 @@ function visual(window::SDLWindow,img::Array{RGBA{N0f8}};
   get!(image_cache,img) do
     surface = ccall((:SDL_CreateRGBSurfaceFrom,weber_SDL2),Ptr{Void},
                     (Ptr{Void},Cint,Cint,Cint,Cint,UInt32,UInt32,UInt32,UInt32),
-                    pointer(img),size(img,2),size(img,1),32,
-                    4size(img,2),0,0,0,0)
+                    pointer(copy(img')),size(img,2),size(img,1),32,
+                    4size(img,2),0x000000ff,0x0000ff00,0x00ff0000,0xff000000)
     if surface == C_NULL
       error("Failed to create image surface: "*SDL_GetError())
     end
