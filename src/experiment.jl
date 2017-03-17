@@ -254,6 +254,7 @@ function setup{T <: BaseExperiment}(fn::Function,exp::T)
     # gc_enable(true)
     rethrow(e)
   end
+  nothing
 end
 
 warmup_run(exp::Experiment{NullWindow}) = nothing
