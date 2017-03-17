@@ -67,7 +67,7 @@ function delete_untimed!(x::DisplayStack)
 end
 
 function delete_timed!(x::DisplayStack)
-  filter!(r -> display_duration(r) <= 0.0,x.data)
+  filter!(r -> display_duration(r) <= 0.0 || isinf(display_duration(r)),x.data)
   x
 end
 
