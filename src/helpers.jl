@@ -1,12 +1,17 @@
 export run_keycode_helper, run_calibrate, create_new_project
 using DataStructures
-
+using Lazy: @>
 """
     run_keycode_helper(;extensions=[])
 
 Runs a program that will display the keycode for each key that you press.
 """
 function run_keycode_helper(;extensions=Extension[])
+  result = @spawn run_keycode_helper__(extensions=extensions)
+  fetch(result)
+end
+
+function run_keycode_helper__(;extensions=Extension[])
   exp = Experiment(hide_output=true,extensions=extensions)
   setup(exp) do
     addbreak(instruct("Press keys to see their codes."))
@@ -30,13 +35,14 @@ your experiment. Using a sound-level meter you can determine the dB SPL of
 each tone, and adjust the attenuation to achieve a desired sound level.
 """
 function run_calibrate()
+  result = @spawn run_calibrate__()
+  fetch(result)
+end
+
+function run_calibrate__()
   exp = Experiment(hide_output=true)
   freqs = [100,250,500,1000,2000,4000,6000,8000]
   atten = collect(20.0 for f in freqs)
-  tones = map(freqs) do f
-    ramp(tone(f,10))
-  end
-
   old_tone = nothing
 
   playing = 1
@@ -49,7 +55,7 @@ function run_calibrate()
 
   setup(exp) do
     instructions = moment() do
-      old_tone = play(sound(attenuate(tones[1],atten[1])))
+      @> tone(freqs[playing]) attenuate(atten[playing]) fadeto
       display(visual("Hit 1-8 to play a tone.",y=0.75,duration=Inf) +
               visual("Hit - or = to adjust dB by 10 dB\n"*
                      "Hit [ or ] to adjust dB by 1 dB\n"*
@@ -67,13 +73,11 @@ function run_calibrate()
       if iskeydown(e)
         if 1 <= (p = key_to_tone(e)) <= 8
           playing = p
-          old_tone == nothing || stop(old_tone)
-          old_tone = play(sound(attenuate(tones[playing],atten[playing])))
+          @> tone(freqs[playing]) attenuate(atten[playing]) fadeto
           display(tone_text())
         elseif keycode(e) ∈ keys(atten_adjust)
-          old_tone == nothing || stop(old_tone)
           atten[playing] -= atten_adjust[keycode(e)]
-          old_tone = play(sound(attenuate(tones[playing],atten[playing])))
+          @> tone(freqs[playing]) attenuate(atten[playing]) fadeto
           display(tone_text())
         end
       end
