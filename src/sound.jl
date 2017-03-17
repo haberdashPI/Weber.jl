@@ -953,10 +953,12 @@ Pause all sounds (or a stream) playing on a given channel.
 If no channel is specified, then all sounds are paused.
 """
 function pause_sounds(channel=-1,isstream=false)
-  @assert 1 <= channel <= sound_setup_state.num_channels || channel <= 0
-  ccall((:ws_pause,weber_sound),Void,(Ptr{Void},Cint,Cint,Cint),
-        sound_setup_state.state,channel-1,isstream,true)
-  ws_if_error("While pausing sounds")
+  if isready(sound_setup_state)
+    @assert 1 <= channel <= sound_setup_state.num_channels || channel <= 0
+    ccall((:ws_pause,weber_sound),Void,(Ptr{Void},Cint,Cint,Cint),
+          sound_setup_state.state,channel-1,isstream,true)
+    ws_if_error("While pausing sounds")
+  end
 end
 
 """
@@ -967,10 +969,12 @@ Resume all sounds (or a stream) playing on a given channel.
 If no channel is specified, then all sounds are resumed.
 """
 function resume_sounds(channel=-1,isstream=false)
-  @assert 1 <= channel <= sound_setup_state.num_channels || channel <= 0
-  ccall((:ws_pause,weber_sound),Void,(Ptr{Void},Cint,Cint,Cint),
+  if isready(sound_setup_state)
+    @assert 1 <= channel <= sound_setup_state.num_channels || channel <= 0
+    ccall((:ws_pause,weber_sound),Void,(Ptr{Void},Cint,Cint,Cint),
         sound_setup_state.state,channel-1,isstream,false)
-  ws_if_error("While resuming audio playback")
+    ws_if_error("While resuming audio playback")
+  end
 end
 
 """
