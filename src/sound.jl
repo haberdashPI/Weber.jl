@@ -140,16 +140,36 @@ immutable OpStream
   streams::Tuple
   op::Function
 end
-start(ms::OpStream) = map(start,ms.streams)
-done(ms::OpStream,state::Tuple) = all(map(done,ms.streams,state))
-function next(ms::OpStream,state::Tuple)
-  state = state[find(map((itr,st) -> !done(itr,st),ms.streams,state))]
+immutable OpState
+  streams::Tuple
+  states::Tuple
+end
+immutable OpPassState
+  stream
+  state
+end
 
-  nexts = map(next,ms.streams,state)
+start(ms::OpStream) = OpState(ms.streams,map(start,ms.streams))
+done(ms::OpStream,state::OpState) = all(map(done,state.streams,state.states))
+done(ms::OpStream,state::OpPassState) = done(state.stream,state.state)
+@inline function next(ms::OpStream,state::OpPassState)
+  obj, pass_state = next(state.stream,state.state)
+  obj, OpPassState(state.stream,pass_state)
+end
+function next(ms::OpStream,state::OpState)
+  undone = find(map((stream,state) -> !done(stream,state),state.streams,state.states))
+  streams = state.streams[undone]
+  states = state.states[undone]
+
+  nexts = map(next,streams,states)
   sounds = map(x -> x[1],nexts)
   states = map(x -> x[2],nexts)
 
-  reduce(ms.op,sounds), states
+  if length(undone) > 1
+    reduce(ms.op,sounds), OpState(streams,states)
+  else
+    sounds[1], OpPassState(streams[1],states[1])
+  end
 end
 
 """
@@ -448,7 +468,9 @@ function rampon(stream,ramp_s=0.005)
   ramp = asstream(sample_rate_Hz=sample_rate_Hz) do t
     t < ramp_s ? -0.5cos(π*(t/ramp_s))+0.5 : 1
   end
-  mult(stream,ramp)
+  len = size(first(stream),1)
+  num_units = ceil(Int,ramp_s*sample_rate_Hz / len)
+  mult(stream,take(ramp,num_units))
 end
 
 """
