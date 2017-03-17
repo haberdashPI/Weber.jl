@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <meta name="author" content="haberdashPI">
+  <link rel="shortcut icon" href="../img/favicon.ico">
+  <title>Trial Creation - Weber.jl</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="../css/highlight.css">
+  <link href="../assets/Documenter.css" rel="stylesheet">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Trial Creation";
+    var mkdocs_page_input_path = "trial_guide.md";
+    var mkdocs_page_url = "/trial_guide/";
+  </script>
+  
+  <script src="../js/jquery-2.1.1.min.js"></script>
+  <script src="../js/modernizr-2.8.3.min.js"></script>
+  <script type="text/javascript" src="../js/highlight.pack.js"></script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href=".." class="icon icon-home"> Weber.jl</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="..">Introduction</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">User Guide</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../start/">Getting Started</a>
+                </li>
+                <li class=" current">
+                    
+    <a class="current" href="./">Trial Creation</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l3"><a href="#defining-moments">Defining Moments</a></li>
+    
+        <ul>
+        
+            <li><a class="toctree-l4" href="#timed-moments">Timed Moments</a></li>
+        
+            <li><a class="toctree-l4" href="#compound-moments">Compound Moments</a></li>
+        
+            <li><a class="toctree-l4" href="#watcher-moments">Watcher Moments</a></li>
+        
+            <li><a class="toctree-l4" href="#conditional-moments">Conditional Moments</a></li>
+        
+        </ul>
+    
+
+    <li class="toctree-l3"><a href="#adding-trials">Adding Trials</a></li>
+    
+
+    </ul>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../adaptive/">Adaptive Tracks</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../advanced/">Advanced Experiments</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../extend/">Extending Weber</a>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Reference</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../experiment/">Experiments</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../trials/">Trials</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../sound/">Sound</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../video/">Video</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../event/">Events</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../extend_ref/">Extensions</a>
+                </li>
+    </ul>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="..">Weber.jl</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="..">Docs</a> &raquo;</li>
+    
+      
+        
+          <li>User Guide &raquo;</li>
+        
+      
+    
+    <li>Trial Creation</li>
+    <li class="wy-breadcrumbs-aside">
+      
+        <a href="https://github.com/haberdashPI/Weber.jl/edit/master/docs/trial_guide.md"
+          class="icon icon-github"> Edit on GitHub</a>
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <p>We'll look in detail at how to create trials of an experiment. For a broad overview of trial creation refer to <a href="../start/">Getting Started</a>. The two basic steps to creating a trial are (1) defining a set of moments and (2) add moments to a trial. </p>
+<p><a id='Defining-Moments-1'></a></p>
+<h1 id="defining-moments">Defining Moments</h1>
+<p>Trials are composed of moments. There are several types of moments: timed moments, compound moments, watcher moments, and conditional moments.</p>
+<p><a id='Timed-Moments-1'></a></p>
+<h2 id="timed-moments">Timed Moments</h2>
+<p>Timed moments are the simplest kind of moment. They are are normally created by calling <a href="../trials/#Weber.moment"><code>moment</code></a>.</p>
+<pre><code class="julia">moment([delta_t],[fn],args...;keys...)
+</code></pre>
+
+<p>A timed moment waits <code>delta_t</code> seconds after the onset of the previous moment, and then runs the specified function (<code>fn</code>), if any, passing it any <code>args</code> and <code>keys</code> provided. Below is an example of creating a timed moment.</p>
+<pre><code class="julia">moment(0.5,play,mysound)
+</code></pre>
+
+<p>This moment plays <code>mysound</code> 0.5 seconds after the onset of the previous moment.</p>
+<p>There are several other kinds of timed moments, other than those created by calling <a href="../trials/#Weber.moment"><code>moment</code></a>. Specifically, <a href="../trials/#Weber.timeout"><code>timeout</code></a> and <a href="../trials/#Weber.await_response"><code>await_response</code></a> wait for a particular event to occur (such as a key press) before they begin.</p>
+<p><a id='Guidlines-for-low-latency-moments-1'></a></p>
+<h3 id="guidlines-for-low-latency-moments">Guidlines for low-latency moments</h3>
+<p>Weber aims to present moments at low latencies for accurate experiments.</p>
+<p>To maintain low latency, as much of the experimental logic as possible should be precomputed, outside of trial moments, during <a href="../start/#setup_time-1">setup-time</a>. The following operations are definitely safe to perform during a moment:</p>
+<ol>
+<li>Calls to <a href="../sound/#Weber.play"><code>play</code></a> to present a sound</li>
+<li>Calls to <a href="../video/#Base.Multimedia.display"><code>display</code></a> to present a visual.</li>
+<li>Calls to <a href="../trials/#Weber.record"><code>record</code></a> to save something to a data file (usually after any calls to <a href="../sound/#Weber.play"><code>play</code></a> or <a href="../video/#Base.Multimedia.display"><code>display</code></a>)</li>
+</ol>
+<p>Note that Julia compiles functions on demand (known as just-in-time or JIT compilation), which can lead to very slow runtimes the first time a function runs.  To minimize JIT compilation during an experiment, any functions called directly by a moment are first precompiled.</p>
+<div class="admonition warning">
+<p class="admonition-title">Keep Moments Short</p>
+<p>Long running moments will lead to latency issues. Make sure all functions that run in a moment terminate relatively quickly.</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Play sounds after a delay.</p>
+<p>To get the most accurate timing when playing a sound make sure it occurs by itself, during a moment that has some non-zero delta. That is, do not call <code>moment(play,mysound)</code>, <em>do</em> call <code>moment(SOA,play,mysound)</code>. This ensures that there is sufficient time to prepare the sound for presentation so that it occurs exactly when you want it to. The exact amount of delay necessary to play the sound accurately will depend on your hardware and operating system. You will recieve warnings about delays that are too fast to handle.</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Sync visuals to the refresh rate.</p>
+<p>Visuals synchronize to the screen refresh rate. You can  find more details about this in the documentation of <a href="../video/#Base.Multimedia.display"><code>display</code></a></p>
+</div>
+<p><a id='Compound-Moments-1'></a></p>
+<h2 id="compound-moments">Compound Moments</h2>
+<p>You can create more complicated moments by concatenating simpler moments together using the <code>&gt;&gt;</code> operator or <code>moment(momoment1,moment2,...)</code>.</p>
+<p>A concatenation of moments starts immediately, proceeding through each of the moments in order. This is useful for playing several moments in parallel. For example, the following code will present two sounds, one at 100ms, the other at 200ms after the start of the trial. It will also display "Too Late!" on the screen if no keyboard key is pressed 150ms after the start of the trial.</p>
+<pre><code class="julia">addtrial(moment(0.1,play,soundA) &gt;&gt; moment(0.1,play,soundB),
+         timeout(() -&gt; display(&quot;Too Late!&quot;),iskeydown,0.15))
+</code></pre>
+
+<p><a id='Watcher-Moments-1'></a></p>
+<h2 id="watcher-moments">Watcher Moments</h2>
+<p>Watcher moments are used to respond to events. Often, watcher moments need not be directly used. Instead, the higher level <a href="../trials/#Weber.response"><code>response</code></a> method can be used.</p>
+<p>As long as a watcher moment is active it occurs any time an event is triggered. A watcher moment becomes active at the start of the preceding moment, or at the start of a trial (if it's the first moment in a trial). This latter form is most common, since generally one wishes to listen to all events during a trial. A watcher moments is simply a function that takes one argument: the event to be processed.</p>
+<p>If the watcher is the first moment in a trial, the convenient <code>do</code> block syntax is possible.</p>
+<pre><code class="julia">message = visual(&quot;You hit spacebar!&quot;)
+addtrial(moment2,moment3) do event
+  if iskeydown(key&quot;:space:&quot;)
+    display(message,duration=0.500)
+    record()
+  end
+end
+</code></pre>
+
+<p>In the above example, "You hit spacebar!" is displayed for 500ms every time the spacebar is hit.</p>
+<p>Refer to the documentation for <a href="../event/">Events</a> for full details on how to respond to events.</p>
+<p><a id='Conditional-Moments-1'></a></p>
+<h2 id="conditional-moments">Conditional Moments</h2>
+<p>Conditional moments are a more advanced technique for creating moments and aren't normally necessary. They run a function only when a certain condition is true (the <a href="../trials/#Weber.when"><code>when</code></a> moment) or repeat a function until a condition is false (the <a href="../trials/#Weber.looping"><code>looping</code></a> moment). They require a good understanding of the difference between <a href="../start/#setup_time-1">setup- and run-time</a>, <a href="http://docs.julialang.org/en/stable/manual/functions/#anonymous-functions">anonymous functions</a>, and <a href="http://docs.julialang.org/en/stable/manual/variables-and-scoping/">scoping rules</a> in julia.</p>
+<p><a id='Adding-Trials-1'></a></p>
+<h1 id="adding-trials">Adding Trials</h1>
+<p>Normally, to add moments to a trial you simply call <a href="../trials/#Weber.addtrial"><code>addtrial</code></a>. There is also <a href="../trials/#Weber.addpractice"><code>addpractice</code></a>, and <a href="../trials/#Weber.addbreak"><code>addbreak</code></a>. These functions are nearly identical to <a href="../trials/#Weber.addtrial"><code>addtrial</code></a> but differ in how they update the trial and offset counters, and what they automatically <a href="../trials/#Weber.record"><code>record</code></a> to a data file.</p>
+<p>All of these functions take a series of iterable objects of moments. The moments of all arguments are added in sequence. For convience these iterables can be nested, allowing functions that return multiple moments themselves to be easily passed to <a href="../trials/#Weber.addtrial"><code>addtrial</code></a>.</p>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../adaptive/" class="btn btn-neutral float-right" title="Adaptive Tracks">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../start/" class="btn btn-neutral" title="Getting Started"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+	  
+        </div>
+      </div>
+
+    </section>
+    
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+          <a href="https://github.com/haberdashPI/Weber.jl" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
+      
+      
+        <span><a href="../start/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../adaptive/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+    <script src="../js/theme.js"></script>
+      <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+      <script src="../assets/mathjaxhelper.js"></script>
+
+</body>
+</html>
