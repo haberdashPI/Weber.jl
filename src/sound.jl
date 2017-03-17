@@ -534,7 +534,7 @@ type SoundSetupState
   queue_size::Int
   stream_unit::Int
 end
-const default_stream_unit = 2^12
+const default_stream_unit = 2^10
 const sound_setup_state = SoundSetupState(0,Dict(),C_NULL,0,0,default_stream_unit)
 isready(s::SoundSetupState) = s.samplerate != 0
 
@@ -601,7 +601,7 @@ end
 
 """
     setup_sound([sample_rate_Hz=44100],[num_channels=8],[queue_size=8],
-                [stream_unit=2^14])
+                [stream_unit=2^10])
 
 Initialize format and capacity of audio playback.
 
