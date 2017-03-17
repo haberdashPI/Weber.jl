@@ -676,6 +676,7 @@ function setup_sound(;sample_rate_Hz=samplerate(sound_setup_state),
   if isready(sound_setup_state)
     ccall((:ws_close,weber_sound),Void,(Ptr{Void},),sound_setup_state.state)
     ws_if_error("While closing old audio stream during setup")
+    ccall((:ws_free,weber_sound),Void,(Ptr{Void},),sound_setup_state.state)
   else
 
     if !weber_sound_is_setup[]
