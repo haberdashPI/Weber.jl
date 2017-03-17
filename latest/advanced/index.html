@@ -250,8 +250,9 @@ moment(play,tone(1000+my_delta))
 <pre><code class="julia">moment(display,() -&gt; &quot;hello $my_name.&quot;)
 </code></pre>
 
-<p>When moments are created this way, the sound or visual is generated before the moment even begins, to eliminate any latency that would be introduced by loading the sound or visual into memory. Specifically, the stimulus is generated at the start of the prior moment. So for instance, in the following example, <code>mysound</code> will be generated 0.5 seconds before <code>play</code> is called, because the moment before the <code>play</code> moment occurs 0.5 seconds before.</p>
-<pre><code class="julia">addtrial(moment(display,&quot;Get ready!&quot;),moment(0.5,play,mysound))
+<p>When moments are created this way, the sound or visual is generated before the moment even begins, to eliminate any latency that would be introduced by loading the sound or visual into memory. Specifically, the stimulus is generated during the most recent non-zero pause occuring before a moment. So for instance, in the following example, <code>mysound</code> will be generated ~0.5 seconds before play is called right after "Get ready!" is displayed.</p>
+<pre><code class="julia">addtrial(moment(display,&quot;Get ready!&quot;),moment(0.5),
+         moment(display,&quot;Here we go!&quot;),moment(play,mysound))
 </code></pre>
               
             </div>
