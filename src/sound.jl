@@ -556,7 +556,7 @@ type SoundSetupState
   queue_size::Int
   stream_unit::Int
 end
-const default_stream_unit = 2^10
+const default_stream_unit = 2^11
 const sound_setup_state = SoundSetupState(0,Dict(),C_NULL,0,0,default_stream_unit)
 isready(s::SoundSetupState) = s.samplerate != 0
 
