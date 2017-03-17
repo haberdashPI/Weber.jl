@@ -172,7 +172,7 @@
 <li><strong>width</strong> and <strong>height</strong>: specified** the screen resolution during the experiment</li>
 <li><strong>extensions</strong>: an array of Weber.Extension objects, which extend the behavior of an experiment.</li>
 </ul>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/6dcbe2f52b82107987a4862137052b384fa84f89/src/experiment.jl#L123-L154' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/82d1cc83dcc51406d2fad9d81dc103ae58a654f8/src/experiment.jl#L123-L154' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.addcolumn' href='#Weber.addcolumn'>#</a>
 <strong><code>Weber.addcolumn</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>addcolumn(column::Symbol)
@@ -180,7 +180,7 @@
 
 <p>Adds a column to be recorded in the data file.</p>
 <p>This function must be called during setup.  It cannot be called once the experiment has begun. Repeatedly adding the same column only adds the column once. After adding a column you can include that column as a keyword argument to <a href="../trials/#Weber.record"><code>record</code></a>. You need not write to the column for every record. If left out, the column will be empty in the resulting row of the data file.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/6dcbe2f52b82107987a4862137052b384fa84f89/src/experiment.jl#L98-L108' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/82d1cc83dcc51406d2fad9d81dc103ae58a654f8/src/experiment.jl#L98-L108' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.setup' href='#Weber.setup'>#</a>
 <strong><code>Weber.setup</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>setup(fn,experiment)
@@ -188,7 +188,7 @@
 
 <p>Setup the experiment, adding breaks, practice, and trials.</p>
 <p>Setup creates the context necessary to generate elements of an experiment. All calls to <code>addtrial</code>, <code>addbreak</code> and <code>addpractice</code> must be called inside of <code>fn</code>. This function must be called before <code>run</code>.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/6dcbe2f52b82107987a4862137052b384fa84f89/src/experiment.jl#L217-L225' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/82d1cc83dcc51406d2fad9d81dc103ae58a654f8/src/experiment.jl#L217-L225' class='documenter-source'>source</a><br></p>
 <p><a id='Base.run' href='#Base.run'>#</a>
 <strong><code>Base.run</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>run(experiment;await_input=true)
@@ -196,7 +196,7 @@
 
 <p>Runs an experiment. You must call <code>setup</code> first.</p>
 <p>By default this function waits for user input before returning. This prevents a console from closing at the end of an experiment, preventing the user from viewing important messages. The exception is if run is called form within Juno: await_input should never be set to true in this case.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/6dcbe2f52b82107987a4862137052b384fa84f89/src/experiment.jl#L349-L359' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/82d1cc83dcc51406d2fad9d81dc103ae58a654f8/src/experiment.jl#L350-L360' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.randomize_by' href='#Weber.randomize_by'>#</a>
 <strong><code>Weber.randomize_by</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>randomize_by(itr)
@@ -204,7 +204,7 @@
 
 <p>Randomize by a given iterable object, usually a string (e.g. the subject id.)</p>
 <p>If the same iterable is given, calls to random functions (e.g. <code>rand</code>, <code>randn</code> and <code>shuffle</code>) will result in the same output.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/6dcbe2f52b82107987a4862137052b384fa84f89/src/primitives.jl#L129-L136' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/82d1cc83dcc51406d2fad9d81dc103ae58a654f8/src/primitives.jl#L129-L136' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.@read_args' href='#Weber.@read_args'>#</a>
 <strong><code>Weber.@read_args</code></strong> &mdash; <em>Macro</em>.</p>
 <pre><code>@read_args(description,[keyword args...])
@@ -219,7 +219,7 @@
   condition=[:red,:green,:blue],block=Int)
 </code></pre>
 
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/6dcbe2f52b82107987a4862137052b384fa84f89/src/primitives.jl#L139-L166' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/82d1cc83dcc51406d2fad9d81dc103ae58a654f8/src/primitives.jl#L139-L166' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.create_new_project' href='#Weber.create_new_project'>#</a>
 <strong><code>Weber.create_new_project</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>create_new_project(name,dir=&quot;.&quot;)
@@ -227,14 +227,14 @@
 
 <p>Creates a set of files to help you get started on a new experiment.</p>
 <p>This creates a file called run_[name].jl, and a README.md and setup.jl file for your expeirment. The readme provides useful information for running the experiment that is common across all expeirments. The run file provides some guidelines to get you started creating an experiment and setup is a script that can be used to install Weber and any additional dependencies for the project, for anyone who wants to download and run your experiment.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/6dcbe2f52b82107987a4862137052b384fa84f89/src/helpers.jl#L91-L103' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/82d1cc83dcc51406d2fad9d81dc103ae58a654f8/src/helpers.jl#L91-L103' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.trial' href='#Weber.trial'>#</a>
 <strong><code>Weber.trial</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>Weber.trial()
 </code></pre>
 
 <p>Returns the current trial of the experiment.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/6dcbe2f52b82107987a4862137052b384fa84f89/src/experiment.jl#L42-L46' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/82d1cc83dcc51406d2fad9d81dc103ae58a654f8/src/experiment.jl#L42-L46' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.offset' href='#Weber.offset'>#</a>
 <strong><code>Weber.offset</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>Weber.offset()
@@ -245,7 +245,7 @@
 <p class="admonition-title">Warning</p>
 <p>For offsets to be well defined, all calls to <a href="../trials/#Weber.moment"><code>moment</code></a> and <a href="../trials/#Weber.@addtrials"><code>@addtrials</code></a> must follow the <a href="../advanced/">guidlines</a> in the user guide. In particular, moments should not rely on state that changes during the experiment unless they are wrapped in an @addtrials macro.</p>
 </div>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/6dcbe2f52b82107987a4862137052b384fa84f89/src/experiment.jl#L51-L67' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/82d1cc83dcc51406d2fad9d81dc103ae58a654f8/src/experiment.jl#L51-L67' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.tick' href='#Weber.tick'>#</a>
 <strong><code>Weber.tick</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>Weber.tick()
@@ -253,12 +253,12 @@
 
 <p>With microsecond precision, this returns the number of elapsed seconds from the start of the experiment to the start of the most recent moment.</p>
 <p>If there is no experiment running, this returns the time since epoch with microsecond precision.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/6dcbe2f52b82107987a4862137052b384fa84f89/src/experiment.jl#L71-L79' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/82d1cc83dcc51406d2fad9d81dc103ae58a654f8/src/experiment.jl#L71-L79' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.metadata' href='#Weber.metadata'>#</a>
 <strong><code>Weber.metadata</code></strong> &mdash; <em>Function</em>.</p>
 <p>Weber.metadata() = Dict{Symbol,Any}()</p>
 <p>Returns metadata for this experiment. You can store global state, specific to this experiment, in this dictionary.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/6dcbe2f52b82107987a4862137052b384fa84f89/src/experiment.jl#L89-L94' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/82d1cc83dcc51406d2fad9d81dc103ae58a654f8/src/experiment.jl#L89-L94' class='documenter-source'>source</a><br></p>
               
             </div>
           </div>
