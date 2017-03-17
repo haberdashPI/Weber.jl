@@ -1,7 +1,7 @@
 using Lazy: @_
 using DataStructures
 using MacroTools
-import Base: run
+import Base: run, display
 export addtrial, addbreak, addpractice, moment, await_response, record, timeout,
   when, looping, @addtrials
 
@@ -356,7 +356,7 @@ function moment(delta_t::Number,fn::Function,args...;keys...)
 end
 
 function moment(fn::Function,args...;keys...)
-  TimedMoment(0.0,() -> fn(args...;keys...),stacktrace()[2:end])
+  moment(0.0,fn,args...;keys...)
 end
 
 moment(delta_t::Number) = TimedMoment(delta_t,()->nothing,stacktrace()[2:end])
