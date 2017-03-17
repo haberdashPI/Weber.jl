@@ -144,7 +144,7 @@ You can create your own moment types, which must be children of
 defined function, or added automatically by extending [`addtrial`](@ref). Once
 created, and added to trials, these moments will be processed at run-time using
 the function [`handle`](@ref), which should define the moment's run-time
-behavior.
+behavior. Such a moment must also define [`moment_trace`](@ref).
 
 A moment can also define [`delta_t`](@ref)--to define when it occurs--or
 [`prepare!`](@ref)--to have some sort of initialization occur before its

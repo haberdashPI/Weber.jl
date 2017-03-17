@@ -29,6 +29,16 @@ function experiment_running()
   !isnull(experiment_context[]) && flags(get(experiment_context[])).processing
 end
 
+# internal functions used to update and retrieve the stack trace
+# where the currently running moment was defined (improving error message
+# readability)
+const current_moment_trace = Array{Vector{StackFrame}}()
+update_trace(m::AbstractMoment) =
+  !isempty(moment_trace(m)) ? current_moment_trace[] = moment_trace(m) : nothing
+update_tracek(m::MomentSequence) =
+  current_moment_trace[] = moment_trace(m.data[1])
+moment_trace() = current_moment_trace[]
+
 """
     Weber.trial()
 
@@ -431,9 +441,12 @@ function run{T <: BaseExperiment}(
       end
     end
   catch e
+    if !isempty(moment_trace())
+      print(STDERR,"\nException during a moment defined")
+      foreach(x -> println(STDERR,x),moment_trace())
+    end
     if await_input
-      show(e)
-      Base.show_backtrace(STDOUT,catch_backtrace())
+      showerror(STDERR,e,catch_backtrace())
     else
       rethrow(e)
     end
@@ -486,6 +499,7 @@ function process(exp::Experiment,queue::MomentQueue,event::ExpEvent)
 
   if !isempty(queue)
     moment = front(queue)
+    update_trace(moment)
     handled = handle(exp,queue,moment,event)
     if handled
       prepare!(queue,time(event))
@@ -511,6 +525,7 @@ function process(exp::Experiment,queue::MomentQueue,t::Float64)
         run_time = offset + precise_time()
       end
       data(exp).last_time = run_time
+      update_trace(moment)
       if handle(exp,queue,moment,run_time)
         d = required_delta_t(moment)
         prepare!(queue,run_time)
@@ -526,7 +541,8 @@ function process(exp::Experiment,queue::MomentQueue,t::Float64)
              latency, reduce the amount of slow code in moments, close programs,
              or run on a faster machine. Or, if this amount of latency is
              acceptable, you should increase `moment_resolution` when you call
-             `Experiment`."))
+             `Experiment`.")*"\n"*
+             reduce(*,"",map(x -> string(x)*"\n",moment_trace())))
           record("high_latency",value=latency)
         end
 

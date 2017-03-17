@@ -364,17 +364,33 @@ required_delta_t(m::AbstractMoment) = delta_t(m)
 isimmediate(m::AbstractMoment) = false
 sequenceable(m::AbstractMoment) = false
 
+"""
+    moment_trace(m)
+
+Returns the stacktrace indicating where this moment was defined.
+
+!!! note
+
+    This method is part of the private interface for moments. It should not be
+    called directly, but implemented as part of an extension.  You can get a
+    stacktrace inside the function you define that constructs your custom moment
+    using `stacktrace()[2:end]`.
+"""
+moment_trace(m::AbstractMoment) = Vector{StackFrame}()
+
 type ResponseMoment <: SimpleMoment
   respond::Function
   timeout::Function
   timeout_delta_t::Float64
   minimum_delta_t::Float64
+  trace::StackTrace
 end
 function delta_t(moment::ResponseMoment)
   (moment.timeout_delta_t > 0.0 ? moment.timeout_delta_t : Inf)
 end
 required_delta_t(m::ResponseMoment) = Inf
 isimmediate(m::ResponseMoment) = false
+moment_trace(m::ResponseMoment) = m.trace
 
 abstract AbstractTimedMoment <: SimpleMoment
 sequenceable(m::AbstractTimedMoment) = true
@@ -383,72 +399,87 @@ isimmediate(m::AbstractTimedMoment) = delta_t(m) == 0.0
 type TimedMoment <: AbstractTimedMoment
   delta_t::Float64
   run::Function
+  trace::StackTrace
 end
 delta_t(moment::TimedMoment) = moment.delta_t
 sequenceable(m::TimedMoment) = true
+moment_trace(m::TimedMoment) = m.trace
 
 type OffsetStartMoment <: AbstractTimedMoment
   run::Function
   count_trials::Bool
   expanding::Bool
+  trace::StackTrace
 end
 delta_t(moment::OffsetStartMoment) = 0.0
 isimmediate(m::OffsetStartMoment) = false
 sequenceable(m::OffsetStartMoment) = false
+moment_trace(m::OffsetStartMoment) = m.trace
 
 type PlayMoment <: AbstractTimedMoment
   delta_t::Float64
   sound::Sound
   channel::Int
+  trace::StackTrace
   prepared::Bool
 end
-PlayMoment(d,f,c) = PlayMoment(d,f,c,false)
+PlayMoment(d,f,c,t) = PlayMoment(d,f,c,t,false)
 delta_t(m::PlayMoment) = m.delta_t
 sequenceable(m::PlayMoment) = true
+moment_trace(m::PlayMoment) = m.trace
 
 type PlayFunctionMoment <: AbstractTimedMoment
   delta_t::Float64
   fn::Function
   channel::Int
+  trace::StackTrace
   prepared::Nullable{Sound}
 end
-PlayFunctionMoment(d,f,c) = PlayFunctionMoment(d,f,c,Nullable())
+PlayFunctionMoment(d,f,c,t) = PlayFunctionMoment(d,f,c,t,Nullable())
 delta_t(m::PlayFunctionMoment) = m.delta_t
 sequenceable(m::PlayFunctionMoment) = true
+moment_trace(m::PlayFunctionMoment) = m.trace
 
 type StreamMoment <: AbstractTimedMoment
   delta_t::Float64
   itr
   channel::Int
+  trace::StackTrace
 end
 delta_t(m::StreamMoment) = delta_t
 required_delta_t(m::StreamMoment) = Inf
 isimmediate(m::StreamMoment) = false
 sequenceable(m::StreamMoment) = false
+moment_trace(m::StreamMoment) = m.trace
 
 type DisplayMoment <: AbstractTimedMoment
   delta_t::Float64
   visual::SDLRendered
+  trace::StackTrace
 end
 delta_t(m::DisplayMoment) = m.delta_t
 sequenceable(m::DisplayMoment) = true
+moment_trace(m::DisplayMoment) = m.trace
 
 type DisplayFunctionMoment <: AbstractTimedMoment
   delta_t::Float64
   fn::Function
   keys::Vector
+  trace::StackTrace
   visual::Nullable{SDLRendered}
 end
-DisplayFunctionMoment(d,f,k) = DisplayFunctionMoment(d,f,k,Nullable())
+DisplayFunctionMoment(d,f,k,t) = DisplayFunctionMoment(d,f,k,t,Nullable())
 delta_t(m::DisplayFunctionMoment) = m.delta_t
 sequenceable(m::DisplayFunctionMoment) = true
+moment_trace(m::DisplayFunctionMoment) = m.trace
 
 type FinalMoment <: SimpleMoment
   run::Function
+  trace::StackTrace
 end
 delta_t(moment::FinalMoment) = 0.0
 isimmediate(m::FinalMoment) = true
-
+moment_trace(m::FinalMoment) = m.trace
 
 type CompoundMoment <: AbstractMoment
   data::Array{AbstractMoment}

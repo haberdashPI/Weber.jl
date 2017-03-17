@@ -352,35 +352,35 @@ The function `fn` is passed the arguments specified in `args` and `keys`.
 """
 function moment(delta_t::Number,fn::Function,args...;keys...)
   precompile(fn,map(typeof,args))
-  TimedMoment(delta_t,() -> fn(args...;keys...))
+  TimedMoment(delta_t,() -> fn(args...;keys...),stacktrace()[2:end])
 end
 
 function moment(fn::Function,args...;keys...)
-  moment(0,fn,args...;keys...)
+  TimedMoment(0.0,() -> fn(args...;keys...),stacktrace()[2:end])
 end
 
-moment(delta_t::Number) = TimedMoment(delta_t,()->nothing)
-moment() = TimedMoment(0,()->nothing)
+moment(delta_t::Number) = TimedMoment(delta_t,()->nothing,stacktrace()[2:end])
+moment() = TimedMoment(0,()->nothing,stacktrace()[2:end])
 
 const PlayFunction = typeof(play)
 function moment(delta_t::Number,::PlayFunction,x;channel=0)
-  PlayMoment(delta_t,sound(x),channel)
+  PlayMoment(delta_t,sound(x),channel,stacktrace()[2:end])
 end
 function moment(delta_t::Number,::PlayFunction,fn::Function;channel=0)
-  PlayFunctionMoment(delta_t,fn,channel)
+  PlayFunctionMoment(delta_t,fn,channel,stacktrace()[2:end])
 end
 
 const StreamFunction = typeof(stream)
 function moment(delta_t::Number,::StreamFunction,itr,channel::Int)
-  StreamMoment(delta_t,itr,channel)
+  StreamMoment(delta_t,itr,channel,stacktrace()[2:end])
 end
 
 const DisplayFunction = typeof(display)
 function moment(delta_t::Number,::DisplayFunction,x;keys...)
-  DisplayMoment(delta_t,visual(x;keys...))
+  DisplayMoment(delta_t,visual(x;keys...),stacktrace()[2:end])
 end
 function moment(delta_t::Number,::DisplayFunction,fn::Function;keys...)
-  DisplayFunctionMoment(delta_t,fn,keys)
+  DisplayFunctionMoment(delta_t,fn,keys,stacktrace()[2:end])
 end
 
 """
@@ -402,12 +402,12 @@ end
 
 function offset_start_moment(fn::Function=()->nothing,count_trials=false)
   precompile(fn,(Float64,))
-  OffsetStartMoment(fn,count_trials,false)
+  OffsetStartMoment(fn,count_trials,false,stacktrace()[2:end])
 end
 
 function final_moment(fn::Function)
   precompile(fn,())
-  FinalMoment(fn)
+  FinalMoment(fn,stacktrace()[2:end])
 end
 
 """
@@ -426,7 +426,7 @@ function await_response(fn::Function;atleast=0.0)
     precompile(fn,(t,))
   end
 
-  ResponseMoment(fn,() -> nothing,0,atleast)
+  ResponseMoment(fn,() -> nothing,0,atleast,stacktrace()[2:end])
 end
 
 """
@@ -449,12 +449,12 @@ function timeout(fn::Function,isresponse::Function,timeout;atleast=0.0)
     precompile(isresponse,(t,))
   end
 
-  ResponseMoment(isresponse,fn,timeout,atleast)
+  ResponseMoment(isresponse,fn,timeout,atleast,stacktrace()[2:end])
 end
 
 flag_expanding(m::AbstractMoment) = m
 function flag_expanding(m::OffsetStartMoment)
-  OffsetStartMoment(m.run,m.count_trials,true)
+  OffsetStartMoment(m.run,m.count_trials,true,m.trace)
 end
 function flag_expanding(m::ExpandingMoment)
   if m.update_offset
