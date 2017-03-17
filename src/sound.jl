@@ -13,7 +13,7 @@ export match_lengths, mix, mult, silence, noise, highpass, lowpass, bandpass,
 	tone, ramp, harmonic_complex, attenuate, sound, asstream, play, stream, stop,
   duration, setup_sound, current_sound_latency, buffer,
   resume_sounds, pause_sounds, load, save, samplerate, length, channel,
-  rampon, rampoff, stream_unit
+  rampon, rampoff, stream_unit, fadeto
 
 const weber_sound_version = 2
 
@@ -896,6 +896,21 @@ function stream(fn::Function,channel::Int)
   end
 
   stream(fn(itr),channel)
+end
+
+"""
+    fadeto(stream,channel=1,transition=0.05)
+
+Smoothly transition from the currently playing stream to another stream.
+"""
+function fadeto(new,channel::Int=1,transition=0.05)
+  stream(channel) do old
+    if isa(first(old),Number)
+      rampon(new,transition)
+    else
+      mix(rampoff(old,transition),rampon(new,transition))
+    end
+  end
 end
 
 """
