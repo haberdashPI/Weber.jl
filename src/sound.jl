@@ -884,6 +884,7 @@ function stream(itr,channel::Int=1)
 end
 
 function stream(fn::Function,channel::Int)
+  !isready(sound_setup_state) ? setup_sound() : nothing
   @assert 1 <= channel <= sound_setup_state.num_channels
   dict = in_experiment() ? data(get_experiment()).streamers : streamers
   itr = if channel in keys(dict)
