@@ -617,7 +617,7 @@ function ws_if_error(msg)
 
     str = unsafe_string(ccall((:ws_warn_str,weber_sound),Cstring,
                               (Ptr{Void},),sound_setup_state.state))
-    if !isempty(str) warn(msg*" - "*str) end
+    if !isempty(str) warn(msg*" - "*str*moment_trace_string()) end
   end
 end
 
@@ -766,19 +766,20 @@ function play(x::Sound,time::Float64=0.0,channel::Int=0)
       if latency > 0
         warn("Requested timing of sound cannot be achieved. ",
              "With your hardware you cannot request the playback of a sound ",
-             "< $(round(1000*latency,2))ms before it begins.")
+             "< $(round(1000*latency,2))ms before it begins.",
+             moment_trace_string())
       else
         warn("Requested timing of sound cannot be achieved. ",
-             "Give more time for the sound to be played.")
+             "Give more time for the sound to be played.",
+             moment_trace_string())
       end
       if experiment_running()
         record("high_latency",value=(now + latency) - time)
       end
     end
   elseif experiment_running()
-    warn("On trial $(Weber.trial()), offset $(Weber.offset()): Cannot guarntee",
-         " the timing of a sound. Add a delay to the sound if precise timing",
-         " is required.")
+    warn("Cannot guarantee the timing of a sound. Add a delay before playing the",
+         " sound if precise timing is required.",moment_trace_string())
   end
 
   # play the sound

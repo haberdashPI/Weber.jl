@@ -38,6 +38,13 @@ update_trace(m::AbstractMoment) =
 update_tracek(m::MomentSequence) =
   current_moment_trace[] = moment_trace(m.data[1])
 moment_trace() = current_moment_trace[]
+function moment_trace_string()
+  if in_experiment()
+    "\nOccured "*reduce(*,"",map(x -> string(x)*"\n",moment_trace()))
+  else
+    ""
+  end
+end
 
 """
     Weber.trial()
@@ -542,8 +549,7 @@ function process(exp::Experiment,queue::MomentQueue,t::Float64)
              latency, reduce the amount of slow code in moments, close programs,
              or run on a faster machine. Or, if this amount of latency is
              acceptable, you should increase `moment_resolution` when you call
-             `Experiment`.")*"\n"*
-             reduce(*,"",map(x -> string(x)*"\n",moment_trace())))
+             `Experiment`.")*moment_trace_string())
           record("high_latency",value=latency)
         end
 
