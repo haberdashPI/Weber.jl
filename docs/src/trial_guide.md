@@ -51,17 +51,6 @@ directly by a moment are first precompiled.
     Long running moments will lead to latency issues. Make sure all
     functions that run in a moment terminate relatively quickly.
 
-!!! warning "Play sounds after a delay."
-
-    To get the most accurate timing when playing a sound make sure it occurs by
-    itself, during a moment that has some non-zero delta. That is, do not call
-    `moment(play,mysound)`, *do* call `moment(SOA,play,mysound)`. This
-    ensures that there is sufficient time to prepare the sound for presentation
-    so that it occurs exactly when you want it to. The exact amount of delay
-    necessary to play the sound accurately will depend on your hardware and
-    operating system. You will recieve warnings about delays that are too fast
-    to handle.
-
 !!! warning "Sync visuals to the refresh rate."
 
     Visuals synchronize to the screen refresh rate. You can 
