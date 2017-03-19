@@ -62,15 +62,20 @@ You can create more complicated moments by concatenating simpler moments
 together using the `>>` operator or `moment(momoment1,moment2,...)`.
 
 A concatenation of moments starts immediately, proceeding through each of the
-moments in order. This is useful for playing several moments in parallel. For
-example, the following code will present two sounds, one at 100ms, the other at
-200ms after the start of the trial. It will also display "Too Late!" on the
-screen if no keyboard key is pressed 150ms after the start of the trial.
+moments in order. This allows for a more complex relationship in inter-moment
+timing. For example, the following code will present two sounds, one at 100ms,
+the other at 200ms after the start of the trial. It will also display "Too
+Late!" on the screen if no keyboard key is pressed 150ms after the start of the
+trial. 
 
 ```julia
 addtrial(moment(0.1,play,soundA) >> moment(0.1,play,soundB),
          timeout(() -> display("Too Late!"),iskeydown,0.15))
 ```
+
+This exact sequence of timing would not be possible withou using the `>>`
+operator because the timing of `timeout` moment depends on user input, while we
+desire that soundB be played at a reliable time.
 
 ## Watcher Moments
 

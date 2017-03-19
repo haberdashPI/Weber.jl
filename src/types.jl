@@ -67,7 +67,7 @@ end
     time(e::ExpEvent)
 
 Get the time an event occured relative to the start of the experiment.
-Resolution is limited by an expeirment's input_resolution (which can be
+Resolution is limited by an experiment's input_resolution (which can be
 specified upon initialization), and the response rate of the device. For
 instance, keyboards usually have a latency on the order of 20-30ms.
 """
