@@ -460,7 +460,7 @@ function run{T <: BaseExperiment}(
 end
 
 function endexperiment(e::Experiment)
-  flgas(exp).running = false
+  flags(exp).running = false
   flags(exp).processing = false
 end
 
