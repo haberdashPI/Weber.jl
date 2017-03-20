@@ -478,7 +478,7 @@ end
 
 function process(exp::Experiment,queues::Array{MomentQueue},x)
   filter!(queues) do queue
-    !isempty(process(exp,queue,x).data)
+    !isempty(process(exp,queue,x))
   end
 end
 
