@@ -200,22 +200,44 @@ int ws_play(double now,double playat,int channel,Sound* toplay,WsState* state){
   PaTime pa_now = Pa_GetStreamTime(state->stream);
   PaTime time;
   if(playat > 0) time = (pa_now - now) + playat;
-  else time = pa_now
+  else time = -1.0;
+  if(time < pa_now){
+    state->channels->playback_error = playat - pa_now;
+    time = -1;
+  }
 
   // create the sound
   TimedSound* sound = newTimedSound((TimedSound*)malloc(sizeof(TimedSound)),toplay,time);
 
   // find the available channel soonest to be done playing a sound
   if(channel < 0){
-    PaTime max_done_at = -INFINITY;
-    for(int i=0;i<state->channels->len / 2;i++){
-      Sounds* sounds = state->channels->data + i;
-      if(sounds->paused) continue;
-      if(sounds->data[sounds->producer_index] != NULL) continue;
-      if(sounds->channels->data[i].done_at > time) continue;
-      if(max_done_at < state->channels->data[i].done_at){
-        channel = i;
-        max_done_at = state->channels->data[i].done_at;
+    // if time well defined, put on channel that is available
+    // as late as possible without delaying playback (to best utilize channels)
+    if(time > 0){
+      PaTime max_done_at = -INFINITY;
+      for(int i=0;i<state->channels->len / 2;i++){
+        Sounds* sounds = state->channels->data + i;
+        if(sounds->paused) continue;
+        if(sounds->data[sounds->producer_index] != NULL) continue;
+        if(sounds->done_at > time) continue;
+        if(max_done_at < sounds->done_at){
+          channel = i;
+          max_done_at = sounds->done_at;
+        }
+      }
+    }
+    // if time is poorly defined (i.e. too late), play it as soon
+    // as possible by finding the channel soonest to be done
+    else{
+      PaTime min_done_at = INFINITY;
+      for(int i=0;i<state->channels->len / 2;i++){
+        Sounds* sounds = state->channels->data + i;
+        if(sounds->paused) continue;
+        if(sounds->data[sounds->producer_index] != NULL) continue;
+        if(min_done_at > sounds->done_at){
+          channel = i;
+          min_done_at = sounds->done_at;
+        }
       }
     }
     if(channel < 0){
@@ -224,23 +246,13 @@ int ws_play(double now,double playat,int channel,Sound* toplay,WsState* state){
     }
   }
 
-  // printf("playing on channel: %d\n",channel);
-
   // add the sound to this channel at the appropriate time
   Sounds* sounds = state->channels->data + channel;
   sounds->data[sounds->producer_index] = sound;
 
-  // printf("channel: %d\n",channel);
-  // printf("sounds->consumer_index: %d\n",sounds->consumer_index);
-  // printf("sounds->producer_index: %d\n",sounds->producer_index);
-  // printf("sounds->data[sounds->producer_index]: %p\n",
-  //       (void*)sounds->data[sounds->producer_index]);
-
   sounds->producer_index++;
   if(sounds->producer_index == sounds->len)
     sounds->producer_index = 0;
-
-  // printf("YO!\n");
 
   return channel;
 }
