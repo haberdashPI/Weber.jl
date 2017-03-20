@@ -460,8 +460,8 @@ function run{T <: BaseExperiment}(
 end
 
 function endexperiment(e::Experiment)
-  data(exp).running = false
-  data(exp).processing = false
+  flgas(exp).running = false
+  flags(exp).processing = false
 end
 
 function process(exp::Experiment,queues::Array{MomentQueue},x)

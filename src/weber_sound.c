@@ -198,21 +198,24 @@ static int ws_callback(const void* in,void* out,unsigned long len,
 EXPORT
 int ws_play(double now,double playat,int channel,Sound* toplay,WsState* state){
   PaTime pa_now = Pa_GetStreamTime(state->stream);
-  PaTime time = (pa_now - now) + playat;
+  PaTime time;
+  if(playat > 0) time = (pa_now - now) + playat;
+  else time = pa_now
 
   // create the sound
   TimedSound* sound = newTimedSound((TimedSound*)malloc(sizeof(TimedSound)),toplay,time);
 
   // find the available channel soonest to be done playing a sound
   if(channel < 0){
-    PaTime min_done_at = INFINITY;
+    PaTime max_done_at = -INFINITY;
     for(int i=0;i<state->channels->len / 2;i++){
       Sounds* sounds = state->channels->data + i;
       if(sounds->paused) continue;
       if(sounds->data[sounds->producer_index] != NULL) continue;
-      if(min_done_at > state->channels->data[i].done_at){
+      if(sounds->channels->data[i].done_at > time) continue;
+      if(max_done_at < state->channels->data[i].done_at){
         channel = i;
-        min_done_at = state->channels->data[i].done_at;
+        max_done_at = state->channels->data[i].done_at;
       }
     }
     if(channel < 0){
