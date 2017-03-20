@@ -405,11 +405,6 @@ function offset_start_moment(fn::Function=()->nothing,count_trials=false)
   OffsetStartMoment(fn,count_trials,false,stacktrace()[2:end])
 end
 
-function final_moment(fn::Function)
-  precompile(fn,())
-  FinalMoment(fn,stacktrace()[2:end])
-end
-
 """
     await_response(isresponse;[atleast=0.0])
 
@@ -542,6 +537,27 @@ function prepare!(m::PlayFunctionMoment,last_moment::Float64)
   end
 end
 
+run(exp,q,m::TimedMoment) = m.run()
+run(exp,q,m::OffsetStartMoment) = m.run()
+run(exp,q,m::MomentSequence) = foreach(x -> run(exp,q,x),m.data)
+
+run(exp,q,m::DisplayMoment) = display(win(exp),m.visual)
+run(exp,q,m::DisplayFunctionMoment) = display(win(exp),get(m.visual))
+
+function run(exp,q,m::PlayMoment)
+  if m.prepared
+    m.prepared = false
+    play(m.sound,0.0,m.channel)
+  end
+end
+
+function run(exp,q,m::PlayFunctionMoment)
+  if !isnull(m.prepared)
+    play(get(m.prepared),0.0,m.channel)
+    m.prepared = Nullable()
+  end
+end
+
 """
     handle(exp,queue,moment,to_handle)
 
@@ -566,40 +582,6 @@ custom moments that have such behavior.
     It is called during the course of running an experiment.
 
 """
-function handle(exp::Experiment,q::MomentQueue,moment::FinalMoment,x)
-  for sq in data(exp).moments
-    if sq != q && !isempty(sq)
-      enqueue!(sq,moment)
-      dequeue!(q)
-      return true
-    end
-  end
-  moment.run()
-  dequeue!(q)
-  true
-end
-
-run(exp,q,m::TimedMoment) = m.run()
-run(exp,q,m::OffsetStartMoment) = m.run()
-run(exp,q,m::MomentSequence) = foreach(x -> run(exp,q,x),m.data)
-
-run(exp,q,m::DisplayMoment) = display(win(exp),m.visual)
-run(exp,q,m::DisplayFunctionMoment) = display(win(exp),get(m.visual))
-
-function run(exp,q,m::PlayMoment)
-  if m.prepared
-    m.prepared = false
-    play(m.sound,0.0,m.channel)
-  end
-end
-
-function run(exp,q,m::PlayFunctionMoment)
-  if !isnull(m.prepared)
-    play(get(m.prepared),0.0,m.channel)
-    m.prepared = Nullable()
-  end
-end
-
 function handle(exp::Experiment,q::MomentQueue,
                 moment::AbstractTimedMoment,time::Float64)
   run(exp,q,moment)
@@ -684,4 +666,3 @@ function is_moment_skipped(exp,moment::ExpandingMoment)
   end
   data(exp).offset < data(exp).skip_offsets
 end
-is_moment_skipped(exp,moment::FinalMoment) = false

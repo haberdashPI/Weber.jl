@@ -473,14 +473,6 @@ delta_t(m::DisplayFunctionMoment) = m.delta_t
 sequenceable(m::DisplayFunctionMoment) = true
 moment_trace(m::DisplayFunctionMoment) = m.trace
 
-type FinalMoment <: SimpleMoment
-  run::Function
-  trace::StackTrace
-end
-delta_t(moment::FinalMoment) = 0.0
-isimmediate(m::FinalMoment) = true
-moment_trace(m::FinalMoment) = m.trace
-
 type CompoundMoment <: AbstractMoment
   data::Array{AbstractMoment}
 end
@@ -656,7 +648,6 @@ type ExperimentData
   pause_mode::Int
   moments::Array{MomentQueue,1}
   streamers::Dict{Int,Streamer}
-  cleanup::Function
   last_good_delta::Float64
   last_bad_delta::Float64
 end

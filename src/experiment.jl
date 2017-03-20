@@ -203,11 +203,10 @@ function Experiment(;skip=0,columns=Symbol[],debug=false,
   pause_mode = Running
   moments = [MomentQueue()]
   streamers = Dict{Int,Streamer}()
-  cleanup = () -> error("no cleanup function available!")
   last_good_delta = -1.0
   last_bad_delta = -1.0
   data = ExperimentData(offset,trial,skip,last_time,next_moment,trial_watcher,
-                        pause_mode,moments,streamers,cleanup,last_good_delta,
+                        pause_mode,moments,streamers,last_good_delta,
                         last_bad_delta)
 
   running = processing = false
@@ -232,30 +231,12 @@ calls to `addtrial`, `addbreak` and `addpractice` must be called inside of
 """
 setup(fn::Function,exp::ExtendedExperiment) = setup(fn,next(exp))
 function setup{T <: BaseExperiment}(fn::Function,exp::T)
-  # create data file header
-  function cleanup()
-    flags(exp).running = false
-    flags(exp).processing = false
-    close(win(exp))
-
-    # OBSOLETE: gc is disabled during individual trials (and enabled at the end of
-    # a trial). Make sure it really does return to an enabled state.
-    # gc_enable(true)
-  end
-
   try
-    # the first moment just waits a short time to ensure
-    # notify(clean_run) runs after wait(cleanup_run)
-    data(exp).cleanup = cleanup
-
     # setup all trial moments for this experiment
     experiment_context[] = Nullable(top(exp))
     addmoment(top(exp),moment())
     fn()
     experiment_context[] = Nullable{Experiment}()
-
-    # the last moment run cleans up the experiment
-    enqueue!(first(data(exp).moments),final_moment(() -> cleanup()))
   catch e
     close(win(exp))
     # gc_enable(true)
@@ -324,7 +305,7 @@ function watch_pauses(exp,e)
     data(exp).pause_mode = Unfocused
   elseif data(exp).pause_mode == ToExit && iskeydown(e,key"y")
     record(top(exp),"terminated")
-    data(exp).cleanup()
+    endexperiment(exp)
   elseif data(exp).pause_mode == ToExit && iskeydown(e,key"n")
     unpause(exp,time(e))
   elseif data(exp).pause_mode == Unfocused && isfocused(e)
@@ -338,7 +319,7 @@ function watch_pauses(exp,e)
   end
 end
 
-process_event(exp::Experiment,event::QuitEvent) = data(exp).cleanup()
+process_event(exp::Experiment,event::QuitEvent) = endexperiment(exp)
 function process_event(exp::Experiment,event)
   if flags(exp).running
     data(exp).trial_watcher(event)
@@ -399,7 +380,7 @@ function run{T <: BaseExperiment}(
     start = precise_time()
     tick = data(exp).last_time = last_input = last_delta = 0.0
     prepare!(data(exp).moments[1],Inf)
-    while flags(exp).processing
+    while flags(exp).processing && !isempty(data(exp).moments)
       tick = data(exp).last_time = precise_time() - start
 
       # notify all moments about the new time
@@ -459,6 +440,8 @@ function run{T <: BaseExperiment}(
       rethrow(e)
     end
   finally
+    flags(exp).running = false
+    flags(exp).processing = false
     experiment_context[] = Nullable()
     close(win(exp))
     # gc_enable(true)
@@ -474,6 +457,11 @@ function run{T <: BaseExperiment}(
     readline(STDIN)
   end
   nothing
+end
+
+function endexperiment(e::Experiment)
+  data(exp).running = false
+  data(exp).processing = false
 end
 
 function process(exp::Experiment,queues::Array{MomentQueue},x)
