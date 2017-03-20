@@ -132,12 +132,17 @@ function handle(exp::Weber.Experiment,queue::Weber.MomentQueue,
   true
 end
 type TestPrepareException <: Exception end
-prepare!(moment::TestPrepareError,time) = isinf(time) ? throw(TestPrepareException()) : nothing
+prepare!(moment::TestPrepareError,time) =
+  isinf(time) ? throw(TestPrepareException()) : record(:success)
 
 function cause_prepare_error1()
   find_timing() do
     addtrial(moment(0.5),timeout(() -> nothing,iskeydown,0.5),TestPrepareError())
   end
+end
+
+prepare_noerror,_,_ = find_timing() do
+  addtrial(moment(0.5),TestPrepareError())
 end
 
 type ExtensionA <: Weber.Extension end
@@ -231,6 +236,7 @@ const moment_eps = 1e-3
       @test abs(prepare_timing[:b_post] - prepare_timing[:b] - 0.5) < 0.25
       @test abs(prepare_timing[:c_post] - prepare_timing[:c] - 0.5) < 0.25
       @test_throws TestPrepareException cause_prepare_error1()
+      @test prepare_noerror == [:success]
     end
 
     @testset "Looping Moments" begin
