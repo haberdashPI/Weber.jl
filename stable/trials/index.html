@@ -160,14 +160,14 @@
 
 <p>Adds a trial to the experiment, consisting of the specified moments.</p>
 <p>Each trial records a "trial_start" code, and increments a counter tracking the number of trials, and (normally) an offset counter. These two numbers are reported on every line of the resulting data file (see <a href="./#Weber.record"><code>record</code></a>). They can be retrieved using <a href="../experiment/#Weber.trial"><code>Weber.trial()</code></a> and <a href="../experiment/#Weber.offset"><code>Weber.offset()</code></a>.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/82d1cc83dcc51406d2fad9d81dc103ae58a654f8/src/trial.jl#L287-L296' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/1c476e15a749b6101e563938b9430b888e6735c1/src/trial.jl#L287-L296' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.addbreak' href='#Weber.addbreak'>#</a>
 <strong><code>Weber.addbreak</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>addbreak(moments...)
 </code></pre>
 
 <p>Identical to <a href="./#Weber.addpractice"><code>addpractice</code></a>, but records "break_start" instead of "practice_start".</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/82d1cc83dcc51406d2fad9d81dc103ae58a654f8/src/trial.jl#L331-L335' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/1c476e15a749b6101e563938b9430b888e6735c1/src/trial.jl#L331-L335' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.addbreak_every' href='#Weber.addbreak_every'>#</a>
 <strong><code>Weber.addbreak_every</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>addbreak_every(n,total,
@@ -176,14 +176,14 @@
 
 <p>Adds a break every <code>n</code> times this event is added given a known number of total such events.</p>
 <p>By default this waits for the user to hit spacebar to move on.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/82d1cc83dcc51406d2fad9d81dc103ae58a654f8/src/primitives.jl#L48-L56' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/1c476e15a749b6101e563938b9430b888e6735c1/src/primitives.jl#L51-L59' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.addpractice' href='#Weber.addpractice'>#</a>
 <strong><code>Weber.addpractice</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>addpractice(moments...)
 </code></pre>
 
 <p>Identical to <a href="./#Weber.addtrial"><code>addtrial</code></a>, except that it does not incriment the trial count, and records a "practice_start" instead of "trial_start" code.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/82d1cc83dcc51406d2fad9d81dc103ae58a654f8/src/trial.jl#L316-L321' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/1c476e15a749b6101e563938b9430b888e6735c1/src/trial.jl#L316-L321' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.moment' href='#Weber.moment'>#</a>
 <strong><code>Weber.moment</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>moment([delta_t],[fn],args...;keys...)
@@ -191,21 +191,22 @@
 
 <p>Create a moment that occurs <code>delta_t</code> (default 0) seconds after the onset of the previous moment, running the specified function.</p>
 <p>The function <code>fn</code> is passed the arguments specified in <code>args</code> and <code>keys</code>.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/82d1cc83dcc51406d2fad9d81dc103ae58a654f8/src/trial.jl#L345-L352' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/1c476e15a749b6101e563938b9430b888e6735c1/src/trial.jl#L345-L352' class='documenter-source'>source</a><br></p>
 <pre><code>moment(moments...)
 moment(moments::Array)
 </code></pre>
 
 <p>Create a single, compound moment by concatentating several moments togethor.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/82d1cc83dcc51406d2fad9d81dc103ae58a654f8/src/trial.jl#L386-L391' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/1c476e15a749b6101e563938b9430b888e6735c1/src/trial.jl#L386-L391' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.response' href='#Weber.response'>#</a>
 <strong><code>Weber.response</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>response(key1 =&gt; response1,key2 =&gt; response2,...;kwds...)
 </code></pre>
 
 <p>Create a watcher moment that records press of <code>key[n]</code> as <code>record(response[n];kwds...)</code>.</p>
-<p>Key releases are suffixed, by default with "_up". This suffix can be changed using the <code>keyup_suffix</code> keyword argument.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/82d1cc83dcc51406d2fad9d81dc103ae58a654f8/src/primitives.jl#L6-L14' class='documenter-source'>source</a><br></p>
+<p>See <a href="./#Weber.record"><code>record</code></a> for more details on how events are recorded.</p>
+<p>When a key is pressed down, the record event occurs. Key releases are also recorded, but are suffixed, by default, with "_up". This suffix can be changed using the <code>keyup_suffix</code> keyword argument.</p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/1c476e15a749b6101e563938b9430b888e6735c1/src/primitives.jl#L6-L17' class='documenter-source'>source</a><br></p>
 <pre><code>response([fn],adapter,[key1] =&gt; [&quot;resp1&quot;],...;correct=[resp],
          [show_feedback=true],
          [feedback=Dict(true=&gt;&quot;Correct&quot;,false=&gt;&quot;Wrong!&quot;)]
@@ -223,7 +224,7 @@ moment(moments::Array)
 <li><code>feedback</code> the text to display to a participant when they are correct (for the true key, defaults to "Correct!") or incorrect (for the false key, defaults to "Wrong!").</li>
 </ul>
 <p>Any additional keyword arguments are added as column values when the response is recorded.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/82d1cc83dcc51406d2fad9d81dc103ae58a654f8/src/adaptive.jl#L35-L65' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/1c476e15a749b6101e563938b9430b888e6735c1/src/adaptive.jl#L35-L65' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.await_response' href='#Weber.await_response'>#</a>
 <strong><code>Weber.await_response</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>await_response(isresponse;[atleast=0.0])
@@ -232,7 +233,7 @@ moment(moments::Array)
 <p>This moment starts when the <code>isresponse</code> function evaluates to true.</p>
 <p>The <code>isresponse</code> function will be called anytime an event occurs. It should take one parameter (the event that just occured).</p>
 <p>If the response is provided before <code>atleast</code> seconds, the moment does not start until <code>atleast</code> seconds have passed.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/82d1cc83dcc51406d2fad9d81dc103ae58a654f8/src/trial.jl#L413-L423' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/1c476e15a749b6101e563938b9430b888e6735c1/src/trial.jl#L408-L418' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.record' href='#Weber.record'>#</a>
 <strong><code>Weber.record</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>record(code;keys...)
@@ -254,7 +255,7 @@ moment(moments::Array)
 <li><strong>unpaused</strong> - recorded when the user ends the pause, continuuing the experiment.</li>
 </ol>
 </div>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/82d1cc83dcc51406d2fad9d81dc103ae58a654f8/src/trial.jl#L90-L124' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/1c476e15a749b6101e563938b9430b888e6735c1/src/trial.jl#L90-L124' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.timeout' href='#Weber.timeout'>#</a>
 <strong><code>Weber.timeout</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>timeout(fn,isresponse,timeout,[atleast=0.0])
@@ -264,28 +265,28 @@ moment(moments::Array)
 <p>The <code>isresponse</code> function will be called anytime an event occurs. It should take one parameter (the event that just occured).</p>
 <p>If the moment times out, the function <code>fn</code> (with no arguments) will be called.</p>
 <p>If the response is provided before <code>atleast</code> seconds, the moment does not begin until <code>atleast</code> seconds (<code>fn</code> will not be called).</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/82d1cc83dcc51406d2fad9d81dc103ae58a654f8/src/trial.jl#L432-L445' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/1c476e15a749b6101e563938b9430b888e6735c1/src/trial.jl#L427-L440' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.show_cross' href='#Weber.show_cross'>#</a>
 <strong><code>Weber.show_cross</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>show_cross([delta_t])
 </code></pre>
 
 <p>Creates a moment that shows a cross hair <code>delta_t</code> seconds after the start of the previous moment (defaults to 0 seconds).</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/82d1cc83dcc51406d2fad9d81dc103ae58a654f8/src/primitives.jl#L72-L77' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/1c476e15a749b6101e563938b9430b888e6735c1/src/primitives.jl#L75-L80' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.when' href='#Weber.when'>#</a>
 <strong><code>Weber.when</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>when(condition,moments...)
 </code></pre>
 
 <p>This moment will begin at the <em>start</em> of the previous moment, and presents the following moments (possibly in nested iterable objects) if the <code>condition</code> function (which takes no arguments) evaluates to true.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/82d1cc83dcc51406d2fad9d81dc103ae58a654f8/src/trial.jl#L478-L484' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/1c476e15a749b6101e563938b9430b888e6735c1/src/trial.jl#L473-L479' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.looping' href='#Weber.looping'>#</a>
 <strong><code>Weber.looping</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>looping(when=fn,moments...)
 </code></pre>
 
 <p>This moment will begin at the <em>start</em> of the previous moment, and repeats the listed moments (possibly in nested iterable objects) until the <code>when</code> function (which takes no arguments) evaluates to false.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/82d1cc83dcc51406d2fad9d81dc103ae58a654f8/src/trial.jl#L467-L473' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/1c476e15a749b6101e563938b9430b888e6735c1/src/trial.jl#L462-L468' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.@addtrials' href='#Weber.@addtrials'>#</a>
 <strong><code>Weber.@addtrials</code></strong> &mdash; <em>Macro</em>.</p>
 <pre><code>@addtrials expr...
@@ -293,28 +294,28 @@ moment(moments::Array)
 
 <p>Marks a let block, a for loop, or an if expression as dependent on experiment run-time state, leaving the offset counter unincremented within that block.  The immediately proceeding loop or conditional logic will be run during experiment run-time rather than setup-time.</p>
 <p>Refer to the <a href="../advanced/"><code>Advanced Topics</code></a> of the manual section for more details.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/82d1cc83dcc51406d2fad9d81dc103ae58a654f8/src/trial.jl#L200-L210' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/1c476e15a749b6101e563938b9430b888e6735c1/src/trial.jl#L200-L210' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.update!' href='#Weber.update!'>#</a>
 <strong><code>Weber.update!</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>update!(adapter,response,correct)
 </code></pre>
 
 <p>Updates any internal state for the adapter when the listener responds with <code>response</code> and the correct response is <code>correct</code>. Usually not called directly, but instead called within <code>response</code>, when the adapter is passed as the first argument. May take a while to run.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/82d1cc83dcc51406d2fad9d81dc103ae58a654f8/src/adaptive.jl#L7-L14' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/1c476e15a749b6101e563938b9430b888e6735c1/src/adaptive.jl#L7-L14' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.estimate' href='#Weber.estimate'>#</a>
 <strong><code>Weber.estimate</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>estimate(adapter)
 </code></pre>
 
 <p>Returns the mean and error of the adapters threshold estimate. May take some time to run.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/82d1cc83dcc51406d2fad9d81dc103ae58a654f8/src/adaptive.jl#L18-L23' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/1c476e15a749b6101e563938b9430b888e6735c1/src/adaptive.jl#L18-L23' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.delta' href='#Weber.delta'>#</a>
 <strong><code>Weber.delta</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>delta(adapter)
 </code></pre>
 
 <p>Returns the next delta that should be tested to help estimate the threshold.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/82d1cc83dcc51406d2fad9d81dc103ae58a654f8/src/adaptive.jl#L27-L31' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/1c476e15a749b6101e563938b9430b888e6735c1/src/adaptive.jl#L27-L31' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.levitt_adapter' href='#Weber.levitt_adapter'>#</a>
 <strong><code>Weber.levitt_adapter</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>levit_adapter([first_delta=0.1],[down=3],[up=1],
@@ -338,7 +339,7 @@ moment(moments::Array)
 <li><code>max_delta</code>: the largest delta allowed</li>
 <li><code>mult</code>: whether the delta change should be additive (false) or  multiplicative (true).</li>
 </ul>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/82d1cc83dcc51406d2fad9d81dc103ae58a654f8/src/adaptive.jl#L137-L169' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/1c476e15a749b6101e563938b9430b888e6735c1/src/adaptive.jl#L137-L169' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.bayesian_adapter' href='#Weber.bayesian_adapter'>#</a>
 <strong><code>Weber.bayesian_adapter</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>bayesian_adapter(;first_delta=0.1,
@@ -380,7 +381,7 @@ moment(moments::Array)
 <li><code>repeat2_thresh</code>: the ratio of sd / mean for theta must suprass to repeat each delta twice.</li>
 <li><code>repeat3_thresh</code>: the ratio of sd / mean for theta must surpass to repeat each delta thrice.</li>
 </ul>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/82d1cc83dcc51406d2fad9d81dc103ae58a654f8/src/adaptive.jl#L296-L370' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/1c476e15a749b6101e563938b9430b888e6735c1/src/adaptive.jl#L296-L370' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.constant_adapter' href='#Weber.constant_adapter'>#</a>
 <strong><code>Weber.constant_adapter</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>constant_adapter(stimuli)
@@ -388,7 +389,7 @@ moment(moments::Array)
 
 <p>An adapter that can be used to implement the method of constant stimuli: the specified sequence of stimulus deltas is presented in order to participants.</p>
 <p>Strictly speaking, this is not an adaptive tracking procedure. However, it can be convienient to have the same programming interface for this method as for adaptive methods. In this way you can easily select between the method of constant stimuli or some kind of adaptive procedure.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/82d1cc83dcc51406d2fad9d81dc103ae58a654f8/src/adaptive.jl#L113-L123' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/1c476e15a749b6101e563938b9430b888e6735c1/src/adaptive.jl#L113-L123' class='documenter-source'>source</a><br></p>
               
             </div>
           </div>
