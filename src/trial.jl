@@ -107,7 +107,7 @@ Each call to record writes a new row to the data file used for the experiment, s
 there should be no loss of data if the program is terminated prematurely for
 some reason.
 
-!!! note "Automaticlly Recorded Codes"
+!!! note "Automatically Recorded Codes"
 
     There are several codes that are automatically recorded by Weber.
     They include:
