@@ -39,5 +39,6 @@ the runtime behavior of Weber.
 ```@docs
 Weber.prepare!
 Weber.handle
+Weber.moment_trace
 Weber.delta_t
 ```
