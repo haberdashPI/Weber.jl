@@ -392,6 +392,15 @@ required_delta_t(m::ResponseMoment) = Inf
 isimmediate(m::ResponseMoment) = false
 moment_trace(m::ResponseMoment) = m.trace
 
+type ResponseMomentMin <: SimpleMoment
+  delta_t::Float64
+  trace::StackTrace
+end
+delta_t(m::ResponseMomentMin) = m.delta_t
+required_delta_t(m::ResponseMomentMin) = Inf
+isimmediate(m::ResponseMomentMin) = false
+moment_trace(m::ResponseMomentMin) = m.trace
+
 abstract AbstractTimedMoment <: SimpleMoment
 sequenceable(m::AbstractTimedMoment) = true
 isimmediate(m::AbstractTimedMoment) = delta_t(m) == 0.0

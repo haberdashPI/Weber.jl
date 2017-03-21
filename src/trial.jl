@@ -612,15 +612,23 @@ end
 
 function handle(exp::Experiment,q::MomentQueue,m::ResponseMoment,event::ExpEvent)
   if m.respond(event)
-    if (m.minimum_delta_t > 0.0 &&
-        m.minimum_delta_t + q.last > Weber.tick(exp))
-      dequeue!(q)
-      unshift!(q,moment(m.minimum_delta_t))
-    else
-      dequeue!(q)
-    end
+    dequeue!(q)
+    unshift!(q,ResponseMomentMin(max(0.0,m.minimum_delta_t),m.trace))
     true
   end
+  false
+end
+
+function handle(exp::Experiment,q::MomentQueue,
+                moment::ResponseMomentMin,time::Float64)
+  q.last = time
+  dequeue!(q)
+  true
+end
+
+
+function handle(exp::Experiment,q::MomentQueue,
+                moment::ResponseMomentMin,evt::ExpEvent)
   false
 end
 
