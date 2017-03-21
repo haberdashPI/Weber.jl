@@ -94,8 +94,8 @@ Record a row to the experiment data file using a given `code`.
 
 Each event has a code which identifies it as being a particular type of
 experiment event. This is normally a string. Each keyword argument is the value
-of a column. By convention when you record something with the same
-code you should specify the same set of columns.
+of a column (with the same name). By convention when you record something with
+the same code you should specify the same set of columns.
 
 All calls to record also result in many additional values being written to the
 data file. The start time and date of the experiment, the trial and offset
