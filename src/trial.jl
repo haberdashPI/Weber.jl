@@ -121,6 +121,9 @@ some reason.
        paused.
     6. **unpaused** - recorded when the user ends the pause, continuuing the
        experiment.
+    7. **terminated** - recorded when the user manually terminates the
+       experiment (via 'escape')
+    8. **closed** - recorded just before the experiment window closes
 """
 function record(code;kwds...)
   record(get_experiment(),code;kwds...)

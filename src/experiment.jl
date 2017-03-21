@@ -441,6 +441,7 @@ function run{T <: BaseExperiment}(
       rethrow(e)
     end
   finally
+    record(top(exp),"closed")
     flags(exp).running = false
     flags(exp).processing = false
     experiment_context[] = Nullable()
