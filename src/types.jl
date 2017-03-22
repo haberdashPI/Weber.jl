@@ -530,7 +530,9 @@ next(m::MomentQueue,i::Int) = m[i], i+1
 @inline function getindex(m::MomentQueue,i)
   @boundscheck 0 < i <= length(m)
   real_index = i + m.start_index - 1
-  real_index <= length(m.data) ? real_index : real_index - length(m.data)
+  if real_index > length(m.data)
+    real_index = real_index - length(m.data)
+  end
   @inbounds return m.data[real_index]
 end
 
