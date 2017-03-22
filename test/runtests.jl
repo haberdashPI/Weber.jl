@@ -12,7 +12,8 @@ function find_timing(fn;keys...)
   run(exp,await_input=false)
 
   nostarts = filter(x -> !endswith(string(x[:code]),"_start") &&
-                         x[:code] != "terminated",
+                    x[:code] != "terminated" &&
+                    x[:code] != "closed",
                     Weber.null_record)
   map(x -> x[:code],nostarts),map(x -> x[:time],nostarts),nostarts
 end
