@@ -24,6 +24,7 @@ bandpass
 ramp
 rampon
 rampoff
+fadeto
 attenuate
 mix
 mult
