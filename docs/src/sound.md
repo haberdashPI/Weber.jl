@@ -28,6 +28,7 @@ fadeto
 attenuate
 mix
 mult
+envelope
 ```
 
 # Playback

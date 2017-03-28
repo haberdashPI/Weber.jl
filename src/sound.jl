@@ -9,7 +9,7 @@ import FileIO: load, save
 import SampledSignals: samplerate
 import Base: show, length, start, done, next
 
-export mix, mult, silence, noise, highpass, lowpass, bandpass,
+export mix, mult, silence, envelope, noise, highpass, lowpass, bandpass,
 	tone, ramp, harmonic_complex, attenuate, sound, asstream, play, stream, stop,
   duration, setup_sound, current_sound_latency, buffer,
   resume_sounds, pause_sounds, load, save, samplerate, length, channel,
@@ -197,6 +197,23 @@ function silence(length_s;sample_rate_Hz=samplerate(sound_setup_state))
 	SampleBuf(zeros(floor(Int,sample_rate_Hz * length_s)),sample_rate_Hz)
 end
 
+"""
+    envelope(mult,length,[sample_rate_Hz=44100])
+
+Creates an evelope of a given multiplier and length (in seconds).
+
+If mult = 0 this is the same as calling silence. This function
+is useful in conjunction with [`fadeto`](@ref) and [`mult`](@ref)
+when defining an envelope that changes in level. For example,
+the following will play a 1kHz tone for 1 second, which changes
+in volume halfway through to a softer level.
+
+    mult(tone(1000,1),fadeto(envelope(1,0.5),envelope(0.1,0.5)))
+
+"""
+function envelope(mult,length;sample_rate_Hz=samplerate(sound_setup_state))
+  SampleBuf(mult*ones(floor(Int,sample_rate_Hz * length)),sample_rate_Hz)
+end
 
 immutable NoiseStream
   rng::RandomDevice
