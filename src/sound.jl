@@ -407,8 +407,6 @@ function highpass(itr,high;order=5,sample_rate_Hz=samplerate(first(itr)))
   FilterStream(f,itr,Int(sample_rate_Hz))
 end
 
-# TODO: after basic streaming is working
-# figure out how to apply ramps for some period of the stream
 """
     ramp(x,[ramp_s=0.005];[sample_rate_Hz=samplerate(x)])
 
