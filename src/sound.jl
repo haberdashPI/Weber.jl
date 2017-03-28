@@ -9,7 +9,7 @@ import FileIO: load, save
 import SampledSignals: samplerate
 import Base: show, length, start, done, next
 
-export match_lengths, mix, mult, silence, noise, highpass, lowpass, bandpass,
+export mix, mult, silence, noise, highpass, lowpass, bandpass,
 	tone, ramp, harmonic_complex, attenuate, sound, asstream, play, stream, stop,
   duration, setup_sound, current_sound_latency, buffer,
   resume_sounds, pause_sounds, load, save, samplerate, length, channel,
@@ -117,23 +117,22 @@ Gets the `SampleBuf` associated with this sound (c.f. `SampledSignals` package).
 """
 buffer(x::Sound) = x.buffer
 
-"""
-    match_lengths(x,y,...)
-
-Ensure that all sounds have exactly the same length by adding silence
-to the end of shorter sounds.
-"""
-function match_lengths(xs...)
-	max_length = maximum(map(x -> size(x,1), xs))
-
-  map(xs) do x
-    if size(x,1) < max_length
-      vcat(x,SampleBuf(zeros(eltype(x),
-                             max_length - size(x,1),size(x,2)),samplerate(x)))
-    else
-      x
+function soundop(op,xs::Union{SampleBuf,Array}...)
+  y = zeros(maximum(map(x -> size(x,1),xs)),maximum(map(x -> size(x,2),xs)))
+  for i in 1:size(y,1)
+    used = false
+    for j in 1:length(xs)
+      if i <= size(xs[j],1)
+        if !used
+          used = true
+          y[i,:] = xs[j][i,:]
+        else
+          y[i,:] = op(y[i,:],xs[j][i,:])
+        end
+      end
     end
   end
+  SampleBuf(y,samplerate(xs[1]))
 end
 
 immutable OpStream
@@ -177,10 +176,7 @@ end
 
 Mix several sounds (or streams) together so that they play at the same time.
 """
-function mix(xs::Union{SampleBuf,Array}...)
-  xs = match_lengths(xs...)
-  reduce(+,xs)
-end
+mix(xs::Union{SampleBuf,Array}...) = soundop(+,xs...)
 mix(itrs...) = OpStream(itrs,+)
 
 """
@@ -189,10 +185,7 @@ mix(itrs...) = OpStream(itrs,+)
 Mutliply several sounds (or streams) together. Typically used to apply an
 amplitude envelope.
 """
-function mult(xs::Union{SampleBuf,Array}...)
-  xs = match_lengths(xs...)
-  reduce(.*,xs)
-end
+mult(xs::Union{SampleBuf,Array}...) = soundop(.*,xs...)
 mult(itrs...) = OpStream(itrs,.*)
 
 """
