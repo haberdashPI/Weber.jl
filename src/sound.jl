@@ -452,7 +452,7 @@ end
 """
     rampon(stream,[ramp_s=0.005])
 
-Applies a half consine ramp to start of the stream.
+Applies a half consine ramp to start of the sound or stream.
 """
 function rampon(stream,ramp_s=0.005)
   sample_rate_Hz = samplerate(first(stream))
@@ -464,11 +464,24 @@ function rampon(stream,ramp_s=0.005)
   mult(stream,take(ramp,num_units))
 end
 
+
+function rampon(x::Union{SampleBuf,Array},ramp_s=0.005)
+  sample_rate_Hz = samplerate(x)
+  ramp_len = floor(Int,sample_rate_Hz * ramp_s)
+	@assert size(x,1) > ramp_len
+
+	ramp_t = (1.0:ramp_len) / ramp_len
+	up = -0.5cos(π*ramp_t)+0.5
+	envelope = [up; ones(size(x,1) - ramp_len)]
+	mult(x,envelope)
+end
+
+
 """
     rampoff(stream,[ramp_s=0.005],[after=0])
 
-Applies a half consine ramp to the stream after `after` seconds, ending the
-stream at that point.
+Applies a half consine ramp to the sound or stream after `after` seconds, ending
+the stream at that point.
 """
 function rampoff(itr,ramp_s=0.005,after=0)
   sample_rate_Hz=samplerate(first(itr))
@@ -486,8 +499,17 @@ function rampoff(itr,ramp_s=0.005,after=0)
   take(mult(itr,ramp),num_units)
 end
 
-# TODO: after basic streaming is working
-# figure out how to attenuate the stream
+function rampoff(x::Union{SampleBuf,Array},ramp_s=0.005)
+  sample_rate_Hz = samplerate(x)
+  ramp_len = floor(Int,sample_rate_Hz * ramp_s)
+  @assert size(x,1) > ramp_len
+
+  ramp_t = (1.0:ramp_len) / ramp_len
+	down = -0.5cos(π*ramp_t+π)+0.5
+  envelope = [ones(size(x,1) - ramp_len); down]
+  mult(x,envelope)
+end
+
 """
     attenuate(x,atten_dB)
 
@@ -904,6 +926,16 @@ function fadeto(new,channel::Int=1,transition=0.05)
       mix(rampoff(old,transition),rampon(new,transition))
     end
   end
+end
+
+"""
+    fadeto(sound1,sound2,overlap=0.05)
+
+Create a sound that is a smooth transition from sound1 to sound2.
+"""
+function fadeto(a::Union{Array,SampleBuf},b::Union{Array,SampleBuf},overlap=0.05)
+  mix(rampoff(a,overlap),
+      [silence(duration(a) - overlap); rampon(b,overlap)])
 end
 
 """
