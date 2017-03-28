@@ -28,7 +28,6 @@ fadeto
 attenuate
 mix
 mult
-match_lengths
 ```
 
 # Playback
