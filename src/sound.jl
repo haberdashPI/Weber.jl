@@ -76,7 +76,7 @@ function sound{T <: Number}(x::Array{T},cache=true;
                             sample_rate_Hz=samplerate(sound_setup_state))
   with_cache(cache,x) do
     bounded = max(min(x,typemax(Fixed{Int16,15})),typemin(Fixed{Int16,15}))
-    if ndims(x) == 1
+    if ndims(x) == 1 || size(x,2) == 1
       bounded = hcat(bounded,bounded)
     end
     sound(SampleBuf(Fixed{Int16,15}.(bounded),sample_rate_Hz))
@@ -91,7 +91,7 @@ Creates a sound object from a `SampleBuf` (from the `SampledSignals` module).
 function sound(x::SampleBuf,cache=true)
   with_cache(cache,x) do
     bounded = max(min(x.data,typemax(Fixed{Int16,15})),typemin(Fixed{Int16,15}))
-    if ndims(x) == 1
+    if ndims(x) == 1 || size(x,2) == 1
       bounded = hcat(bounded,bounded)
     end
     sound(SampleBuf(Fixed{Int16,15}.(bounded),samplerate(x)))
