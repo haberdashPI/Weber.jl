@@ -131,7 +131,7 @@ addcolumn(col::Symbol) = addcolumn(get_experiment(),col)
 """
     Experiment([skip=0],[columns=[symbols...]],[debug=false],
                [moment_resolution=0.0015],[input_resolution=1/60],[data_dir="data"],
-               [width=1024],[height=768],[extensions=[]])
+               [width=1024],[height=768],[warn_on_trials_only=true],[extensions=[]])
 
 Prepares a new experiment to be run.
 
@@ -158,7 +158,9 @@ Prepares a new experiment to be run.
 * **width** and **height** specified the screen resolution during the experiment
 * **extensions** an array of Weber.Extension objects, which extend the
   behavior of an experiment.
-* **warn_on_trials_only** when true latency warnings are only displayed
+* **warn_on_trials_only** when true, latency warnings are only displayed
+  when the trial count is greater than 0. Thus, practice and breaks
+  that occur before the first trial do not raise latency warnings.
 
 """
 function Experiment(;skip=0,columns=Symbol[],debug=false,
@@ -168,7 +170,8 @@ function Experiment(;skip=0,columns=Symbol[],debug=false,
                     hide_output = false,
                     input_resolution = default_input_resolution,
                     extensions = Extension[],
-                    width=exp_width,height=exp_height)
+                    width=exp_width,height=exp_height,
+                    warn_on_trials_only = true)
   if !(data_dir == nothing || hide_output)
     mkpath(data_dir)
   elseif !hide_output
@@ -195,7 +198,8 @@ function Experiment(;skip=0,columns=Symbol[],debug=false,
   filename = (data_dir == nothing || hide_output ? Nullable() :
               Nullable(joinpath(data_dir,info_str*"_"*timestr*".csv")))
   einfo = ExperimentInfo(info_values,meta,input_resolution,moment_resolution,
-                         start_date,reserved_columns,filename,hide_output)
+                         start_date,reserved_columns,filename,hide_output,
+                         warn_on_trials_only)
 
   offset = 0
   trial = 0
@@ -509,6 +513,14 @@ function process(exp::Experiment,queue::MomentQueue,event::ExpEvent)
   queue
 end
 
+function show_latency_warnings()
+  if in_experiment()
+    !info(get_experiment()).warn_on_trials_only || Weber.trial() > 0
+  else
+    true
+  end
+end
+
 roundstr(x,n=6) = x > 10.0^-n ? string(round(x,n)) : "≤1e-$n"
 function process(exp::Experiment,queue::MomentQueue,t::Float64)
   skip_offsets(exp,queue)
@@ -531,8 +543,10 @@ function process(exp::Experiment,queue::MomentQueue,t::Float64)
 
         latency = run_time - event_time
 
-        if (0.0 < d < Inf && latency > info(exp).moment_resolution &&
-            !info(exp).hide_output)
+        if (0.0 < d < Inf &&
+            latency > info(exp).moment_resolution &&
+            !info(exp).hide_output &&
+            show_latency_warnings())
           warn(cleanstr(
             "Delivered moment with a high latency ($(roundstr(latency))
              seconds). This often happens at the start of an experiment, but

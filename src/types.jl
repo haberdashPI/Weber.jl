@@ -646,6 +646,7 @@ immutable ExperimentInfo
   header::Array{Symbol}
   file::Nullable{String}
   hide_output::Bool
+  warn_on_trials_only::Bool
 end
 
 # ongoing state about an experiment that changes moment to moment
