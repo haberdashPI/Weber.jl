@@ -136,28 +136,29 @@ addcolumn(col::Symbol) = addcolumn(get_experiment(),col)
 Prepares a new experiment to be run.
 
 # Keyword Arguments
-* **skip**: the number of offsets to skip. Allows restarting of an experiment
+* **skip** the number of offsets to skip. Allows restarting of an experiment
   somewhere in the middle. When an experiment is terminated, the most
   recent offset is reported. The offset is also recorded in each row
   of the resulting data file (also reported on exit).
-* **columns**: the names (as symbols) of columns that will be recorded during the
+* **columns** the names (as symbols) of columns that will be recorded during the
   experiment (using `record`). These can be set to fixed values (using :name =>
   value), or be filled in during a call to record (:name). The column `:value`
   is always included here, even if not specified, since there are number of
   events recorded automatically which make use of this column.
-* **debug**: if true, experiment will show in a windowed view
-* **moment_resolution**: the desired precision (in seconds) that moments
+* **debug** if true, experiment will show in a windowed view
+* **moment_resolution** the desired precision (in seconds) that moments
   should be presented at. Warnings will be printed for moments that
   lack this precision.
-* **input_resolution**: the precision (in seconds) that input events should
+* **input_resolution** the precision (in seconds) that input events should
   be queried at. This almost never needs to be changed. Keyboards do not provide
   precise timing, and the timing of response pads is queried independently
   from input_resolution, using `response_time`.
-* **data_dir**: the directory where data files should be stored (can be set to
+* **data_dir** the directory where data files should be stored (can be set to
   nothing to prevent a file from being created)
-* **width** and **height**: specified the screen resolution during the experiment
-* **extensions**: an array of Weber.Extension objects, which extend the
+* **width** and **height** specified the screen resolution during the experiment
+* **extensions** an array of Weber.Extension objects, which extend the
   behavior of an experiment.
+* **warn_on_trials_only** when true latency warnings are only displayed
 
 """
 function Experiment(;skip=0,columns=Symbol[],debug=false,
