@@ -1,4 +1,5 @@
-export instruct, response, addbreak_every, show_cross, @read_args, randomize_by
+export instruct, response, addbreak_every, show_cross, @read_args,
+  @read_debug_args, oddball_paradigm, randomize_by
 using ArgParse
 using Juno: input, selector
 import Juno
@@ -192,6 +193,30 @@ and `shuffle`) will result in the same output.
 randomize_by(itr) = srand(reinterpret(UInt32,collect(itr)))
 
 """
+    @read_debug_args(description,[keyword args...])
+
+Same as @read_args, but better suited to debugging errors in your program
+when running the experiment in Juno.
+
+Specifically, this verison will never spawn a new process to run the
+experiment. This means that you can safely step through the code using debugging
+tools. In this case, you will also likely want to set `debug=true` when defining
+your [`Experiment`](@ref) object.
+"""
+macro read_debug_args(description,keys...)
+  expr = :(@read_args($description))
+  for key in keys
+    push!(expr.args,key)
+  end
+  quote
+    Weber.start_debug_read_args()
+    result = $expr
+    Weber.end_debug_read_args()
+    result
+  end
+end
+
+"""
     @read_args(description,[keyword args...])
 
 Reads experimental parameters from the user.
@@ -281,6 +306,9 @@ macro read_args(description,keys...)
   end
 end
 
+start_debug_read_args() = global debug_read_args = true
+end_debug_read_args() = global debug_read_args = false
+debug_read_args = false
 function collect_args(description,script_file;keys...)
   if Juno.isactive()
     info("Please type your responses directly below the prompt."*
@@ -326,11 +354,9 @@ function collect_args(description,script_file;keys...)
     skip = parse(Int,str)
   end
 
-  if Juno.isactive()
+  if Juno.isactive() && debug_read_args == false
     info("Spawning experiment in new child process...")
-    info("If you need to debug your experiment, don't call @read_args."*
-         " Set your experiment parameters manually inside your script "*
-         " add `cd(dirname(@__FILE__))` to a new line, and then run the script.")
+    info("If you need to debug your experiment, use @read_debug_args instead.")
     timestr = Dates.format(now(),"yyyy-mm-dd__HH_MM_SS")
     logfile = "weber_$timestr.log"
     child = spawn(pipeline(`$(joinpath(JULIA_HOME,"julia")) $script_file $sid $args $skip`,
