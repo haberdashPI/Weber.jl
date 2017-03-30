@@ -16,6 +16,7 @@ looping
 Weber.update!
 estimate
 delta
+oddball_paradigm
 levitt_adapter
 bayesian_adapter
 constant_adapter
