@@ -257,11 +257,6 @@ int ws_play(double now,double playat,int channel,Sound* toplay,WsState* state){
   return channel;
 }
 
-// TODO: i think what's happening is that the new sound is getting swapped out
-// because where quickly overriding the capacity of the queue. THis explains
-// why the clicking stops when we stop streaming, and then runs smoothly
-// until the end.
-
 EXPORT
 double ws_play_next(double now,int channel,Sound* toplay,WsState* state){
   // play_next uses a spearate set of channels
