@@ -864,23 +864,11 @@ stops the older stream. The channels for `stream` are separate from the channels
 for `play`. That is, `play(mysound,channel=1)` plays a sound on a channel
 separate from `stream(mystream,1)`.
 
-Returns the time at which the stream will start playing.
+!!! warning "Streams are not precisely timed"
 
-!!! warning "Streaming delays the start of a moment."
-
-    When stream is called as a moment, (e.g. `moment(stream,itr,channel)`) it
-    will delay the start of the moment so that it begins at the start of the
-    stream. The amount of delay depends on how long any currently playing unit
-    of an older stream takes to finish playing on the given channel. This delay
-    ensures that subsequent moments are synchronized to the start of the stream,
-    allowing all events to be well timed with respect to streaming events.
-
-    In general the latency of changing from one stream to another depends
-    on how long each sound returned by the iterator is. Streams cannot
-    be stopped in the middle of playing back a given unit returned by
-    the iterator. This in turn is normally determined by the stream_unit
-    value set during the initial call to [`setup_sound`](@ref), which can
-    be retrieved using [`stream_unit`](@ref).
+    Streams cannot occur at a precise time. Their latency is variable and
+    depends on the value of `stream_unit()`. Future versions of Weber will
+    likely allow for precisely timed audio streams.
 
 """
 
@@ -888,31 +876,17 @@ function stream(itr,channel::Int=1)
   !isready(sound_setup_state) ? setup_sound() : nothing
   @assert 1 <= channel <= sound_setup_state.num_channels
   itr_state = start(itr)
-  obj, itr_state = next(itr,itr_state)
-  x = sound(obj,false)
-  done_at = -1.0
   stop(channel)
-
-  while (done_at = ccall((:ws_play_next,weber_sound),Cdouble,
-                         (Cdouble,Cint,Ref{WS_Sound},Ptr{Void}),
-                         tick(),channel-1,x.chunk,sound_setup_state.state)) < 0
-    sleep(0.001);
-  end
-  ws_if_error("While playing sound")
-  register_sound(x,done_at)
 
   if in_experiment()
     data(get_experiment()).streamers[channel] =
-      Streamer(done_at - 0.95duration(x),channel,itr_state,itr)
+      Streamer(tick(),channel,itr_state,itr)
   else
     if isempty(streamers)
       setup_streamers()
     end
-    streamers[channel] =
-      Streamer(done_at - 0.95duration(x),channel,itr_state,itr)
+    streamers[channel] = Streamer(tick(),channel,itr_state,itr)
   end
-
-  (done_at - duration(x))
 end
 
 function stream(fn::Function,channel::Int)

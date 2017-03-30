@@ -595,7 +595,7 @@ end
 
 function handle(exp::Experiment,q::MomentQueue,
                 moment::StreamMoment,time::Float64)
-  q.last = stream(moment.itr,moment.channel)
+  stream(moment.itr,moment.channel)
   dequeue!(q)
   true
 end
