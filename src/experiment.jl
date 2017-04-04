@@ -35,7 +35,7 @@ end
 const current_moment_trace = Array{Vector{StackFrame}}()
 update_trace(m::AbstractMoment) =
   !isempty(moment_trace(m)) ? current_moment_trace[] = moment_trace(m) : nothing
-update_tracek(m::MomentSequence) =
+update_trace(m::MomentSequence) =
   current_moment_trace[] = moment_trace(m.data[1])
 moment_trace() = current_moment_trace[]
 function moment_trace_string()
