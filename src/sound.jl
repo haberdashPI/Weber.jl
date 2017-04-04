@@ -810,6 +810,7 @@ seconds from experiment start if an experiment is running), otherwise the sound
 plays as close to right now as is possible.
 """
 function play(x::Sound,time::Float64=0.0,channel::Int=0)
+  @assert samplerate(x) == samplerate()
   @assert 1 <= channel <= sound_setup_state.num_channels || channel <= 0
   # first, verify the sound can be played when we want to
   if time > 0.0
@@ -971,6 +972,8 @@ function process(streamer::Streamer)
   if !done(streamer.itr,streamer.itr_state)
     obj, next_state = next(streamer.itr,streamer.itr_state)
     x = sound(obj,false)
+    @assert samplerate(x) == samplerate()
+
     done_at = -1.0
 
     done_at = ccall((:ws_play_next,weber_sound),Cdouble,
