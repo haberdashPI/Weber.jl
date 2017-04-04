@@ -135,14 +135,14 @@ function estimate(adapter::ConstantStimulus)
 end
 
 """
-    levit_adapter([first_delta=0.1],[down=3],[up=1],
-                  [big_reverse=3],[big=0.01],[little=0.005],
-                  [min_reversals=7],[min_delta=-Inf],[max_delta=Inf],
-                  [mult=false])
+    levitt_adapter([first_delta=0.1],[down=3],[up=1],
+                   [big_reverse=3],[big=0.01],[little=0.005],
+                   [min_reversals=7],[min_delta=-Inf],[max_delta=Inf],
+                   [mult=false])
 
 An adapter that finds a threshold according to a non-parametric statistical
 procedure. This approach makes fewer explicit assumptions than
-`bayesian_adapter` but may be slower to converge to a threshold.
+[`bayesian_adapter`](@ref) but may be slower to converge to a threshold.
 
 This finds a threshold by moving the delta down after three correct responses
 and up after one incorrect response (these default up and down counts can be
@@ -158,7 +158,7 @@ changed). This is the same approach described in Levitt (1971).
 - `big`: the amount delta changes by (up or down) at first
 - `big_reverse`: how many reveresals (up to down or down to up) must
   occur before `little` is used instead of `big`
-- `little`: the amount delat changes by (up or down) after
+- `little`: the amount delta changes by (up or down) after
   `big_reverse` reversals.
 - `min_reversals`: the smallest number of reversals that can
   be used to estimate a threshold.
@@ -310,10 +310,10 @@ end
                           inv_slope_d=inv_slope_prior)
 
 An adapter that finds a threshold according to a parametric statistical
-model. This makes more explicit assumptions than the `levitt_adapter` but will
-normally find the threshold faster.
+model. This makes more explicit assumptions than the [`levitt_adapter`](@ref)
+but will normally find a threshold faster.
 
-The psychmetric curve is estimated from user responses using a bayesian
+The psychometric curve is estimated from user responses using a bayesian
 approach. After estimation, each new delta is selected in a greedy fashion,
 picking the response that best minimizes entropy according to this psychometric
 function. This is a modified version of the approach described in Kontsevich &
@@ -325,7 +325,7 @@ This algorithm assumes the following functional form for the psychometric
 response as a function of the stimulus difference ``Δ``.
 
 ``
-f(Δ) = λ/2 + (1-λ) Φ((Δ - θ)⋅σ/\sqrt{2})
+f(Δ) = λ/2 + (1-λ) Φ((Δ - θ)⋅σ/√2)
 ``
 
 In the above ``Φ`` is the cumulative distribution function of a normal
@@ -335,37 +335,37 @@ is the 50%-correct threshold, and ``σ`` is the psychometric slope.
 
 For stability and robustness, this adapter begins by repeating the same delta
 multiple times and only begins quickly changing deltas trial-by-trial when the
-ratio of standard deviation to the mean is small. This functionality can be
-adjusted using `repeat3_thresh` and `repeat2_thresh`, or, if you do not
-wish to have any repeats, both values can be set to Inf.
+ratio of estiamted standard deviation to mean is small. This functionality can
+be adjusted using `repeat3_thresh` and `repeat2_thresh`, or, if you do not wish
+to have any repeats, both values can be set to Inf.
 
 # Keyword Arugments
 
-- `first_delta`: the delta to start measuring with
-- `n_samples`: the number of samples to use during importance sampling.
+- **first_delta**: the delta to start measuring with
+- **n_samples** the number of samples to use during importance sampling.
   The algorithm for selecting new deltas is O(n²).
-- `miss`: the expected rate at which listeners will make mistakes
+- **miss** the expected rate at which listeners will make mistakes
   even for easy to percieve differences.
-- `threshold`: the %-response threshold to be estimated
-- `min_delta`: the smallest possible delta
-- `max_delta`: the largest possible delta
-- `min_plausible_delta`: the smallest plausible delta, should be > 0.
+- **threshold** the %-response threshold to be estimated
+- **min_delta** the smallest possible delta
+- **max_delta** the largest possible delta
+- **min_plausible_delta** the smallest plausible delta, should be > 0.
   Used to define a reasonable value for thresh_prior and inv_slope_prior.
-- `max_plausible_delta`: the largest plausible delta, should be < max_delta.
+- **max_plausible_delta** the largest plausible delta, should be < max_delta.
   Used to define a reasonable value for thresh_prior and inv_slope_prior.
-- `thresh_prior`: the prior probability distribution across thresholds.
+- **thresh_prior** the prior probability distribution across thresholds.
   This influence the way the delta is adapted. By default this is defined in
   terms of min_plausible_delta and max_plausible_delta.
-- `inv_slope_prior`: the prior probability distribution across inverse slopes.
+- **inv_slope_prior** the prior probability distribution across inverse slopes.
   By default this is defined in terms of min_plausible_delta and
   max_plausible_delta.
-- `thresh_d`: the distribution over-which to draw samples for the threshold
+- **thresh_d** the distribution over-which to draw samples for the threshold
   during importance sampling. This defaults to thresh_prior
-- `inv_slope_d`: the distribution over-which to draw samples for the inverse slope
+- **inv_slope_d** the distribution over-which to draw samples for the inverse slope
   during importance sampling. This defaults to inv_slope_prior.
-- `repeat2_thresh`: the ratio of sd / mean for theta must suprass
+- **repeat2_thresh** the ratio of sd / mean for theta must suprass
   to repeat each delta twice.
-- `repeat3_thresh`: the ratio of sd / mean for theta must surpass
+- **repeat3_thresh** the ratio of sd / mean for theta must surpass
   to repeat each delta thrice.
 """
 function bayesian_adapter(;first_delta=0.1,

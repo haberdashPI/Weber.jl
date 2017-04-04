@@ -70,7 +70,7 @@ creating a new sound for the same object.
 
     This function is normally called implicitly in a call to
     `play(x)`, where x is an arbitrary array, so it need not normally
-    be called.
+    be called directly.
 """
 function sound{T <: Number}(x::Array{T},cache=true;
                             sample_rate_Hz=samplerate(sound_setup_state))
@@ -518,8 +518,10 @@ end
 """
     rampoff(stream,[ramp_s=0.005],[after=0])
 
-Applies a half consine ramp to the sound or stream after `after` seconds, ending
-the stream at that point.
+Applies a half consine ramp to the end of the sound.
+
+For streams, you may specify that the ramp off occur some number of seconds
+after the start of the stream.
 """
 function rampoff(itr,ramp_s=0.005,after=0)
   sample_rate_Hz=samplerate(first(itr))
@@ -625,7 +627,7 @@ Report the sampling rate of the sound or of any object
 that can be turned into a sound.
 
 If no sound is passed, the curent playback sampling rate is reported (as
-determiend by [`setup_sound`](@ref)).  The sampling rate of object determines
+determined by [`setup_sound`](@ref)).  The sampling rate of an object determines
 how many samples per second are used to represent the sound. Objects that can be
 converted to sounds assume the sampling rate of the current hardware settings as
 defined by [`setup_sound`](@ref).
@@ -692,13 +694,6 @@ sample_rate/2). Changing the sample rate from the default 44100 to a new value
 will also change the default sample rate sounds will be created at, to match
 this new sample rate.
 
-!!! warning "There is no check for sampling rate"
-
-    Upon playback, there is no check to ensure that the sample rate of a given
-    sound is the same as that setup here, and no resampling of the sound is
-    made, so it will play incorrectly if the sample rates differ.
-    This minimizes the latency of audio playback.
-
 # Channel Number
 
 The number of channels determines the number of sounds and streams that can be
@@ -718,9 +713,9 @@ up to play ahead of time.
 
 The stream unit determines the number of samples that are streamed at one time.
 Iterators to be used as streams should generate this many samples at a time.  If
-this value is two small for your hardware, streams will sound jumpy. However the
-latency for changing from one stream to another will increase as the stream unit
-increases.
+this value is too small for your hardware, streams will sound jumpy. However the
+latency of streams will increase as the stream unit increases. Future versions
+of Weber will likely improve the latency of stream playback.
 
 """
 function setup_sound(;sample_rate_Hz=samplerate(sound_setup_state),
@@ -793,7 +788,7 @@ end
 """
     play(x;[time=0.0],[channel=0])
 
-Plays a sound (created via `sound`).
+Plays a sound (created via [`sound`](@ref)).
 
 For convenience, play can also can be called on any object that can be turned
 into a sound (via `sound`).
@@ -801,9 +796,9 @@ into a sound (via `sound`).
 This function returns immediately with the channel the sound is playing on. You
 may provide a specific channel that the sound plays on: only one sound can be
 played per channel. Normally it is unecessary to specify a channel, because an
-appriate channel is selected for you. However, pausing and resuming of
+appropriate channel is selected for you. However, pausing and resuming of
 sounds occurs on a per channel basis, so if you plan to pause a specific
-sound, you can do so by specifiying its channel.
+sound, you can do so by specifying its channel.
 
 If `time > 0`, the sound plays at the given time (in seconds from epoch, or
 seconds from experiment start if an experiment is running), otherwise the sound
@@ -946,7 +941,8 @@ end
 """
     fadeto(sound1,sound2,overlap=0.05)
 
-Create a sound that is a smooth transition from sound1 to sound2.
+A smooth transition from sound1 to sound2, overlapping the end of sound1
+and the start of sound2 by `overlap` (in seconds).
 """
 function fadeto(a::Union{Array,SampleBuf},b::Union{Array,SampleBuf},overlap=0.05)
   mix(rampoff(a,overlap),
@@ -1038,7 +1034,7 @@ end
 """
     duration(x)
 
-Get the duration of the given sound.
+Get the duration of the given sound in seconds.
 """
 duration(s::Sound) = duration(s.buffer)
 duration(s::SampleBuf) = size(s,1) / samplerate(s)

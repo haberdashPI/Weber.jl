@@ -94,7 +94,7 @@ end
 Creates a set of files to help you get started on a new experiment.
 
 This creates a file called run_[name].jl, and a README.md and setup.jl file for
-your expeirment. The readme provides useful information for running the
+your experiment. The readme provides useful information for running the
 experiment that is common across all experiments. The run file provides some
 guidelines to get you started creating an experiment and the setup file is a
 script that can be used to install Weber and any additional dependencies for the

@@ -237,7 +237,7 @@ or, if no command-line arguments were specified, interactively. Interactive
 arguments work both in the terminal or in Juno. This macro also
 generates useful help text that will be displayed to the user
 when they give a single command-line "-h" argument. This help text
-will print out the `desecription` string.
+will include the `desecription` string.
 
 # Example
 

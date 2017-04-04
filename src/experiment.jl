@@ -130,7 +130,7 @@ addcolumn(col::Symbol) = addcolumn(get_experiment(),col)
 
 """
     Experiment([skip=0],[columns=[symbols...]],[debug=false],
-               [moment_resolution=0.0015],[input_resolution=1/60],[data_dir="data"],
+               [moment_resolution=0.0015],[data_dir="data"],
                [width=1024],[height=768],[warn_on_trials_only=true],[extensions=[]])
 
 Prepares a new experiment to be run.
@@ -149,15 +149,11 @@ Prepares a new experiment to be run.
 * **moment_resolution** the desired precision (in seconds) that moments
   should be presented at. Warnings will be printed for moments that
   lack this precision.
-* **input_resolution** the precision (in seconds) that input events should
-  be queried at. This almost never needs to be changed. Keyboards do not provide
-  precise timing, and the timing of response pads is queried independently
-  from input_resolution, using `response_time`.
 * **data_dir** the directory where data files should be stored (can be set to
   nothing to prevent a file from being created)
 * **width** and **height** specified the screen resolution during the experiment
-* **extensions** an array of Weber.Extension objects, which extend the
-  behavior of an experiment.
+* **extensions** an array of Weber.Extension objects, which [extend](extend.md)
+  the behavior of an experiment.
 * **warn_on_trials_only** when true, latency warnings are only displayed
   when the trial count is greater than 0. Thus, practice and breaks
   that occur before the first trial do not raise latency warnings.
@@ -346,11 +342,10 @@ const gc_time = 1
 
 Runs an experiment. You must call `setup` first.
 
-By default this function waits for user input before returning.
-This prevents a console from closing at the end of an experiment,
-preventing the user from viewing important messages. The exception
-is if run is called form within Juno: await_input should
-never be set to true in this case.
+By default, on windows, this function waits for user input before returning.
+This prevents a console from closing at the end of an experiment, preventing the
+user from viewing important messages. The exception is if run is called form
+within Juno: await_input should never be set to true in this case.
 """
 run(exp::ExtendedExperiment;keys...) = run(next(exp);keys...)
 function run{T <: BaseExperiment}(

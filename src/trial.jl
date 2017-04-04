@@ -204,7 +204,7 @@ end
     @addtrials expr...
 
 Marks a let block, a for loop, or an if expression as dependent on experiment
-run-time state, leaving the offset counter unincremented within that block.  The
+[run-time](@ref setup_time) state, leaving the offset counter unincremented within that block.  The
 immediately proceeding loop or conditional logic will be run during
 experiment run-time rather than setup-time.
 

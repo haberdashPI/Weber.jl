@@ -31,7 +31,7 @@ function one_trial(adapter)
    resp,await_response(isresponse)]
 end
 
-exp = Experiment(
+experiment = Experiment(
   skip=trial_skip,
   columns = [
     :sid => sid,
@@ -41,7 +41,7 @@ exp = Experiment(
   ]
 )
 
-setup(exp) do
+setup(experiment) do
   addbreak(moment(record,"start"))
 
   addbreak(instruct("""
@@ -83,5 +83,4 @@ second beep was lower.
 
 end
 
-play(attenuate(ramp(tone(1000,1)),atten_dB))
-run(exp)
+run(experiment)

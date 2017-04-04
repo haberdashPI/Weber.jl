@@ -197,13 +197,13 @@ how to add trials.
 run(exp)
 ```
 
-This final part of the code actually runs the experiment. Note that none of the
+This final part of the code actually runs the experiment. Note that almost none of the
 code in setup actually runs during the experiment. This is _important_! Weber is
 designed to run as much code as possible before the experiment starts, during
 setup. This is called setup-time. This ensures that code which
 does run during the experiment, during run-time, can do so in a timely manner. The
 only code that actually runs during the experiment is the behavior defined
-within each moment.
+within each moment (e.g. playing sounds, displaying text, etc...).
 
 # Where to go from here
 
