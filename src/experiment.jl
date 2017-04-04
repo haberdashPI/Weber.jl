@@ -538,23 +538,22 @@ function process(exp::Experiment,queue::MomentQueue,t::Float64)
       data(exp).last_time = run_time
       update_trace(moment)
       if handle(exp,queue,moment,run_time)
-        d = required_delta_t(moment)
         prepare!(queue,run_time)
 
         latency = run_time - event_time
 
-        if (0.0 < d < Inf &&
-            latency > info(exp).moment_resolution &&
-            !info(exp).hide_output &&
-            show_latency_warnings())
+        if (latency > info(exp).moment_resolution &&
+            warn_delta_t(moment) &&
+            show_latency_warnings() &&
+            !info(exp).hide_output)
           warn(cleanstr(
-            "Delivered moment with a high latency ($(roundstr(latency))
+            "Delivered a moment with a high latency ($(roundstr(latency))
              seconds). This often happens at the start of an experiment, but
              should rarely, if ever, occur throughout the experiment. To reduce
              latency, reduce the amount of slow code in moments, close programs,
              or run on a faster machine. Or, if this amount of latency is
              acceptable, you should increase `moment_resolution` when you call
-             `Experiment`.")*moment_trace_string())
+             `Experiment`.\nMoment: $moment \n\n")*moment_trace_string())
           record("high_latency",value=latency)
         end
 

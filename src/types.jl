@@ -363,6 +363,7 @@ delta_t(m::AbstractMoment) = 0.0
 required_delta_t(m::AbstractMoment) = delta_t(m)
 isimmediate(m::AbstractMoment) = false
 sequenceable(m::AbstractMoment) = false
+warn_delta_t(m::AbstractMoment) = 0.0 < required_delta_t(m) < Inf
 
 """
     moment_trace(m)
@@ -436,6 +437,7 @@ PlayMoment(d,f,c,t) = PlayMoment(d,f,c,t,false)
 delta_t(m::PlayMoment) = m.delta_t
 sequenceable(m::PlayMoment) = true
 moment_trace(m::PlayMoment) = m.trace
+warn_delta_t(m::PlayMoment) = false
 
 type PlayFunctionMoment <: AbstractTimedMoment
   delta_t::Float64
@@ -448,6 +450,7 @@ PlayFunctionMoment(d,f,c,t) = PlayFunctionMoment(d,f,c,t,Nullable())
 delta_t(m::PlayFunctionMoment) = m.delta_t
 sequenceable(m::PlayFunctionMoment) = true
 moment_trace(m::PlayFunctionMoment) = m.trace
+warn_delta_t(m::PlayFunctionMoment) = false
 
 type StreamMoment <: AbstractTimedMoment
   delta_t::Float64
@@ -500,6 +503,8 @@ type MomentSequence <: AbstractTimedMoment
   data::Vector{AbstractMoment}
 end
 delta_t(m::MomentSequence) = delta_t(m.data[1])
+required_delta_t(m::MomentSequence) = required_delta_t(m.data[1])
+warn_delta_t(m::MomentSequence) = warn_delta_t(m.data[1])
 push!(m::MomentSequence,x) = push!(m.data,x)
 sequence(m1::AbstractMoment,m2::AbstractMoment) = MomentSequence([m1,m2])
 sequence(ms::MomentSequence,m::AbstractMoment) = (push!(ms.data,m); ms)
