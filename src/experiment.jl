@@ -40,7 +40,7 @@ update_trace(m::MomentSequence) =
 moment_trace() = current_moment_trace[]
 function moment_trace_string()
   if in_experiment()
-    "\nOn trial $(Weber.trial()), offset $(Weber.offset()) "*
+    "\nOn trial $(Weber.trial()), offset $(Weber.offset())"*
     reduce(*,"",map(x -> string(x)*"\n",moment_trace()))
   else
     ""
