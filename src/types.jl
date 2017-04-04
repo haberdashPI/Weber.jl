@@ -361,7 +361,7 @@ moment should begin. The default implementation returns zero.
 """
 delta_t(m::AbstractMoment) = 0.0
 required_delta_t(m::AbstractMoment) = delta_t(m)
-isimmediate(m::AbstractMoment) = false
+can_continue_sequence(m::AbstractMoment) = false
 sequenceable(m::AbstractMoment) = false
 warn_delta_t(m::AbstractMoment) = 0.0 < required_delta_t(m) < Inf
 
@@ -390,7 +390,7 @@ function delta_t(moment::ResponseMoment)
   (moment.timeout_delta_t > 0.0 ? moment.timeout_delta_t : Inf)
 end
 required_delta_t(m::ResponseMoment) = Inf
-isimmediate(m::ResponseMoment) = false
+can_continue_sequence(m::ResponseMoment) = false
 moment_trace(m::ResponseMoment) = m.trace
 
 type ResponseMomentMin <: SimpleMoment
@@ -399,12 +399,12 @@ type ResponseMomentMin <: SimpleMoment
 end
 delta_t(m::ResponseMomentMin) = m.delta_t
 required_delta_t(m::ResponseMomentMin) = Inf
-isimmediate(m::ResponseMomentMin) = false
+can_continue_sequence(m::ResponseMomentMin) = false
 moment_trace(m::ResponseMomentMin) = m.trace
 
 abstract AbstractTimedMoment <: SimpleMoment
 sequenceable(m::AbstractTimedMoment) = true
-isimmediate(m::AbstractTimedMoment) = delta_t(m) == 0.0
+can_continue_sequence(m::AbstractTimedMoment) = delta_t(m) == 0.0
 
 type TimedMoment <: AbstractTimedMoment
   delta_t::Float64
@@ -422,7 +422,7 @@ type OffsetStartMoment <: AbstractTimedMoment
   trace::StackTrace
 end
 delta_t(moment::OffsetStartMoment) = 0.0
-isimmediate(m::OffsetStartMoment) = false
+can_continue_sequence(m::OffsetStartMoment) = false
 sequenceable(m::OffsetStartMoment) = false
 moment_trace(m::OffsetStartMoment) = m.trace
 
@@ -460,7 +460,7 @@ type StreamMoment <: AbstractTimedMoment
 end
 delta_t(m::StreamMoment) = delta_t
 required_delta_t(m::StreamMoment) = Inf
-isimmediate(m::StreamMoment) = false
+can_continue_sequence(m::StreamMoment) = false
 sequenceable(m::StreamMoment) = false
 moment_trace(m::StreamMoment) = m.trace
 
@@ -489,7 +489,7 @@ type CompoundMoment <: AbstractMoment
   data::Array{AbstractMoment}
 end
 delta_t(m::CompoundMoment) = 0.0
-isimmediate(m::CompoundMoment) = false
+can_continue_sequence(m::CompoundMoment) = false
 >>(a::SimpleMoment,b::SimpleMoment) = CompoundMoment([a,b])
 >>(a::CompoundMoment,b::CompoundMoment) = CompoundMoment(vcat(a.data,b.data))
 >>(a::AbstractMoment,b::AbstractMoment) = >>(promote(a,b)...)
@@ -516,7 +516,7 @@ type ExpandingMoment <: AbstractMoment
   update_offset::Bool
 end
 delta_t(m::ExpandingMoment) = 0.0
-isimmediate(m::ExpandingMoment) = false
+can_continue_sequence(m::ExpandingMoment) = false
 
 type EmptyMoment <: AbstractMoment end
 empty_moment = EmptyMoment()

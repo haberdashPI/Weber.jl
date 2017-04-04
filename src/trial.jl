@@ -131,21 +131,21 @@ end
 
 function addmoment(q::ExpandingMoment,m::AbstractMoment)
   m = flag_expanding(m)
-  if !isempty(q.data) && isimmediate(m) && sequenceable(top(q.data))
+  if !isempty(q.data) && can_continue_sequence(m) && sequenceable(top(q.data))
     m = sequence(pop!(q.data),m)
   end
   push!(q.data,m)
 end
 
 function addmoment(q::MomentQueue,m::AbstractMoment)
-  if !isempty(q) && isimmediate(m) && sequenceable(back(q))
+  if !isempty(q) && can_continue_sequence(m) && sequenceable(back(q))
     m = sequence(pop!(q),m)
   end
   enqueue!(q,m)
 end
 
 function addmoment(q::Vector{AbstractMoment},m::AbstractMoment)
-  if !isempty(q) && isimmediate(m) && sequenceable(last(q))
+  if !isempty(q) && can_continue_sequence(m) && sequenceable(last(q))
     m = sequence(pop!(q),m)
   end
   push!(q,m)
