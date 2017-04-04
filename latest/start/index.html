@@ -300,7 +300,7 @@ end
 <pre><code class="julia">run(exp)
 </code></pre>
 
-<p>This final part of the code actually runs the experiment. Note that none of the code in setup actually runs during the experiment. This is <em>important</em>! Weber is designed to run as much code as possible before the experiment starts, during setup. This is called setup-time. This ensures that code which does run during the experiment, during run-time, can do so in a timely manner. The only code that actually runs during the experiment is the behavior defined within each moment.</p>
+<p>This final part of the code actually runs the experiment. Note that almost none of the code in setup actually runs during the experiment. This is <em>important</em>! Weber is designed to run as much code as possible before the experiment starts, during setup. This is called setup-time. This ensures that code which does run during the experiment, during run-time, can do so in a timely manner. The only code that actually runs during the experiment is the behavior defined within each moment (e.g. playing sounds, displaying text, etc...).</p>
 <p><a id='Where-to-go-from-here-1'></a></p>
 <h1 id="where-to-go-from-here">Where to go from here</h1>
 <p>From here you can begin writing your own simple experiments. Take a look at some of the example experiments under Weber's example directory to see what you can do. You can find the location of this directory by typing <code>Pkg.dir("Weber","examples")</code> in the julia console. To further your understanding of the details of Weber, you can also read through the rest of the user guide. Topics in the guide have been organized from simplest, and most useful, to the more advanced, least-frequently-necessary features.</p>
