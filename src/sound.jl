@@ -10,8 +10,8 @@ import SampledSignals: samplerate
 import Base: show, length, start, done, next
 
 export mix, mult, silence, envelope, noise, highpass, lowpass, bandpass,
-	tone, ramp, harmonic_complex, attenuate, sound, asstream, play, stream, stop,
-  duration, setup_sound, current_sound_latency, buffer,
+  bandstop, tone, ramp, harmonic_complex, attenuate, sound, asstream, play,
+  stream, stop, duration, setup_sound, current_sound_latency, buffer,
   resume_sounds, pause_sounds, load, save, samplerate, length, channel,
   rampon, rampoff, stream_unit, fadeto
 
@@ -354,8 +354,6 @@ function next{T,S}(fs::FilterStream{T},x::Tuple{DF2TFilter,S})
   SampleBuf(filt(new_filt_state,sound),fs.samplerate), (new_filt_state, state)
 end
 
-# TODO: after basic streaming is working
-# figure out how to stream these filters
 """
     bandpass(x,low,high,[order=5],[sample_rate_Hz=samplerate(x)])
 
@@ -377,6 +375,29 @@ function bandpass(itr,low,high;order=5,sample_rate_Hz=samplerate(first(itr)))
 	f = digitalfilter(ftype,Butterworth(order))
   FilterStream(f,itr,Int(sample_rate_Hz))
 end
+
+"""
+    bandstop(x,low,high,[order=5],[sample_rate_Hz=samplerate(x)])
+
+Band-stop filter of the sound (or stream) at the specified frequencies.
+
+Filtering uses a butterworth filter of the given order.
+"""
+bandstop(x::Sound,low,high;keys...) = sound(bandstop_helper(x.buffer,low,high;keys...))
+bandstop(x::Array,low,high;keys...) = bandstop_helper(x,low,high;keys...)
+bandstop(x::SampleBuf,low,high;keys...) = bandstop_helper(x,low,high;keys...)
+function bandstop_helper(x,low,high;order=5,sample_rate_Hz=samplerate(x))
+	ftype = Bandstop(float(low),float(high),fs=sample_rate_Hz)
+	f = digitalfilter(ftype,Butterworth(order))
+	SampleBuf(filt(f,x),sample_rate_Hz)
+end
+
+function bandstop(itr,low,high;order=5,sample_rate_Hz=samplerate(first(itr)))
+	ftype = Bandstop(float(low),float(high),fs=sample_rate_Hz)
+	f = digitalfilter(ftype,Butterworth(order))
+  FilterStream(f,itr,Int(sample_rate_Hz))
+end
+
 
 """
     lowpass(x,low,[order=5],[sample_rate_Hz=samplerate(x)])

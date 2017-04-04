@@ -21,6 +21,7 @@ buffer
 highpass
 lowpass
 bandpass
+bandstop
 ramp
 rampon
 rampoff
