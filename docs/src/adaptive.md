@@ -2,11 +2,11 @@ Some experiments require the use of an adaptive adjustment of a stimulus based o
 
 # Using an Adaptive Track
 
-To use an adaptive track in your experimerntenteriment, you need to make use of some of the
+To use an adaptive track in your experiment, you need to make use of some of the
 [advanced features](advanced.md) of Weber. In this section we'll walk through
-the necessary steps, using a simple frequency discrimination experimerntenteriment.
+the necessary steps, using a simple frequency discrimination experiment.
 
-In this experimerntenteriment, on each trial, listeners hear a low and a high tone, separated in frequency by an adaptively adjusted delta. Their task is to indicate which tone is lower, and the delta is adjusted to determine the difference in frequency at which listeners respond with 79% accuracy. The entire example code is provided below. 
+In this experiment, on each trial, listeners hear a low and a high tone, separated in frequency by an adaptively adjusted delta. Their task is to indicate which tone is lower, and the delta is adjusted to determine the difference in frequency at which listeners respond with 79% accuracy. The entire example code is provided below. 
 
 ```julia
 using Weber
@@ -16,14 +16,14 @@ sid,trial_skip,adapt = @read_args("Frequency Discrimination ($version).",
                                   adapt=[:levitt,:bayes])
 
 const ms = 1/1000
-atten_dB = 30
-n_trials = 60
-feedback_delay = 750ms
+const atten_dB = 30
+const n_trials = 60
+const feedback_delay = 750ms
 
 isresponse(e) = iskeydown(e,key"p") || iskeydown(e,key"q")
 
-standard_freq = 1000
-standard = attenuate(ramp(tone(standard_freq,0.1)),atten_dB)
+const standard_freq = 1000
+const standard = attenuate(ramp(tone(standard_freq,0.1)),atten_dB)
 function one_trial(adapter)
   first_lower = rand(Bool)
   resp = response(adapter,key"q" => "first_lower",key"p" => "second_lower",
@@ -72,7 +72,7 @@ second beep was lower.
       addtrial(one_trial(a))
     end
 
-    # define this string during experimerntenteriment setup
+    # define this string during experiment setup
     # when we know what block we're on...
 
     function threshold_report()
@@ -95,7 +95,7 @@ end
 run(experimerntent)
 ```
 
-In what follows we'll walk through the parts of this code unique to creating an adaptive track. For more details on the basics of creating an experimerntenteriment see [Getting Started](start.md).
+In what follows we'll walk through the parts of this code unique to creating an adaptive track. For more details on the basics of creating an experiment see [Getting Started](start.md).
 
 ## Creating the Adapter
 ```julia
@@ -113,7 +113,7 @@ is the object you create to run an adaptive track, and defines the particular al
 ## Generating Stimuli
 
 ```julia
-standard = attenuate(ramp(tone(1000,0.1)),atten_dB)
+const standard = attenuate(ramp(tone(standard_freq,0.1)),atten_dB)
 ...
 signal() = attenuate(ramp(tone(1000*(1-delta(adapter)),0.1)),atten_dB)
 stimuli = first_lower? [signal,standard] : [standard,signal]
