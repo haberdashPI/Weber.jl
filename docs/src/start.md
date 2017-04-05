@@ -7,7 +7,9 @@ number of useful
 [resources](http://docs.julialang.org/en/stable/manual/getting-started/#resources)
 available to learn Julia.
 
-Next, open the Julia console, and enter the following lines of code.
+# Creating a simple program
+
+First, open the Julia console, and enter the following lines of code.
 
 ```julia
 using Weber
@@ -23,8 +25,8 @@ Remove all text in run_simple.jl and replace it with the following.
 using Weber
 sid,skip = @read_args("A simple frequency discrimination experiment.")
 
-low = ramp(tone(1000,0.5))
-high = ramp(tone(1100,0.5))
+const low = ramp(tone(1000,0.5))
+const high = ramp(tone(1100,0.5))
 
 function one_trial()
   if rand(Bool)
@@ -50,7 +52,9 @@ end
 run(exp)
 ```
 
-Finally, [open the julia console](@ref install), and enter the following:
+# Running the program
+
+Now, [open the julia console](@ref install), and enter the following:
 
 ```juila
 include("run_simple.jl")
@@ -65,10 +69,16 @@ include("run_simple.jl")
     "Current File's Folder". This will set Julia's working directory to
     run_simple.jl's directory.
 
+!!! note "You can exit at any time"
+
+    To prematurely end the experiment hit the escape key.
+
+# Code Walk-through
+
 After running the experiment on yourself, let's walk through the parts of this
 experiment piece-by-piece.
 
-# Read Experiment Parameters
+## Read Experiment Parameters
 
 ```julia
 using Weber
@@ -80,11 +90,11 @@ The first line loads Weber. Then, when the script is run, the second line will r
 Don't worry about the offset right now. (If you wish to learn more you can read
 about the [`Weber.offset`](@ref) function).
 
-# Stimulus Generation
+## Stimulus Generation
 
 ```julia
-low = ramp(tone(1000,0.5))
-high = ramp(tone(1100,0.5))
+const low = ramp(tone(1000,0.5))
+const high = ramp(tone(1100,0.5))
 ```
 
 These next two lines create two stimuli. A 1000 Hz tone (`low`) and a 1100 Hz
@@ -95,7 +105,7 @@ You can generate many simple stimuli in Weber, or you can use `load("sound.wav")
 to open a sound file on your computer. Refer to the documentation in
 [`Sound`](sound.md).
 
-# Creating a trial
+## Creating a trial
 
 ```julia
 function one_trial()
@@ -118,7 +128,7 @@ produced. When true, the low stimulus is presented first, when false, the high
 stimulus is presented first. There are two basic components of trial creation:
 trial moments and trial events.
 
-## Trial Moments
+### Trial Moments
 
 Each trial is composed of a sequence of *moments*. Most moments just run a
 short function at some well defined point in time. For example, during the
@@ -139,7 +149,7 @@ For more details on how to create trial moments you can refer to the
 [`Trial Creation`](trial_guide.md) section of the user guide and the [`Trials`](trials.md)
 section of the reference.
 
-## Trial Events
+### Trial Events
 
 The [`response`](@ref) function also creates a moment. It's purpose is to record
 the keyboard presses to q or p. It works a little differently than other
@@ -154,7 +164,7 @@ the keyboard. For details on how events work you can refer to the reference
 section on [`Events`](event.md). The `response` moment listens for events with the
 'p' or 'q' key codes, and records those events.
 
-# Experiment Definition
+## Experiment Definition
 
 ```julia
 exp = Experiment(columns = [:sid => sid,condition => "ConditionA",:correct],skip=skip) 
@@ -173,7 +183,7 @@ You can add as many columns as you want, either when you first create an
 experiment, as above, or using [`addcolumn`](@ref). Trying to record values to a
 column you haven't added results in an error.
 
-# Experiment Setup
+## Experiment Setup
 
 ```julia
 setup(exp) do
@@ -191,7 +201,7 @@ function we defined above. Please refer to the
 [`Trial Creation`](trial_guide.md) section of the user guide for more details on
 how to add trials.
 
-## [Setup- vs. run-time](@id setup_time)
+### [Setup- vs. run-time](@id setup_time)
 
 ```julia
 run(exp)
