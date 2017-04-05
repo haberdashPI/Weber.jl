@@ -177,8 +177,8 @@
                 <p>Some experiments require the use of an adaptive adjustment of a stimulus based on participant responses. There are several basic adaptive tracking algorithms built into Weber, and you can also implement your own as well.</p>
 <p><a id='Using-an-Adaptive-Track-1'></a></p>
 <h1 id="using-an-adaptive-track">Using an Adaptive Track</h1>
-<p>To use an adaptive track in your experimerntenteriment, you need to make use of some of the <a href="../advanced/">advanced features</a> of Weber. In this section we'll walk through the necessary steps, using a simple frequency discrimination experimerntenteriment.</p>
-<p>In this experimerntenteriment, on each trial, listeners hear a low and a high tone, separated in frequency by an adaptively adjusted delta. Their task is to indicate which tone is lower, and the delta is adjusted to determine the difference in frequency at which listeners respond with 79% accuracy. The entire example code is provided below. </p>
+<p>To use an adaptive track in your experiment, you need to make use of some of the <a href="../advanced/">advanced features</a> of Weber. In this section we'll walk through the necessary steps, using a simple frequency discrimination experiment.</p>
+<p>In this experiment, on each trial, listeners hear a low and a high tone, separated in frequency by an adaptively adjusted delta. Their task is to indicate which tone is lower, and the delta is adjusted to determine the difference in frequency at which listeners respond with 79% accuracy. The entire example code is provided below. </p>
 <pre><code class="julia">using Weber
 
 version = v&quot;0.0.2&quot;
@@ -186,14 +186,14 @@ sid,trial_skip,adapt = @read_args(&quot;Frequency Discrimination ($version).&quo
                                   adapt=[:levitt,:bayes])
 
 const ms = 1/1000
-atten_dB = 30
-n_trials = 60
-feedback_delay = 750ms
+const atten_dB = 30
+const n_trials = 60
+const feedback_delay = 750ms
 
 isresponse(e) = iskeydown(e,key&quot;p&quot;) || iskeydown(e,key&quot;q&quot;)
 
-standard_freq = 1000
-standard = attenuate(ramp(tone(standard_freq,0.1)),atten_dB)
+const standard_freq = 1000
+const standard = attenuate(ramp(tone(standard_freq,0.1)),atten_dB)
 function one_trial(adapter)
   first_lower = rand(Bool)
   resp = response(adapter,key&quot;q&quot; =&gt; &quot;first_lower&quot;,key&quot;p&quot; =&gt; &quot;second_lower&quot;,
@@ -242,7 +242,7 @@ second beep was lower.
       addtrial(one_trial(a))
     end
 
-    # define this string during experimerntenteriment setup
+    # define this string during experiment setup
     # when we know what block we're on...
 
     function threshold_report()
@@ -265,7 +265,7 @@ end
 run(experimerntent)
 </code></pre>
 
-<p>In what follows we'll walk through the parts of this code unique to creating an adaptive track. For more details on the basics of creating an experimerntenteriment see <a href="../start/">Getting Started</a>.</p>
+<p>In what follows we'll walk through the parts of this code unique to creating an adaptive track. For more details on the basics of creating an experiment see <a href="../start/">Getting Started</a>.</p>
 <p><a id='Creating-the-Adapter-1'></a></p>
 <h2 id="creating-the-adapter">Creating the Adapter</h2>
 <pre><code class="julia">if adapt == :levitt
@@ -279,7 +279,7 @@ end
 <p>The present experiment can be run using either of two built-in adapters: <a href="../trials/#Weber.levitt_adapter"><code>levitt_adapter</code></a> and <a href="../trials/#Weber.bayesian_adapter"><code>bayesian_adapter</code></a>. An adapter is the object you create to run an adaptive track, and defines the particular algorithm that will be used to select a new delta on each trial, based on the responses to previous deltas. </p>
 <p><a id='Generating-Stimuli-1'></a></p>
 <h2 id="generating-stimuli">Generating Stimuli</h2>
-<pre><code class="julia">standard = attenuate(ramp(tone(1000,0.1)),atten_dB)
+<pre><code class="julia">const standard = attenuate(ramp(tone(standard_freq,0.1)),atten_dB)
 ...
 signal() = attenuate(ramp(tone(1000*(1-delta(adapter)),0.1)),atten_dB)
 stimuli = first_lower? [signal,standard] : [standard,signal]
