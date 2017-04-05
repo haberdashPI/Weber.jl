@@ -76,7 +76,7 @@ function duration2AFC(adapter;keys...)
   resp = response(adapter,
                   key"q" => "first_longer",
                   key"b" => "second_longer",
-                  key"q" => "third_longer",
+                  key"p" => "third_longer",
                   correct = longer_sound_text[longer_sound];
                   keys...)
 
