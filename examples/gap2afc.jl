@@ -17,23 +17,25 @@ Experiment Settings
 # does not have a gap in the middle. The task is to indicate which of 2 stimuli
 # has this gap.
 
-atten_dB = 30 # adjust to calibrate sound levels
-n_trials_per_block = 60
-n_blocks = 6
+const atten_dB = 30 # adjust to calibrate sound levels
+const n_trials_per_block = 60
+const n_blocks = 6
 
-marker_center_freq = 200
-marker_width_octaves = 1
-marker_SNR = 20
+const marker_center_freq = 200
+const marker_width_octaves = 1
+const marker_SNR = 20
 
-gap_ramp_ms = 0.5ms
-feedback_delay = 700ms
+const gap_ramp_ms = 0.5ms
+const feedback_delay = 700ms
 
-SOA = 900ms # "onset" asynchrony of the no-gap and gap interval
-trial_spacing = 500ms # how long to wait at the start and end of trials
+const visual_delay = 300ms
 
-adapter = levitt_adapter(first_delta=50ms,down=3,up=1,
-                         big=5ms,little=1ms,min_delta=0,
-                         max_delta=trial_spacing-100ms)
+const SOA = 900ms # "onset" asynchrony of the no-gap and gap interval
+const trial_spacing = 500ms # how long to wait at the start and end of trials
+
+const adapter = levitt_adapter(first_delta=50ms,down=3,up=1,
+                               big=5ms,little=1ms,min_delta=0,
+                               max_delta=trial_spacing-100ms)
 
 
 experiment = Experiment(
@@ -95,6 +97,7 @@ function gap_noise(gap_first,adapter)
 end
 
 # creates a single, 2-interval forced-choice trial
+
 function gap2AFC(adapter;keys...)
   gap_first = rand(Bool)
   resp = response(adapter,key"q" => "gap_first",key"p" => "gap_second",
@@ -102,11 +105,11 @@ function gap2AFC(adapter;keys...)
                   keys...)
   stim() = gap_noise(gap_first,adapter)
 
-  [moment(feedback_delay,play,stim()),
+  [moment(feedback_delay,play,stim),
    show_cross(),
    moment(trial_spacing,display,"Interval 1"),
    moment(SOA,display,"Interval 2"),
-   moment(trial_spacing,display,
+   moment(trial_spacing+visual_delay,display,
           "Was there a gap in the first [Q] or second interval [P]?"),
    resp,await_response(isresponse)]
 end

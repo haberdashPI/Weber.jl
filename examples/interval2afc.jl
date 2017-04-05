@@ -15,21 +15,21 @@ Experiment Setup
 # separated by given duration. The task is to indicate which of 2 intervals
 # is longer.
 
-atten_dB = 30 # adjust to calibrate levels
-n_trials_per_block = 60
-n_blocks = 6
+const atten_dB = 30 # adjust to calibrate levels
+const n_trials_per_block = 60
+const n_blocks = 6
 
-tone_freq = 1k
-tone_length = 10ms
-standard_length = 100ms # from start of tone 1 to start of tone 2
+const tone_freq = 1k
+const tone_length = 10ms
+const standard_length = 100ms # from start of tone 1 to start of tone 2
 
-SOA = 900ms # how long to wait to starting play stimulus 2
-response_delay = 300ms # how long to wait before asking for a response
-trial_spacing = 500ms # how long to wait between trials
+const SOA = 900ms # how long to wait to starting play stimulus 2
+const response_delay = 300ms # how long to wait before asking for a response
+const trial_spacing = 500ms # how long to wait between trials
 
-adapter = levitt_adapter(first_delta=2,down=3,up=1,
-                         big=0.5,little=0.05,min_delta=0,
-                         max_delta=(SOA/2-tone_length)/tone_length)
+const adapter = levitt_adapter(first_delta=2,down=3,up=1,
+                               big=0.5,little=0.05,min_delta=0,
+                               max_delta=(SOA/2-tone_length)/tone_length)
 
 #======================================================================#
 

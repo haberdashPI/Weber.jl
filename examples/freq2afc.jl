@@ -7,14 +7,14 @@ sid,trial_skip,adapt = @read_args("Frequency Discrimination ($version).",
                                   adapt=[:levitt,:bayes])
 
 const ms = 1/1000
-atten_dB = 30
-n_trials = 60
-feedback_delay = 750ms
+const atten_dB = 30
+const n_trials = 60
+const feedback_delay = 750ms
 
 isresponse(e) = iskeydown(e,key"p") || iskeydown(e,key"q")
 
-standard_freq = 1000
-standard = attenuate(ramp(tone(standard_freq,0.1)),atten_dB)
+const standard_freq = 1000
+const standard = attenuate(ramp(tone(standard_freq,0.1)),atten_dB)
 function one_trial(adapter)
   first_lower = rand(Bool)
   resp = response(adapter,key"q" => "first_lower",key"p" => "second_lower",

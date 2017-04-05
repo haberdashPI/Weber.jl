@@ -22,14 +22,14 @@ experiment = Experiment(
 # settings
 
 const ms = 1/1000
-atten_dB = 30
-n_trials = 60
-feedback_delay = 750ms
-f0 = 100
-n_harmonics = 10
-mistune_harmonic = 1
-stim_length = 6.72
-example_length = stim_length
+const atten_dB = 30
+const n_trials = 60
+const feedback_delay = 750ms
+const f0 = 100
+const n_harmonics = 10
+const mistune_harmonic = 1
+const stim_length = 6.72
+const example_length = stim_length
 
 isresponse(e) = iskeydown(e,key"p") || iskeydown(e,key"q")
 

@@ -3,8 +3,8 @@
 using Weber
 using Lazy: @> # see https://github.com/MikeInnes/Lazy.jl
 
-version = v"0.0.1"
-sid,skip = @read_args("Duration Discrimination ($version).")
+const version = v"0.0.1"
+const sid,skip = @read_args("Duration Discrimination ($version).")
 
 const ms = 1/1000
 const k = 1000
@@ -16,21 +16,21 @@ Experiment Setup
 # separated by given duration. The task is to indicate which of 3 intervals
 # is longer.
 
-atten_dB = 30 # adjust to calibrate levels
-n_trials_per_block = 60
-n_blocks = 6
+const atten_dB = 30 # adjust to calibrate levels
+const n_trials_per_block = 60
+const n_blocks = 6
 
-tone_freq = 1k
-tone_length = 10ms
-standard_length = 100ms # from start of tone 1 to start of tone 2
+const tone_freq = 1k
+const tone_length = 10ms
+const standard_length = 100ms # from start of tone 1 to start of tone 2
 
-SOA = 900ms
-response_delay = 300ms
-feedback_delay = 700ms
+const SOA = 900ms
+const response_delay = 300ms
+const feedback_delay = 700ms
 
-adapter = levitt_adapter(first_delta=2,down=3,up=1,
-                         big=0.5,little=0.05,min_delta=0,
-                         max_delta=(SOA/2-tone_length)/tone_length)
+const adapter = levitt_adapter(first_delta=2,down=3,up=1,
+                               big=0.5,little=0.05,min_delta=0,
+                               max_delta=(SOA/2-tone_length)/tone_length)
 
 #======================================================================#
 
@@ -47,7 +47,7 @@ experiment = Experiment(
 
 isresponse(e) = iskeydown(e,key"p") || iskeydown(e,key"b") || iskeydown(e,key"q")
 
-beep = attenuate(ramp(tone(tone_freq,tone_length)),atten_dB)
+const beep = attenuate(ramp(tone(tone_freq,tone_length)),atten_dB)
 beep_beep(len) = [beep;silence(len - tone_length);beep]
 
 function trial_stimuli(longer_sound,delta)
@@ -70,7 +70,7 @@ function trial_stimuli(longer_sound,delta)
   end
 end
 
-longer_sound_text = ["first_longer","second_longer","third_longer"]
+const longer_sound_text = ["first_longer","second_longer","third_longer"]
 function duration2AFC(adapter;keys...)
   longer_sound = rand(1:3)
   resp = response(adapter,

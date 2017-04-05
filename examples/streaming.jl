@@ -8,21 +8,19 @@ sid,trial_skip =
 
 const ms = 1/1000
 const st = 1/12
-atten_dB = 30
+const atten_dB = 30
 
-# We might be able to change this to ISI now that there
-# is no gap.
-tone_len = 60ms
-tone_SOA = 144ms
-aba_SOA = 4tone_SOA
-A_freq = 300
-response_spacing = aba_SOA
-n_trials = 1600
-n_break_after = 75
-stimuli_per_response = 2
+const tone_len = 60ms
+const tone_SOA = 144ms
+const aba_SOA = 4tone_SOA
+const A_freq = 300
+const response_spacing = aba_SOA
+const n_trials = 1600
+const n_break_after = 75
+const stimuli_per_response = 2
 
-n_repeat_example = 30
-num_practice_trials = 20
+const n_repeat_example = 30
+const num_practice_trials = 20
 
 function aba(step)
   A = ramp(tone(A_freq,tone_len))
