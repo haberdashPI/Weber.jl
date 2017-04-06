@@ -16,5 +16,7 @@ const moment_eps = 2.5e-3
     include("test_moment_looping.jl")
     include("test_moment_conditions.jl")
   end
+  include("test_record_columns.jl")
+  include("test_moment_checks.jl")
   include("test_extensions.jl")
 end

@@ -26,7 +26,7 @@ function handle(exp::Weber.Experiment,queue::Weber.MomentQueue,
   true
 end
 type TestPrepareException <: Exception end
-prepare!(moment::TestPrepareError,time) =
+prepare!(moment::TestPrepareError,time::Float64) =
   isinf(time) ? throw(TestPrepareException()) : record(:success)
 
 function cause_prepare_error1()
