@@ -4,22 +4,30 @@ using FileIO
 using LRUCache
 using Lazy
 using Unitful
-import Unitful: s, Hz
+import Unitful: ms, s, kHz, Hz
 
 import FileIO: load, save
 import DSP: resample
 import LibSndFile
 import SampledSignals: samplerate
+import SampledSignals
+import Distributions: nsamples
 import Base: show, length, start, done, next, linearindexing, size, getindex,
-  setindex!
+  setindex!, vcat, similar, convert, .*, .+
+
+# TODO: separate out sound object, from sound creation
+# from streaming from audio playback into separate files
+
+# TODO: define streaming and sounds with same code that
+# makes call to general function which takes a standard interface
+# for defining elements of the sound
 
 export mix, mult, silence, envelope, noise, highpass, lowpass, bandpass,
   bandstop, tone, ramp, harmonic_complex, attenuate, sound, asstream, play,
-  stream, stop, duration, setup_sound, current_sound_latency, buffer,
-  resume_sounds, pause_sounds, load, save, samplerate, length, channel,
-  rampon, rampoff, stream_unit, fadeto
-
-# TODO: regularize all sounds to have 2 dimensions??
+  stream, stop, duration, nchannels, nsamples, setup_sound,
+  current_sound_latency, buffer, resume_sounds, pause_sounds, loadsound,
+  save, samplerate, length, channel, rampon, rampoff, stream_unit, fadeto,
+  ms, s, kHz, Hz, vcat, leftright, similar, .., between, left, right
 
 # TODO: I will probably reimplement streams using a different
 # interface, to allow said interface to request how much
@@ -27,8 +35,6 @@ export mix, mult, silence, envelope, noise, highpass, lowpass, bandpass,
 # this means I probably shouldn't bother troubleshooting
 # the streaming functions, since they'll change quickly anyways
 # (might be worth commenting them out....)
-
-# TOOD:
 
 const weber_sound_version = 2
 
@@ -41,9 +47,268 @@ let
   end
 end
 
-load_sound(file) = resample(sound(load(file),false),samplerate())
-save(file,sound::Sound) = save(file,assampled(sound))
-assampled{R}(x::Sound{R}) = SampleBuf(x.data,float(R))
+immutable Sound{R,T,N} <: AbstractArray{T,N}
+  data::Array{T,N}
+  function Sound(a::Array{T,N})
+    if T <: Integer
+      error("Cannot use integer arrays for a sound. ",
+            "Use FixedPointNumbers instead.")
+    end
+
+    if N == 1
+      new(a)
+    elseif N == 2
+      new(a)
+    else
+      error("Unexpected dimension count $N for sound array, should be 1",
+            " (for mono) or 2 (for mono or stereo).")
+    end
+  end
+end
+convert{R,T,N}(::Type{Sound{R,T,N}},x) = Sound{R,T,N}(convert(Array{T,N},x))
+function convert{R,T,S,N}(::Type{Sound{R,T,N}},x::Sound{R,S,N})
+  Sound{R,T,N}(convert(Array{T,N},x.data))
+end
+function convert{R,Q,T,S}(::Type{Sound{R,T}},x::Sound{Q,S})
+  error("Cannot convert a sound with sampling rate $(Q*Hz) to a sound with ",
+        "sampling rate $(R*Hz). Use `resample` to change the sampling rate.")
+end
+typealias TimeDim Unitful.Dimensions{(Unitful.Dimension{:Time}(1//1),)}
+typealias FreqDim Unitful.Dimensions{(Unitful.Dimension{:Time}(-1//1),)}
+typealias Time{N} Quantity{N,TimeDim}
+typealias Freq{N} Quantity{N,FreqDim}
+
+samplerate{R}(x::Sound{R}) = R*Hz
+length(x::Sound) = length(x.data)
+
+"""
+    duration(x)
+
+Get the duration of the given sound in seconds.
+"""
+duration{R}(x::Sound{R}) = uconvert(s,nsamples(x) / (R*Hz))
+nchannels(x::Sound) = size(x.data,2)
+
+"""
+    nsamples(x::Sound)
+
+Returns the number of samples in the sound.
+"""
+nsamples(x::Sound) = size(x.data,1)
+size(x::Sound) = size(x.data)
+linearindexing(t::Type{Sound}) = Base.LinearSlow()
+
+# adapted from:
+# https://github.com/JuliaAudio/SampledSignals.jl/blob/0a31806c3f7d382c9aa6db901a83e1edbfac62df/src/SampleBuf.jl#L109-L139
+function show{R}(io::IO, x::Sound{R})
+  seconds = round(ustrip(duration(x)),ceil(Int,log(10,R)))
+  typ = if eltype(x) == Q0f15
+    "16 bit PCM"
+  elseif eltype(x) <: AbstractFloat
+    "$(sizeof(eltype(x))*8) bit floating-point"
+  else
+    eltype(x)
+  end
+
+  channel = size(x.data,2) == 1 ? "mono" : "stereo"
+
+  println(io, "$seconds s $typ $channel sound")
+  print(io, "Sampled at $(R*Hz)")
+  nsamples(x) > 0 && showchannels(io, x)
+end
+show(io::IO, ::MIME"text/plain", x::Sound) = show(io,x)
+
+const ticks = ['_','▁','▂','▃','▄','▅','▆','▇']
+function showchannels(io::IO, x::Sound, widthchars=80)
+  # number of samples per block
+  blockwidth = round(Int, nsamples(x)/widthchars, RoundUp)
+  nblocks = round(Int, nsamples(x)/blockwidth, RoundUp)
+  blocks = Array(Char, nblocks, nchannels(x))
+  for blk in 1:nblocks
+    i = (blk-1)*blockwidth + 1
+    n = min(blockwidth, nsamples(x)-i+1)
+    peaks = sqrt.(mean(float(x[(1:n)+i-1,:]).^2,1))
+    # clamp to -60dB, 0dB
+    peaks = clamp(20log10(peaks), -60.0, 0.0)
+    idxs = trunc(Int, (peaks+60)/60 * (length(ticks)-1)) + 1
+    blocks[blk, :] = ticks[idxs]
+  end
+  for ch in 1:nchannels(x)
+    println(io)
+    print(io, convert(String, blocks[:, ch]))
+  end
+end
+
+
+@inline function getindex(x::Sound,i::Int)
+  @boundscheck checkbounds(x.data,i)
+  @inbounds return x.data[i]
+end
+
+@inline function setindex!{R,T,S}(x::Sound{R,T},v::S,i::Int)
+  @boundscheck checkbounds(x.data,i)
+  @inbounds return x.data[i] = convert(T,v)
+end
+
+
+@inline function getindex(x::Sound,i::Int,j::Int)
+  @boundscheck checkbounds(x.data,i,j)
+  @inbounds return x.data[i,j]
+end
+
+@inline function setindex!{R,T,S}(x::Sound{R,T},v::S,i::Int,j::Int)
+  @boundscheck checkbounds(x.data,i,j)
+  @inbounds return x.data[i,j] = convert(T,v)
+end
+
+"""
+    left(sound::Sound)
+
+Extract the left channel a sound.
+
+For a single channel (mono) sound, this transforms the sound into a stereo sound
+with the given samples as the left channel, and a silent right channel. For a
+double channel (stereo) sound, this transforms the sound into a stereo
+sound with a silenced right channel.
+"""
+function left{R,T,N}(sound::Sound{R,T,N})
+  channel = if size(sound.data,2) == 1
+    sound.data
+  else
+    sound.data[:,1]
+  end
+  Sound{R,T,N}(hcat(channel,(zereos(T,size(sound,1)))))
+end
+
+"""
+    right(sound::Sound)
+
+Extract the right channel of a sound.
+
+For a single channel (mono) sound, this transforms the sound into a stereo sound
+with the given samples as the right channel, and a silent left channel. For a
+double channel (stereo) sound, this transforms the sound into a stereo
+sound with a silenced left channel.
+"""
+function right{R,T,N}(sound::Sound{R,T,N})
+  channel = if size(sound.data,2) == 1
+    sound.data
+  else
+    sound.data[:,2]
+  end
+  Sound{R,T,N}(hcat((zereos(T,size(sound,1))),channel))
+end
+
+immutable SampleRange{N,M}
+  from::Time{N}
+  to::Time{M}
+end
+
+immutable SampleEndRange{N}
+  from::Time{N}
+  possible_end::Int
+end
+
+"""
+   between(a::Quantity,b::Quantity)
+   a .. b
+
+Specifies the range of sound samples in the range [a,b): inclusive of the sound
+sample preciesly at time a, all samples between a and b, but excusive of the
+sample at time b.
+
+While a and b must normally both be specified as time quantities, a special
+exception is made for the use of end, e.g. sound[2s .. end], can be used to
+specify all samples occuring from 2 seconds or later.
+"""
+between{N,M}(from::Time{N},to::Time{M}) = SampleRange(from,to)
+between{N}(from::Time{N},to::Int) = SampleEndRange(from,to)
+const .. = between
+
+insamples(time,rate) = floor(Int,ustrip(inseconds(time)*inHz(rate)))
+function insamples{N,M}(time::Time{N},rate::Freq{M})
+  floor(Int,ustrip(uconvert(s,time)*uconvert(Hz,rate)))
+end
+
+function checktime(time)
+  if time < 0s
+    throw(BoundsError("Unexpected negative time."))
+  end
+end
+
+const Left = typeof(left)
+const Right = typeof(right)
+@inline @Base.propagate_inbounds function getindex(x::Sound,ixs,js::Left)
+  getindex(x,ixs,1)
+end
+@inline @Base.propagate_inbounds function setindex!(x::Sound,vals,ixs,js::Left)
+  setindex!(x,vals,ixs,1)
+end
+@inline @Base.propagate_inbounds function getindex(x::Sound,ixs,js::Right)
+  getindex(x,ixs,2)
+end
+@inline @Base.propagate_inbounds function setindex!(x::Sound,vals,ixs,js::Right)
+  setindex!(x,vals,ixs,2)
+end
+
+@inline function getindex{R,T,I,N}(x::Sound{R,T,N},ixs::SampleEndRange,js::I)
+  if nsamples(x) == ixs.possible_end
+    @boundscheck checktime(ixs.from)
+    from = max(1,insamples(ixs.from,R*Hz))
+    @boundscheck checkbounds(x.data,from,js)
+    @inbounds return Sound{R,T,N}(x.data[from:end,js])
+  else
+    error("Cannot specify range of samples using a mixture of times and ",
+          "integers. Use only integers or only times (but `end` works in ",
+          "either context).")
+  end
+end
+
+@inline function getindex{R,T,I,N}(x::Sound{R,T,N},ixs::SampleRange,js::I)
+  @boundscheck checktime(ixs.from)
+  from = max(1,insamples(ixs.from,R*Hz))
+  to = insamples(ixs.to,R*Hz)-1
+  @boundscheck checkbounds(x.data,from,js)
+  @boundscheck checkbounds(x.data,to,js)
+  @inbounds return Sound{R,T,N}(x.data[from:to,js])
+end
+
+@inline function setindex!{R,T,I}(x::Sound{R,T},vals::AbstractVector,
+                                  ixs::SampleEndRange,js::I)
+  if nsamples(x) == ixs.possible_end
+    @boundscheck checktime(ixs.from)
+    from = max(1,insamples(ixs.from,R*Hz))
+    @boundscheck checkbounds(x.data,from,js)
+    @inbounds x.data[from:end,js] = vals
+    vals
+  else
+    error("Cannot specify range of samples using a mixture of times and ",
+          "integers. Use only integers or only times (but `end` works in ",
+          "either context).")
+  end
+end
+
+@inline function setindex!{R,T,I}(x::Sound{R,T},vals::AbstractVector,
+                                  ixs::SampleRange,js::I)
+  @boundscheck checktime(ixs.from)
+  from = max(1,insamples(ixs.from,R*Hz))
+  to = insamples(ixs.to,R*Hz)-1
+  @boundscheck checkbounds(x.data,from,js)
+  @boundscheck checkbounds(x.data,to,js)
+  @inbounds x.data[from:to,js] = vals
+  vals
+end
+
+function similar{R,T,S,N,M}(x::Sound{R,T,N},::Type{S},dims::NTuple{M,Int})
+  if M ∉ [1,2] || (M == 2 && dims[2] ∉ [1,2])
+    similar(x.data,S,dims)
+  else
+    Sound{R,S,M}(similar(x.data,S,dims))
+  end
+end
+
+save(file::Union{AbstractString,IO},sound::Sound) = save(file,assampled(sound))
+assampled{R}(x::Sound{R}) = SampledSignals.SampleBuf(x.data,float(R))
 
 """
     resample(x::Sound,samplerate)
@@ -63,106 +328,14 @@ function resample{R,T,N}(x::Sound{R,T,N},new_sample_rate)
   new_rate = floor(Int,ustrip(inHz(new_sample_rate)))
   if new_rate < R
     warn("The function `resample` reduced the sample rate, high freqeuncy",
-         " information will be lost ",
+         " information above $(new_rate/2) Hz will be lost ",
          reduce(*,"",map(x -> string(x)*"\n",stacktrace())))
   end
   Sound{new_rate,T,N}(resample(x.data,new_rate // R))
 end
 
-immutable Sound{R,T,N <: Number} <: AbstractArray{T,N}
-  data::Array{T,N}
-  function Sound(a::Array{T,N})
-    if !isready(sound_setup_state)
-      setup_sound()
-    end
-    @assert N == 1 || (N == 2 && size(a,2) in [1,2])
-    if isa(N,Integer)
-      error("Cannot use integer arrays for a sound. ",
-            "Use FixedPointNumbers instead.")
-    end
-    if N == 2 && size(a,2) == 1
-      new(squeeze(a,2))
-    else
-      new(a)
-    end
-  end
-end
-typealias MonoSound{R,T} Sound{R,T,1}
-typealias StereoSound{R,T} Sound{R,T,2}
-typealias TimeDim Unitful.Dimensions{(Unitful.Dimension{:Time}(1//1),)}
-typealias FreqDim Unitful.Dimensions{(Unitful.Dimension{:Time}(-1//1),)}
-
-samplerate{R}(x::Sound{R}) = R*Hz
-length(x::Sound) = length(x.data)
-duration{R}(x::Sound{R}) = length(x.data) / R
-size(x::Sound) = size(x.data)
-linearindexing{R,T,N}(t::Type{Sound{R,T,N}}) = Base.LinearFast()
-@inline getindex(x::Sound,i::Int) = (@boundscheck checkbounds(x,i); x.data[i])
-@inline function setindex!{R,T}(x::Sound{R,T},v::T,i::Int)
-  @boundscheck checkbounds(x,i)
-  x.data[i] = v
-end
-
-@inline function getindex{R,N}(x::Sound{R},i::Quantity{N,TimeDim})
-  index = floor(Int,uconvert(s,i)*R)
-  @boundscheck checkbounds(x,index)
-  x.data[index]
-end
-@inline function setindex!{R,T,N}(x::Sound{R,T},v::T,i::Quantity{N,TimeDim})
-  index = floor(Int,uconvert(s,i)*R)
-  @boundscheck checkbounds(x,index)
-  x.data[index] = v
-end
-
-immutable SampleRange{N}
-  from::Quantity{N,TimeDim}
-  to::Quantity{N,TimeDim}
-end
-const .. = between
-between{N}(from::Quantity{N,TimeDim},to::Quantity{N,TimeDim}) = SampleRange(from,to)
-
-@inline function getindex{R}(x::MonoSound{R},ixs::SampleRange{N})
-  from = floor(Int,uconvert(s,ixs.from)*R)
-  to = ceil(Int,uconvert(s,ixs.to)*R)
-  x.data[from:to]
-end
-
-@inline function getindex{R}(x::StereoSound{R},ixs::SampleRange{N})
-  from = floor(Int,uconvert(s,ixs.from)*R)
-  to = ceil(Int,uconvert(s,ixs.to)*R)
-  x.data[from:to,:]
-end
-
-@inline function setindex!{R}(x::MonoSound{R},vals::AbstractVector,
-                              ixs::SampleRange{N})
-  from = floor(Int,uconvert(s,ixs.from)*R)
-  to = ceil(Int,uconvert(s,ixs.to)*R)
-  x.data[from:to] = vals
-end
-
-@inline function setindex!{R}(x::StereoSound{R},vals::AbstractMatrix,
-                              ixs::SampleRange{N})
-  from = floor(Int,uconvert(s,ixs.from)*R)
-  to = ceil(Int,uconvert(s,ixs.to)*R)
-  x.data[from:to,:] = vals
-end
-
-function similar{R,T,N}(x::Sound{R,T,N},dims::NTuple{Int})
-  @assert length(dims) == 1 || (length(dims) == 2 && dims[2] in [1,2])
-  Sound(similar(x.data,dims))
-end
-
-
-"""
-    duration(x)
-
-Get the duration of the given sound in seconds.
-"""
-duration(s::Sound) = duration(s.buffer)
-duration(s::SampleBuf) = size(s,1) / samplerate(s)
-function duration(s::Array{Float64};
-                  sample_rate_Hz=samplerate(sound_setup_state))
-  length(s) / sample_rate_Hz
+function duration(x::Array{Float64};sample_rate_Hz=samplerate())
+  uconvert(s,nsamples(x) / inHz(sample_rate_Hz))
 end
 
 inHz(x::Quantity) = uconvert(Hz,x)
@@ -172,9 +345,11 @@ function inHz(x::Number)
        reduce(*,"",map(x -> string(x)*"\n",stacktrace())))
   x*Hz
 end
-inHz{N <: Number,T}(typ::Type{N},x::T) = floor(N,inHz(x))
+inHz{N <: Number,T}(typ::Type{N},x::T) = floor(N,ustrip(inHz(x)))*Hz
+inHz{N <: Number}(typ::Type{N},x::N) = inHz(x)
+inHz{N <: Number}(typ::Type{N},x::Freq{N}) = inHz(x)
 
-inseconds{N}(x::Quantity) = uconvert(s,x)
+inseconds(x::Quantity) = uconvert(s,x)
 function inseconds(x::Number)
   warn("Unitless value, assuming seconds. Append s or ms to avoid this warning",
        " (e.g. silence(500ms))",
@@ -182,9 +357,7 @@ function inseconds(x::Number)
   x*s
 end
 
-insamples(time,rate) = floor(Int,ustrip(inseconds(time)*inHz(rate)))
-
-const sound_cache = LRU{AbstractArray,StereoSound}(256)
+const sound_cache = LRU{Any,Sound}(256)
 function with_cache(fn,usecache,x)
   if usecache
     get!(fn,sound_cache,object_id(x))
@@ -212,57 +385,74 @@ creating a new sound for the same object.
 """
 function sound{T <: Number,N}(x::Array{T,N},cache=true;
                               sample_rate=samplerate())
-  @assert N in [1,2]
+  if N ∉ [1,2]
+    error("Array must have 1 or 2 dimensinos to be converted to a sound.")
+  end
+
   with_cache(cache,x) do
-    bounded = max(min(x,typemax(Fixed{Int16,15})),typemin(Fixed{Int16,15}))
-    if N == 1 || size(x,2) == 1
+    bounded = max(min(x,typemax(Q0f15)),typemin(Q0f15))
+    if size(x,2) == 1
       bounded = hcat(bounded,bounded)
     end
-    StereoSound{ustrip(inHz(sample_rate))}(Fixed{Int16,15}.(bounded))
+    R = ustrip(inHz(sample_rate))
+    Sound{R,Q0f15,N}(Q0f15.(bounded))
   end
 end
 
-function sound(x::SampleBuf,cache=true)
+function sound(x::SampledSignals.SampleBuf,cache=true)
   with_cache(cache,x) do
-    sound(Sound{ustrip(inHz(samplerate(x)))}(x.data),false)
+    R,T = ustrip(inHz(Int,samplerate(x)*Hz)),eltype(x.data)
+    sound(Sound{R,T,ndims(x)}(x.data),false)
   end
 end
 
 """
-    sound(x::Sound,[cache=true],[sample_rate=samplerate()])
+    sound(x::Sound,[cache=true],sample_rate=samplerate())
 
 Regularize the format of a sound.
 
-This will ensure the sound is in a format that can be played
-according to the settings defined in setup_sound().
+This will ensure the sound is represented at a given sample rate.
 """
 
-function sound{R}(x::Sound{R},cache=true,sample_rate=samplerate())
+function sound{R,T,N}(x::Sound{R,T,N},cache=true)
+  sample_rate=samplerate()
   with_cache(cache,x) do
-    bounded = max(min(x.data,typemax(Fixed{Int16,15})),typemin(Fixed{Int16,15}))
-    sound(Sound{R}(Fixed{Int16,15}.(bounded)),false,sample_rate)
+    bounded = max(min(x.data,typemax(Q0f15)),typemin(Q0f15))
+    T2 = Q0f15
+    sound(Sound{R,T2,N}(Q0f15.(bounded)),false,sample_rate)
   end
 end
 
-function sound{R}(x::Sound{R,Fixed{Int16,15}},cache=true,
-                  sample_rate=samplerate())
-  data = if ndims(x) == 1 || size(x,2) == 1
-    hcat(x.data,x.data)
+function sound{R,N}(x::Sound{R,Q0f15,N},cache=true,sample_rate=samplerate())
+  if size(x.data,2) == 2
+    if R == ustrip(sample_rate)
+      x
+    else
+      resample(Sound{R,Q0f15,N}(x.data),sample_rate)
+    end
   else
-    x.data
-  end
-
-  if R == ustrip(sample_rate)
-    Sound{R}(x.data)
-  else
-    resample(Sound{R}(x.data),sample_rate)
+    data = hcat(x.data,x.data)
+    if R == ustrip(sample_rate)
+      Sound{R,Q0f15,N}(data)
+    else
+      resample(Sound{R,Q0f15,N}(data),sample_rate)
+    end
   end
 end
 
-function soundop{R}(op,xs::Sound{R}...)
+"""
+    sound(file,[cahce=true])
+
+Load a specified file (e.g. by filename or stream) as a sound.
+"""
+sound(file::File,cache=true) = sound(load(file),cache)
+sound(file::String,cache=true) = sound(load(file),cache)
+sound(stream::IOStream) = sound(load(stream),false)
+
+function soundop{R}(op,xs::Union{Sound{R},Array}...)
   len = maximum(map(x -> size(x,1),xs))
   channels = maximum(map(x -> size(x,2),xs))
-  y = similar(xs[1],len,channels)
+  y = similar(xs[1],(len,channels))
 
   for i in 1:size(y,1)
     used = false
@@ -270,9 +460,9 @@ function soundop{R}(op,xs::Sound{R}...)
       if i <= size(xs[j],1)
         if !used
           used = true
-          y[i,:] = xs[j][i,:]
+          @inbounds y[i,:] = xs[j][i,:]
         else
-          y[i,:] = op(y[i,:],xs[j][i,:])
+          @inbounds y[i,:] = op(y[i,:],xs[j][i,:])
         end
       end
     end
@@ -281,71 +471,79 @@ function soundop{R}(op,xs::Sound{R}...)
   y
 end
 
-immutable OpStream
-  streams::Tuple
-  op::Function
-end
-immutable OpState
-  streams::Tuple
-  states::Tuple
-end
-immutable OpPassState
-  stream
-  state
-end
+# immutable OpStream
+#   streams::Tuple
+#   op::Function
+# end
+# immutable OpState
+#   streams::Tuple
+#   states::Tuple
+# end
+# immutable OpPassState
+#   stream
+#   state
+# end
 
-start(ms::OpStream) = OpState(ms.streams,map(start,ms.streams))
-done(ms::OpStream,state::OpState) = all(map(done,state.streams,state.states))
-done(ms::OpStream,state::OpPassState) = done(state.stream,state.state)
-@inline function next(ms::OpStream,state::OpPassState)
-  obj, pass_state = next(state.stream,state.state)
-  obj, OpPassState(state.stream,pass_state)
-end
-function next(ms::OpStream,state::OpState)
-  undone = find(map((stream,state) -> !done(stream,state),state.streams,state.states))
-  streams = state.streams[undone]
-  states = state.states[undone]
+# start(ms::OpStream) = OpState(ms.streams,map(start,ms.streams))
+# done(ms::OpStream,state::OpState) = all(map(done,state.streams,state.states))
+# done(ms::OpStream,state::OpPassState) = done(state.stream,state.state)
+# @inline
+# function next(ms::OpStream,state::OpPassState)
+#   obj, pass_state = next(state.stream,state.state)
+#   obj, OpPassState(state.stream,pass_state)
+# end
+# function next(ms::OpStream,state::OpState)
+#   undone = find(map((stream,state) -> !done(stream,state),state.streams,state.states))
+#   streams = state.streams[undone]
+#   states = state.states[undone]
 
-  nexts = map(next,streams,states)
-  sounds = map(x -> x[1],nexts)
-  states = map(x -> x[2],nexts)
+#   nexts = map(next,streams,states)
+#   sounds = map(x -> x[1],nexts)
+#   states = map(x -> x[2],nexts)
 
-  if length(undone) > 1
-    reduce(ms.op,sounds), OpState(streams,states)
-  else
-    sounds[1], OpPassState(streams[1],states[1])
-  end
-end
+#   if length(undone) > 1
+#     reduce(ms.op,sounds), OpState(streams,states)
+#   else
+#     sounds[1], OpPassState(streams[1],states[1])
+#   end
+# end
 
 """
     mix(x,y,...)
 
 Mix several sounds (or streams) together so that they play at the same time.
+
+Unlike normal addition, this acts as if each sound is padded with
+zeros at the end so that the lengths of all sounds match.
 """
-mix{R}(xs::Sound{R}...) = soundop(+,xs...)
-mix(itrs...) = OpStream(itrs,+)
+mix{R}(xs::Union{Sound{R},Array}...) = soundop(.+,xs...)
+# mix(itrs...) = OpStream(itrs,+)
 
 """
     mult(x,y,...)
 
 Mutliply several sounds (or streams) together. Typically used to apply an
 amplitude envelope.
+
+Unlike normal multiplication, this acts as if each sound is padded with
+ones at the end so that the lengths of all sounds match.
 """
-mult{R}(xs::Sound{R}...) = soundop(.*,xs...)
-mult(itrs...) = OpStream(itrs,.*)
+mult{R}(xs::Union{Sound{R},Array}...) = soundop(.*,xs...)
+# mult(itrs...) = OpStream(itrs,.*)
 
 """
-    silence(length,stereo=false;[sample_rate=samplerate()])
+    silence(length,stereo=true;[sample_rate=samplerate()])
 
 Creates period of silence of the given length (in seconds).
 """
-function silence(length,stereo=false;sample_rate=samplerate())
+function silence(length,stereo=true;sample_rate=samplerate())
   len = insamples(length,sample_rate)
-  Sound{ustrip(inHz(Int,sample_rate))}(zeros(len,stereo? 2 : 1))
+  N = stereo? 2 : 1
+  Sound{ustrip(inHz(Int,sample_rate)),Float64,N}(zeros(len,N))
 end
 
 """
-    envelope(mult,length,stereo=false;[sample_rate_Hz=44100])
+    envelope(mult,length,stereo=true;[sample_rate_Hz=44100])
 
 Creates an evelope of a given multiplier and length (in seconds).
 
@@ -358,81 +556,76 @@ in volume halfway through to a softer level.
     mult(tone(1000,1),fadeto(envelope(1,0.5),envelope(0.1,0.5)))
 
 """
-function envelope(mult,length,stereo=false;sample_rate=samplerate())
-  vals = ones(insample(length,sample_rate),stereo? 2 : 1)
-  Sound{ustrip(inHz(Int,sample_rate))}(vals)
+function envelope(mult,length,stereo=true;sample_rate=samplerate())
+  N = stereo? 2 : 1
+  vals = ones(insample(length,sample_rate),N)
+  Sound{ustrip(inHz(Int,sample_rate))}(vals,N)
 end
 
 
 # TODO: implement these functions for streams
-"""
-    left(sound::MonoSound)
-
-Make `sound` the left channel of a StereoSound (the right channel is silent).
-"""
-left(sound::MonoSound{R,N}) = hcat(sound,MonoSound{R}(zereos(N,size(sound,1))))
 
 """
-    left(sound::StereoSound)
+    leftright(left,right;[sample_rate=samplerate()])
 
-Get the left channel of `sound` a MonoSound
+Create a stereo sound from two vectors or two monaural sounds.
+
+For vectors, one can specify a sample_rate other than the default,
+if desired.
 """
-left(sound::StereoSound{R,N}) = sound[:,1]
-
-
-"""
-    right(sound::MonoSound)
-
-Make `sound` the right channel of a StereoSound (the left channel is silent).
-"""
-right(sound::MonoSound{R,N}) = hcat(MonoSound{R}(zereos(N,size(sound,1))),sound)
-
-"""
-    right(sound::StereoSound)
-
-Get the left channel of `sound` a MonoSound
-"""
-left(sound::StereoSound{R,N}) = sound[:,2]
-
-immutable NoiseStream{R,N}
-  rng::RandomDevice
-  length::Int
+function leftright{R,T,N}(x::Sound{R,T,N},y::Sound{R,T,N})
+  if size(x.data,2) == size(y.data,2) == 1
+    Sound{R,T,2}(hcat(x.data,y.data))
+  else
+    error("Expected two monaural sounds.")
+  end
 end
-show(io::IO,as::NoiseStream) = write(io,"NoiseStream()")
-start(ns::NoiseStream) = nothing
-done(ns::NoiseStream,::Void) = false
+
+function leftright{T}(x::Vector{T},y::Vector{T};sample_rate=samplerate())
+  Sound{ustrip(sample_rate),T,2}(hcat(x,y))
+end
+
+# immutable NoiseStream{R,N}
+#   rng::RandomDevice
+#   length::Int
+# end
+# show(io::IO,as::NoiseStream) = write(io,"NoiseStream()")
+# start(ns::NoiseStream) = nothing
+# done(ns::NoiseStream,::Void) = false
 
 """
-    noise(length=Inf,stereo=false,[sample_rate_Hz=44100])
+    noise(length=Inf,stereo=true;[sample_rate_Hz=44100],[rng=global RNG])
 
 Creates a period of white noise of the given length (in seconds).
 
 You can create an infinite stream of noise (playable with [`stream`](@ref)) by
 passing a length of Inf, or leaving out the length entirely.
 """
-function noise(length=Inf,stereo=false;sample_rate=samplerate())
+function noise(length=Inf,stereo=true;
+               sample_rate=samplerate(),rng=Base.GLOBAL_RNG)
   R = ustrip(inHz(Int,sample_rate))
-  if length < Inf
+  N = stereo? 2 : 1
+  if ustrip(length) < Inf
     len = insamples(length,sample_rate)
     if stereo
-	    StereoSound{R}(hcat(1-2rand(len),1-2rand(len)))
+	    Sound{R,Float64,N}(hcat(1-2rand(rng,len),1-2rand(rng,len)))
     else
-      MonoSound{R}(hcat(1-2rand(len)))
+      Sound{R,Float64,N}(hcat(1-2rand(rng,len)))
     end
   else
-    NoiseStream{R,stereo? 2 : 1}(RandomDevice(),stream_unit())
+    nothing # NoiseStream{R,stereo? 2 : 1}(RandomDevice(),stream_unit())
   end
 end
 
-function next{R}(ns::NoiseStream{R,1},::Void)
-  Sound{R}(1-2rand(ns.rng,ns.length)), nothing
-end
+# function next{R}(ns::NoiseStream{R,1},::Void)
+#   Sound{R}(1-2rand(ns.rng,ns.length)), nothing
+# end
 
-function next{R}(ns::NoiseStream{R,2},::Void)
-  Sound{R}(hcat(1-2rand(ns.rng,ns.length),1-2rand(ns.rng,ns.length))), nothing
-end
+# function next{R}(ns::NoiseStream{R,2},::Void)
+#   Sound{R}(hcat(1-2rand(ns.rng,ns.length),1-2rand(ns.rng,ns.length))), nothing
+# end
 
-function tone_helper(t,freq,phase)
+function tone_helper(t,freq,phase,stereo)
   x = sin(2π*t * freq + phase)
   if stereo
     hcat(x,x)
@@ -441,14 +634,14 @@ function tone_helper(t,freq,phase)
   end
 end
 
-immutable ToneStream{R,N}
-  freq::Quantity{Float64,FreqDim}
-  phase::Float64
-  length::Int
-end
-show(io::IO,as::ToneStream) = write(io,"ToneStream($freq)")
-start(ts::ToneStream) = 1
-done(ts::ToneStream,i::Int) = false
+# immutable ToneStream{R,N}
+#   freq::Freq{Float64}
+#   phase::Float64
+#   length::Int
+# end
+# show(io::IO,as::ToneStream) = write(io,"ToneStream($freq)")
+# start(ts::ToneStream) = 1
+# done(ts::ToneStream,i::Int) = false
 
 """
     tone(freq,length;[sample_rate=samplerate()],[phase=0])
@@ -458,22 +651,25 @@ Creates a pure tone of the given frequency and length (in seconds).
 You can create an infinitely long tone (playable with [`stream`](@ref)) by
 passing a length of Inf, or leaving out the length entirely.
 """
-function tone(freq,len=Inf,stereo=false;sample_rate=samplerate(),
-              phase=0)
-  R = ustrip(inHz(Int,sample_rate))
-  if len < Inf
+function tone(freq,len=Inf,stereo=true;sample_rate=samplerate(),phase=0)
+  sample_rate_Hz = inHz(Int,sample_rate)
+  R = ustrip(sample_rate_Hz)
+  N = stereo? 2 : 1
+  if ustrip(len) < Inf
     length_s = inseconds(len)
-	  t = linspace(0,length_s,insamples(length_s,sample_rate))
-	  Sound{R}(tone_helper(t,ustrip(inHz(freq_Hz)),phase,stereo))
+	  t = linspace(0,ustrip(length_s),ustrip(insamples(length_s,sample_rate_Hz)))
+    x = tone_helper(t,ustrip(inHz(freq)),phase,stereo)
+    T = eltype(x)
+	  Sound{R,T,N}(x)
   else
-    ToneStream{R,N}(inHz(freq_Hz),phase,stream_unit())
+    nothing # ToneStream{R,N}(inHz(freq_Hz),phase,stream_unit())
   end
 end
 
-function next{R,N}(ts::ToneStream{R,N},i::Int)
-  t = (ts.length*(i-1):ts.length*i-1) ./ R
-  Sound{R}(tone_helper(t,ustrip(ts.freq),ts.phase,N == 2)), i+1
-end
+# function next{R,N}(ts::ToneStream{R,N},i::Int)
+#   t = (ts.length*(i-1):ts.length*i-1) ./ R
+#   Sound{R}(tone_helper(t,ustrip(ts.freq),ts.phase,N == 2)), i+1
+# end
 
 function complex_cycle(f0,harmonics,stereo,amps,sample_rate_Hz,phases)
   @assert all(0 .<= phases) && all(phases .< 2π)
@@ -481,14 +677,13 @@ function complex_cycle(f0,harmonics,stereo,amps,sample_rate_Hz,phases)
 
   # generate single cycle of complex
   cycle_length_s = 1/f0
-  cycle_length = floor(Int,sample_rate_Hz*cycle_length_s)
-  cycle = zeros(cycle_length)
+  cycle = zeros(insamples(cycle_length_s,sample_rate_Hz))
 
-	highest_freq = tone(f0,2n*cycle_length_s;sample_rate_Hz=sample_rate_Hz)
+	highest_freq = tone(f0,2n*cycle_length_s;sample_rate=sample_rate_Hz)
 
 	for (amp,harm,phase) in zip(amps,harmonics,phases)
 		phase_offset = round(Int,n*phase/2π*sample_rate_Hz/f0)
-    wave = highest_freq[(1:cycle_length) * (n-harm) + phase_offset]
+    wave = highest_freq[(1:length(cycle)) * (n-harm) + phase_offset]
 		cycle += amp*wave[1:length(cycle)]
 	end
 
@@ -499,17 +694,17 @@ function complex_cycle(f0,harmonics,stereo,amps,sample_rate_Hz,phases)
   end
 end
 
-immutable ComplexStream{R,N}
-  cycle::SampleBuf
-  length::Int
-  stereo::Bool
-end
-show(io::IO,as::ComplexStream) = write(io,"ComplexStream(...)")
-start(cs::ComplexStream) = 0
-done(cs::ComplexStream,i::Int) = false
+# immutable ComplexStream{R,N}
+#   cycle::Sound
+#   length::Int
+#   stereo::Bool
+# end
+# show(io::IO,as::ComplexStream) = write(io,"ComplexStream(...)")
+# start(cs::ComplexStream) = 0
+# done(cs::ComplexStream,i::Int) = false
 
 """
-    harmonic_complex(f0,harmonics,amps,length,steroe=false,
+    harmonic_complex(f0,harmonics,amps,length,stereo=false,
                      [sample_rate=samplerate()],[phases=zeros(length(harmonics))])
 
 Creates a harmonic complex of the given length, with the specified harmonics
@@ -520,46 +715,47 @@ it avoids beating in the sound that may occur due floating point errors.
 You can create an infinitely long complex (playable with [`stream`](@ref)) by
 passing a length of Inf, or leaving out the length entirely.
 """
-function harmonic_complex(f0,harmonics,amps,len=Inf,stereo=false;
+function harmonic_complex(f0,harmonics,amps,len=Inf,stereo=true;
 						              sample_rate=samplerate(),
                           phases=zeros(length(harmonics)))
-  cycle = complex_cycle(f0,harmonics,stereo,amps,sample_rate_Hz,phases)
-  R = ustrip(inHz(Int,sample_rate))
-
-  if length_s < Inf
-    full_length = insamples(len,sample_rate)
+  sample_rate_Hz = inHz(Int,sample_rate)
+  cycle = complex_cycle(inHz(f0),harmonics,stereo,amps,sample_rate_Hz,phases)
+  R = ustrip(sample_rate_Hz)
+  N = stereo? 2 : 1
+  if ustrip(len) < Inf
+    n = insamples(len,sample_rate)
     if stereo
-      Sound{R}(cycle[(0:full_length-1) .% length(cycle) + 1,:])
+      Sound{R,Float64,N}(cycle[(0:n-1) .% size(cycle,1) + 1,:])
     else
-      Sound{R}(cycle[(0:full_length-1) .% length(cycle) + 1])
+      Sound{R,Float64,N}(cycle[(0:n-1) .% size(cycle,1) + 1])
     end
   else
-    ComplexStream{R}(cycle,stream_unit(),stereo)
+    nothing # ComplexStream{R}(cycle,stream_unit(),stereo)
   end
 end
 
-function next{R}(cs::ComplexStream{R,1},i::Int)
-  Sound{R}(cs.cycle[(i:i+cs.length-1) .% length(cs.cycle) + 1]), i+cs.length
-end
+# function next{R}(cs::ComplexStream{R,1},i::Int)
+#   Sound{R}(cs.cycle[(i:i+cs.length-1) .% length(cs.cycle) + 1]), i+cs.length
+# end
 
-function next{R}(cs::ComplexStream{R,2},i::Int)
-  Sound{R}(cs.cycle[(i:i+cs.length-1) .% length(cs.cycle) + 1,:]), i+cs.length
-end
+# function next{R}(cs::ComplexStream{R,2},i::Int)
+#   Sound{R}(cs.cycle[(i:i+cs.length-1) .% length(cs.cycle) + 1,:]), i+cs.length
+# end
 
-immutable FilterStream{R,T,N,I}
-  filt
-  stream::I
-end
-show(io::IO,filt::FilterStream) = write(io,"FilterStream($filt,$stream)")
-start(fs::FilterStream) = DF2TFilter(fs.filt), start(fs.stream)
-done{T,S}(fs::FilterStream{T},x::Tuple{DF2TFilter,S}) = done(fs.stream,x[2])
-function next{R,T,N,I,J}(fs::FilterStream{R,T,N,I},x::Tuple{DF2TFilter,J})
-  filt_state, state = x
-  new_filt_state = deepcopy(filt_state)
-  sound, state = next(fs.stream,state)
+# immutable FilterStream{R,T,N,I}
+#   filt
+#   stream::I
+# end
+# show(io::IO,filt::FilterStream) = write(io,"FilterStream($filt,$stream)")
+# start(fs::FilterStream) = DF2TFilter(fs.filt), start(fs.stream)
+# done{T,S}(fs::FilterStream{T},x::Tuple{DF2TFilter,S}) = done(fs.stream,x[2])
+# function next{R,T,N,I,J}(fs::FilterStream{R,T,N,I},x::Tuple{DF2TFilter,J})
+#   filt_state, state = x
+#   new_filt_state = deepcopy(filt_state)
+#   sound, state = next(fs.stream,state)
 
-  Sound{R,T,N}(filt(new_filt_state,sound.data)), (new_filt_state, state)
-end
+#   Sound{R,T,N}(filt(new_filt_state,sound.data)), (new_filt_state, state)
+# end
 
 """
     bandpass(x,low,high;[order=5])
@@ -597,38 +793,34 @@ Filtering uses a butterworth filter of the given order.
 """
 highpass(x,high;order=5) = filter_helper(x,0,high,Highpass,order)
 
-function buildfilt{R}(low,high,kind)
+function buildfilt(samplerate,low,high,kind)
   if kind == Bandpass
-	  Bandpass(float(low),float(high),fs=R)
+	  Bandpass(float(ustrip(inHz(low))),float(ustrip(inHz(high))),fs=samplerate)
   elseif kind == Lowpass
-    Lowpass(float(low),fs=R)
+    Lowpass(float(ustrip(inHz(low))),fs=samplerate)
   elseif kind == Highpass
-    Highpass(float(high),fs=R)
+    Highpass(float(ustrip(inHz(high))),fs=samplerate)
   elseif kind == Bandstop
-    Bandstop(float(high),fs=R)
+    Bandstop(float(ustrip(inHz(low))),float(ustrip(inHz(high))),fs=samplerate)
   end
 end
 
-function filter_helper{R}(x::Sound{R,1},low,high,kind,order)
-  ftype = buildfilt{R}(low,high,kind)
+function filter_helper{R,T,N}(x::Sound{R,T,N},low,high,kind,order)
+  ftype = buildfilt(R,low,high,kind)
 	f = digitalfilter(ftype,Butterworth(order))
-	Sound{R}(filt(f,x))
+  Sound{R,T,N}(mapslices(slice -> filt(f,slice),x.data,1))
 end
 
-function filter_helper{R}(x::Sound{R,2},low,high,kind,order)
-	hcat(filter_helper(x,low,high,kind),bandpass(x,low,high,kind))
-end
+# function filter_helper(itr,low,hihg,kind;order=5)
+#   first_x = first(itr)
+#   R = ustrip(samplerate(first_x))
+#   T = eltype(first_x)
+#   N = ndims(first_x)
 
-function filter_helper(itr,low,hihg,kind;order=5)
-  first_x = first(itr)
-  R = ustrip(samplerate(first_x))
-  T = eltype(first_x)
-  N = ndims(first_x)
-
-  ftype = buildfilt{R}(low,high,kind)
-	f = digitalfilter(ftype,Butterworth(order))
-  FilterStream{R,T,N}(f,itr)
-end
+#   ftype = buildfilt{R}(low,high,kind)
+# 	f = digitalfilter(ftype,Butterworth(order))
+#   FilterStream{R,T,N}(f,itr)
+# end
 
 """
     ramp(x,[length=5ms])
@@ -637,9 +829,9 @@ Applies a half cosine ramp to start and end of the sound.
 
 Ramps prevent clicks at the start and end of sounds.
 """
-function ramp{R}(x::MonoSound{R},len=5ms)
+function ramp{R}(x::Sound{R},len=5ms)
 	ramp_len = insamples(len,R*Hz)
-	@assert size(x,1) > 2ramp_len
+	@assert nsamples(x) > 2ramp_len
 
 	ramp_t = (1.0:ramp_len) / ramp_len
 	up = -0.5cos(π*ramp_t)+0.5
@@ -648,47 +840,45 @@ function ramp{R}(x::MonoSound{R},len=5ms)
 	mult(x,envelope)
 end
 
-ramp{R}(x::StereoSound{R},len=5ms) = hcat(ramp(x[:,1],len),ramp(x[:,2],len))
+# immutable FnStream{R}
+#   fn::Function
+#   length::Int
+# end
+# start(fs::FnStream) = 1
+# done(fs::FnStream,i::Int) = false
+# function next{R}(fs::FnStream{R,1},i::Int)
+#   t = (fs.length*(i-1):fs.length*i-1) ./ fs.samplerate
+#   MonoSound{R}(fs.fn.(t)), i+1
+# end
 
-immutable FnStream{R}
-  fn::Function
-  length::Int
-end
-start(fs::FnStream) = 1
-done(fs::FnStream,i::Int) = false
-function next{R}(fs::FnStream{R,1},i::Int)
-  t = (fs.length*(i-1):fs.length*i-1) ./ fs.samplerate
-  MonoSound{R}(fs.fn.(t)), i+1
-end
+# """
+#     asstream(fn;[sample_rate_Hz=44100])
 
-"""
-    asstream(fn;[sample_rate_Hz=44100])
+# Converts the function `fn` into a sound stream.
 
-Converts the function `fn` into a sound stream.
+# The function `fn` should take a single argument--the time in seconds from the
+# start of the stream--and should return a number between -1 and 1.
+# """
+# function asstream(fn;sample_rate=samplerate())
+#   R = ustrip(inHz(Int,sample_rate))
+#   FnStream{R}(fn,stream_unit())
+# end
 
-The function `fn` should take a single argument--the time in seconds from the
-start of the stream--and should return a number between -1 and 1.
-"""
-function asstream(fn;sample_rate=samplerate())
-  R = ustrip(inHz(Int,sample_rate))
-  FnStream{R}(fn,stream_unit())
-end
+# """
+#     rampon(stream,[len=5ms])
 
-"""
-    rampon(stream,[len=5ms])
-
-Applies a half consine ramp to start of the sound or stream.
-"""
-function rampon(stream,len=5ms)
-  sample_rate = samplerate(first(stream))
-  ramp_len = inseconds(len)
-  ramp = asstream(sample_rate=sample_rate) do t
-    t < ramp_len ? -0.5cos(π*(t/ustrip(ramp_len)))+0.5 : 1
-  end
-  stream_len = size(first(stream),1)
-  num_units = ceil(Int,insamples(ramp_len,sample_rate) / stream_len)
-  mult(stream,take(ramp,num_units))
-end
+# Applies a half consine ramp to start of the sound or stream.
+# """
+# function rampon(stream,len=5ms)
+#   sample_rate = samplerate(first(stream))
+#   ramp_len = inseconds(len)
+#   ramp = asstream(sample_rate=sample_rate) do t
+#     t < ramp_len ? -0.5cos(π*(t/ustrip(ramp_len)))+0.5 : 1
+#   end
+#   stream_len = size(first(stream),1)
+#   num_units = ceil(Int,insamples(ramp_len,sample_rate) / stream_len)
+#   mult(stream,take(ramp,num_units))
+# end
 
 
 function rampon{R}(x::Sound{R},len=5ms)
@@ -702,32 +892,32 @@ function rampon{R}(x::Sound{R},len=5ms)
 end
 
 
-"""
-    rampoff(stream,[len=5ms],[after=0s])
+# """
+#     rampoff(stream,[len=5ms],[after=0s])
 
-Applies a half consine ramp to the end of the sound.
+# Applies a half consine ramp to the end of the sound.
 
-For streams, you may specify that the ramp off occur some number of seconds
-after the start of the stream.
-"""
-function rampoff(itr,len=5ms,after=0s)
-  sample_rate=samplerate(first(itr))
-  stream_len = size(first(itr),1)
-  ramp = asstream(sample_rate=sample_rate) do t
-    if t < after
-      1
-    elseif after <= t < after+len
-      -0.5cos(π*(t - after)/ustrip(len) + π)+0.5)
-    else
-      0
-    end
-  end
-  num_units = ceil(Int,insamples(after+len,sample_rate) / stream_len)
-  take(mult(itr,ramp),num_units)
-end
+# For streams, you may specify that the ramp off occur some number of seconds
+# after the start of the stream.
+# """
+# function rampoff(itr,len=5ms,after=0s)
+#   sample_rate=samplerate(first(itr))
+#   stream_len = size(first(itr),1)
+#   ramp = asstream(sample_rate=sample_rate) do t
+#     if t < after
+#       1
+#     elseif after <= t < after+len
+#       -0.5cos(π*(t - after)/ustrip(len) + π)+0.5)
+#     else
+#       0
+#     end
+#   end
+#   num_units = ceil(Int,insamples(after+len,sample_rate) / stream_len)
+#   take(mult(itr,ramp),num_units)
+# end
 
-function rampoff(x::Sound{R},len=5ms)
-  ramp_len = insamples(len,R)
+function rampoff{R}(x::Sound{R},len=5ms)
+  ramp_len = insamples(len,R*Hz)
   @assert size(x,1) > ramp_len
 
   ramp_t = (1.0:ramp_len) / ramp_len
@@ -753,40 +943,40 @@ function attenuate(x::Sound,atten_dB)
 	10^(-atten_dB/20) * x/sqrt(mean(x.^2))
 end
 
-immutable AttenStream{T}
-  itr::T
-  atten_dB::Float64
-  decay::Float64
-end
+# immutable AttenStream{T}
+#   itr::T
+#   atten_dB::Float64
+#   decay::Float64
+# end
 
-immutable AttenState{T}
-  itr_state::T
-  μ²::Float64
-  N::Float64
-end
-show(io::IO,as::AttenStream) = write(io,"AttenStream(...,$(as.atten_dB),$(as.decay))")
-start{T}(as::AttenStream{T}) = AttenState(start(as.itr),1.0,1.0)
-done(as::AttenStream,s::AttenState) = done(as.itr,s.itr_state)
-function next{T,S}(as::AttenStream{T},s::AttenState{S})
-  xs, itr_state = next(as.itr,s.itr_state)
-  ys = similar(xs)
-  for i in 1:size(xs,1)
-    ys[i,:] = 10^(-as.atten_dB/20) * xs[i,:] ./ sqrt(s.μ² ./ s.N)
-    s = AttenState(itr_state,as.decay*s.μ² + mean(xs[i,:])^2,as.decay*s.N + 1)
-  end
+# immutable AttenState{T}
+#   itr_state::T
+#   μ²::Float64
+#   N::Float64
+# end
+# show(io::IO,as::AttenStream) = write(io,"AttenStream(...,$(as.atten_dB),$(as.decay))")
+# start{T}(as::AttenStream{T}) = AttenState(start(as.itr),1.0,1.0)
+# done(as::AttenStream,s::AttenState) = done(as.itr,s.itr_state)
+# function next{T,S}(as::AttenStream{T},s::AttenState{S})
+#   xs, itr_state = next(as.itr,s.itr_state)
+#   ys = similar(xs)
+#   for i in 1:size(xs,1)
+#     ys[i,:] = 10^(-as.atten_dB/20) * xs[i,:] ./ sqrt(s.μ² ./ s.N)
+#     s = AttenState(itr_state,as.decay*s.μ² + mean(xs[i,:])^2,as.decay*s.N + 1)
+#   end
 
-  ys, s
-end
+#   ys, s
+# end
 
-function attenuate(itr,atten_dB=20;time_constant=1)
-  sr = samplerate(first(itr))
-  AttenStream(itr,float(atten_dB),1 - 1 / (time_constant*sr))
-end
+# function attenuate(itr,atten_dB=20;time_constant=1)
+#   sr = samplerate(first(itr))
+#   AttenStream(itr,float(atten_dB),1 - 1 / (time_constant*sr))
+# end
 
 const default_sample_rate = 44100Hz
 
 type SoundSetupState
-  samplerate::Quantity{Int,FreqDim}
+  samplerate::Freq{Int}
   playing::Dict{Sound,Float64}
   state::Ptr{Void}
   num_channels::Int
@@ -907,7 +1097,7 @@ of Weber will likely improve the latency of stream playback.
 function setup_sound(;sample_rate=samplerate(),
                      buffer_size=nothing,queue_size=8,num_channels=8,
                      stream_unit=default_stream_unit)
-  sample_rate_Hz = floor(Int,inHz(sample_rate))
+  sample_rate_Hz = inHz(Int,sample_rate)
   empty!(sound_cache)
 
   if isready(sound_setup_state)
@@ -937,7 +1127,7 @@ function setup_sound(;sample_rate=samplerate(),
 
   sound_setup_state.samplerate = sample_rate_Hz
   sound_setup_state.state = ccall((:ws_setup,weber_sound),Ptr{Void},
-                                  (Cint,Cint,Cint,),sample_rate_Hz,
+                                  (Cint,Cint,Cint,),ustrip(sample_rate_Hz),
                                   num_channels,queue_size)
   sound_setup_state.num_channels = num_channels
   sound_setup_state.queue_size = queue_size
@@ -980,6 +1170,10 @@ seconds from experiment start if an experiment is running), otherwise the sound
 plays as close to right now as is possible.
 """
 function play(x;time=0.0,channel=0)
+  if !isready(sound_setup_state)
+    setup_sound()
+  end
+
   if in_experiment() && !experiment_running()
     error("You cannot call `play` during experiment `setup`. During `setup`",
           " you should add play to a trial (e.g. ",
@@ -993,8 +1187,13 @@ function _play(x,time=0.0,channel=0)
   play(sound(x),time,channel)
 end
 
-function play(x::SteroeSound{R,Fixed{Int16,15}},time::Float64=0.0,channel::Int=0)
-  if R != samplerate()
+immutable WS_Sound
+  buffer::Ptr{Void}
+  len::Cint
+end
+
+function play{R}(x::Sound{R,Q0f15,2},time::Float64=0.0,channel::Int=0)
+  if R != ustrip(samplerate())
     error("Sample rate of sound ($(R*Hz)) and audio playback ($(samplerate()))",
           " do not match. Please resample this sound by calling `resample` ",
           "or `sound`.")
@@ -1032,10 +1231,10 @@ function play(x::SteroeSound{R,Fixed{Int16,15}},time::Float64=0.0,channel::Int=0
   channel = ccall((:ws_play,weber_sound),Cint,
                   (Cdouble,Cdouble,Cint,Ref{WS_Sound},Ptr{Void}),
                   Weber.tick(),time,channel-1,
-                  WS_Sound(pointer(x.data),size(x,1))
+                  WS_Sound(pointer(x.data),size(x,1)),
                   sound_setup_state.state) + 1
   ws_if_error("While playing sound")
-  register_sound(x,(time > 0.0 ? time : Weber.tick()) + duration(x))
+  register_sound(x,(time > 0.0 ? time : Weber.tick()) + ustrip(duration(x)))
 
   channel
 end
@@ -1049,92 +1248,92 @@ end
 show(stream::IO,streamer::Streamer) =
   write(stream,"<Streamer channel: $(streamer.channel)>")
 
-function setup_streamers()
-  streamers[-1] = Streamer(0.0,0,nothing,nothing)
-  Timer(1/60,1/60) do timer
-    for streamer in values(streamers)
-      if streamer.itr != nothing
-        process(streamer)
-      end
-    end
-  end
-end
+# function setup_streamers()
+#   streamers[-1] = Streamer(0.0,0,nothing,nothing)
+#   Timer(1/60,1/60) do timer
+#     for streamer in values(streamers)
+#       if streamer.itr != nothing
+#         process(streamer)
+#       end
+#     end
+#   end
+# end
 
-const num_channels = 8
-const streamers = Dict{Int,Streamer}()
-"""
-    stream([itr | fn],channel=1)
+# const num_channels = 8
+# const streamers = Dict{Int,Streamer}()
+# """
+#     stream([itr | fn],channel=1)
 
-Plays sounds continuously on a given channel by reading from the iterator `itr`
-whenever more data is required. The iterator should return objects that can be
-turned into sounds (via [`sound`](@ref)). The number of available streaming
-channels is determined by [`setup_sound`](@ref). The size, in samples, of each
-sound returned by this iterator should be equal to [`stream_unit`](@ref).
+# Plays sounds continuously on a given channel by reading from the iterator `itr`
+# whenever more data is required. The iterator should return objects that can be
+# turned into sounds (via [`sound`](@ref)). The number of available streaming
+# channels is determined by [`setup_sound`](@ref). The size, in samples, of each
+# sound returned by this iterator should be equal to [`stream_unit`](@ref).
 
-Alternatively a `fn` can be streamed: this transforms a previously streamed itr
-into a new iterator by calling `fn(itr)`. If no stream already exists on the
-given channel, `fn` is passed the result of `countfrom()`.
+# Alternatively a `fn` can be streamed: this transforms a previously streamed itr
+# into a new iterator by calling `fn(itr)`. If no stream already exists on the
+# given channel, `fn` is passed the result of `countfrom()`.
 
-A stream stops playing if the iterator is finished. There can only be one stream
-per channel.  Streaming a new iterator on the same channel as another stream
-stops the older stream. The channels for `stream` are separate from the channels
-for `play`. That is, `play(mysound,channel=1)` plays a sound on a channel
-separate from `stream(mystream,1)`.
+# A stream stops playing if the iterator is finished. There can only be one stream
+# per channel.  Streaming a new iterator on the same channel as another stream
+# stops the older stream. The channels for `stream` are separate from the channels
+# for `play`. That is, `play(mysound,channel=1)` plays a sound on a channel
+# separate from `stream(mystream,1)`.
 
-!!! warning "Streams are not precisely timed"
+# !!! warning "Streams are not precisely timed"
 
-    Streams cannot occur at a precise time. Their latency is variable and
-    depends on the value of `stream_unit()`. Future versions of Weber will
-    likely allow for precisely timed audio streams.
+#     Streams cannot occur at a precise time. Their latency is variable and
+#     depends on the value of `stream_unit()`. Future versions of Weber will
+#     likely allow for precisely timed audio streams.
 
-"""
+# """
 
-function stream(itr,channel::Int=1)
-  !isready(sound_setup_state) ? setup_sound() : nothing
-  @assert 1 <= channel <= sound_setup_state.num_channels
-  itr_state = start(itr)
-  stop(channel)
+# function stream(itr,channel::Int=1)
+#   !isready(sound_setup_state) ? setup_sound() : nothing
+#   @assert 1 <= channel <= sound_setup_state.num_channels
+#   itr_state = start(itr)
+#   stop(channel)
 
-  if in_experiment()
-    data(get_experiment()).streamers[channel] =
-      Streamer(tick(),channel,itr_state,itr)
-  else
-    if isempty(streamers)
-      setup_streamers()
-    end
-    streamers[channel] = Streamer(tick(),channel,itr_state,itr)
-  end
-end
+#   if in_experiment()
+#     data(get_experiment()).streamers[channel] =
+#       Streamer(tick(),channel,itr_state,itr)
+#   else
+#     if isempty(streamers)
+#       setup_streamers()
+#     end
+#     streamers[channel] = Streamer(tick(),channel,itr_state,itr)
+#   end
+# end
 
-function stream(fn::Function,channel::Int)
-  !isready(sound_setup_state) ? setup_sound() : nothing
-  @assert 1 <= channel <= sound_setup_state.num_channels
-  dict = in_experiment() ? data(get_experiment()).streamers : streamers
-  itr = if channel in keys(dict)
-    streamer = dict[channel]
-    delete!(dict,channel)
-    rest(streamer.itr,streamer.itr_state)
-  else
-    countfrom()
-  end
+# function stream(fn::Function,channel::Int)
+#   !isready(sound_setup_state) ? setup_sound() : nothing
+#   @assert 1 <= channel <= sound_setup_state.num_channels
+#   dict = in_experiment() ? data(get_experiment()).streamers : streamers
+#   itr = if channel in keys(dict)
+#     streamer = dict[channel]
+#     delete!(dict,channel)
+#     rest(streamer.itr,streamer.itr_state)
+#   else
+#     countfrom()
+#   end
 
-  stream(fn(itr),channel)
-end
+#   stream(fn(itr),channel)
+# end
 
-"""
-    fadeto(stream,channel=1,transition=0.05)
+# """
+#     fadeto(stream,channel=1,transition=0.05)
 
-Smoothly transition from the currently playing stream to another stream.
-"""
-function fadeto(new,channel::Int=1,transition=0.05)
-  stream(channel) do old
-    if isa(first(old),Number)
-      rampon(new,transition)
-    else
-      mix(rampoff(old,transition),rampon(new,transition))
-    end
-  end
-end
+# Smoothly transition from the currently playing stream to another stream.
+# """
+# function fadeto(new,channel::Int=1,transition=0.05)
+#   stream(channel) do old
+#     if isa(first(old),Number)
+#       rampon(new,transition)
+#     else
+#       mix(rampoff(old,transition),rampon(new,transition))
+#     end
+#   end
+# end
 
 """
     fadeto(sound1,sound2,overlap=0.05)
@@ -1142,7 +1341,7 @@ end
 A smooth transition from sound1 to sound2, overlapping the end of sound1
 and the start of sound2 by `overlap` (in seconds).
 """
-function fadeto(a::Union{Array,SampleBuf},b::Union{Array,SampleBuf},overlap=0.05)
+function fadeto{R}(a::Sound{R},b::Sound{R},overlap=50ms)
   mix(rampoff(a,overlap),
       [silence(duration(a) - overlap); rampon(b,overlap)])
 end
@@ -1163,30 +1362,33 @@ function stop(channel::Int)
 end
 
 function process(streamer::Streamer)
-  if !done(streamer.itr,streamer.itr_state)
-    obj, next_state = next(streamer.itr,streamer.itr_state)
-    x = sound(obj,false)
-    @assert samplerate(x) == samplerate()
-
-    done_at = -1.0
-
-    done_at = ccall((:ws_play_next,weber_sound),Cdouble,
-                    (Cdouble,Cint,Ref{WS_Sound},Ptr{Void}),
-                    tick(),streamer.channel-1,x.chunk,
-                    sound_setup_state.state)
-    ws_if_error("While playing sound")
-    if done_at < 0
-      # sound not ready to be queued for playing, wait a bit and try again
-      streamer.next_stream += 0.05duration(x)
-    else
-      # sound was queued to play, wait until this queued sound actually
-      # starts playing to queue the next stream unit
-      register_sound(x,done_at)
-      streamer.next_stream += 0.75duration(x)
-      streamer.itr_state = next_state
-    end
-  else stop(streamer.channel) end
+  nothing
 end
+
+#   if !done(streamer.itr,streamer.itr_state)
+#     obj, next_state = next(streamer.itr,streamer.itr_state)
+#     x = sound(obj,false)
+#     @assert samplerate(x) == samplerate()
+
+#     done_at = -1.0
+
+#     done_at = ccall((:ws_play_next,weber_sound),Cdouble,
+#                     (Cdouble,Cint,Ref{WS_Sound},Ptr{Void}),
+#                     tick(),streamer.channel-1,x.chunk,
+#                     sound_setup_state.state)
+#     ws_if_error("While playing sound")
+#     if done_at < 0
+#       # sound not ready to be queued for playing, wait a bit and try again
+#       streamer.next_stream += 0.05duration(x)
+#     else
+#       # sound was queued to play, wait until this queued sound actually
+#       # starts playing to queue the next stream unit
+#       register_sound(x,done_at)
+#       streamer.next_stream += 0.75duration(x)
+#       streamer.itr_state = next_state
+#     end
+#   else stop(streamer.channel) end
+# end
 
 """
     play(fn::Function)

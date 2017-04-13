@@ -168,6 +168,10 @@ function Experiment(;skip=0,columns=Symbol[],debug=false,
                     extensions = Extension[],
                     width=exp_width,height=exp_height,
                     warn_on_trials_only = true)
+  if !isready(sound_setup_state)
+    setup_sound()
+  end
+
   if !(data_dir == nothing || hide_output)
     mkpath(data_dir)
   elseif !hide_output
