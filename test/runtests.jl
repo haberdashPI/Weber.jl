@@ -1,3 +1,5 @@
+using Base.Test
+
 @testset "Weber" begin
   @testset "Trial Sequencing" begin
     include("test_moment_timing.jl")
