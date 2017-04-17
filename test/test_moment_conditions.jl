@@ -1,3 +1,6 @@
+using Weber
+using Base.Test
+include("find_timing.jl")
 
 when_events,_,_ = find_timing() do
   @addtrials let test = true

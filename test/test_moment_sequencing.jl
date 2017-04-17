@@ -1,3 +1,7 @@
+using Weber
+using Base.Test
+include("find_timing.jl")
+
 seq_events,_,_ = find_timing() do
   addtrial(moment(0.01,() -> record(:a)),
            moment(0.01,() -> record(:b)),

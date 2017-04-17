@@ -1,3 +1,8 @@
+using Weber
+using Base.Test
+include("find_timing.jl")
+
+import Weber: prepare!, handle
 
 type TestPrepareMoment <: Weber.SimpleMoment
   event::Symbol

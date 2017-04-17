@@ -1,3 +1,6 @@
+using Weber
+using Base.Test
+include("find_timing.jl")
 
 loop_events,_,rows = find_timing() do
   @addtrials let i = 0

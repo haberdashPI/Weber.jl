@@ -1,11 +1,3 @@
-using Weber
-using Base.Test
-import Weber: prepare!, handle
-include("find_timing.jl")
-
-const check_timing = get(ENV,"WEBER_TIMING_TESTS","Yes") != "No"
-const moment_eps = 2.5e-3
-
 @testset "Weber" begin
   @testset "Trial Sequencing" begin
     include("test_moment_timing.jl")

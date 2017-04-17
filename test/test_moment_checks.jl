@@ -1,3 +1,6 @@
+using Weber
+using Base.Test
+include("find_timing.jl")
 
 function cause_addtrial_error()
   find_timing() do

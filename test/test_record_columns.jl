@@ -1,3 +1,7 @@
+using Weber
+using Base.Test
+include("find_timing.jl")
+
 function cause_column_error()
   find_timing() do
     addtrial(moment(record,"test",unspecified_column_name="string"))

@@ -1,3 +1,8 @@
+using Weber
+using Base.Test
+include("find_timing.jl")
+
+import Weber: poll_events
 
 type ExtensionA <: Weber.Extension end
 type ExtensionB <: Weber.Extension end

@@ -1,3 +1,10 @@
+using Weber
+using Base.Test
+include("find_timing.jl")
+
+const check_timing = get(ENV,"WEBER_TIMING_TESTS","Yes") != "No"
+const moment_eps = 2.5e-3
+
 # warm up JIT...
 find_timing() do
   addtrial(moment(0.05,() -> record(:a)),
