@@ -2,8 +2,8 @@ using FixedPointNumbers
 using LRUCache
 using Unitful
 using FileIO
-
-import Unitful: ms, s, kHz, Hz
+using Lazy: @>, @>>
+using IntervalSets
 
 import FileIO: save
 import DSP: resample
@@ -11,11 +11,14 @@ import LibSndFile
 import SampledSignals: samplerate
 import SampledSignals
 import Distributions: nsamples
+import Unitful: ms, s, kHz, Hz
 import Base: show, length, start, done, next, linearindexing, size, getindex,
-  setindex!, vcat, similar, convert, .*, .+
+  setindex!, vcat, similar, convert, .*, .+, *, minimum, maximum
+importall IntervalSets # I just need .., but there's a syntax parsing bug
 
-export sound, duration, nchannels, nsamples, save, samplerate, length,
-  ms, s, kHz, Hz, vcat, leftright, similar, .., between, left, right
+export sound, playable, duration, nchannels, nsamples, save, samplerate, length,
+  ms, s, kHz, Hz, samples, vcat, leftright, similar, left, right,
+  audiofn, limit, ..
 
 immutable Sound{R,T,N} <: AbstractArray{T,N}
   data::Array{T,N}
@@ -48,7 +51,6 @@ typealias FreqDim Unitful.Dimensions{(Unitful.Dimension{:Time}(-1//1),)}
 typealias Time{N} Quantity{N,TimeDim}
 typealias Freq{N} Quantity{N,FreqDim}
 
-
 """
     samplerate([sound])
 
@@ -63,8 +65,23 @@ be at the sampling rate of the current hardware settings as defined by
 samplerate(x::Vector) = samplerate()
 samplerate(x::Matrix) = samplerate()
 samplerate{R}(x::Sound{R}) = R*Hz
+rtype{R}(x::Sound{R}) = R
 
 length(x::Sound) = length(x.data)
+
+asstereo{R,T}(x::Sound{R,T,1}) = hcat(x.data,x.data)
+asstereo{R,T}(x::Sound{R,T,2}) = size(x,2) == 1 ? hcat(x.data,x.data) : x.data
+asmono{R,T}(x::Sound{R,T,1}) = x.data
+asmono{R,T}(x::Sound{R,T,2}) = squeeze(x.data,2)
+
+vcat{R,T}(xs::Sound{R,T,1}...) = Sound{R,T,1}(vcat(map(x -> x.data,xs)...))
+function vcat{R,T}(xs::Sound{R,T}...)
+  if any(x -> nchannels(x) == 2,xs)
+    Sound{R,T,2}(vcat(map(asstereo,xs)...))
+  else
+    Sound{R,T,1}(vcat(map(asmono,xs)...))
+  end
+end
 
 """
     duration(x)
@@ -85,8 +102,9 @@ linearindexing(t::Type{Sound}) = Base.LinearSlow()
 
 # adapted from:
 # https://github.com/JuliaAudio/SampledSignals.jl/blob/0a31806c3f7d382c9aa6db901a83e1edbfac62df/src/SampleBuf.jl#L109-L139
+rounded_time(x,R) = round(ustrip(x),ceil(Int,log(10,R)))*s
 function show{R}(io::IO, x::Sound{R})
-  seconds = round(ustrip(duration(x)),ceil(Int,log(10,R)))
+  seconds = rounded_time(duration(x),R)
   typ = if eltype(x) == Q0f15
     "16 bit PCM"
   elseif eltype(x) <: AbstractFloat
@@ -97,7 +115,7 @@ function show{R}(io::IO, x::Sound{R})
 
   channel = size(x.data,2) == 1 ? "mono" : "stereo"
 
-  println(io, "$seconds s $typ $channel sound")
+  println(io, "$seconds $typ $channel sound")
   print(io, "Sampled at $(R*Hz)")
   nsamples(x) > 0 && showchannels(io, x)
 end
@@ -149,68 +167,48 @@ end
 """
     left(sound::Sound)
 
-Extract the left channel a sound.
-
-For a single channel (mono) sound, this transforms the sound into a stereo sound
-with the given samples as the left channel, and a silent right channel. For a
-double channel (stereo) sound, this transforms the sound into a stereo
-sound with a silenced right channel.
+Extract the left channel a stereo sound or stream.
 """
 function left{R,T,N}(sound::Sound{R,T,N})
-  channel = if size(sound.data,2) == 1
-    sound.data
+  if size(sound.data,2) == 1
+    error("Expected stereo sound.")
   else
-    sound.data[:,1]
+    sound[:,1]
   end
-  Sound{R,T,N}(hcat(channel,(zereos(T,size(sound,1)))))
 end
 
 """
     right(sound::Sound)
 
-Extract the right channel of a sound.
-
-For a single channel (mono) sound, this transforms the sound into a stereo sound
-with the given samples as the right channel, and a silent left channel. For a
-double channel (stereo) sound, this transforms the sound into a stereo
-sound with a silenced left channel.
+Extract the right channel of a stereo sound or stream.
 """
 function right{R,T,N}(sound::Sound{R,T,N})
-  channel = if size(sound.data,2) == 1
-    sound.data
+  if size(sound.data,2) == 1
+    error("Expected stereo sound.")
   else
-    sound.data[:,2]
+    sound[:,2]
   end
-  Sound{R,T,N}(hcat((zereos(T,size(sound,1))),channel))
 end
 
-immutable SampleRange{N,M}
-  from::Time{N}
-  to::Time{M}
-end
-
-immutable SampleEndRange{N}
+immutable ClosedIntervalEnd{N}
   from::Time{N}
   possible_end::Int
 end
+minimum(x::ClosedIntervalEnd) = x.from
 
-"""
-   between(a::Quantity,b::Quantity)
-   a .. b
+..(x::Time,possible_end::Int) = ClosedIntervalEnd(x,possible_end)
 
-Specifies the range of sound samples in the range [a,b): inclusive of the sound
-sample preciesly at time a, all samples between a and b, but excusive of the
-sample at time b.
+@dimension 𝐒 "𝐒" Sample
+@refunit samples "samples" Samples 𝐒 false
+typealias SampDim Unitful.Dimensions{(Unitful.Dimension{:Sample}(1//1),)}
+typealias SampleQuant{N} Quantity{N,SampDim}
+insamples{N <: Integer}(time::SampleQuant{N},rate) = ustrip(time)
+insamples{N}(time::SampleQuant{N},rate) = error("Cannot use non-integer samples.")
+function insamples(time,rate)
+  r = inHz(rate)
+  floor(Int,ustrip(inseconds(time,r)*r))
+end
 
-While a and b must normally both be specified as time quantities, a special
-exception is made for the use of end, e.g. sound[2s .. end], can be used to
-specify all samples occuring from 2 seconds or later.
-"""
-between{N,M}(from::Time{N},to::Time{M}) = SampleRange(from,to)
-between{N}(from::Time{N},to::Int) = SampleEndRange(from,to)
-const .. = between
-
-insamples(time,rate) = floor(Int,ustrip(inseconds(time)*inHz(rate)))
 function insamples{N,M}(time::Time{N},rate::Freq{M})
   floor(Int,ustrip(uconvert(s,time)*uconvert(Hz,rate)))
 end
@@ -221,27 +219,35 @@ function checktime(time)
   end
 end
 
-const Left = typeof(left)
-const Right = typeof(right)
-@inline @Base.propagate_inbounds function getindex(x::Sound,ixs,js::Left)
-  getindex(x,ixs,1)
+@inline @Base.propagate_inbounds function getindex(x::Sound,ixs,js::Symbol)
+  if js == :left
+    getindex(x,ixs,1)
+  elseif js == :right
+    getindex(x,ixs,2)
+  else
+    throw(BoundsError(x,js))
+  end
 end
-@inline @Base.propagate_inbounds function setindex!(x::Sound,vals,ixs,js::Left)
-  setindex!(x,vals,ixs,1)
-end
-@inline @Base.propagate_inbounds function getindex(x::Sound,ixs,js::Right)
-  getindex(x,ixs,2)
-end
-@inline @Base.propagate_inbounds function setindex!(x::Sound,vals,ixs,js::Right)
-  setindex!(x,vals,ixs,2)
+@inline @Base.propagate_inbounds function setindex!(x::Sound,vals,ixs,js::Symbol)
+  if js == :left
+    setindex!(x,vals,ixs,1)
+  elseif js == :right
+    setindex!(x,vals,ixs,2)
+  else
+    throw(BoundsError(x,js))
+  end
 end
 
-@inline function getindex{R,T,I,N}(x::Sound{R,T,N},ixs::SampleEndRange,js::I)
+########################################
+# getindex
+typealias Index Union{Integer,Range,AbstractVector,Colon}
+@inline function getindex{R,T,I <: Index}(
+  x::Sound{R,T},ixs::ClosedIntervalEnd,js::I)
   if nsamples(x) == ixs.possible_end
-    @boundscheck checktime(ixs.from)
-    from = max(1,insamples(ixs.from,R*Hz))
+    @boundscheck checktime(minimum(ixs))
+    from = max(1,insamples(minimum(ixs),R*Hz))
     @boundscheck checkbounds(x.data,from,js)
-    @inbounds return Sound{R,T,N}(x.data[from:end,js])
+    @inbounds return Sound{R,T,2}(x.data[from:end,js])
   else
     error("Cannot specify range of samples using a mixture of times and ",
           "integers. Use only integers or only times (but `end` works in ",
@@ -249,20 +255,49 @@ end
   end
 end
 
-@inline function getindex{R,T,I,N}(x::Sound{R,T,N},ixs::SampleRange,js::I)
-  @boundscheck checktime(ixs.from)
-  from = max(1,insamples(ixs.from,R*Hz))
-  to = insamples(ixs.to,R*Hz)-1
+@inline function getindex{R,T,I <: Index,N,TM <: Time}(
+  x::Sound{R,T,N},ixs::ClosedInterval{TM},js::I)
+  @boundscheck checktime(minimum(ixs))
+  from = max(1,insamples(minimum(ixs),R*Hz))
+  to = insamples(maximum(ixs),R*Hz)-1
   @boundscheck checkbounds(x.data,from,js)
   @boundscheck checkbounds(x.data,to,js)
-  @inbounds return Sound{R,T,N}(x.data[from:to,js])
+  @inbounds result = x.data[from:to,js]
+  return Sound{R,T,ndims(result)}(result)
 end
 
-@inline function setindex!{R,T,I}(x::Sound{R,T},vals::AbstractVector,
-                                  ixs::SampleEndRange,js::I)
+@inline function getindex{R,T}(
+  x::Sound{R,T,1},ixs::ClosedIntervalEnd)
   if nsamples(x) == ixs.possible_end
-    @boundscheck checktime(ixs.from)
-    from = max(1,insamples(ixs.from,R*Hz))
+    @boundscheck checktime(minimum(ixs))
+    from = max(1,insamples(minimum(ixs),R*Hz))
+    @boundscheck checkbounds(x.data,from)
+    @inbounds return Sound{R,T,1}(x.data[from:end])
+  else
+    error("Cannot specify range of samples using a mixture of times and ",
+          "integers. Use only integers or only times (but `end` works in ",
+          "either context).")
+  end
+end
+
+@inline function getindex{R,T,TM <: Time}(
+  x::Sound{R,T,1},ixs::ClosedInterval{TM})
+  @boundscheck checktime(minimum(ixs))
+  from = max(1,insamples(minimum(ixs),R*Hz))
+  to = insamples(maximum(ixs),R*Hz)-1
+  @boundscheck checkbounds(x.data,from)
+  @boundscheck checkbounds(x.data,to)
+  @inbounds return Sound{R,T,1}(x.data[from:to])
+end
+
+########################################
+# setindex
+
+@inline function setindex!{R,T,I}(
+  x::Sound{R,T},vals::AbstractVector,ixs::ClosedIntervalEnd,js::I)
+  if nsamples(x) == ixs.possible_end
+    @boundscheck checktime(minimum(ixs))
+    from = max(1,insamples(minimum(ixs),R*Hz))
     @boundscheck checkbounds(x.data,from,js)
     @inbounds x.data[from:end,js] = vals
     vals
@@ -273,14 +308,40 @@ end
   end
 end
 
-@inline function setindex!{R,T,I}(x::Sound{R,T},vals::AbstractVector,
-                                  ixs::SampleRange,js::I)
-  @boundscheck checktime(ixs.from)
-  from = max(1,insamples(ixs.from,R*Hz))
-  to = insamples(ixs.to,R*Hz)-1
+@inline function setindex!{R,T,I,TM <: Time}(
+  x::Sound{R,T},vals::AbstractVector,ixs::ClosedInterval{TM},js::I)
+  @boundscheck checktime(minimum(ixs))
+  from = max(1,insamples(minimum(ixs),R*Hz))
+  to = insamples(maximum(ixs),R*Hz)-1
   @boundscheck checkbounds(x.data,from,js)
   @boundscheck checkbounds(x.data,to,js)
   @inbounds x.data[from:to,js] = vals
+  vals
+end
+
+@inline function setindex!{R,T}(
+  x::Sound{R,T,1},vals::AbstractVector,ixs::ClosedIntervalEnd)
+  if nsamples(x) == ixs.possible_end
+    @boundscheck checktime(minimum(ixs))
+    from = max(1,insamples(minimum(ixs),R*Hz))
+    @boundscheck checkbounds(x.data,from)
+    @inbounds x.data[from:end] = vals
+    vals
+  else
+    error("Cannot specify range of samples using a mixture of times and ",
+          "integers. Use only integers or only times (but `end` works in ",
+          "either context).")
+  end
+end
+
+@inline function setindex!{R,T,TM <: Time}(
+  x::Sound{R,T,1},vals::AbstractVector,ixs::ClosedInterval{TM})
+  @boundscheck checktime(minimum(ixs))
+  from = max(1,insamples(minimum(ixs),R*Hz))
+  to = insamples(maximum(ixs),R*Hz)-1
+  @boundscheck checkbounds(x.data,from)
+  @boundscheck checkbounds(x.data,to)
+  @inbounds x.data[from:to] = vals
   vals
 end
 
@@ -334,18 +395,19 @@ inHz{N <: Number,T}(typ::Type{N},x::T) = floor(N,ustrip(inHz(x)))*Hz
 inHz{N <: Number}(typ::Type{N},x::N) = inHz(x)
 inHz{N <: Number}(typ::Type{N},x::Freq{N}) = inHz(x)
 
-inseconds(x::Quantity) = uconvert(s,x)
-function inseconds(x::Number)
-  warn("Unitless value, assuming seconds. Append s or ms to avoid this warning",
-       " (e.g. silence(500ms))",
-       stacktrace())
+inseconds{N}(x::SampleQuant{N},R) = (ustrip(x) / R)*s
+inseconds(x::Quantity,R) = uconvert(s,x)
+function inseconds(x::Number,R)
+  warn("Unitless value, assuming seconds. Append s, ms or samples to avoid",
+       " this warning (e.g. 500ms)",
+       reduce(*,"",map(x -> string(x)*"\n",stacktrace())))
   x*s
 end
 
-const sound_cache = LRU{Any,Sound}(256)
+const sound_cache = LRU{UInt,Sound}(256)
 function with_cache(fn,usecache,x)
   if usecache
-    get!(fn,sound_cache,x)
+    get!(fn,sound_cache,object_id(x))
   else
     fn()
   end
@@ -364,86 +426,113 @@ creating a new sound for the same object.
 
 !!! note "Called Implicitly"
 
-    This function is normally called implicitly in a call to
-    `play(x)`, where x is an arbitrary array, so it need not normally
-    be called directly.
+    This function is normally called implicitly in a call to `play(x)`, where `x`
+    is any object that can be turned into a sound, so it need not normally be
+    called directly.
+
 """
 function sound{T <: Number,N}(x::Array{T,N},cache=true;
                               sample_rate=samplerate())
   if N ∉ [1,2]
-    error("Array must have 1 or 2 dimensinos to be converted to a sound.")
+    error("Array must have 1 or 2 dimensions to be converted to a sound.")
   end
 
   with_cache(cache,x) do
-    bounded = max(min(x,typemax(Q0f15)),typemin(Q0f15))
-    if size(x,2) == 1
-      bounded = hcat(bounded,bounded)
-    end
     R = ustrip(inHz(sample_rate))
-    Sound{R,Q0f15,N}(Q0f15.(bounded))
+    Sound{R,T,N}(x)
   end
 end
 
-function sound(x::SampledSignals.SampleBuf,cache=true)
+function sound(x::SampledSignals.SampleBuf,cache=true;
+               sample_rate=samplerate(x)*Hz)
+  if ustrip(sample_rate) != samplerate(x)
+    error("Unexpected sample rate $sample_rate. Use `playable` or `resample`",
+          " to change the sampling rate.")
+  end
+
   with_cache(cache,x) do
     R,T = ustrip(inHz(Int,samplerate(x)*Hz)),eltype(x.data)
-    sound(Sound{R,T,ndims(x)}(x.data),false)
+    Sound{R,T,ndims(x)}(x.data)
   end
 end
 
+function sound{R}(x::Sound{R},cache=true;sample_rate=R*Hz)
+  if ustrip(sample_rate) != R
+    error("Unexpected sample rate $sample_rate. Use `playable` or `resample`",
+          " to change the sampling rate.")
+  end
+  x
+end
+
 """
-    sound(x::Sound,[cache=true],sample_rate=samplerate())
+    playable(x::Sound,[cache=true])
 
-Regularize the format of a sound.
+Regularize the format of an existing sound.
 
-This will ensure the sound is represented at a given sample rate.
+This will ensure the sound is in the format required by [`play`](@ref).
+This need not be called explicitly, as play will call it for you if
+need be.
 """
 
-function sound{R,T,N}(x::Sound{R,T,N},cache=true)
+function playable{R,T,N}(x::Sound{R,T,N},cache=true)
   sample_rate=samplerate()
   with_cache(cache,x) do
     bounded = max(min(x.data,typemax(Q0f15)),typemin(Q0f15))
     T2 = Q0f15
-    sound(Sound{R,T2,N}(Q0f15.(bounded)),false,sample_rate)
+    playable(Sound{R,T2,N}(Q0f15.(bounded)),false,sample_rate)
   end
 end
 
-function sound{R,N}(x::Sound{R,Q0f15,N},cache=true,sample_rate=samplerate())
+function playable{R}(x::Sound{R,Q0f15},cache=true,sample_rate=samplerate())
   if size(x.data,2) == 2
     if R == ustrip(sample_rate)
       x
     else
-      resample(Sound{R,Q0f15,N}(x.data),sample_rate)
+      with_cache(cache,x) do
+        warn("Reampling sound")
+        resample(Sound{R,Q0f15,2}(x.data),sample_rate)
+      end
     end
   else
-    data = hcat(x.data,x.data)
-    if R == ustrip(sample_rate)
-      Sound{R,Q0f15,N}(data)
-    else
-      resample(Sound{R,Q0f15,N}(data),sample_rate)
+    with_cache(cache,x) do
+      data = hcat(x.data,x.data)
+      if R == ustrip(sample_rate)
+        Sound{R,Q0f15,2}(data)
+      else
+        warn("Reampling sound")
+        resample(Sound{R,Q0f15,2}(data),sample_rate)
+      end
     end
   end
 end
 
 """
-    sound(file,[cahce=true])
+    sound(file,[cahce=true];[sample_rate=samplerate(file)])
 
 Load a specified file (e.g. by filename or stream) as a sound.
 """
-sound(file::File,cache=true) = sound(load(file),cache)
-sound(file::String,cache=true) = sound(load(file),cache)
-sound(stream::IOStream) = sound(load(stream),false)
-
+sound(file::File,cache=true;keys...) = sound(load(file),cache;keys...)
+sound(file::String,cache=true;keys...) = sound(load(file),cache;keys...)
+function sound(stream::IOStream,cache=false;keys...)
+  if cache
+    error("Cannot cache a sound from an IOStream. Please use the filename.")
+  end
+  sound(load(stream),cache;keys...)
+end
 
 """
-    leftright(left,right;[sample_rate=samplerate()])
+    leftright(left,right)
 
 Create a stereo sound from two vectors or two monaural sounds.
 
 For vectors, one can specify a sample_rate other than the default,
 if desired.
 """
-function leftright{R,T,N}(x::Sound{R,T,N},y::Sound{R,T,N})
+function leftright{R,T}(x::Sound{R,T},y::Sound{R,T},sample_rate=R*Hz)
+  if sample_rate != R*Hz
+    error("Unexpected sampling rate $sample_rate. ",
+          "Use `playable` or `resample` to change the sampling rate.")
+  end
   if size(x.data,2) == size(y.data,2) == 1
     Sound{R,T,2}(hcat(x.data,y.data))
   else
@@ -451,6 +540,45 @@ function leftright{R,T,N}(x::Sound{R,T,N},y::Sound{R,T,N})
   end
 end
 
-function leftright{T}(x::Vector{T},y::Vector{T};sample_rate=samplerate())
-  Sound{ustrip(sample_rate),T,2}(hcat(x,y))
+function leftright{T}(x::Array{T},y::Array{T};sample_rate=samplerate())
+  if size(x,2) == size(y,2) == 1 && 1 <= ndims(x) <= 2 && 1 <= ndims(y) <= 2
+    Sound{ustrip(sample_rate),T,2}(hcat(x,y))
+  else
+    error("Expected two vectors.")
+  end
+end
+
+limit{R}(sound::Sound{R},len::Time) = limit(sound,insamples(len,R*Hz))
+limit{R,T}(sound::Sound{R,T,1},len::Int) = sound[1:len]
+limit{R,T}(sound::Sound{R,T,2},len::Int) = sound[1:len,:]
+
+"""
+    audiofn(fn,x)
+
+Apply `fn` to x for both sounds and streams.
+
+For a sound this is the same as calling `fn(x)`.
+"""
+audiofn{R}(fn::Function,x::Sound{R}) = sound(fn(x),sample_rate=R*Hz)
+
+function soundop{R}(op,xs::Union{Sound{R},Array}...)
+  len = maximum(map(x -> size(x,1),xs))
+  channels = maximum(map(x -> size(x,2),xs))
+  y = similar(xs[1],(len,channels))
+
+  for i in 1:size(y,1)
+    used = false
+    for j in 1:length(xs)
+      if i <= size(xs[j],1)
+        if !used
+          used = true
+          @inbounds y[i,:] .= xs[j][i,:]
+        else
+          @inbounds y[i,:] .= op(y[i,:],xs[j][i,:])
+        end
+      end
+    end
+  end
+
+  y
 end

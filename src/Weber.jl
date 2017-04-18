@@ -117,8 +117,12 @@ include(joinpath(dirname(@__FILE__),"adaptive.jl"))
 
 include(joinpath(dirname(@__FILE__),"precompile.jl"))
 
+const localunits = Unitful.basefactors
+const localpromotion = Unitful.promotion
 function __init__()
   _precompile_()
+  merge!(Unitful.basefactors,localunits)
+  merge!(Unitful.promotion, localpromotion)
 end
 
 end

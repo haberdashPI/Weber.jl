@@ -1,5 +1,5 @@
 export play, stream, stop, setup_sound, current_sound_latency, resume_sounds,
-  pause_sounds, stream_unit
+  pause_sounds
 const weber_sound_version = 2
 
 let
@@ -24,13 +24,6 @@ end
 const default_stream_unit = 2^11
 const sound_setup_state = SoundSetupState(0Hz,Dict(),C_NULL,0,0,default_stream_unit)
 isready(s::SoundSetupState) = s.samplerate != 0Hz
-
-"""
-    stream_unit()
-
-Report the length in samples of each unit that all sound streams should generate.
-"""
-stream_unit(s::SoundSetupState=sound_setup_state) = s.stream_unit
 
 """
 With no argument samplerate reports the current playback sample rate, as
@@ -212,13 +205,14 @@ function play(x;time=0.0,channel=0)
 end
 
 function _play(x,time=0.0,channel=0)
-  play(sound(x),time,channel)
+  play(playable(sound(x)),time,channel)
 end
 
 immutable WS_Sound
   buffer::Ptr{Void}
   len::Cint
 end
+WS_Sound{R}(x::Sound{R,Q0f15,2}) = WS_Sound(pointer(x.data),size(x,1))
 
 function play{R}(x::Sound{R,Q0f15,2},time::Float64=0.0,channel::Int=0)
   if R != ustrip(samplerate())
@@ -258,8 +252,7 @@ function play{R}(x::Sound{R,Q0f15,2},time::Float64=0.0,channel::Int=0)
   # play the sound
   channel = ccall((:ws_play,weber_sound),Cint,
                   (Cdouble,Cdouble,Cint,Ref{WS_Sound},Ptr{Void}),
-                  Weber.tick(),time,channel-1,
-                  WS_Sound(pointer(x.data),size(x,1)),
+                  Weber.tick(),time,channel-1,WS_Sound(x),
                   sound_setup_state.state) + 1
   ws_if_error("While playing sound")
   register_sound(x,(time > 0.0 ? time : Weber.tick()) + ustrip(duration(x)))
@@ -267,86 +260,72 @@ function play{R}(x::Sound{R,Q0f15,2},time::Float64=0.0,channel::Int=0)
   channel
 end
 
+"""
+    play(fn::Function)
+
+Play the sound that's returned by calling `fn`.
+"""
+function play(fn::Function;keys...)
+  play(fn();keys...)
+end
+
 type Streamer
   next_stream::Float64
   channel::Int
-  itr_state
-  itr
+  stream::Stream
 end
-show(stream::IO,streamer::Streamer) =
-  write(stream,"<Streamer channel: $(streamer.channel)>")
 
-# function setup_streamers()
-#   streamers[-1] = Streamer(0.0,0,nothing,nothing)
-#   Timer(1/60,1/60) do timer
-#     for streamer in values(streamers)
-#       if streamer.itr != nothing
-#         process(streamer)
-#       end
-#     end
-#   end
-# end
+addstream(streamers::Dict{Int,Streamer},channel::Int,stream::Stream) =
+  streamers[channel] = Streamer(tick(),chanel,stream)
 
-# const num_channels = 8
-# const streamers = Dict{Int,Streamer}()
-# """
-#     stream([itr | fn],channel=1)
+function setup_streamers()
+  streamers[-1] = Streamer(0.0,0,nothing,nothing)
+  Timer(1/60,1/60) do timer
+    for streamer in values(streamers)
+      if streamer.itr != nothing
+        process(streamer)
+      end
+    end
+  end
+end
 
-# Plays sounds continuously on a given channel by reading from the iterator `itr`
-# whenever more data is required. The iterator should return objects that can be
-# turned into sounds (via [`sound`](@ref)). The number of available streaming
-# channels is determined by [`setup_sound`](@ref). The size, in samples, of each
-# sound returned by this iterator should be equal to [`stream_unit`](@ref).
+const num_channels = 8
+const streamers = Dict{Int,Streamer}()
 
-# Alternatively a `fn` can be streamed: this transforms a previously streamed itr
-# into a new iterator by calling `fn(itr)`. If no stream already exists on the
-# given channel, `fn` is passed the result of `countfrom()`.
+function streamon(channel::Int)
+  streamer = in_experiment() ? data(get_experiment()).streamers : streamers
+  if channel in streamer
+    Nullable{Stream}(streamer[channel])
+  else
+    Nullable{Stream}()
+  end
+end
 
-# A stream stops playing if the iterator is finished. There can only be one stream
-# per channel.  Streaming a new iterator on the same channel as another stream
-# stops the older stream. The channels for `stream` are separate from the channels
-# for `play`. That is, `play(mysound,channel=1)` plays a sound on a channel
-# separate from `stream(mystream,1)`.
+# TODO: implement precise stream timing
+"""
+Play can also be used to present a continuous stream of sound.  In this case,
+the channel defaults to channel 1 (there is no automatic selection of channels
+for streams). Streams are usually created by specifying an infinite length
+during sound creation using [`tone`](@ref), [`noise`](@ref),
+[`harmonic_complex`](@ref) or [`audible`](@ref).
+"""
+function play{R}(stream::Stream{R},channel::Int=1)
+  @assert 1 <= channel <= sound_setup_state.num_channels
+  if R != ustrip(samplerate())
+    error("Sample rate of sound ($(R*Hz)) and audio playback ($(samplerate()))",
+          " do not match. Please resample this sound by calling `resample` ",
+          "or `sound`.")
+  end
 
-# !!! warning "Streams are not precisely timed"
-
-#     Streams cannot occur at a precise time. Their latency is variable and
-#     depends on the value of `stream_unit()`. Future versions of Weber will
-#     likely allow for precisely timed audio streams.
-
-# """
-
-# function stream(itr,channel::Int=1)
-#   !isready(sound_setup_state) ? setup_sound() : nothing
-#   @assert 1 <= channel <= sound_setup_state.num_channels
-#   itr_state = start(itr)
-#   stop(channel)
-
-#   if in_experiment()
-#     data(get_experiment()).streamers[channel] =
-#       Streamer(tick(),channel,itr_state,itr)
-#   else
-#     if isempty(streamers)
-#       setup_streamers()
-#     end
-#     streamers[channel] = Streamer(tick(),channel,itr_state,itr)
-#   end
-# end
-
-# function stream(fn::Function,channel::Int)
-#   !isready(sound_setup_state) ? setup_sound() : nothing
-#   @assert 1 <= channel <= sound_setup_state.num_channels
-#   dict = in_experiment() ? data(get_experiment()).streamers : streamers
-#   itr = if channel in keys(dict)
-#     streamer = dict[channel]
-#     delete!(dict,channel)
-#     rest(streamer.itr,streamer.itr_state)
-#   else
-#     countfrom()
-#   end
-
-#   stream(fn(itr),channel)
-# end
+  if in_experiment()
+    addstream(data(get_experiment()).streamers,channel,stream)
+  else
+    if isempty(streamers)
+      setup_streamers()
+    end
+    addstream(streamers,channel,stream)
+  end
+end
 
 """
     stop(channel)
@@ -364,41 +343,32 @@ function stop(channel::Int)
 end
 
 function process(streamer::Streamer)
-  nothing
-end
+  if done(stream)
+    stop(streamer.channel)
+    return
+  end
 
-#   if !done(streamer.itr,streamer.itr_state)
-#     obj, next_state = next(streamer.itr,streamer.itr_state)
-#     x = sound(obj,false)
-#     @assert samplerate(x) == samplerate()
+  # call sound twice, once to create the stream, and once to regularize
+  # it to the format required for playback
+  x = playable(sound(stream,sound_setup_state.stream_unit))
+  done_at = -1.0
 
-#     done_at = -1.0
+  done_at = ccall((:ws_play_next,weber_sound),Cdouble,
+                  (Cdouble,Cint,Ref{WS_Sound},Ptr{Void}),
+                  tick(),streamer.channel-1,WS_Sound(x),
+                  sound_setup_state.state)
 
-#     done_at = ccall((:ws_play_next,weber_sound),Cdouble,
-#                     (Cdouble,Cint,Ref{WS_Sound},Ptr{Void}),
-#                     tick(),streamer.channel-1,x.chunk,
-#                     sound_setup_state.state)
-#     ws_if_error("While playing sound")
-#     if done_at < 0
-#       # sound not ready to be queued for playing, wait a bit and try again
-#       streamer.next_stream += 0.05duration(x)
-#     else
-#       # sound was queued to play, wait until this queued sound actually
-#       # starts playing to queue the next stream unit
-#       register_sound(x,done_at)
-#       streamer.next_stream += 0.75duration(x)
-#       streamer.itr_state = next_state
-#     end
-#   else stop(streamer.channel) end
-# end
-
-"""
-    play(fn::Function)
-
-Play the sound that's returned by calling `fn`.
-"""
-function play(fn::Function;keys...)
-  play(fn();keys...)
+  ws_if_error("While playing sound")
+  if done_at < 0
+    # sound not ready to be queued for playing, wait a bit and try again
+    streamer.next_stream += ustrip(0.05duration(x))
+  else
+    # sound was queued to play, wait until this queued sound actually
+    # starts playing to queue the next stream unit
+    register_sound(x,done_at)
+    streamer.next_stream += ustrip(0.75duration(x))
+    streamer.state = next_state
+  end
 end
 
 """

@@ -367,7 +367,7 @@ moment() = TimedMoment(0,()->nothing,stacktrace()[2:end])
 
 const PlayFunction = typeof(play)
 function moment(delta_t::Number,::PlayFunction,x;channel=0)
-  PlayMoment(delta_t,sound(x),channel,stacktrace()[2:end])
+  PlayMoment(delta_t,playable(sound(x)),channel,stacktrace()[2:end])
 end
 function moment(delta_t::Number,::PlayFunction,fn::Function;channel=0)
   PlayFunctionMoment(delta_t,fn,channel,stacktrace()[2:end])
@@ -534,9 +534,9 @@ end
 
 function prepare!(m::PlayFunctionMoment,last_moment::Float64)
   if !isinf(last_moment)
-    play(sound(m.fn()),last_moment,m.channel)
+    play(playable(sound(m.fn())),last_moment,m.channel)
   else
-    m.prepared = Nullable(sound(m.fn()))
+    m.prepared = Nullable(playable(sound(m.fn())))
   end
 end
 
