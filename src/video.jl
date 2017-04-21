@@ -491,8 +491,8 @@ function update_arguments(img::SDLImage;w=NaN,h=NaN,duration=img.duration,
   SDLImage(img.data,img.img,rect,duration,priority)
 end
 
-const convert_cache = LRU{Array,Array{RGBA{N0f8}}}(256)
-const image_cache = LRU{Array{RGBA{N0f8}},SDLImage}(256)
+const convert_cache = LRU{UInt,Array{RGBA{N0f8}}}(256)
+const image_cache = LRU{UInt,SDLImage}(256)
 """
     visual(img::Array, [x=0],[y=0],[duration=0],[priority=0])
 
@@ -505,7 +505,7 @@ size(img,1) is of size 3 or 4. A 3d array with a size(img,1) ∉ [3,4] results i
 an error.
 """
 function visual{T <: AbstractFloat}(window::SDLWindow,img::Array{T};keys...)
-  converted = get!(convert_cache,img) do
+  converted = get!(convert_cache,object_id(img)) do
     if length(size(img)) == 3
       if size(img,1) == 3
         n0f8.(colorview(RGB,img))
@@ -522,7 +522,7 @@ function visual{T <: AbstractFloat}(window::SDLWindow,img::Array{T};keys...)
 end
 
 function visual(window::SDLWindow,img::Array;keys...)
-  converted = get!(convert_cache,img) do
+  converted = get!(convert_cache,object_id(img)) do
     convert(RGBA,n0f8.(img))
   end
   visual(window,converted;keys...)
@@ -530,7 +530,7 @@ end
 
 function visual(window::SDLWindow,img::Array{RGBA{N0f8}};
                 x=0,y=0,duration=0,priority=0)
-  get!(image_cache,img) do
+  get!(image_cache,object_id(img)) do
     surface = ccall((:SDL_CreateRGBSurfaceFrom,weber_SDL2),Ptr{Void},
                     (Ptr{Void},Cint,Cint,Cint,Cint,UInt32,UInt32,UInt32,UInt32),
                     pointer(copy(img')),size(img,2),size(img,1),32,

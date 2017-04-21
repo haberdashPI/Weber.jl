@@ -45,10 +45,10 @@ sound(x::Sound) = x
 samplerate(x::Sound) = samplerate(x.buffer)
 length(x::Sound) = length(x.buffer)
 
-const sound_cache = LRU{Union{SampleBuf,Array},Sound}(256)
+const sound_cache = LRU{UInt,Sound}(256)
 function with_cache(fn,usecache,x)
   if usecache
-    get!(fn,sound_cache,x)
+    get!(fn,sound_cache,object_id(x))
   else
     fn()
   end
