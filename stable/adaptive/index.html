@@ -85,7 +85,10 @@
         </ul>
     
 
-    <li class="toctree-l3"><a href="#custom-adaptive-track-algorithms">Custom Adaptive Track Algorithms</a></li>
+    <li class="toctree-l3"><a href="#reporting-the-threshold">Reporting the Threshold</a></li>
+    
+
+    <li class="toctree-l3"><a href="#custom-adaptive-tracking-algorithms">Custom Adaptive Tracking Algorithms</a></li>
     
 
     </ul>
@@ -177,39 +180,47 @@
 <p>To use an adaptive track in your experiment, you need to make use of some of the <a href="../advanced/">advanced features</a> of Weber. In this section we'll walk through the necessary steps, using a simple frequency discrimination experiment.</p>
 <p>In this experiment, on each trial, listeners hear a low and a high tone, separated in frequency by an adaptively adjusted delta. Their task is to indicate which tone is lower, and the delta is adjusted to determine the difference in frequency at which listeners respond with 79% accuracy. The entire example code is provided below. </p>
 <pre><code class="julia">using Weber
+
+version = v&quot;0.0.2&quot;
 sid,trial_skip,adapt = @read_args(&quot;Frequency Discrimination ($version).&quot;,
                                   adapt=[:levitt,:bayes])
 
-n_trials = 60
+const ms = 1/1000
+const atten_dB = 30
+const n_trials = 60
+const feedback_delay = 750ms
+
 isresponse(e) = iskeydown(e,key&quot;p&quot;) || iskeydown(e,key&quot;q&quot;)
 
-exp = Experiment(sid = sid,condition = &quot;example&quot;,version = version,
-                 skip=trial_skip,standard=1000)
-
-if adapt == :levitt
-  adapter = levitt_adapter(down=3,up=1,min_delta=0,max_delta=1,
-                           big=2,little=sqrt(2),mult=true)
-else
-  adapter = bayesian_adapter(min_delta = 0,max_delta = 0.95)
-end
-
-standard = attenuate(ramp(tone(1000,0.1)),atten_dB)
+const standard_freq = 1000
+const standard = attenuate(ramp(tone(standard_freq,0.1)),atten_dB)
 function one_trial(adapter)
   first_lower = rand(Bool)
   resp = response(adapter,key&quot;q&quot; =&gt; &quot;first_lower&quot;,key&quot;p&quot; =&gt; &quot;second_lower&quot;,
                   correct=(first_lower ? &quot;first_lower&quot; : &quot;second_lower&quot;))
 
-  signal() = attenuate(ramp(tone(1000*(1-delta(adapter)),0.1)),atten_dB)
+  signal() = attenuate(ramp(tone(standard_freq*(1-delta(adapter)),0.1)),atten_dB)
   stimuli = first_lower? [signal,standard] : [standard,signal]
 
-  [show_cross(),
-   moment(play,stimuli[1]),moment(0.9,play,stimuli[2]),
+  [moment(feedback_delay,play,stimuli[1]),
+   show_cross(),
+   moment(0.9,play,stimuli[2]),
    moment(0.1 + 0.3,display,
           &quot;Was the first [Q] or second sound [P] lower in pitch?&quot;),
-   resp,await_response(isresponse),moment(0.75)]
+   resp,await_response(isresponse)]
 end
 
-setup(exp) do
+experiment = Experiment(
+  skip=trial_skip,
+  columns = [
+    :sid =&gt; sid,
+    :condition =&gt; &quot;example&quot;,
+    :version =&gt; version,
+    :standard =&gt; standard_freq
+  ]
+)
+
+setup(experimerntent) do
   addbreak(moment(record,&quot;start&quot;))
 
   addbreak(instruct(&quot;&quot;&quot;
@@ -219,18 +230,39 @@ heard was lower in pitch. Hit 'Q' if the first beep was lower, and 'P' if the
 second beep was lower.
 &quot;&quot;&quot;))
 
+  if adapt == :levitt
+    adapter = levitt_adapter(down=3,up=1,min_delta=0,max_delta=1,
+                             big=2,little=sqrt(2),mult=true)
+  else
+    adapter = bayesian_adapter(min_delta = 0,max_delta = 0.95)
+  end
+
   @addtrials let a = adapter
     for trial in 1:n_trials
       addtrial(one_trial(a))
     end
-    addbreak(moment(display,() -&gt; &quot;Estimated threshold: $(estimate(adapter)[1])\n&quot;,
-                                  &quot;Hit spacebar to exit.&quot;),
+
+    # define this string during experiment setup
+    # when we know what block we're on...
+
+    function threshold_report()
+      mean,sd = estimate(adapter)
+      thresh = round(mean,3)*standard_freq
+      thresh_sd = round(sd,3)*standard_freq
+
+      # define this string during run time when we know
+      # what the threshold estimate is.
+      &quot;Threshold $(thresh)Hz (SD: $thresh_sd)\n&quot;*
+      &quot;Hit spacebar to continue...&quot;
+    end
+
+    addbreak(moment(display,threshold_report,clean_whitespace=false),
              await_response(iskeydown(key&quot;:space:&quot;)))
   end
+
 end
 
-play(attenuate(ramp(tone(1000,1)),atten_dB))
-run(exp)
+run(experimerntent)
 </code></pre>
 
 <p>In what follows we'll walk through the parts of this code unique to creating an adaptive track. For more details on the basics of creating an experiment see <a href="../start/">Getting Started</a>.</p>
@@ -247,13 +279,13 @@ end
 <p>The present experiment can be run using either of two built-in adapters: <a href="../trials/#Weber.levitt_adapter"><code>levitt_adapter</code></a> and <a href="../trials/#Weber.bayesian_adapter"><code>bayesian_adapter</code></a>. An adapter is the object you create to run an adaptive track, and defines the particular algorithm that will be used to select a new delta on each trial, based on the responses to previous deltas. </p>
 <p><a id='Generating-Stimuli-1'></a></p>
 <h2 id="generating-stimuli">Generating Stimuli</h2>
-<pre><code class="julia">standard = attenuate(ramp(tone(1000,0.1)),atten_dB)
+<pre><code class="julia">const standard = attenuate(ramp(tone(standard_freq,0.1)),atten_dB)
 ...
 signal() = attenuate(ramp(tone(1000*(1-delta(adapter)),0.1)),atten_dB)
 stimuli = first_lower? [signal,standard] : [standard,signal]
 </code></pre>
 
-<p>The two stimuli presented to the listener are the standard (always at 1kHz) and the signal (1kHz - delta). The standard is always the same, and so can be generated in advance before the experiment begins. The signal must be generated during the experiment, on each trial. The next delta is queried from the adapter using <a href="../trials/#Weber.delta"><code>delta</code></a>. The signal is defined as a function that takes no arguments. When passed a function, <code>play</code> generates the stimulus defined by that function at runtime, rather than <a href="../start/#setup_time-1">setup time</a>, which is precisely what we want in this case.</p>
+<p>The two stimuli presented to the listener are the standard (always at 1kHz) and the signal (1kHz - delta). The standard is always the same, and so can be generated in advance before the experiment begins. The signal must be generated during the experiment, on each trial. The next delta is queried from the adapter using <a href="../trials/#Weber.delta"><code>delta</code></a>. The signal is defined as a function that takes no arguments. When passed a function, <a href="../sound/#Weber.play"><code>play</code></a> generates the stimulus defined by that function at runtime, rather than <a href="../start/#setup_time-1">setup time</a>, which is precisely what we want in this case.</p>
 <p><a id='Collecting-Responses-1'></a></p>
 <h2 id="collecting-responses">Collecting Responses</h2>
 <pre><code class="julia">resp = response(adapter,key&quot;q&quot; =&gt; &quot;first_lower&quot;,key&quot;p&quot; =&gt; &quot;second_lower&quot;,
@@ -275,8 +307,29 @@ end
 
 <p>To generate the trials, which depend on the run-time state of the adapter, we use the <a href="../trials/#Weber.@addtrials"><code>@addtrials</code></a> macro. Any time the behavior of listeners in one trial influences subsequent trials, this macro will be necessary. In this case it is used to signal to Weber that the trials added inside the loop depend on the run-time state of the adapter.</p>
 <p>After all trials have been run, we report the threshold estimated by the adapter using the <a href="../trials/#Weber.estimate"><code>estimate</code></a> function, which returns both the mean and measurement error.</p>
-<p><a id='Custom-Adaptive-Track-Algorithms-1'></a></p>
-<h1 id="custom-adaptive-track-algorithms">Custom Adaptive Track Algorithms</h1>
+<p><a id='Reporting-the-Threshold-1'></a></p>
+<h1 id="reporting-the-threshold">Reporting the Threshold</h1>
+<pre><code class="julia"># define this string during experiment setup
+# when we know what block we're on...
+
+function threshold_report()
+  mean,sd = estimate(adapter)
+  thresh = round(mean,3)*standard_freq
+  thresh_sd = round(sd,3)*standard_freq
+
+  # define this string during run time when we know
+  # what the threshold estimate is.
+  &quot;Threshold $(thresh)Hz (SD: $thresh_sd)\n&quot;*
+  &quot;Hit spacebar to continue...&quot;
+end
+
+addbreak(moment(display,threshold_report,clean_whitespace=false),
+         await_response(iskeydown(key&quot;:space:&quot;)))
+</code></pre>
+
+<p>You can report the threshold at the end of an experiment using <a href="../trials/#Weber.estimate"><code>estimate</code></a>, as above, but this isn't strictly necessary. The tricky part is to make sure you find the estimate <em>after</em> trials have been run (during run time).</p>
+<p><a id='Custom-Adaptive-Tracking-Algorithms-1'></a></p>
+<h1 id="custom-adaptive-tracking-algorithms">Custom Adaptive Tracking Algorithms</h1>
 <p>You can define your own adaptive tracking algorithms by defining a new type that is a child of <code>Adapter</code>. You must define an appropriate function to generate the adapter, and methods of <a href="../trials/#Weber.update!"><code>Weber.update!</code></a>, <a href="../trials/#Weber.estimate"><code>estimate</code></a> and <a href="../trials/#Weber.delta"><code>delta</code></a> for this type. Strictly speaking estimate need not be implemented, if you choose not to make use of this method in your experiment.</p>
               
             </div>
