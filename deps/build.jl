@@ -23,7 +23,7 @@ portaudio = "UNKNOWN"
     zipfile = joinpath(downloaddir,library*".zip")
     try
       download(uri,zipfile)
-      run(`7z x $zipfile -y -o$libdir`)
+      run(`$(joinpath(JULIA_HOME, "7z.exe")) x $zipfile -y -o$libdir`)
       for lib in filter(s -> endswith(s,".dll"),readdir(libdir))
         cp(joinpath(libdir,lib),joinpath(bindir,lib))
       end
