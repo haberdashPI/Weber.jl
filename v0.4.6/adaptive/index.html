@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <meta name="author" content="haberdashPI">
+  <link rel="shortcut icon" href="../img/favicon.ico">
+  <title>Adaptive Tracks - Weber.jl</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="../css/highlight.css">
+  <link href="../assets/Documenter.css" rel="stylesheet">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Adaptive Tracks";
+    var mkdocs_page_input_path = "adaptive.md";
+    var mkdocs_page_url = "/adaptive/";
+  </script>
+  
+  <script src="../js/jquery-2.1.1.min.js"></script>
+  <script src="../js/modernizr-2.8.3.min.js"></script>
+  <script type="text/javascript" src="../js/highlight.pack.js"></script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href=".." class="icon icon-home"> Weber.jl</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="..">Introduction</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">User Guide</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../start/">Getting Started</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../trial_guide/">Trial Creation</a>
+                </li>
+                <li class=" current">
+                    
+    <a class="current" href="./">Adaptive Tracks</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l3"><a href="#using-an-adaptive-track">Using an Adaptive Track</a></li>
+    
+        <ul>
+        
+            <li><a class="toctree-l4" href="#creating-the-adapter">Creating the Adapter</a></li>
+        
+            <li><a class="toctree-l4" href="#generating-stimuli">Generating Stimuli</a></li>
+        
+            <li><a class="toctree-l4" href="#collecting-responses">Collecting Responses</a></li>
+        
+            <li><a class="toctree-l4" href="#generating-trials">Generating Trials</a></li>
+        
+        </ul>
+    
+
+    <li class="toctree-l3"><a href="#reporting-the-threshold">Reporting the Threshold</a></li>
+    
+
+    <li class="toctree-l3"><a href="#custom-adaptive-tracking-algorithms">Custom Adaptive Tracking Algorithms</a></li>
+    
+
+    </ul>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../advanced/">Advanced Experiments</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../extend/">Extending Weber</a>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Reference</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../experiment/">Experiments</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../trials/">Trials</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../sound/">Sound</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../video/">Video</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../event/">Events</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../extend_ref/">Extensions</a>
+                </li>
+    </ul>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="..">Weber.jl</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="..">Docs</a> &raquo;</li>
+    
+      
+        
+          <li>User Guide &raquo;</li>
+        
+      
+    
+    <li>Adaptive Tracks</li>
+    <li class="wy-breadcrumbs-aside">
+      
+        <a href="https://github.com/haberdashPI/Weber.jl/edit/master/docs/adaptive.md"
+          class="icon icon-github"> Edit on GitHub</a>
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <p>Some experiments require the use of an adaptive adjustment of a stimulus based on participant responses. There are several basic adaptive tracking algorithms built into Weber, and you can also implement your own as well.</p>
+<p><a id='Using-an-Adaptive-Track-1'></a></p>
+<h1 id="using-an-adaptive-track">Using an Adaptive Track</h1>
+<p>To use an adaptive track in your experiment, you need to make use of some of the <a href="../advanced/">advanced features</a> of Weber. In this section we'll walk through the necessary steps, using a simple frequency discrimination experiment.</p>
+<p>In this experiment, on each trial, listeners hear a low and a high tone, separated in frequency by an adaptively adjusted delta. Their task is to indicate which tone is lower, and the delta is adjusted to determine the difference in frequency at which listeners respond with 79% accuracy. The entire example code is provided below. </p>
+<pre><code class="julia">using Weber
+
+version = v&quot;0.0.2&quot;
+sid,trial_skip,adapt = @read_args(&quot;Frequency Discrimination ($version).&quot;,
+                                  adapt=[:levitt,:bayes])
+
+const ms = 1/1000
+const atten_dB = 30
+const n_trials = 60
+const feedback_delay = 750ms
+
+isresponse(e) = iskeydown(e,key&quot;p&quot;) || iskeydown(e,key&quot;q&quot;)
+
+const standard_freq = 1000
+const standard = attenuate(ramp(tone(standard_freq,0.1)),atten_dB)
+function one_trial(adapter)
+  first_lower = rand(Bool)
+  resp = response(adapter,key&quot;q&quot; =&gt; &quot;first_lower&quot;,key&quot;p&quot; =&gt; &quot;second_lower&quot;,
+                  correct=(first_lower ? &quot;first_lower&quot; : &quot;second_lower&quot;))
+
+  signal() = attenuate(ramp(tone(standard_freq*(1-delta(adapter)),0.1)),atten_dB)
+  stimuli = first_lower? [signal,standard] : [standard,signal]
+
+  [moment(feedback_delay,play,stimuli[1]),
+   show_cross(),
+   moment(0.9,play,stimuli[2]),
+   moment(0.1 + 0.3,display,
+          &quot;Was the first [Q] or second sound [P] lower in pitch?&quot;),
+   resp,await_response(isresponse)]
+end
+
+experiment = Experiment(
+  skip=trial_skip,
+  columns = [
+    :sid =&gt; sid,
+    :condition =&gt; &quot;example&quot;,
+    :version =&gt; version,
+    :standard =&gt; standard_freq
+  ]
+)
+
+setup(experimerntent) do
+  addbreak(moment(record,&quot;start&quot;))
+
+  addbreak(instruct(&quot;&quot;&quot;
+
+    On each trial, you will hear two beeps. Indicate which of the two beeps you
+heard was lower in pitch. Hit 'Q' if the first beep was lower, and 'P' if the
+second beep was lower.
+&quot;&quot;&quot;))
+
+  if adapt == :levitt
+    adapter = levitt_adapter(down=3,up=1,min_delta=0,max_delta=1,
+                             big=2,little=sqrt(2),mult=true)
+  else
+    adapter = bayesian_adapter(min_delta = 0,max_delta = 0.95)
+  end
+
+  @addtrials let a = adapter
+    for trial in 1:n_trials
+      addtrial(one_trial(a))
+    end
+
+    # define this string during experiment setup
+    # when we know what block we're on...
+
+    function threshold_report()
+      mean,sd = estimate(adapter)
+      thresh = round(mean,3)*standard_freq
+      thresh_sd = round(sd,3)*standard_freq
+
+      # define this string during run time when we know
+      # what the threshold estimate is.
+      &quot;Threshold $(thresh)Hz (SD: $thresh_sd)\n&quot;*
+      &quot;Hit spacebar to continue...&quot;
+    end
+
+    addbreak(moment(display,threshold_report,clean_whitespace=false),
+             await_response(iskeydown(key&quot;:space:&quot;)))
+  end
+
+end
+
+run(experimerntent)
+</code></pre>
+
+<p>In what follows we'll walk through the parts of this code unique to creating an adaptive track. For more details on the basics of creating an experiment see <a href="../start/">Getting Started</a>.</p>
+<p><a id='Creating-the-Adapter-1'></a></p>
+<h2 id="creating-the-adapter">Creating the Adapter</h2>
+<pre><code class="julia">if adapt == :levitt
+  adapter = levitt_adapter(down=3,up=1,min_delta=0,max_delta=1,
+                           big=2,little=sqrt(2),mult=true)
+else
+  adapter = bayesian_adapter(min_delta = 0,max_delta = 0.95)
+end
+</code></pre>
+
+<p>The present experiment can be run using either of two built-in adapters: <a href="../trials/#Weber.levitt_adapter"><code>levitt_adapter</code></a> and <a href="../trials/#Weber.bayesian_adapter"><code>bayesian_adapter</code></a>. An adapter is the object you create to run an adaptive track, and defines the particular algorithm that will be used to select a new delta on each trial, based on the responses to previous deltas. </p>
+<p><a id='Generating-Stimuli-1'></a></p>
+<h2 id="generating-stimuli">Generating Stimuli</h2>
+<pre><code class="julia">const standard = attenuate(ramp(tone(standard_freq,0.1)),atten_dB)
+...
+signal() = attenuate(ramp(tone(1000*(1-delta(adapter)),0.1)),atten_dB)
+stimuli = first_lower? [signal,standard] : [standard,signal]
+</code></pre>
+
+<p>The two stimuli presented to the listener are the standard (always at 1kHz) and the signal (1kHz - delta). The standard is always the same, and so can be generated in advance before the experiment begins. The signal must be generated during the experiment, on each trial. The next delta is queried from the adapter using <a href="../trials/#Weber.delta"><code>delta</code></a>. The signal is defined as a function that takes no arguments. When passed a function, <a href="../sound/#Weber.play"><code>play</code></a> generates the stimulus defined by that function at runtime, rather than <a href="../start/#setup_time-1">setup time</a>, which is precisely what we want in this case.</p>
+<p><a id='Collecting-Responses-1'></a></p>
+<h2 id="collecting-responses">Collecting Responses</h2>
+<pre><code class="julia">resp = response(adapter,key&quot;q&quot; =&gt; &quot;first_lower&quot;,key&quot;p&quot; =&gt; &quot;second_lower&quot;,
+                  correct=(first_lower ? &quot;first_lower&quot; : &quot;second_lower&quot;))
+</code></pre>
+
+<p>To update the adapter after each response, a special method of the <a href="../trials/#Weber.response"><code>response</code></a> function is used, which takes the adapter as its first argument. We also must indicate which response is correct by setting <code>correct</code> appropriately.</p>
+<p><a id='Generating-Trials-1'></a></p>
+<h2 id="generating-trials">Generating Trials</h2>
+<pre><code class="julia">@addtrials let a = adapter
+  for trial in 1:n_trials
+    addtrial(one_trial(a))
+  end
+  addbreak(moment(display,() -&gt; &quot;Estimated threshold: $(estimate(adapter)[1])\n&quot;,
+                                &quot;Hit spacebar to exit.&quot;),
+           await_response(iskeydown(key&quot;:space:&quot;)))
+end
+</code></pre>
+
+<p>To generate the trials, which depend on the run-time state of the adapter, we use the <a href="../trials/#Weber.@addtrials"><code>@addtrials</code></a> macro. Any time the behavior of listeners in one trial influences subsequent trials, this macro will be necessary. In this case it is used to signal to Weber that the trials added inside the loop depend on the run-time state of the adapter.</p>
+<p>After all trials have been run, we report the threshold estimated by the adapter using the <a href="../trials/#Weber.estimate"><code>estimate</code></a> function, which returns both the mean and measurement error.</p>
+<p><a id='Reporting-the-Threshold-1'></a></p>
+<h1 id="reporting-the-threshold">Reporting the Threshold</h1>
+<pre><code class="julia"># define this string during experiment setup
+# when we know what block we're on...
+
+function threshold_report()
+  mean,sd = estimate(adapter)
+  thresh = round(mean,3)*standard_freq
+  thresh_sd = round(sd,3)*standard_freq
+
+  # define this string during run time when we know
+  # what the threshold estimate is.
+  &quot;Threshold $(thresh)Hz (SD: $thresh_sd)\n&quot;*
+  &quot;Hit spacebar to continue...&quot;
+end
+
+addbreak(moment(display,threshold_report,clean_whitespace=false),
+         await_response(iskeydown(key&quot;:space:&quot;)))
+</code></pre>
+
+<p>You can report the threshold at the end of an experiment using <a href="../trials/#Weber.estimate"><code>estimate</code></a>, as above, but this isn't strictly necessary. The tricky part is to make sure you find the estimate <em>after</em> trials have been run (during run time).</p>
+<p><a id='Custom-Adaptive-Tracking-Algorithms-1'></a></p>
+<h1 id="custom-adaptive-tracking-algorithms">Custom Adaptive Tracking Algorithms</h1>
+<p>You can define your own adaptive tracking algorithms by defining a new type that is a child of <code>Adapter</code>. You must define an appropriate function to generate the adapter, and methods of <a href="../trials/#Weber.update!"><code>Weber.update!</code></a>, <a href="../trials/#Weber.estimate"><code>estimate</code></a> and <a href="../trials/#Weber.delta"><code>delta</code></a> for this type. Strictly speaking estimate need not be implemented, if you choose not to make use of this method in your experiment.</p>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../advanced/" class="btn btn-neutral float-right" title="Advanced Experiments">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../trial_guide/" class="btn btn-neutral" title="Trial Creation"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+	  
+        </div>
+      </div>
+
+    </section>
+    
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+          <a href="https://github.com/haberdashPI/Weber.jl" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
+      
+      
+        <span><a href="../trial_guide/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../advanced/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+    <script src="../js/theme.js"></script>
+      <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+      <script src="../assets/mathjaxhelper.js"></script>
+
+</body>
+</html>
