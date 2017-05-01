@@ -1,5 +1,5 @@
-MAJOR_VERSION = 2
-MINOR_VERSION = 2.0
+MAJOR_VERSION = 3
+MINOR_VERSION = 1.0
 DEBUG = "no"
 $(info [Debug: ${DEBUG}])
 

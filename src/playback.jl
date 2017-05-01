@@ -1,6 +1,7 @@
 export play, stream, stop, setup_sound, current_sound_latency, resume_sounds,
   pause_sounds
-const weber_sound_version = 2
+
+const weber_sound_version = 3
 
 let
   version_in_file =
@@ -48,7 +49,7 @@ const sound_cleanup_wait = 2
 # playing. Whenever a new sound is registered it removes sounds that are no
 # longer playing. This is called internally by all methods that send requests to
 # play sounds to the weber-sound library (implemented in weber_sound.c)
-function register_sound(current::Sound,done_at::Float64)
+function register_sound(current::Sound,done_at::Float64,wait=sound_cleanup_wait)
   setstate = sound_setup_state
   setstate.playing[current] = done_at
   for s in keys(setstate.playing)
@@ -172,7 +173,7 @@ function current_sound_latency()
 end
 
 """
-    play(x;[time=0.0],[channel=0])
+    play(x;[time=0.0s],[channel=0])
 
 Plays a sound (created via [`sound`](@ref)).
 
@@ -186,7 +187,7 @@ appropriate channel is selected for you. However, pausing and resuming of
 sounds occurs on a per channel basis, so if you plan to pause a specific
 sound, you can do so by specifying its channel.
 
-If `time > 0`, the sound plays at the given time (in seconds from epoch, or
+If `time > 0s`, the sound plays at the given time (in seconds from epoch, or
 seconds from experiment start if an experiment is running), otherwise the sound
 plays as close to right now as is possible.
 """
@@ -269,10 +270,10 @@ type Streamer
   next_stream::Float64
   channel::Int
   stream::Stream
+  cache::Nullable{Sound}
+  done_at::Float64
+  start_at::Float64
 end
-
-addstream(streamers::Dict{Int,Streamer},channel::Int,stream::Stream) =
-  streamers[channel] = Streamer(tick(),chanel,stream)
 
 function setup_streamers()
   streamers[-1] = Streamer(0.0,0,nothing,nothing)
@@ -302,24 +303,41 @@ end
 Play can also be used to present a continuous stream of sound.  In this case,
 the channel defaults to channel 1 (there is no automatic selection of channels
 for streams). Streams are usually created by specifying an infinite length
-during sound creation using [`tone`](@ref), [`noise`](@ref),
+during sound generation using [`tone`](@ref), [`noise`](@ref),
 [`harmonic_complex`](@ref) or [`audible`](@ref).
 """
-function play{R}(stream::Stream{R},channel::Int=1)
+function play{R}(stream::AbstractStream{R},time::Float64=0.0,channel::Int=1)
   @assert 1 <= channel <= sound_setup_state.num_channels
   if R != ustrip(samplerate())
     error("Sample rate of sound ($(R*Hz)) and audio playback ($(samplerate()))",
-          " do not match. Please resample this sound by calling `resample` ",
-          "or `sound`.")
+          " do not match. Please resample this sound by calling `resample`.")
   end
 
-  if in_experiment()
-    addstream(data(get_experiment()).streamers,channel,stream)
-  else
-    if isempty(streamers)
-      setup_streamers()
+  streamers = in_experiment() ? data(get_experiment()).streamers : streamers
+
+  if channel in streamers
+    streamer = steamers[channel]
+    unit_s = sound_setup_state.stream_unit / R
+
+    if time > 0
+      if streamer.done_at < time
+        offset = time - streamer.done_at
+        cat_stream = [limit(streamer.stream,offset*s); stream]
+        streamers[channel] =
+          Streamer(tick(),channel,cat_stream,streamer.done_at + unit_s,-1)
+      else
+        warn("Requested timing of stream cannot be achieved. ",
+             "With the current streaming settings you cannot request playback ",
+             "more than $(round(1000*unit_s,2))ms beforehand.",
+             moment_trace_string())
+      end
+    else
+      streamers[channel] = Streamer(tick(),chanel,stream,
+                                    streamer.done_at + unit_s,-1)
     end
-    addstream(streamers,channel,stream)
+  else
+    streamers[channel] = Streamer(tick(),chanel,stream,
+                                  Weber.tick()+unit_s,-1)
   end
 end
 
@@ -339,31 +357,35 @@ function stop(channel::Int)
 end
 
 function process(streamer::Streamer)
-  if done(stream)
+  if done(streamer.stream) && isnull(streamer.cache)
     stop(streamer.channel)
     return
   end
 
-  # call sound twice, once to create the stream, and once to regularize
-  # it to the format required for playback
-  x = playable(sound(stream,sound_setup_state.stream_unit))
-  done_at = -1.0
+  toplay = if !isnull(streamer.cache) get(streamer.cache) else
+    x = sound(streamer.stream,sound_setup_state.stream_unit)
+    result = playable(x)
+    streamer.cache = Nullable(result)
+    result
+  end
 
   done_at = ccall((:ws_play_next,weber_sound),Cdouble,
-                  (Cdouble,Cint,Ref{WS_Sound},Ptr{Void}),
-                  tick(),streamer.channel-1,WS_Sound(x),
+                  (Cdouble,Cdouble,Cint,Ref{WS_Sound},Ptr{Void}),
+                  tick(),streamer.start_at,streamer.channel-1,WS_Sound(toplay),
                   sound_setup_state.state)
 
   ws_if_error("While playing sound")
   if done_at < 0
     # sound not ready to be queued for playing, wait a bit and try again
-    streamer.next_stream += ustrip(0.05duration(x))
+    streamer.next_stream += ustrip(0.05duration(toplay))
   else
     # sound was queued to play, wait until this queued sound actually
     # starts playing to queue the next stream unit
-    register_sound(x,done_at)
-    streamer.next_stream += ustrip(0.75duration(x))
+    register_sound(toplay,done_at,4sound_setup_state.stream_unit / samplerate())
+    streamer.next_stream += ustrip(0.75duration(toplay))
     streamer.state = next_state
+    streamer.done_at = done_at
+    streamer.cache = Nullable()
   end
 end
 

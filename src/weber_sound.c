@@ -258,7 +258,7 @@ int ws_play(double now,double playat,int channel,Sound* toplay,WsState* state){
 }
 
 EXPORT
-double ws_play_next(double now,int channel,Sound* toplay,WsState* state){
+double ws_play_next(double now,double at,int channel,Sound* toplay,WsState* state){
   // play_next uses a spearate set of channels
   channel = state->channels->len/2 + channel;
 
@@ -272,7 +272,7 @@ double ws_play_next(double now,int channel,Sound* toplay,WsState* state){
   if(!sounds->data[sounds->producer_index]){
     PaTime pa_now = Pa_GetStreamTime(state->stream);
     double done_at = sounds->done_at + toplay->len*state->channels->samplelen;
-    TimedSound* sound = newTimedSound((TimedSound*)malloc(sizeof(TimedSound)),toplay,-1);
+    TimedSound* sound = newTimedSound((TimedSound*)malloc(sizeof(TimedSound)),toplay,at);
     sounds->data[sounds->producer_index] = sound;
 
     sounds->producer_index++;
