@@ -532,9 +532,9 @@ end
 
 function prepare!(m::PlayFunctionMoment,last_moment::Float64)
   if !isinf(last_moment)
-    play(playable(sound(m.fn())),last_moment,m.channel)
+    play(playable(m.fn()),last_moment,m.channel)
   else
-    m.prepared = Nullable(playable(sound(m.fn())))
+    m.prepared = Nullable(playable(m.fn()))
   end
 end
 

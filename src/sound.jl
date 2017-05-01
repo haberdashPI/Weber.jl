@@ -397,7 +397,8 @@ inHz{N <: Number}(typ::Type{N},x::Freq{N}) = inHz(x)
 
 inseconds{N}(x::SampleQuant{N},R) = (ustrip(x) / R)*s
 inseconds(x::Quantity,R) = uconvert(s,x)
-function inseconds(x::Number,R)
+inseconds(x::Number,R) = inseconds(x)
+function inseconds(x::Number)
   warn("Unitless value, assuming seconds. Append s, ms or samples to avoid",
        " this warning (e.g. 500ms)",
        reduce(*,"",map(x -> string(x)*"\n",stacktrace())))
