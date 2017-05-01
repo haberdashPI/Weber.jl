@@ -155,6 +155,14 @@ function sound(cs::CatStream,len::Int)
   end
 end
 
+function playable(s::AbstractStream{R,T},cache=true,sample_rate=samplerate())
+  if ustrip(sample_rate) != R
+    error("Cannot convert a stream at sample rate $(R*Hz) to $sample_rate. ",
+          "Create a stream at $sample_rate instead.")
+  end
+  s
+end
+
 """
 For a stream, `fn` will be applied to each unit of sound as it is requested
 from the stream.

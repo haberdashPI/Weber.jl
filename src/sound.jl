@@ -426,9 +426,8 @@ creating a new sound for the same object.
 
 !!! note "Called Implicitly"
 
-    This function is normally called implicitly in a call to `play(x)`, where `x`
-    is any object that can be turned into a sound, so it need not normally be
-    called directly.
+    This function is normally called implicitly in a call to `play(x)`, so it
+    need not normally be called directly.
 
 """
 function sound{T <: Number,N}(x::Array{T,N},cache=true;
@@ -465,16 +464,26 @@ function sound{R}(x::Sound{R},cache=true;sample_rate=R*Hz)
 end
 
 """
-    playable(x::Sound,[cache=true])
+    playable(x,[cache=true],[sample_rate=samplerate()])
 
-Regularize the format of an existing sound.
+Prepare a sound or stream to be played.
 
-This will ensure the sound is in the format required by [`play`](@ref).
-This need not be called explicitly, as play will call it for you if
-need be.
+A call to `playable` will ensure the sound is in the format required by
+[`play`](@ref).  This automatically calls [`sound`](@ref) on `x` if it not
+already appear to be a sound or a stream.
+
+!!! note "Called Implicitly"
+
+    This need not be called explicitly, as play will call it for you, if need be.
 """
 
-function playable{R,T,N}(x::Sound{R,T,N},cache=true)
+function playable(x,cache=true,sample_rate=samplerate())
+  with_cache(cache,x) do
+    playable(sound(x,sample_rate=sample_rate),false,sample_rate)
+  end
+end
+
+function playable{R,T,N}(x::Sound{R,T,N},cache=true,sample_rate)
   sample_rate=samplerate()
   with_cache(cache,x) do
     bounded = max(min(x.data,typemax(Q0f15)),typemin(Q0f15))

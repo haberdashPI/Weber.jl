@@ -353,37 +353,35 @@ the previous moment, running the specified function.
 
 The function `fn` is passed the arguments specified in `args` and `keys`.
 """
-function moment(delta_t::Number,fn::Function,args...;keys...)
+function moment(delta_t::Number=0.0s,fn::Function=()->nothing,args...;keys...)
   precompile(fn,map(typeof,args))
+  delta_t = ustrip(inseconds(delta_t))
   TimedMoment(delta_t,() -> fn(args...;keys...),stacktrace()[2:end])
 end
 
 function moment(fn::Function,args...;keys...)
-  moment(0.0,fn,args...;keys...)
+  moment(0.0s,fn,args...;keys...)
 end
-
-moment(delta_t::Number) = TimedMoment(delta_t,()->nothing,stacktrace()[2:end])
-moment() = TimedMoment(0,()->nothing,stacktrace()[2:end])
 
 const PlayFunction = typeof(play)
 function moment(delta_t::Number,::PlayFunction,x;channel=0)
-  PlayMoment(delta_t,playable(sound(x)),channel,stacktrace()[2:end])
+  PlayMoment(ustrip(inseconds(delta_t)),playable(x),channel,stacktrace()[2:end])
 end
 function moment(delta_t::Number,::PlayFunction,fn::Function;channel=0)
-  PlayFunctionMoment(delta_t,fn,channel,stacktrace()[2:end])
+  PlayFunctionMoment(ustrip(inseconds(delta_t)),fn,channel,stacktrace()[2:end])
 end
 
 const StreamFunction = typeof(stream)
 function moment(delta_t::Number,::StreamFunction,itr,channel::Int)
-  StreamMoment(delta_t,itr,channel,stacktrace()[2:end])
+  StreamMoment(ustrip(inseconds(delta_t)),itr,channel,stacktrace()[2:end])
 end
 
 const DisplayFunction = typeof(display)
 function moment(delta_t::Number,::DisplayFunction,x;keys...)
-  DisplayMoment(delta_t,visual(x;keys...),stacktrace()[2:end])
+  DisplayMoment(ustrip(inseconds(delta_t)),visual(x;keys...),stacktrace()[2:end])
 end
 function moment(delta_t::Number,::DisplayFunction,fn::Function;keys...)
-  DisplayFunctionMoment(delta_t,fn,keys,stacktrace()[2:end])
+  DisplayFunctionMoment(ustrip(inseconds(delta_t)),fn,keys,stacktrace()[2:end])
 end
 
 """

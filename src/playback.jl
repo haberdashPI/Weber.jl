@@ -190,7 +190,7 @@ If `time > 0`, the sound plays at the given time (in seconds from epoch, or
 seconds from experiment start if an experiment is running), otherwise the sound
 plays as close to right now as is possible.
 """
-function play(x;time=0.0,channel=0)
+function play(x;time=0.0s,channel=0)
   if !isready(sound_setup_state)
     setup_sound()
   end
@@ -201,11 +201,7 @@ function play(x;time=0.0,channel=0)
           "`addtrial(moment(play,my_sound))`).")
   end
   warn("Calling play outside of an experiment moment.")
-  _play(x,time,channel)
-end
-
-function _play(x,time=0.0,channel=0)
-  play(playable(sound(x)),time,channel)
+  play(playable(x),ustrip(inseconds(time)),channel)
 end
 
 immutable WS_Sound
@@ -218,7 +214,7 @@ function play{R}(x::Sound{R,Q0f15,2},time::Float64=0.0,channel::Int=0)
   if R != ustrip(samplerate())
     error("Sample rate of sound ($(R*Hz)) and audio playback ($(samplerate()))",
           " do not match. Please resample this sound by calling `resample` ",
-          "or `sound`.")
+          "or `playable`.")
   end
   if !(1 <= channel <= sound_setup_state.num_channels || channel <= 0)
     error("Channel $channel does not exist. Must fall between 1 and",
