@@ -516,7 +516,15 @@ type ExpandingMoment <: AbstractMoment
   update_offset::Bool
 end
 delta_t(m::ExpandingMoment) = 0.0
+required_delta_t(m::ExpandingMoment) = Inf
 can_continue_sequence(m::ExpandingMoment) = false
+
+immutable ExpandingMomentStub <: AbstractMoment
+end
+const expanding_stub = ExpandingMomentStub()
+delta_t(m::ExpandingMomentStub) = 0.0
+required_delta_t(m::ExpandingMomentStub) = Inf
+can_continue_sequence(m::ExpandingMomentStub) = false
 
 type EmptyMoment <: AbstractMoment end
 empty_moment = EmptyMoment()

@@ -24,6 +24,12 @@ ks,vs,_ = find_timing() do
 end
 prepare_timing = Dict(k => v for (k,v) in zip(ks,vs))
 
+expanding_prepare,_,_ = find_timing() do
+  @addtrials let test = 1
+    addtrial(TestPrepareMoment(:a))
+  end
+end
+
 type TestPrepareError <: Weber.SimpleMoment end
 function handle(exp::Weber.Experiment,queue::Weber.MomentQueue,
                 moment::TestPrepareError,x)
@@ -44,12 +50,12 @@ prepare_noerror,_,_ = find_timing() do
   addtrial(moment(0.5),TestPrepareError())
 end
 
-
 @testset "Moment Preparation" begin
   @test :a in keys(prepare_timing)
   @test :d in keys(prepare_timing)
   @test :e in keys(prepare_timing)
   @test :f in keys(prepare_timing)
+  @test :a in expanding_prepare
   @test abs(prepare_timing[:b_post] - prepare_timing[:b] - 0.5) < 0.25
   @test abs(prepare_timing[:c_post] - prepare_timing[:c] - 0.5) < 0.25
   @test_throws TestPrepareException cause_prepare_error1()

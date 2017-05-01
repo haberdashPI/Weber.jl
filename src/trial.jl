@@ -652,9 +652,15 @@ function handle(exp::Experiment,q::MomentQueue,m::ExpandingMoment,x)
     for x in m.data
       unshift!(q,x)
     end
+    unshift!(q,expanding_stub)
   else
     dequeue!(q)
   end
+  true
+end
+
+function handle(exp::Experiment,q::MomentQueue,m::ExpandingMomentStub,x)
+  dequeue!(q)
   true
 end
 
