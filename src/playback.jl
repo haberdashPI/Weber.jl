@@ -202,7 +202,7 @@ function play(x;time=0.0s,channel=0)
           "`addtrial(moment(play,my_sound))`).")
   end
   warn("Calling play outside of an experiment moment.")
-  play(playable(x),ustrip(inseconds(time)),channel)
+  play(playable(x),ustrip(inseconds(time,samplerate(x))),channel)
 end
 
 immutable WS_Sound

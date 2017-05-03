@@ -12,14 +12,43 @@ Sampled at 44100 Hz
 
 @testset "Sound Indexing" begin
   @test isapprox(duration(x[0s .. 0.5s,:]),0.5s; atol = 1/samplerate(x))
-  @test isapprox(duration(x[0.5s .. end,:]),0.5s; atol = 1/samplerate(x))
+  @test isapprox(duration(x[0.5s .. ends,:]),0.5s; atol = 1/samplerate(x))
+
   @test x[:,:left][0s .. 0.5s] == x[0s .. 0.5s,:left]
   @test x[:,:left] == x[:,:right]
+  @test x[0.5s .. 0.75s] == x[0.5s .. 0.75s,:]
+  @test x[0.5s .. ends] == x[0.5s .. ends,:]
+  mylen = nsamples(x[0.1s .. 0.6s])
+  newx = copy(x)
+  @test (newx[0.1s .. 0.6s] = x[50:(50+mylen-1),:]) == x[50:(50+mylen-1),:]
+  @test (newx[0.1s .. 0.6s,:] = x[50:(50+mylen-1),:]) == x[50:(50+mylen-1),:]
+  myend = (0.1s + duration(x[0.5s .. ends]))
+  @test (newx[0.5s .. ends] = x[0.1s .. myend]) == x[0.1s .. myend]
+  @test (newx[0.5s .. ends,:] = x[0.1s .. myend,:]) == x[0.1s .. myend,:]
+  @test (newx[0.1s .. 0.6s,:] = x[0.2s .. 0.700005s,:]) == x[0.2s .. 0.700005s,:]
+
   @test_throws BoundsError x[0.5s .. 2s,:]
   @test_throws BoundsError x[-0.5s .. 0.5s,:]
-  @test_throws BoundsError x[-0.5s .. end,:]
+  @test_throws BoundsError x[-0.5s .. ends,:]
   @test_throws BoundsError x[:,:doodle]
-  @test nsamples(x[0s .. 0.5s,:]) + nsamples(x[0.5s .. end,:]) == nsamples(x)
+  @test_throws BoundsError x[0.5s .. 2s]
+  @test_throws BoundsError x[-0.5s .. 0.5s]
+  @test_throws BoundsError x[-0.5s .. ends]
+  @test_throws BoundsError x[0.5s .. 2s,:] = 1:10
+  @test_throws BoundsError x[-0.5s .. 0.5s,:] = 1:10
+  @test_throws BoundsError x[-0.5s .. ends,:] = 1:10
+  @test_throws BoundsError x[:,:doodle] = 1:10
+  @test_throws BoundsError x[0.5s .. 2s] = 1:10
+  @test_throws BoundsError x[-0.5s .. 0.5s] = 1:10
+  @test_throws BoundsError x[-0.5s .. ends] = 1:10
+  @test_throws DimensionMismatch x[0.5s .. 0.6s,:] = 1:10
+  @test_throws DimensionMismatch x[0.2s .. 0.5s,:] = 1:10
+  @test_throws DimensionMismatch x[0.2s .. ends,:] = 1:10
+  @test_throws DimensionMismatch x[0.5s .. 0.6s] = 1:10
+  @test_throws DimensionMismatch x[0.5s .. 0.6s] = 1:10
+  @test_throws DimensionMismatch x[0.5s .. ends] = 1:10
+
+  @test nsamples(x[0s .. 0.5s,:]) + nsamples(x[0.5s .. ends,:]) == nsamples(x)
   strbuff = IOBuffer()
   show(strbuff,playable(x))
   @test show_str == String(strbuff)
