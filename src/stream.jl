@@ -79,7 +79,7 @@ function audible(fn::Function,len=Inf,asseconds=true;
   if ustrip(len) < Inf
     n = ustrip(insamples(len,sample_rate_Hz))
     R = ustrip(sample_rate_Hz)
-    Sound{R,eltype,1}(!asseconds ? fn(1:n) : fn((1:n)./R))
+    Sound{R,eltype,1}(!asseconds ? fn(1:n) : fn(((1:n)-1)./R))
   else
     R = ustrip(sample_rate_Hz)
     Stream(R,eltype,!asseconds ? fn : i -> fn((i-1)./R))
@@ -155,7 +155,7 @@ function sound(cs::CatStream,len::Int)
   end
 end
 
-function playable(s::AbstractStream{R,T},cache=true,sample_rate=samplerate())
+function playable{R}(s::AbstractStream{R},cache=true,sample_rate=samplerate())
   if ustrip(sample_rate) != R
     error("Cannot convert a stream at sample rate $(R*Hz) to $sample_rate. ",
           "Create a stream at $sample_rate instead.")
@@ -235,6 +235,11 @@ function sound{R,T}(os::OpStream{R,T},len::Int)
   end
 end
 
+function audiofn(fn::Function,stream::AbstractStream)
+  soundop(stream,stream) do x,_
+    fn(x)
+  end
+end
 
 leftright{R,T}(x::AbstractStream{R,T},y::AbstractStream{R,T}) =
   soundop(leftright,x,y)
