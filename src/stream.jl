@@ -186,8 +186,6 @@ end
 #   end
 # end
 
-# TODO: opstream can be used to create stereo streams
-
 const emptyfn = () -> nothing
 type OpStream{R,T} <: AbstractStream{R,T}
   op::Function

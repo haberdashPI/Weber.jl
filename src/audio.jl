@@ -304,7 +304,9 @@ function attenuate(x::Sound,atten_dB)
 	10^(-atten_dB/20) * x / rms(x)
 end
 function attenuate(x::AbstractStream,atten_dB;time_constant=1s)
-	10^(-atten_dB/20) * soundop(./,x,rms(x,time_constant))
+	audiofn(soundop(./,x,rms(x,time_constant))) do x
+    10^(-atten_dB/20) * x
+  end
 end
 
 rms(x::Sound) = sqrt(mean(x.^2))
