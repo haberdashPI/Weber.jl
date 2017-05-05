@@ -37,7 +37,7 @@ mult{R}(xs::Union{Audible{R},Array}...) = soundop(.*,xs...)
 Creates period of silence of the given length (in seconds).
 """
 function silence(length;sample_rate=samplerate())
-  audible(t -> zeros(t),length,sample_rate=sample_rate)
+  audible((t::Range) -> zeros(t),length,sample_rate=sample_rate)
 end
 
 """
@@ -55,7 +55,7 @@ in volume halfway through to a softer level.
 
 """
 function envelope(mult,length;sample_rate=samplerate())
-  audible(t -> mult*ones(t),length,sample_rate=sample_rate)
+  audible((t::Range) -> mult*ones(t),length,sample_rate=sample_rate)
 end
 
 """
@@ -67,7 +67,8 @@ You can create an infinite stream of noise by passing a length of Inf, or
 leaving out the length entirely.
 """
 function noise(len=Inf;sample_rate=samplerate(),rng=RandomDevice())
-  audible(i -> 1.0-2.0rand(rng,length(i)),len,false,sample_rate=sample_rate)
+  audible((i::UnitRange{Int}) -> 1.0-2.0rand(rng,length(i)),len,
+          false,sample_rate=sample_rate)
 end
 
 """
@@ -80,7 +81,8 @@ out the length entirely.
 """
 function tone(freq,len=Inf;sample_rate=samplerate(),phase=0.0)
   freq_Hz = ustrip(inHz(freq))
-  audible(t -> sin.(2π*t * freq_Hz + phase),len,sample_rate=sample_rate)
+  audible((t::FloatRange{Float64}) -> sin.(2π*t * freq_Hz + phase),len,
+          sample_rate=sample_rate)
 end
 
 # function next{R,N}(ts::ToneStream{R,N},i::Int)
@@ -124,7 +126,7 @@ function harmonic_complex(f0,harmonics,amps,len=Inf;
   cycle = complex_cycle(inHz(f0),harmonics,amps,
                         inHz(Int,sample_rate),phases)
   N = size(cycle,1)
-  audible(i -> cycle[(i.-1) .% N + 1],len,false,sample_rate=sample_rate)
+  audible((i::UnitRange{Int}) -> cycle[(i.-1) .% N + 1],len,false,sample_rate=sample_rate)
 end
 
 """
@@ -196,7 +198,7 @@ function ramp{R}(x::Sound{R},len=5ms)
   end
 
   n = nsamples(x)
-	r = audible(duration(x),false,sample_rate=R*Hz) do t
+	r = audible(duration(x),false,sample_rate=R*Hz) do t::UnitRange{Int}
     ifelse.(t .< ramp_n,
       -0.5.*cos.(π.*t./ramp_n).+0.5,
     ifelse.(t .< n .- ramp_n,
@@ -218,7 +220,7 @@ function rampon{R}(x::Audible{R},len=5ms)
           "$(rounded_time(duration(x),R)) sound.")
   end
 
-	r = audible(ramp_n*samples,false,sample_rate=R*Hz) do t
+	r = audible(ramp_n*samples,false,sample_rate=R*Hz) do t::UnitRange{Int}
     -0.5.*cos.(π.*t./ramp_n).+0.5
 	end
 	mult(x,r)
@@ -254,7 +256,7 @@ function rampoff_helper{R}(x::Audible{R},len::Int,after::Int)
   end
 
   rampstart = (after - len)
-	r = audible(after*samples,false) do t
+	r = audible(after*samples,false) do t::UnitRange{Int}
     ifelse.(t .< rampstart,1,-0.5.*cos.(π.*(t.-rampstart)./len+π).+0.5)
 	end
 	mult(limit(x,after),r)
@@ -265,7 +267,7 @@ end
 
 A smooth transition from the currently playing stream to another stream.
 """
-function fadeto(new,channel::Int=1,transition=0.05)
+function fadeto(new::AbstractStream,channel::Int=1,transition=50ms)
   old = streamon(channel)
   if isnull(old)
     rampon(new,transition)
