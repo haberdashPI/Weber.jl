@@ -1,3 +1,4 @@
+using LRUCache
 export play, stream, stop, setup_sound, current_sound_latency, resume_sounds,
   pause_sounds
 
@@ -16,14 +17,15 @@ const default_sample_rate = 44100Hz
 
 type SoundSetupState
   samplerate::Freq{Int}
-  playing::Dict{Sound,Float64}
+  playing::LRU{UInt,Sound}
   state::Ptr{Void}
   num_channels::Int
   queue_size::Int
   stream_unit::Int
 end
-const default_stream_unit = 2^11
-const sound_setup_state = SoundSetupState(0Hz,Dict(),C_NULL,0,0,default_stream_unit)
+const default_stream_unit = 2^12
+const sound_setup_state =
+  SoundSetupState(0Hz,LRU{UInt,Sound}(1),C_NULL,0,0,default_stream_unit)
 isready(s::SoundSetupState) = s.samplerate != 0Hz
 
 """
@@ -51,13 +53,7 @@ const sound_cleanup_wait = 2
 # play sounds to the weber-sound library (implemented in weber_sound.c)
 function register_sound(current::Sound,done_at::Float64,wait=sound_cleanup_wait)
   setstate = sound_setup_state
-  setstate.playing[current] = done_at
-  for s in keys(setstate.playing)
-    done_at = setstate.playing[s]
-    if done_at > Weber.tick() + sound_cleanup_wait
-      delete!(setstate.playing,s)
-    end
-  end
+  setstate.playing[object_id(current)] = current
 end
 
 function ws_if_error(msg)
@@ -151,6 +147,8 @@ function setup_sound(;sample_rate=samplerate(),
   sound_setup_state.state = ccall((:ws_setup,weber_sound),Ptr{Void},
                                   (Cint,Cint,Cint,),ustrip(sample_rate_Hz),
                                   num_channels,queue_size)
+  sound_setup_state.playing =
+    LRU{UInt,Sound}(2 * (queue_size*num_channels + 2*num_channels))
   sound_setup_state.num_channels = num_channels
   sound_setup_state.queue_size = queue_size
   sound_setup_state.stream_unit = stream_unit
@@ -269,21 +267,16 @@ end
 type Streamer
   next_stream::Float64
   channel::Int
-  stream::Stream
+  stream::AbstractStream
   cache::Nullable{Sound}
   done_at::Float64
   start_at::Float64
 end
 
 function setup_streamers()
-  streamers[-1] = Streamer(0.0,0,nothing,nothing)
-  Timer(1/60,1/60) do timer
-    for streamer in values(streamers)
-      if streamer.itr != nothing
-        process(streamer)
-      end
-    end
-  end
+  empty = EmptyStream{ustrip(samplerate()),Q0f15}()
+  streamers[-1] = Streamer(0.0,1,empty,Nullable(),0.0,0.0)
+  Timer(t -> map(process,values(streamers)),1/60,1/60)
 end
 
 const num_channels = 8
@@ -298,7 +291,6 @@ function streamon(channel::Int)
   end
 end
 
-# TODO: implement precise stream timing
 """
 Play can also be used to present a continuous stream of sound.  In this case,
 the channel defaults to channel 1 (there is no automatic selection of channels
@@ -314,31 +306,43 @@ function play_{R}(stream::AbstractStream{R},time::Float64=0.0,channel::Int=1)
           " do not match. Please resample this sound by calling `resample`.")
   end
 
-  streamers = in_experiment() ? data(get_experiment()).streamers : streamers
+  cur_streamers = if in_experiment()
+    data(get_experiment()).streamers
+  else
+    if isempty(streamers)
+      setup_streamers()
+    end
+    streamers
+  end
 
-  if channel in streamers
-    streamer = steamers[channel]
-    unit_s = sound_setup_state.stream_unit / R
+  unit_s = sound_setup_state.stream_unit / R
+
+  if channel in keys(cur_streamers)
+    streamer = cur_streamers[channel]
 
     if time > 0
       if streamer.done_at < time
         offset = time - streamer.done_at
+
         cat_stream = [limit(streamer.stream,offset*s); stream]
-        streamers[channel] =
-          Streamer(tick(),channel,cat_stream,streamer.done_at + unit_s,-1)
+        cur_streamers[channel] =
+          Streamer(streamer.next_stream,channel,cat_stream,Nullable(),
+                   streamer.done_at,-1)
       else
         warn("Requested timing of stream cannot be achieved. ",
              "With the current streaming settings you cannot request playback ",
              "more than $(round(1000*unit_s,2))ms beforehand.",
              moment_trace_string())
+        cur_streamers[channel] = Streamer(tick(),channel,stream,Nullable(),
+                                        streamer.done_at + unit_s,-1)
       end
     else
-      streamers[channel] = Streamer(tick(),chanel,stream,
-                                    streamer.done_at + unit_s,-1)
+      cur_streamers[channel] = Streamer(tick(),channel,stream,Nullable(),
+                                        streamer.done_at + unit_s,-1)
     end
   else
-    streamers[channel] = Streamer(tick(),chanel,stream,
-                                  Weber.tick()+unit_s,-1)
+    cur_streamers[channel] = Streamer(tick(),channel,stream,Nullable(),
+                                      Weber.tick()+unit_s,time)
   end
 end
 
@@ -358,7 +362,9 @@ function stop(channel::Int)
 end
 
 function process(streamer::Streamer)
-  if done(streamer.stream) && isnull(streamer.cache)
+  if isa(streamer.stream,EmptyStream)
+    return
+  elseif done(streamer.stream) && isnull(streamer.cache)
     stop(streamer.channel)
     return
   end
@@ -382,11 +388,11 @@ function process(streamer::Streamer)
   else
     # sound was queued to play, wait until this queued sound actually
     # starts playing to queue the next stream unit
+    streamer.cache = Nullable()
     register_sound(toplay,done_at,4sound_setup_state.stream_unit / samplerate())
     streamer.next_stream += ustrip(0.75duration(toplay))
-    streamer.state = next_state
     streamer.done_at = done_at
-    streamer.cache = Nullable()
+    streamer.start_at = -1
   end
 end
 
