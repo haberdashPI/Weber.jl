@@ -202,7 +202,7 @@ function play(x;time=0.0s,channel=0)
           "`addtrial(moment(play,my_sound))`).")
   end
   warn("Calling play outside of an experiment moment.")
-  play(playable(x),ustrip(inseconds(time,samplerate(x))),channel)
+  play_(playable(x),ustrip(inseconds(time,samplerate(x))),channel)
 end
 
 immutable WS_Sound
@@ -211,7 +211,7 @@ immutable WS_Sound
 end
 WS_Sound{R}(x::Sound{R,Q0f15,2}) = WS_Sound(pointer(x.data),size(x,1))
 
-function play{R}(x::Sound{R,Q0f15,2},time::Float64=0.0,channel::Int=0)
+function play_{R}(x::Sound{R,Q0f15,2},time::Float64=0.0,channel::Int=0)
   if R != ustrip(samplerate())
     error("Sample rate of sound ($(R*Hz)) and audio playback ($(samplerate()))",
           " do not match. Please resample this sound by calling `resample` ",
@@ -306,7 +306,8 @@ for streams). Streams are usually created by specifying an infinite length
 during sound generation using [`tone`](@ref), [`noise`](@ref),
 [`harmonic_complex`](@ref) or [`audible`](@ref).
 """
-function play{R}(stream::AbstractStream{R},time::Float64=0.0,channel::Int=1)
+function play_{R}(stream::AbstractStream{R},time::Float64=0.0,channel::Int=1)
+  channel = channel == 0 ? 1 : channel
   @assert 1 <= channel <= sound_setup_state.num_channels
   if R != ustrip(samplerate())
     error("Sample rate of sound ($(R*Hz)) and audio playback ($(samplerate()))",

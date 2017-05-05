@@ -524,7 +524,7 @@ end
 
 function prepare!(m::PlayMoment,last_moment::Float64)
   if !isinf(last_moment)
-    play(m.sound,last_moment,m.channel)
+    play_(m.sound,last_moment,m.channel)
   else
     m.prepared = true
   end
@@ -532,7 +532,7 @@ end
 
 function prepare!(m::PlayFunctionMoment,last_moment::Float64)
   if !isinf(last_moment)
-    play(playable(m.fn()),last_moment,m.channel)
+    play_(playable(m.fn()),last_moment,m.channel)
   else
     m.prepared = Nullable(playable(m.fn()))
   end
@@ -548,13 +548,13 @@ run(exp,q,m::DisplayFunctionMoment) = display(win(exp),get(m.visual))
 function run(exp,q,m::PlayMoment)
   if m.prepared
     m.prepared = false
-    play(m.sound,0.0,m.channel)
+    play_(m.sound,0.0,m.channel)
   end
 end
 
 function run(exp,q,m::PlayFunctionMoment)
   if !isnull(m.prepared)
-    play(get(m.prepared),0.0,m.channel)
+    play_(get(m.prepared),0.0,m.channel)
     m.prepared = Nullable()
   end
 end
