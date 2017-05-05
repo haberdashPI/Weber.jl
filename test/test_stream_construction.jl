@@ -5,9 +5,6 @@ using Lazy: @>, @_
 rng() = MersenneTwister(1983)
 same(x,y) = isapprox(x,y,rtol=1e-6)
 
-# TODO: test concatenation of streams, both hetereo- and homogeneous
-# TODO: remove apply and use a different function name
-
 @testset "Stream Construction" begin
   @test same(sound("sounds/tone.wav")[:,:left],
              @> tone(1kHz) rampon rampoff(5ms,1s) sound)

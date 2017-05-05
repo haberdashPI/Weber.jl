@@ -80,6 +80,3 @@ end
   @test same(sound("sounds/complex.wav"),
              @> harmonic_complex(200Hz,0:5,ones(6),1s) attenuate(20))
 end
-
-# TODO: new REPL tests of audio playback functions
-# TODO: apply unitful to moment interface
