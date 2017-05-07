@@ -439,13 +439,14 @@ If the moment times out, the function `fn` (with no arguments) will be called.
 If the response is provided before `atleast` seconds, the moment does not begin
 until `atleast` seconds (`fn` will not be called).
 """
-function timeout(fn::Function,isresponse::Function,timeout;atleast=0.0)
+function timeout(fn::Function,isresponse::Function,timeout;atleast=0.0s)
   precompile(fn,())
   for t in concrete_events
     precompile(isresponse,(t,))
   end
 
-  ResponseMoment(isresponse,fn,timeout,atleast,stacktrace()[2:end])
+  ResponseMoment(isresponse,fn,ustrip(inseconds(timeout)),
+                 ustrip(inseconds(atleast)),stacktrace()[2:end])
 end
 
 flag_expanding(m::AbstractMoment) = m

@@ -2,8 +2,8 @@ using Lazy: @>, takewhile
 import Base: run
 export Experiment, setup, run, addcolumn
 
-const default_moment_resolution = 0.0015
-const default_input_resolution = 1/60
+const default_moment_resolution = 1.5ms
+const default_input_resolution = (1/60)s
 const exp_width = 1024
 const exp_height = 768
 
@@ -146,7 +146,7 @@ Prepares a new experiment to be run.
   is always included here, even if not specified, since there are number of
   events recorded automatically which make use of this column.
 * **debug** if true, experiment will show in a windowed view
-* **moment_resolution** the desired precision (in seconds) that moments
+* **moment_resolution** the desired precision that moments
   should be presented at. Warnings will be printed for moments that
   lack this precision.
 * **data_dir** the directory where data files should be stored (can be set to
@@ -180,7 +180,9 @@ function Experiment(;skip=0,columns=Symbol[],debug=false,
                   "`Experiment`."))
   end
 
-  if moment_resolution < approx_timer_resolution
+  moment_resolution_s = ustrip(inseconds(moment_resolution))
+  input_resolution_s = ustrip(inseconds(input_resolution))
+  if moment_resolution_s < approx_timer_resolution
     warn(cleanstr("The desired timing resolution of $moment_resolution ",
                   "seconds is probably not achievable on your system. The ",
                   "approximate minimum is $approx_timer_resolution seconds.",
@@ -197,9 +199,9 @@ function Experiment(;skip=0,columns=Symbol[],debug=false,
   info_str = join(map(x -> x[2],info_values),"_")
   filename = (data_dir == nothing || hide_output ? Nullable() :
               Nullable(joinpath(data_dir,info_str*"_"*timestr*".csv")))
-  einfo = ExperimentInfo(info_values,meta,input_resolution,moment_resolution,
-                         start_date,reserved_columns,filename,hide_output,
-                         warn_on_trials_only)
+  einfo = ExperimentInfo(info_values,meta,input_resolution_s,
+                         moment_resolution_s,start_date,reserved_columns,
+                         filename,hide_output,warn_on_trials_only)
 
   offset = 0
   trial = 0
@@ -420,7 +422,7 @@ function run{T <: BaseExperiment}(
       # if after all this processing there's still plenty of time left
       # then sleep for a little while. (pausing also sleeps the loop)
       new_tick = precise_time() - start
-      stream_len = stream_unit()/samplerate()
+      stream_len = ustrip(sound_setup_state.stream_unit/samplerate())
       if !flags(exp).running
         gc()
         sleep(sleep_amount)
@@ -454,7 +456,7 @@ function run{T <: BaseExperiment}(
     if !info(exp).hide_output
       info("Experiment terminated at offset $(data(exp).offset).")
       if !isnull(info(exp).file)
-        info("Data recorded to: $(get(info(exp).file))")
+        info("Data recorded to: $(abspath(get(info(exp).file)))")
       end
     end
   end

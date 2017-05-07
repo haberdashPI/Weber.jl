@@ -1,6 +1,5 @@
 using FixedPointNumbers
 using LRUCache
-using Unitful
 using FileIO
 using Lazy: @>, @>>
 using IntervalSets
@@ -11,13 +10,12 @@ import LibSndFile
 import SampledSignals: samplerate
 import SampledSignals
 import Distributions: nsamples
-import Unitful: ms, s, kHz, Hz
 import Base: show, length, start, done, next, linearindexing, size, getindex,
   setindex!, vcat, similar, convert, .*, .+, *, minimum, maximum
 importall IntervalSets # I just need .., but there's a syntax parsing bug
 
 export sound, playable, duration, nchannels, nsamples, save, samplerate, length,
-  ms, s, kHz, Hz, samples, vcat, leftright, similar, left, right,
+  samples, vcat, leftright, similar, left, right,
   audiofn, limit, .., ends
 
 immutable Sound{R,T,N} <: AbstractArray{T,N}
@@ -46,10 +44,6 @@ function convert{R,Q,T,S}(::Type{Sound{R,T}},x::Sound{Q,S})
   error("Cannot convert a sound with sampling rate $(Q*Hz) to a sound with ",
         "sampling rate $(R*Hz). Use `resample` to change the sampling rate.")
 end
-typealias TimeDim Unitful.Dimensions{(Unitful.Dimension{:Time}(1//1),)}
-typealias FreqDim Unitful.Dimensions{(Unitful.Dimension{:Time}(-1//1),)}
-typealias Time{N} Quantity{N,TimeDim}
-typealias Freq{N} Quantity{N,FreqDim}
 
 """
     samplerate([sound])
@@ -200,21 +194,6 @@ end
 minimum(x::ClosedIntervalEnd) = x.from
 
 ..(x::Time,::EndSecs) = ClosedIntervalEnd(x)
-
-@dimension 𝐒 "𝐒" Sample
-@refunit samples "samples" Samples 𝐒 false
-typealias SampDim Unitful.Dimensions{(Unitful.Dimension{:Sample}(1//1),)}
-typealias SampleQuant{N} Quantity{N,SampDim}
-insamples{N <: Integer}(time::SampleQuant{N},rate) = ustrip(time)
-insamples{N}(time::SampleQuant{N},rate) = error("Cannot use non-integer samples.")
-function insamples(time,rate)
-  r = inHz(rate)
-  floor(Int,ustrip(inseconds(time,r)*r))
-end
-
-function insamples{N,M}(time::Time{N},rate::Freq{M})
-  floor(Int,ustrip(uconvert(s,time)*uconvert(Hz,rate)))
-end
 
 function checktime(time)
   if time < 0s
@@ -382,28 +361,6 @@ end
 
 function duration(x::Array{Float64};sample_rate_Hz=samplerate())
   uconvert(s,nsamples(x) / inHz(sample_rate_Hz))
-end
-
-inHz(x::Quantity) = uconvert(Hz,x)
-function inHz(x::Number)
-  warn("Unitless value, assuming Hz. Append Hz or kHz to avoid this warning",
-       " (e.g. tone(1kHz))",
-       reduce(*,"",map(x -> string(x)*"\n",stacktrace())))
-  x*Hz
-end
-inHz{N <: Number,T}(typ::Type{N},x::T) = floor(N,ustrip(inHz(x)))*Hz
-inHz{N <: Number}(typ::Type{N},x::N) = inHz(x)
-inHz{N <: Number}(typ::Type{N},x::Freq{N}) = inHz(x)
-
-inseconds{N}(x::SampleQuant{N},R) = (ustrip(x) / R)*s
-inseconds(x::Quantity,R) = uconvert(s,x)
-inseconds(x::Number,R) = inseconds(x)
-inseconds(x::Quantity) = error("Expected second argument, specifying sample rate.")
-function inseconds(x::Number)
-  warn("Unitless value, assuming seconds. Append s, ms or samples to avoid",
-       " this warning (e.g. 500ms)",
-       reduce(*,"",map(x -> string(x)*"\n",stacktrace())))
-  x*s
 end
 
 const sound_cache = LRU{Tuple{UInt,Int,Function},Sound}(256)

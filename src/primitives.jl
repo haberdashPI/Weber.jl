@@ -131,7 +131,7 @@ end
 Creates a moment that shows a cross hair `delta_t` seconds after the start
 of the previous moment (defaults to 0 seconds).
 """
-function show_cross(delta_t::Number=0;render_options...)
+function show_cross(delta_t::Number=0s;render_options...)
   moment(delta_t,display,"+";render_options...)
 end
 

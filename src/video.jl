@@ -252,7 +252,7 @@ end
 const forever = -1
 
 """
-    visual(obj,[duration=0],[priority=0],keys...)
+    visual(obj,[duration=0s],[priority=0],keys...)
 
 Render an object, allowing `display` to show the object in current experiment's
 window.
@@ -288,18 +288,18 @@ end
 display_duration(clear::SDLClear) = clear.duration
 display_priority(clear::SDLClear) = clear.priority
 draw(window::SDLWindow,cl::SDLClear) = clear(window,cl.color)
-function update_arguments(cl::SDLClear;duration=cl.duration,
+function update_arguments(cl::SDLClear;duration=cl.duration*s,
                           priority=cl.priority,kwds...)
-  SDLClear(cl.color,duration,priority)
+  SDLClear(cl.color,ustrip(inseconds(duration)),priority)
 end
 
 """
-    visual(color,[duration=0],[priority=0])
+    visual(color,[duration=0s],[priority=0])
 
 Render a color, across the entire screen.
 """
-function visual(window::SDLWindow,color::Color;duration=0,priority=0)
-  SDLClear(color,duration,priority)
+function visual(window::SDLWindow,color::Color;duration=0s,priority=0)
+  SDLClear(color,ustrip(inseconds(duration)),priority)
 end
 
 immutable SDLRect
@@ -371,7 +371,7 @@ display_priority(text::SDLText) = text.priority
 data(text::SDLText) = text.data
 rect(text::SDLText) = text.rect
 function update_arguments(text::SDLText;w=NaN,h=NaN,color=nothing,
-                          duration=text.duration,priority=text.priority,
+                          duration=text.duration*s,priority=text.priority,
                           kwds...)
   if !isnan(w) || !isnan(h)
     error("Cannot update the height or width of text on display. These",
@@ -385,7 +385,7 @@ function update_arguments(text::SDLText;w=NaN,h=NaN,color=nothing,
   end
 
   rect = update_arguments(text.rect;kwds...)
-  SDLText(text.str,text.data,rect,duration,priority,text.color)
+  SDLText(text.str,text.data,rect,ustrip(inseconds(duration)),priority,text.color)
 end
 
 fonts = Dict{Tuple{String,Int},SDLFont}()
@@ -393,7 +393,7 @@ fonts = Dict{Tuple{String,Int},SDLFont}()
 """
     visual(str::String, [font=nothing], [font_name="arial"], [size=32],
            [color=colorant"white"],
-           [wrap_width=0.8],[clean_whitespace=true],[x=0],[y=0],[duration=0],
+           [wrap_width=0.8],[clean_whitespace=true],[x=0],[y=0],[duration=0s],
            [priority=0])
 
 Render the given string as an image that can be displayed. An optional
@@ -425,13 +425,13 @@ end
 function visual(window::SDLWindow,str::String,font::SDLFont;
                 color::RGB{N0f8}=colorant"white",
                 wrap_width=0.8,clean_whitespace=true,x=0,y=0,
-                duration=0,priority=0)
+                duration=0s,priority=0)
   if clean_whitespace
     str = replace(str,r"^\s+","")
     str = replace(str,r"\s+"," ")
   end
   visual(window,x,y,font,color,round(UInt32,window.w*wrap_width),str,
-         duration,priority)
+         inseconds(duration),priority)
 end
 
 const w_ptr = 0x0000000000000010 # icxx"offsetof(SDL_Surface,w);"
@@ -440,7 +440,7 @@ const h_ptr = 0x0000000000000014 # icxx"offsetof(SDL_Surface,h);"
 const text_cache = LRU{Tuple{String,UInt32,SDLFont},SDLText}(256)
 
 function visual(window::SDLWindow,x::Real,y::Real,font::SDLFont,color::RGB{N0f8},
-                wrap_width::UInt32,str::String,duration=0,priority=0)
+                wrap_width::UInt32,str::String,duration=0s,priority=0)
   get!(text_cache,(str,wrap_width,font)) do
     surface = ccall((:TTF_RenderUTF8_Blended_Wrapped,weber_SDL2_ttf),Ptr{Void},
                     (Ptr{Void},Cstring,RGBA{N0f8},UInt32),
@@ -460,7 +460,8 @@ function visual(window::SDLWindow,x::Real,y::Real,font::SDLFont,color::RGB{N0f8}
 
     xint,yint = as_screen_coordinates(window,x,y,w,h)
 
-    result = SDLText(str,texture,SDLRect(xint,yint,w,h),duration,priority,color)
+    result = SDLText(str,texture,SDLRect(xint,yint,w,h),
+                     ustrip(inseconds(duration)),priority,color)
     finalizer(result,x ->
               ccall((:SDL_DestroyTexture,weber_SDL2),Void,(Ptr{Void},),x.data))
     ccall((:SDL_FreeSurface,weber_SDL2),Void,(Ptr{Void},),surface)
@@ -480,7 +481,7 @@ display_duration(img::SDLImage) = img.duration
 display_priority(img::SDLImage) = img.priority
 data(img::SDLImage) = img.data
 rect(img::SDLImage) = img.rect
-function update_arguments(img::SDLImage;w=NaN,h=NaN,duration=img.duration,
+function update_arguments(img::SDLImage;w=NaN,h=NaN,duration=img.duration*s,
                           priority=img.priority,kwds...)
   if !isnan(w) || !isnan(h)
     error("Cannot update the height or width of an image on display. These",
@@ -488,13 +489,13 @@ function update_arguments(img::SDLImage;w=NaN,h=NaN,duration=img.duration,
   end
 
   rect = update_arguments(img.rect;kwds...)
-  SDLImage(img.data,img.img,rect,duration,priority)
+  SDLImage(img.data,img.img,rect,ustrip(inseconds(duration)),priority)
 end
 
 const convert_cache = LRU{UInt,Array{RGBA{N0f8}}}(256)
 const image_cache = LRU{UInt,SDLImage}(256)
 """
-    visual(img::Array, [x=0],[y=0],[duration=0],[priority=0])
+    visual(img::Array, [x=0],[y=0],[duration=0s],[priority=0])
 
 Prepare the color or gray scale image to be displayed to the screen.
 
@@ -529,7 +530,7 @@ function visual(window::SDLWindow,img::Array;keys...)
 end
 
 function visual(window::SDLWindow,img::Array{RGBA{N0f8}};
-                x=0,y=0,duration=0,priority=0)
+                x=0,y=0,duration=0s,priority=0)
   get!(image_cache,object_id(img)) do
     surface = ccall((:SDL_CreateRGBSurfaceFrom,weber_SDL2),Ptr{Void},
                     (Ptr{Void},Cint,Cint,Cint,Cint,UInt32,UInt32,UInt32,UInt32),
@@ -548,7 +549,8 @@ function visual(window::SDLWindow,img::Array{RGBA{N0f8}};
     h,w = size(img)
     xint,yint = as_screen_coordinates(window,x,y,w,h)
 
-    result = SDLImage(texture,img,SDLRect(xint,yint,w,h),duration,priority)
+    result = SDLImage(texture,img,SDLRect(xint,yint,w,h),
+                      ustrip(inseconds(duration)),priority)
     finalizer(result,x ->
               ccall((:SDL_DestroyTexture,weber_SDL2),Void,(Ptr{Void},),x.data))
     ccall((:SDL_FreeSurface,weber_SDL2),Void,(Ptr{Void},),surface)
@@ -587,7 +589,7 @@ if Pkg.installed("Compose") != nothing && Pkg.installed("Cairo") != nothing
 
 """
   visual(comp::Compose.Context,[x=0],[y=0],[w=1],[h=1],
-                           [dpi=72],[priority=0],[duration=0])
+                           [dpi=72],[priority=0],[duration=0s])
 
 Renders the given Compose.jl object so it can be displayed on screen.
 Width and height are specified as a proportion of the full width and height.
