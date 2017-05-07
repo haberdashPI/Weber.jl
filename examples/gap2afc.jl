@@ -6,9 +6,6 @@ using Lazy: @> # see https://github.com/MikeInnes/Lazy.jl
 version = v"0.0.1"
 sid,skip = @read_args("Gap Detection ($version).")
 
-const ms = 1/1000
-const k = 1000
-
 #===============================================================================
 Experiment Settings
 ===============================================================================#
@@ -21,7 +18,7 @@ const atten_dB = 30 # adjust to calibrate sound levels
 const n_trials_per_block = 60
 const n_blocks = 6
 
-const marker_center_freq = 200
+const marker_center_freq = 200Hz
 const marker_width_octaves = 1
 const marker_SNR = 20
 
@@ -32,11 +29,15 @@ const visual_delay = 300ms
 
 const SOA = 900ms # "onset" asynchrony of the no-gap and gap interval
 const trial_spacing = 500ms # how long to wait at the start and end of trials
+const max_delta = 400ms
+const first_delta = 50ms
+const big_step = 5ms
+const little_step = 1ms
 
-const adapter = levitt_adapter(first_delta=50ms,down=3,up=1,
-                               big=5ms,little=1ms,min_delta=0,
-                               max_delta=trial_spacing-100ms)
-
+const adapter = levitt_adapter(first_delta=first_delta/max_delta,down=3,up=1,
+                               big=big_step / first_delta,
+                               little=little_step / first_delta,
+                               min_delta=0,max_delta=1)
 
 experiment = Experiment(
   skip=skip,
@@ -76,20 +77,22 @@ end
 
 # gap_noise: generates the gap
 function gap_noise(gap_first,adapter)
-  @assert delta(adapter) > 2gap_ramp_ms || delta(adapter) == 0
-  if gap_first
+  @assert max_delta*delta(adapter) > 2gap_ramp_ms || delta(adapter) == 0
+  if delta(adapter) == 0 # no gap
+    mix(masker(),marker)
+  elseif gap_first
     @> begin
       envelope(1,trial_spacing)
-      fadeto(silence(delta(adapter)),gap_ramp_ms)
-      fadeto(envelope(1,SOA+trial_spacing-delta(adapter)),gap_ramp_ms)
+      fadeto(silence(max_delta*delta(adapter)),gap_ramp_ms)
+      fadeto(envelope(1,SOA+trial_spacing-max_delta*delta(adapter)),gap_ramp_ms)
       mult(marker())
       mix(masker())
     end
   else # gap second
     @> begin
       envelope(1,trial_spacing+SOA)
-      fadeto(silence(delta(adapter)),gap_ramp_ms)
-      fadeto(envelope(1,trial_spacing-delta(adapter)))
+      fadeto(silence(max_delta*delta(adapter)),gap_ramp_ms)
+      fadeto(envelope(1,trial_spacing-max_delta*delta(adapter)))
       mult(marker())
       mix(masker())
     end
@@ -121,8 +124,8 @@ Experiment Creation
 setup(experiment) do
   # play a test tone, to verify sound levels
   addbreak(moment(record,"start"),
-           moment(250ms,play,@> tone(1000,1) ramp attenuate(atten_dB)),
-           moment(1))
+           moment(250ms,play,@> tone(1kHz,1s) ramp attenuate(atten_dB)),
+           moment(1s))
 
   addbreak(instruct("""
 
@@ -144,12 +147,12 @@ setup(experiment) do
 
       function threshold_report()
         mean,sd = estimate(adapter)
-        thresh = round(mean,3)*1000
-        thresh_sd = round(sd,3)*1000
+        thresh = usconvert(ms,round(mean,3)*max_delta)
+        thresh_sd = uconvert(ms,round(sd,3)*max_delta)
 
         # define this string during run time when we know
         # what the threshold estimate is.
-        "$heading: Threshold $(thresh)ms (SD: $(thresh_sd)ms)\n"*
+        "$heading: Threshold $thresh (SD: $thresh_sd)\n"*
         "Hit spacebar to continue..."
       end
 

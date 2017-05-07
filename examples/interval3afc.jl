@@ -1,13 +1,9 @@
 #!/usr/bin/env julia
 
 using Weber
-using Lazy: @> # see https://github.com/MikeInnes/Lazy.jl
 
 const version = v"0.0.1"
 const sid,skip = @read_args("Duration Discrimination ($version).")
-
-const ms = 1/1000
-const k = 1000
 
 #======================================================================
 Experiment Setup
@@ -20,7 +16,7 @@ const atten_dB = 30 # adjust to calibrate levels
 const n_trials_per_block = 60
 const n_blocks = 6
 
-const tone_freq = 1k
+const tone_freq = 1kHz
 const tone_length = 10ms
 const standard_length = 100ms # from start of tone 1 to start of tone 2
 
@@ -90,7 +86,7 @@ end
 setup(experiment) do
   # play a test tone, to verify sound levels
   addbreak(moment(record,"start"),
-           moment(250ms,play,@> tone(1000,1) ramp attenuate(atten_dB)),
+           moment(play,@> tone(1kHz,1s) ramp attenuate(atten_dB)),
            moment(1))
 
   addbreak(instruct("""

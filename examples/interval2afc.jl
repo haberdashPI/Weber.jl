@@ -5,9 +5,6 @@ using Weber
 version = v"0.0.1"
 sid,skip = @read_args("Duration Discrimination ($version).")
 
-const ms = 1/1000
-const k = 1000
-
 #======================================================================
 Experiment Setup
 ======================================================================#
@@ -19,7 +16,7 @@ const atten_dB = 30 # adjust to calibrate levels
 const n_trials_per_block = 60
 const n_blocks = 6
 
-const tone_freq = 1k
+const tone_freq = 1kHz
 const tone_length = 10ms
 const standard_length = 100ms # from start of tone 1 to start of tone 2
 
@@ -73,7 +70,9 @@ function duration2AFC(adapter;keys...)
 end
 
 setup(experiment) do
-  addbreak(moment(record,"start"))
+  addbreak(moment(record,"start"),
+           moment(play,@> tone(1kHz,1s) ramp attenuate(atten_dB)),
+           moment(1s))
 
   addbreak(instruct("""
 
@@ -83,7 +82,7 @@ setup(experiment) do
 
   """))
 
-  for block in n_blocks
+  for block in 1:n_blocks
     @addtrials let adapter = adapter
       for trial in 1:n_trials_per_block
         addtrial(duration2AFC(adapter,block=block))
@@ -110,6 +109,4 @@ setup(experiment) do
 end
 
 # play a test tone, to verify levels
-play(attenuate(ramp(tone(1000,1)),atten_dB))
-
 run(experiment)
