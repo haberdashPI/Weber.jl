@@ -49,11 +49,11 @@ function poll_events(callback,e::ExtendedExperiment{ExtensionC},time::Float64)
 end
 
 _,_,extension_events1 = find_timing(extensions=[ExtensionA(),ExtensionB(),ExtensionC()]) do
-  addtrial(moment(0.001))
+  addtrial(moment(1ms))
 end
 
 _,_,extension_events2 = find_timing(extensions=[ExtensionC(),ExtensionB(),ExtensionA()]) do
-  addtrial(moment(0.001))
+  addtrial(moment(1ms))
 end
 
 @testset "Extensions" begin

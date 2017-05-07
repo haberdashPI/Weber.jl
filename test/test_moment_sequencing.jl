@@ -3,9 +3,9 @@ using Base.Test
 include("find_timing.jl")
 
 seq_events,_,_ = find_timing() do
-  addtrial(moment(0.01,() -> record(:a)),
-           moment(0.01,() -> record(:b)),
-           moment(0.01,() -> record(:c)))
+  addtrial(moment(10ms,() -> record(:a)),
+           moment(10ms,() -> record(:b)),
+           moment(10ms,() -> record(:c)))
 end
 
 @testset "Moment Sequencing" begin

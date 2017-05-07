@@ -7,17 +7,17 @@ const moment_eps = 2.5e-3
 
 # warm up JIT...
 find_timing() do
-  addtrial(moment(0.05,() -> record(:a)),
-           moment(0.05,() -> record(:b)) >> moment(0.1,() -> record(:d)),
-           moment(0.1,() -> record(:c)),
-           moment(0.1,() -> record(:e)))
+  addtrial(moment(50ms,() -> record(:a)),
+           moment(50ms,() -> record(:b)) >> moment(0.1,() -> record(:d)),
+           moment(100ms,() -> record(:c)),
+           moment(100ms,() -> record(:e)))
 end
 
 comp_events,comp_times,_ = find_timing() do
-  addtrial(moment(0.05,() -> record(:a)),
-           moment(0.05,() -> record(:b)) >> moment(0.1,() -> record(:d)),
-           moment(0.1,() -> record(:c)),
-           moment(0.1,() -> record(:e)))
+  addtrial(moment(50ms,() -> record(:a)),
+           moment(50ms,() -> record(:b)) >> moment(100ms,() -> record(:d)),
+           moment(100ms,() -> record(:c)),
+           moment(100ms,() -> record(:e)))
 end
 
 @testset "Compound Moments" begin

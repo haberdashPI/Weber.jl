@@ -16,11 +16,11 @@ end
 prepare!(moment::TestPrepareMoment) = record(moment.event)
 
 ks,vs,_ = find_timing() do
-  addtrial(TestPrepareMoment(:a),moment(0.5),moment(),moment(),
-           TestPrepareMoment(:b),moment(record,:b_post),moment(0.5))
+  addtrial(TestPrepareMoment(:a),moment(0.5s),moment(),moment(),
+           TestPrepareMoment(:b),moment(record,:b_post),moment(0.5s))
   addtrial(moment(),TestPrepareMoment(:c),moment(record,:c_post),
-           timeout(() -> nothing,iskeydown,0.5),TestPrepareMoment(:d))
-  addtrial(moment(0.1),TestPrepareMoment(:e) >> TestPrepareMoment(:f))
+           timeout(() -> nothing,iskeydown,0.5s),TestPrepareMoment(:d))
+  addtrial(moment(100ms),TestPrepareMoment(:e) >> TestPrepareMoment(:f))
 end
 prepare_timing = Dict(k => v for (k,v) in zip(ks,vs))
 
@@ -42,12 +42,12 @@ prepare!(moment::TestPrepareError,time::Float64) =
 
 function cause_prepare_error1()
   find_timing() do
-    addtrial(moment(0.5),timeout(() -> nothing,iskeydown,0.5),TestPrepareError())
+    addtrial(moment(0.5s),timeout(() -> nothing,iskeydown,0.5s),TestPrepareError())
   end
 end
 
 prepare_noerror,_,_ = find_timing() do
-  addtrial(moment(0.5),TestPrepareError())
+  addtrial(moment(0.5s),TestPrepareError())
 end
 
 @testset "Moment Preparation" begin
