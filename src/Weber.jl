@@ -2,7 +2,8 @@ __precompile__()
 
 module Weber
 using Juno
-export resize_cache!
+using Lazy: @>, @>>, @_
+export resize_cache!, @>, @>>, @_
 
 # helper function for clean info and warn output
 function cleanstr(strs...;width=70)
