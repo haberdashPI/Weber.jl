@@ -17,7 +17,7 @@ end
 
 const null_record = []
 function write_csv_line(exp::Experiment{NullWindow},header,kwds)
-  push!(null_record,Dict(map(c -> c => findkwd(kwds,c,""),header)))
+  push!(null_record,Dict{Symbol,Any}(map(c -> c => findkwd(kwds,c,""),header)))
 end
 
 function write_csv_line(exp::Experiment{SDLWindow},header,kwds)
@@ -35,7 +35,7 @@ function record_helper(exp::Experiment,kwds,header)
   columns = map(x -> x[1],kwds)
 
   if !isempty(columns) && !all(map(c -> c ∈ header,columns))
-    missing = collect(filter(c -> c ∉ header,columns))
+    missing = collect(Iterators.filter(c -> c ∉ header,columns))
 
     error("Unexpected column $(length(missing) > 1 ? "s" : "")"*
           "$(join(missing,", "," and ")). "*

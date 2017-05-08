@@ -2,15 +2,15 @@ using Unitful
 import Unitful: ms, s, kHz, Hz
 export ms, s, kHz, Hz, samples, uconvert, ustrip
 
-typealias TimeDim Unitful.Dimensions{(Unitful.Dimension{:Time}(1//1),)}
-typealias FreqDim Unitful.Dimensions{(Unitful.Dimension{:Time}(-1//1),)}
-typealias Time{N} Quantity{N,TimeDim}
-typealias Freq{N} Quantity{N,FreqDim}
+const TimeDim = Unitful.Dimensions{(Unitful.Dimension{:Time}(1//1),)}
+const FreqDim = Unitful.Dimensions{(Unitful.Dimension{:Time}(-1//1),)}
+const Time{N} = Quantity{N,TimeDim}
+const Freq{N} = Quantity{N,FreqDim}
 
 @dimension 𝐒 "𝐒" Sample
 @refunit samples "samples" Samples 𝐒 false
-typealias SampDim Unitful.Dimensions{(Unitful.Dimension{:Sample}(1//1),)}
-typealias SampleQuant{N} Quantity{N,SampDim}
+const SampDim = Unitful.Dimensions{(Unitful.Dimension{:Sample}(1//1),)}
+const SampleQuant{N} = Quantity{N,SampDim}
 
 insamples{N <: Integer}(time::SampleQuant{N},rate) = ustrip(time)
 insamples{N}(time::SampleQuant{N},rate) = error("Cannot use non-integer samples.")

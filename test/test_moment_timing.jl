@@ -11,7 +11,7 @@ end
 
 if check_timing
   @testset "Timing" begin
-    diffs = abs(0.0005 - diff(many_times))
+    diffs = abs.(0.0005 - diff(many_times))
     middle99 = diffs[quantile(diffs,0.005) .< diffs .< quantile(diffs,0.995)]
     @test mean(middle99) < moment_eps
   end

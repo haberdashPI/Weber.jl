@@ -18,7 +18,7 @@ mix several sounds (or streams) together so that they play at the same time.
 Unlike normal addition, this acts as if each sound is padded with
 zeros at the end so that the lengths of all sounds match.
 """
-mix{R}(xs::Union{Audible{R},Array}...) = soundop(.+,xs...)
+mix{R}(xs::Union{Audible{R},Array}...) = soundop((x,y) -> x .+ y,xs...)
 
 """
     mult(x,y,...)
@@ -29,7 +29,7 @@ amplitude envelope.
 Unlike normal multiplication, this acts as if each sound is padded with
 ones at the end so that the lengths of all sounds match.
 """
-mult{R}(xs::Union{Audible{R},Array}...) = soundop(.*,xs...)
+mult{R}(xs::Union{Audible{R},Array}...) = soundop((x,y) -> x .* y,xs...)
 
 """
     silence(length;[sample_rate=samplerate()])
@@ -37,7 +37,7 @@ mult{R}(xs::Union{Audible{R},Array}...) = soundop(.*,xs...)
 Creates period of silence of the given length (in seconds).
 """
 function silence(length;sample_rate=samplerate())
-  audible((t::Range) -> zeros(t),length,sample_rate=sample_rate)
+  audible((t::UnitRange{Int}) -> zeros(t),length,false,sample_rate=sample_rate)
 end
 
 """
@@ -55,7 +55,7 @@ in volume halfway through to a softer level.
 
 """
 function envelope(mult,length;sample_rate=samplerate())
-  audible((t::Range) -> mult*ones(t),length,sample_rate=sample_rate)
+  audible((t::UnitRange{Int}) -> mult*ones(t),length,sample_rate=sample_rate)
 end
 
 """
@@ -81,7 +81,7 @@ out the length entirely.
 """
 function tone(freq,len=Inf;sample_rate=samplerate(),phase=0.0)
   freq_Hz = ustrip(inHz(freq))
-  audible((t::FloatRange{Float64}) -> sin.(2π*t * freq_Hz + phase),len,
+  audible((t::StepRangeLen{Float64}) -> sin.(2π*t * freq_Hz + phase),len,
           sample_rate=sample_rate)
 end
 

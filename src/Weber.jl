@@ -25,7 +25,7 @@ function cleanstr(strs...;width=70)
 
     print(result,word)
   end
-  takebuf_string(result)
+  String(take!(result))
 end
 
 try

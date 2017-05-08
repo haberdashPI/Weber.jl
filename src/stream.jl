@@ -2,7 +2,7 @@ export audible
 import Base: eltype, isinf
 
 abstract type AbstractStream{R,T} end
-typealias Audible{R,T} Union{Sound{R,T},AbstractStream{R,T}}
+const Audible{R,T} = Union{Sound{R,T},AbstractStream{R,T}}
 
 samplerate{R}(s::AbstractStream{R}) = R*Hz
 eltype{R,T}(x::AbstractStream{R,T}) = T
@@ -79,10 +79,10 @@ function audible(fn::Function,len=Inf,asseconds=true;
   if ustrip(len) < Inf
     n = ustrip(insamples(len,sample_rate_Hz))
     R = ustrip(sample_rate_Hz)
-    Sound{R,eltype,1}(!asseconds ? fn(1:n) : fn(((1:n)-1)./R))
+    Sound{R,eltype,1}(!asseconds ? fn(1:n) : fn(((1:n)-1)/R))
   else
     R = ustrip(sample_rate_Hz)
-    Stream(R,eltype,!asseconds ? fn : i -> fn((i-1)./R))
+    Stream(R,eltype,!asseconds ? fn : i -> fn((i-1)/R))
   end
 end
 

@@ -748,7 +748,7 @@ flags(e::BaseExtendedExperiment) = e.top.exp.flags
 win(e::BaseExtendedExperiment) = e.top.exp.win
 top(e::BaseExtendedExperiment) = e.top
 
-typealias BaseExperiment{W} Union{UnextendedExperiment{W},BaseExtendedExperiment{W}}
+const BaseExperiment{W} = Union{UnextendedExperiment{W},BaseExtendedExperiment{W}}
 
 function extend{W}(exp::UnextendedExperiment{W},exts)
   if isempty(exts)

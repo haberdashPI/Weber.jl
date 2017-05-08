@@ -10,7 +10,7 @@ import LibSndFile
 import SampledSignals: samplerate
 import SampledSignals
 import Distributions: nsamples
-import Base: show, length, start, done, next, linearindexing, size, getindex,
+import Base: show, length, start, done, next, getindex, size,
   setindex!, vcat, similar, convert, .*, .+, *, minimum, maximum
 importall IntervalSets # I just need .., but there's a syntax parsing bug
 
@@ -20,7 +20,7 @@ export sound, playable, duration, nchannels, nsamples, save, samplerate, length,
 
 immutable Sound{R,T,N} <: AbstractArray{T,N}
   data::Array{T,N}
-  function Sound(a::Array{T,N})
+  function Sound{R,T,N}(a::Array{T,N}) where {R,T,N}
     if T <: Integer
       error("Cannot use integer arrays for a sound. ",
             "Use FixedPointNumbers instead.")
@@ -92,7 +92,7 @@ Returns the number of samples in the sound.
 """
 nsamples(x::Sound) = size(x.data,1)
 size(x::Sound) = size(x.data)
-linearindexing(t::Type{Sound}) = Base.LinearSlow()
+Base.IndexStyle(::Type{Sound}) = IndexLinear()
 
 # adapted from:
 # https://github.com/JuliaAudio/SampledSignals.jl/blob/0a31806c3f7d382c9aa6db901a83e1edbfac62df/src/SampleBuf.jl#L109-L139
@@ -120,14 +120,14 @@ function showchannels(io::IO, x::Sound, widthchars=80)
   # number of samples per block
   blockwidth = round(Int, nsamples(x)/widthchars, RoundUp)
   nblocks = round(Int, nsamples(x)/blockwidth, RoundUp)
-  blocks = Array(Char, nblocks, nchannels(x))
+  blocks = Array{Char}(nblocks, nchannels(x))
   for blk in 1:nblocks
     i = (blk-1)*blockwidth + 1
     n = min(blockwidth, nsamples(x)-i+1)
     peaks = sqrt.(mean(float(x[(1:n)+i-1,:]).^2,1))
     # clamp to -60dB, 0dB
-    peaks = clamp(20log10(peaks), -60.0, 0.0)
-    idxs = trunc(Int, (peaks+60)/60 * (length(ticks)-1)) + 1
+    peaks = clamp.(20log10.(peaks), -60.0, 0.0)
+    idxs = trunc.(Int, (peaks+60)/60 * (length(ticks)-1)) + 1
     blocks[blk, :] = ticks[idxs]
   end
   for ch in 1:nchannels(x)
@@ -222,7 +222,7 @@ end
 
 ########################################
 # getindex
-typealias Index Union{Integer,Range,AbstractVector,Colon}
+const Index = Union{Integer,Range,AbstractVector,Colon}
 @inline function getindex{R,T,I <: Index}(
   x::Sound{R,T},ixs::ClosedIntervalEnd,js::I)
   @boundscheck checktime(minimum(ixs))
@@ -444,7 +444,7 @@ end
 
 function playable{R,T,N}(x::Sound{R,T,N},cache=true,sample_rate=samplerate())
   with_cache(cache,x,sample_rate) do
-    bounded = max(min(x.data,typemax(Q0f15)),typemin(Q0f15))
+    bounded = clamp.(x.data,typemin(Q0f15),typemax(Q0f15))
     T2 = Q0f15
     playable(Sound{R,T2,N}(Q0f15.(bounded)),false,sample_rate)
   end
