@@ -33,7 +33,7 @@ end
 # where the currently running moment was defined (improving error message
 # readability)
 const current_moment_trace = Array{Vector{StackFrame}}()
-update type_trace(m::AbstractMoment) = end
+update_trace(m::AbstractMoment) =
   !isempty(moment_trace(m)) ? current_moment_trace[] = moment_trace(m) : nothing
 update_trace(m::MomentSequence) =
   current_moment_trace[] = moment_trace(m.data[1])
