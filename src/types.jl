@@ -10,7 +10,7 @@ export iskeydown, iskeyup, iskeypressed, isfocused, isunfocused, keycode,
 ################################################################################
 # event types
 
-abstract ExpEvent
+abstract type ExpEvent end
 
 const concrete_events = []
 
@@ -77,10 +77,10 @@ time(event::KeyDownEvent) = event.time
 time(event::WindowFocused) = event.time
 time(event::WindowUnfocused) = event.time
 
-abstract Key
+abstract type Key end
 ==(x::Key,y::Key) = false
 
-type KeyboardKey <: Key
+struct KeyboardKey <: Key
   code::Int32
 end
 hash(x::KeyboardKey,h::UInt) = hash(KeyboardKey,hash(x.code,h))
@@ -328,7 +328,7 @@ isunfocused(event::ExpEvent) = false
 isunfocused(event::WindowUnfocused) = true
 
 
-@event type EndPauseEvent <: ExpEvent
+@event struct EndPauseEvent <: ExpEvent
   time::Float64
 end
 
@@ -345,8 +345,8 @@ time(event::EndPauseEvent) = event.time
 ################################################################################
 # trial types
 
-abstract AbstractMoment
-abstract SimpleMoment <: AbstractMoment
+abstract type AbstractMoment end
+abstract type SimpleMoment <: AbstractMoment end
 
 """
     delta_t(m::AbstractMoment)
@@ -379,7 +379,7 @@ Returns the stacktrace indicating where this moment was defined.
 """
 moment_trace(m::AbstractMoment) = Vector{StackFrame}()
 
-type ResponseMoment <: SimpleMoment
+struct ResponseMoment <: SimpleMoment
   respond::Function
   timeout::Function
   timeout_delta_t::Float64
@@ -393,7 +393,7 @@ required_delta_t(m::ResponseMoment) = Inf
 can_continue_sequence(m::ResponseMoment) = false
 moment_trace(m::ResponseMoment) = m.trace
 
-type ResponseMomentMin <: SimpleMoment
+struct ResponseMomentMin <: SimpleMoment
   delta_t::Float64
   trace::StackTrace
 end
@@ -402,11 +402,11 @@ required_delta_t(m::ResponseMomentMin) = Inf
 can_continue_sequence(m::ResponseMomentMin) = false
 moment_trace(m::ResponseMomentMin) = m.trace
 
-abstract AbstractTimedMoment <: SimpleMoment
+abstract type AbstractTimedMoment <: SimpleMoment end
 sequenceable(m::AbstractTimedMoment) = true
 can_continue_sequence(m::AbstractTimedMoment) = delta_t(m) == 0.0
 
-type TimedMoment <: AbstractTimedMoment
+struct TimedMoment <: AbstractTimedMoment
   delta_t::Float64
   run::Function
   trace::StackTrace
@@ -415,7 +415,7 @@ delta_t(moment::TimedMoment) = moment.delta_t
 sequenceable(m::TimedMoment) = true
 moment_trace(m::TimedMoment) = m.trace
 
-type OffsetStartMoment <: AbstractTimedMoment
+struct OffsetStartMoment <: AbstractTimedMoment
   run::Function
   count_trials::Bool
   expanding::Bool
@@ -426,7 +426,7 @@ can_continue_sequence(m::OffsetStartMoment) = false
 sequenceable(m::OffsetStartMoment) = false
 moment_trace(m::OffsetStartMoment) = m.trace
 
-type PlayMoment <: AbstractTimedMoment
+mutable struct PlayMoment <: AbstractTimedMoment
   delta_t::Float64
   sound::Sound
   channel::Int
@@ -439,7 +439,7 @@ sequenceable(m::PlayMoment) = true
 moment_trace(m::PlayMoment) = m.trace
 warn_delta_t(m::PlayMoment) = false
 
-type PlayFunctionMoment <: AbstractTimedMoment
+mutable struct PlayFunctionMoment <: AbstractTimedMoment
   delta_t::Float64
   fn::Function
   channel::Int
@@ -452,7 +452,7 @@ sequenceable(m::PlayFunctionMoment) = true
 moment_trace(m::PlayFunctionMoment) = m.trace
 warn_delta_t(m::PlayFunctionMoment) = false
 
-type StreamMoment <: AbstractTimedMoment
+struct StreamMoment <: AbstractTimedMoment
   delta_t::Float64
   itr
   channel::Int
@@ -464,7 +464,7 @@ can_continue_sequence(m::StreamMoment) = false
 sequenceable(m::StreamMoment) = false
 moment_trace(m::StreamMoment) = m.trace
 
-type DisplayMoment <: AbstractTimedMoment
+struct DisplayMoment <: AbstractTimedMoment
   delta_t::Float64
   visual::SDLRendered
   trace::StackTrace
@@ -473,7 +473,7 @@ delta_t(m::DisplayMoment) = m.delta_t
 sequenceable(m::DisplayMoment) = true
 moment_trace(m::DisplayMoment) = m.trace
 
-type DisplayFunctionMoment <: AbstractTimedMoment
+struct DisplayFunctionMoment <: AbstractTimedMoment
   delta_t::Float64
   fn::Function
   keys::Vector
@@ -485,7 +485,7 @@ delta_t(m::DisplayFunctionMoment) = m.delta_t
 sequenceable(m::DisplayFunctionMoment) = true
 moment_trace(m::DisplayFunctionMoment) = m.trace
 
-type CompoundMoment <: AbstractMoment
+struct CompoundMoment <: AbstractMoment
   data::Array{AbstractMoment}
 end
 delta_t(m::CompoundMoment) = 0.0
@@ -499,7 +499,7 @@ convert(::Type{CompoundMoment},x::SimpleMoment) = CompoundMoment([x])
 
 # optimize a seequence of moments that can occur, immediately, one after
 # the other
-type MomentSequence <: AbstractTimedMoment
+struct MomentSequence <: AbstractTimedMoment
   data::Vector{AbstractMoment}
 end
 delta_t(m::MomentSequence) = delta_t(m.data[1])
@@ -509,7 +509,7 @@ push!(m::MomentSequence,x) = push!(m.data,x)
 sequence(m1::AbstractMoment,m2::AbstractMoment) = MomentSequence([m1,m2])
 sequence(ms::MomentSequence,m::AbstractMoment) = (push!(ms.data,m); ms)
 
-type ExpandingMoment <: AbstractMoment
+mutable struct ExpandingMoment <: AbstractMoment
   condition::Function
   data::Stack{AbstractMoment}
   repeat::Bool
@@ -526,10 +526,10 @@ delta_t(m::ExpandingMomentStub) = 0.0
 required_delta_t(m::ExpandingMomentStub) = Inf
 can_continue_sequence(m::ExpandingMomentStub) = false
 
-type EmptyMoment <: AbstractMoment end
+struct EmptyMoment <: AbstractMoment end
 empty_moment = EmptyMoment()
 
-type MomentQueue
+mutable struct MomentQueue
   data::Vector{AbstractMoment}
   last::Float64
   start_index::Int
@@ -663,7 +663,7 @@ immutable ExperimentInfo
 end
 
 # ongoing state about an experiment that changes moment to moment
-type ExperimentData
+mutable struct ExperimentData
   offset::Int
   trial::Int
   skip_offsets::Int
@@ -678,13 +678,13 @@ type ExperimentData
 end
 
 # flags to track experiment state
-type ExperimentFlags
+mutable struct ExperimentFlags
   running::Bool
   processing::Bool
 end
 
-abstract Extension
-abstract Experiment{W}
+abstract type Extension end
+abstract type Experiment{W} end
 
 immutable UnextendedExperiment{W} <: Experiment{W}
   info::ExperimentInfo

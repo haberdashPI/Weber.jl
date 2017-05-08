@@ -4,7 +4,7 @@ include("find_timing.jl")
 
 import Weber: prepare!, handle
 
-type TestPrepareMoment <: Weber.SimpleMoment
+struct TestPrepareMoment <: Weber.SimpleMoment
   event::Symbol
 end
 function handle(exp::Weber.Experiment,queue::Weber.MomentQueue,
@@ -30,13 +30,13 @@ expanding_prepare,_,_ = find_timing() do
   end
 end
 
-type TestPrepareError <: Weber.SimpleMoment end
+struct TestPrepareError <: Weber.SimpleMoment end
 function handle(exp::Weber.Experiment,queue::Weber.MomentQueue,
                 moment::TestPrepareError,x)
   Weber.dequeue!(queue)
   true
 end
-type TestPrepareException <: Exception end
+struct TestPrepareException <: Exception end
 prepare!(moment::TestPrepareError,time::Float64) =
   isinf(time) ? throw(TestPrepareException()) : record(:success)
 

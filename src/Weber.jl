@@ -2,6 +2,7 @@ __precompile__()
 
 module Weber
 using Juno
+using Base.Iterators
 using Lazy: @>, @>>, @_
 export resize_cache!, @>, @>>, @_
 
@@ -45,7 +46,7 @@ try
                   "be reproduceable."))
   end
   global const version =
-    convert(VersionNumber,chomp(readstring(`git describe --match v* --tags`))*suffix)
+    convert(VersionNumber,chomp(readstring(`git describe --match 'v*' --tags`))*suffix)
 catch
   try
     global const version = Pkg.installed("Weber")

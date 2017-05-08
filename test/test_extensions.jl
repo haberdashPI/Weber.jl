@@ -4,9 +4,9 @@ include("find_timing.jl")
 
 import Weber: poll_events
 
-type ExtensionA <: Weber.Extension end
-type ExtensionB <: Weber.Extension end
-type ExtensionC <: Weber.Extension
+struct ExtensionA <: Weber.Extension end
+struct ExtensionB <: Weber.Extension end
+mutable struct ExtensionC <: Weber.Extension
   triggered::Bool
 end
 ExtensionC() = ExtensionC(false)

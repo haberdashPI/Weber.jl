@@ -34,12 +34,12 @@ function find_font(name,dirs)
         join(dirs,", "," and ")*".")
 end
 
-abstract SDLRendered
-abstract SDLSimpleRendered <: SDLRendered
+abstract type SDLRendered end
+abstract type SDLSimpleRendered <: SDLRendered end
 timed(r) = 0.0 < display_duration(r) < Inf
 visual(x::SDLRendered;kwds...) = update_arguments(x;kwds...)
 
-type RenderItem
+struct RenderItem
   r::SDLRendered
   delete_at::Float64
 end
@@ -47,7 +47,7 @@ display_priority(x::RenderItem) = display_priority(x.r)
 display_duration(x::RenderItem) = display_duration(x.r)
 timed(x::RenderItem) = timed(x.r)
 
-type DisplayStack
+mutable struct DisplayStack
   data::OrderedSet{RenderItem}
   next_change::Float64
 end
@@ -91,8 +91,8 @@ collect(x::DisplayStack) = collect(x.data)
 copy(x::DisplayStack) = DisplayStack(copy(x.data),x.next_change)
 ischanging(x::DisplayStack,tick) = x.next_change + change_resolution <= tick
 
-abstract ExperimentWindow
-type NullWindow <: ExperimentWindow
+abstract type ExperimentWindow end
+mutable struct NullWindow <: ExperimentWindow
   w::Cint
   h::Cint
   closed::Bool
@@ -100,7 +100,7 @@ end
 visual(win::NullWindow,args...;kwds...) = nothing
 display(win::NullWindow,r;kwds...) = nothing
 
-type SDLWindow <: ExperimentWindow
+mutable struct SDLWindow <: ExperimentWindow
   data::Ptr{Void}
   renderer::Ptr{Void}
   w::Cint
@@ -220,7 +220,7 @@ function clear(window::SDLWindow,color::RGB{N0f8}=colorant"gray")
 end
 clear(win::NullWindow,color) = nothing
 
-type SDLFont
+struct SDLFont
   data::Ptr{Void}
   color::RGBA{N0f8}
 end
@@ -280,7 +280,7 @@ function draw(r::SDLRendered)
   draw(win(get_experiment()),r)
 end
 
-type SDLClear <: SDLSimpleRendered
+struct SDLClear <: SDLSimpleRendered
   color::Color
   duration::Float64
   priority::Float64
@@ -349,7 +349,7 @@ function update_arguments(rect::SDLRect;w=NaN,h=NaN,x=NaN,y=NaN,kwds...)
 end
 
 
-abstract SDLTextured <: SDLSimpleRendered
+abstract type SDLTextured <: SDLSimpleRendered end
 
 function draw(window::SDLWindow,texture::SDLTextured)
   ccall((:SDL_RenderCopy,weber_SDL2),Void,
@@ -358,7 +358,7 @@ function draw(window::SDLWindow,texture::SDLTextured)
   nothing
 end
 
-type SDLText <: SDLTextured
+struct SDLText <: SDLTextured
   str::String
   data::Ptr{Void}
   rect::SDLRect
@@ -470,7 +470,7 @@ function visual(window::SDLWindow,x::Real,y::Real,font::SDLFont,color::RGB{N0f8}
   end
 end
 
-type SDLImage <: SDLTextured
+struct SDLImage <: SDLTextured
   data::Ptr{Void}
   img::Array{RGBA{N0f8}}
   rect::SDLRect
@@ -770,7 +770,7 @@ end
 
 refresh_display(window::NullWindow) = nothing
 
-type SDLCompound <: SDLRendered
+struct SDLCompound <: SDLRendered
   data::Array{SDLRendered}
 end
 function +(a::SDLSimpleRendered,b::SDLSimpleRendered)
@@ -800,7 +800,7 @@ function update_arguments(rs::SDLCompound;kwds...)
   SDLCompound(map(r -> update_arguments(r;kwds...),rs.data))
 end
 
-type RestoreDisplay <: SDLRendered
+struct RestoreDisplay <: SDLRendered
   x::DisplayStack
 end
 function update_stack_helper!(window,restore::RestoreDisplay)

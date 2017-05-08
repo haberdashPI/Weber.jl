@@ -2,7 +2,7 @@ using Distributions
 export levitt_adapter, bayesian_adapter, constant_adapter, delta, estimate,
   update!
 
-abstract Adapter
+abstract type Adapter end
 
 """
     update!(adapter,response,correct)
@@ -103,7 +103,7 @@ function response(callback::Function,adapter::Adapter,responses::Pair...;
   end
 end
 
-type ConstantStimulus
+mutable struct ConstantStimulus
   stimuli::Vector{Float64}
   index::Int
   correct::Vector{Int}

@@ -1,4 +1,5 @@
 using Base.Test
+using Base.Iterators
 
 @testset "Weber" begin
   @testset "Trial Sequencing" begin

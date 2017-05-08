@@ -1,7 +1,7 @@
 export audible
 import Base: eltype, isinf
 
-abstract AbstractStream{R,T}
+abstract type AbstractStream{R,T} end
 typealias Audible{R,T} Union{Sound{R,T},AbstractStream{R,T}}
 
 samplerate{R}(s::AbstractStream{R}) = R*Hz
@@ -102,7 +102,7 @@ limit{R}(stream::AbstractStream{R},len::Time) = limit(stream,insamples(len,R*Hz)
 limit{R,T}(s::AbstractStream{R,T},n::Int) = LimitStream{R,T}(s,n+index(s))
 limit{R,T}(s::LimitStream{R,T},n::Int) = LimitStream{R,T}(s.data,min(n+index(s),s.n))
 
-type CatStream{R,T} <: AbstractStream{R,T}
+mutable struct CatStream{R,T} <: AbstractStream{R,T}
   a::AbstractStream{R,T}
   b::AbstractStream{R,T}
 end
@@ -187,7 +187,7 @@ end
 # end
 
 const emptyfn = () -> nothing
-type OpStream{R,T} <: AbstractStream{R,T}
+mutable struct OpStream{R,T} <: AbstractStream{R,T}
   op::Function
   a::AbstractStream{R,T}
   b::AbstractStream{R,T}
