@@ -165,78 +165,16 @@
                 <p>In addition to functions available below you can also call <a href="https://github.com/JuliaIO/FileIO.jl"><code>FileIO.jl</code></a>'s <code>load</code> and <code>save</code> functions for common audio file formats (e.g. "wav", "aiff", "ogg").</p>
 <p><a id='Sound-Creation-1'></a></p>
 <h1 id="sound-creation">Sound Creation</h1>
-<p><a id='Weber.tone' href='#Weber.tone'>#</a>
-<strong><code>Weber.tone</code></strong> &mdash; <em>Function</em>.</p>
-<pre><code>tone(freq,length,[sample_rate_Hz=44100],[phase=0])
+<pre><code>tone
+noise
+silence
+harmonic_complex
+asstream
+stream_unit
+sound
+buffer
 </code></pre>
 
-<p>Creates a pure tone of the given frequency and length (in seconds).</p>
-<p>You can create an infinitely long tone (playable with <a href="./#Weber.stream"><code>stream</code></a>) by passing a length of Inf, or leaving out the length entirely.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/c61b599324691ce077d73fc6507108d7e1cd7c02/src/sound.jl#L260-L267' class='documenter-source'>source</a><br></p>
-<p><a id='Weber.noise' href='#Weber.noise'>#</a>
-<strong><code>Weber.noise</code></strong> &mdash; <em>Function</em>.</p>
-<pre><code>noise(length,[sample_rate_Hz=44100])
-</code></pre>
-
-<p>Creates a period of white noise of the given length (in seconds).</p>
-<p>You can create an infinite stream of noise (playable with <a href="./#Weber.stream"><code>stream</code></a>) by passing a length of Inf, or leaving out the length entirely.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/c61b599324691ce077d73fc6507108d7e1cd7c02/src/sound.jl#L227-L234' class='documenter-source'>source</a><br></p>
-<p><a id='Weber.silence' href='#Weber.silence'>#</a>
-<strong><code>Weber.silence</code></strong> &mdash; <em>Function</em>.</p>
-<pre><code>silence(length,[sample_rate_Hz=44100])
-</code></pre>
-
-<p>Creates period of silence of the given length (in seconds).</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/c61b599324691ce077d73fc6507108d7e1cd7c02/src/sound.jl#L191-L195' class='documenter-source'>source</a><br></p>
-<p><a id='Weber.harmonic_complex' href='#Weber.harmonic_complex'>#</a>
-<strong><code>Weber.harmonic_complex</code></strong> &mdash; <em>Function</em>.</p>
-<pre><code>harmonic_complex(f0,harmonics,amps,length,
-                 [sample_rate_Hz=44100],[phases=zeros(length(harmonics))])
-</code></pre>
-
-<p>Creates a harmonic complex of the given length, with the specified harmonics at the given amplitudes. This implementation is somewhat superior to simply summing a number of pure tones generated using <code>tone</code>, because it avoids beating in the sound that may occur due floating point errors.</p>
-<p>You can create an infinitely long complex (playable with <a href="./#Weber.stream"><code>stream</code></a>) by passing a length of Inf, or leaving out the length entirely.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/c61b599324691ce077d73fc6507108d7e1cd7c02/src/sound.jl#L312-L323' class='documenter-source'>source</a><br></p>
-<p><a id='Weber.asstream' href='#Weber.asstream'>#</a>
-<strong><code>Weber.asstream</code></strong> &mdash; <em>Function</em>.</p>
-<pre><code>asstream(fn;[sample_rate_Hz=44100])
-</code></pre>
-
-<p>Converts the function <code>fn</code> into a sound stream.</p>
-<p>The function <code>fn</code> should take a single argument–the time in seconds from the start of the stream–and should return a number between -1 and 1.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/c61b599324691ce077d73fc6507108d7e1cd7c02/src/sound.jl#L478-L485' class='documenter-source'>source</a><br></p>
-<p><a id='Weber.stream_unit' href='#Weber.stream_unit'>#</a>
-<strong><code>Weber.stream_unit</code></strong> &mdash; <em>Function</em>.</p>
-<pre><code>stream_unit()
-</code></pre>
-
-<p>Report the length in samples of each unit that all sound streams should generate.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/c61b599324691ce077d73fc6507108d7e1cd7c02/src/sound.jl#L616-L620' class='documenter-source'>source</a><br></p>
-<p><a id='Weber.sound' href='#Weber.sound'>#</a>
-<strong><code>Weber.sound</code></strong> &mdash; <em>Function</em>.</p>
-<pre><code>sound(x::Array,[cache=true];[sample_rate_Hz=44100])
-</code></pre>
-
-<p>Creates a sound object from an arbitrary array.</p>
-<p>For real numbers, assumes 1 is the loudest and -1 the softest. Assumes 16-bit PCM for integers. The array should be 1d for mono signals, or an array of size (N,2) for stereo sounds.</p>
-<p>When cache is set to true, sound will cache its results thus avoiding repeatedly creating a new sound for the same object.</p>
-<div class="admonition note">
-<p class="admonition-title">Called Implicitly</p>
-<p>This function is normally called implicitly in a call to <code>play(x)</code>, where x is an arbitrary array, so it need not normally be called directly.</p>
-</div>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/c61b599324691ce077d73fc6507108d7e1cd7c02/src/sound.jl#L57-L74' class='documenter-source'>source</a><br></p>
-<pre><code>sound(x::SampleBuff,[cache=true])
-</code></pre>
-
-<p>Creates a sound object from a <code>SampleBuf</code> (from the <code>SampledSignals</code> module).</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/c61b599324691ce077d73fc6507108d7e1cd7c02/src/sound.jl#L86-L90' class='documenter-source'>source</a><br></p>
-<p><a id='Weber.buffer' href='#Weber.buffer'>#</a>
-<strong><code>Weber.buffer</code></strong> &mdash; <em>Function</em>.</p>
-<pre><code>buffer(s::Sound)
-</code></pre>
-
-<p>Gets the <code>SampleBuf</code> associated with this sound (c.f. <code>SampledSignals</code> package).</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/c61b599324691ce077d73fc6507108d7e1cd7c02/src/sound.jl#L113-L117' class='documenter-source'>source</a><br></p>
 <p><a id='Sound-Manipulation-1'></a></p>
 <h1 id="sound-manipulation">Sound Manipulation</h1>
 <p><a id='Weber.highpass' href='#Weber.highpass'>#</a>
@@ -246,7 +184,7 @@
 
 <p>High-pass filter the sound (or stream) at the specified frequency.</p>
 <p>Filtering uses a butterworth filter of the given order.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/c61b599324691ce077d73fc6507108d7e1cd7c02/src/sound.jl#L426-L432' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/76491d2dd7eb6759df2223b6574d0a50185041e5/src/audio.jl#L159-L165' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.lowpass' href='#Weber.lowpass'>#</a>
 <strong><code>Weber.lowpass</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>lowpass(x,low,[order=5],[sample_rate_Hz=samplerate(x)])
@@ -254,15 +192,15 @@
 
 <p>Low-pass filter the sound (or stream) at the specified frequency.</p>
 <p>Filtering uses a butterworth filter of the given order.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/c61b599324691ce077d73fc6507108d7e1cd7c02/src/sound.jl#L402-L408' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/76491d2dd7eb6759df2223b6574d0a50185041e5/src/audio.jl#L150-L156' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.bandpass' href='#Weber.bandpass'>#</a>
 <strong><code>Weber.bandpass</code></strong> &mdash; <em>Function</em>.</p>
-<pre><code>bandpass(x,low,high,[order=5],[sample_rate_Hz=samplerate(x)])
+<pre><code>bandpass(x,low,high;[order=5])
 </code></pre>
 
 <p>Band-pass filter the sound (or stream) at the specified frequencies.</p>
 <p>Filtering uses a butterworth filter of the given order.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/c61b599324691ce077d73fc6507108d7e1cd7c02/src/sound.jl#L357-L363' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/76491d2dd7eb6759df2223b6574d0a50185041e5/src/audio.jl#L132-L138' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.bandstop' href='#Weber.bandstop'>#</a>
 <strong><code>Weber.bandstop</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>bandstop(x,low,high,[order=5],[sample_rate_Hz=samplerate(x)])
@@ -270,175 +208,91 @@
 
 <p>Band-stop filter of the sound (or stream) at the specified frequencies.</p>
 <p>Filtering uses a butterworth filter of the given order.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/c61b599324691ce077d73fc6507108d7e1cd7c02/src/sound.jl#L379-L385' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/76491d2dd7eb6759df2223b6574d0a50185041e5/src/audio.jl#L141-L147' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.ramp' href='#Weber.ramp'>#</a>
 <strong><code>Weber.ramp</code></strong> &mdash; <em>Function</em>.</p>
-<pre><code>ramp(x,[ramp_s=0.005];[sample_rate_Hz=samplerate(x)])
+<pre><code>ramp(x,[length=5ms])
 </code></pre>
 
 <p>Applies a half cosine ramp to start and end of the sound.</p>
 <p>Ramps prevent clicks at the start and end of sounds.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/c61b599324691ce077d73fc6507108d7e1cd7c02/src/sound.jl#L448-L454' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/76491d2dd7eb6759df2223b6574d0a50185041e5/src/audio.jl#L186-L192' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.rampon' href='#Weber.rampon'>#</a>
 <strong><code>Weber.rampon</code></strong> &mdash; <em>Function</em>.</p>
-<pre><code>rampon(stream,[ramp_s=0.005])
+<pre><code>rampon(stream,[len=5ms])
 </code></pre>
 
 <p>Applies a half consine ramp to start of the sound or stream.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/c61b599324691ce077d73fc6507108d7e1cd7c02/src/sound.jl#L490-L494' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/76491d2dd7eb6759df2223b6574d0a50185041e5/src/audio.jl#L211-L215' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.rampoff' href='#Weber.rampoff'>#</a>
 <strong><code>Weber.rampoff</code></strong> &mdash; <em>Function</em>.</p>
-<pre><code>rampoff(stream,[ramp_s=0.005],[after=0])
+<pre><code>rampoff(stream,[len=5ms],[after=0s])
 </code></pre>
 
-<p>Applies a half consine ramp to the end of the sound.</p>
-<p>For streams, you may specify that the ramp off occur some number of seconds after the start of the stream.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/c61b599324691ce077d73fc6507108d7e1cd7c02/src/sound.jl#L518-L525' class='documenter-source'>source</a><br></p>
+<p>Applies a half consine ramp to the end sound, or to a stream.</p>
+<p>For streams, you may specify how many seconds after the call to rampff the stream should end.</p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/76491d2dd7eb6759df2223b6574d0a50185041e5/src/audio.jl#L229-L236' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.fadeto' href='#Weber.fadeto'>#</a>
 <strong><code>Weber.fadeto</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>fadeto(stream,channel=1,transition=0.05)
 </code></pre>
 
-<p>Smoothly transition from the currently playing stream to another stream.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/c61b599324691ce077d73fc6507108d7e1cd7c02/src/sound.jl#L926-L930' class='documenter-source'>source</a><br></p>
+<p>A smooth transition from the currently playing stream to another stream.</p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/76491d2dd7eb6759df2223b6574d0a50185041e5/src/audio.jl#L265-L269' class='documenter-source'>source</a><br></p>
 <pre><code>fadeto(sound1,sound2,overlap=0.05)
 </code></pre>
 
 <p>A smooth transition from sound1 to sound2, overlapping the end of sound1 and the start of sound2 by <code>overlap</code> (in seconds).</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/c61b599324691ce077d73fc6507108d7e1cd7c02/src/sound.jl#L941-L946' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/76491d2dd7eb6759df2223b6574d0a50185041e5/src/audio.jl#L279-L284' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.attenuate' href='#Weber.attenuate'>#</a>
 <strong><code>Weber.attenuate</code></strong> &mdash; <em>Function</em>.</p>
-<pre><code>attenuate(x,atten_dB)
+<pre><code>attenuate(x,atten_dB;[time_constant])
 </code></pre>
 
 <p>Apply the given decibels of attenuation to the sound (or stream) relative to a power level of 1.</p>
 <p>This function normalizes the sound to have a root mean squared value of 1 and then reduces the sound by a factor of $10^{-a/20}$, where $a$ = <code>atten_dB</code>.</p>
-<p>If <code>x</code> is a stream, attenuate takes an additional keyword argument <code>time_constant</code>. This determines the time across which the sound is normalized to power 1, which defaults to 1 second.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/c61b599324691ce077d73fc6507108d7e1cd7c02/src/sound.jl#L553-L565' class='documenter-source'>source</a><br></p>
+<p>The keyword argument <code>time_constant</code> determines the time across which the sound is normalized to power 1, which, for sounds, defaults to the entire sound and, for streams, defaults to 1 second.</p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/76491d2dd7eb6759df2223b6574d0a50185041e5/src/audio.jl#L290-L302' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.mix' href='#Weber.mix'>#</a>
 <strong><code>Weber.mix</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>mix(x,y,...)
 </code></pre>
 
-<p>Mix several sounds (or streams) together so that they play at the same time.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/c61b599324691ce077d73fc6507108d7e1cd7c02/src/sound.jl#L174-L178' class='documenter-source'>source</a><br></p>
+<p>mix several sounds (or streams) together so that they play at the same time.</p>
+<p>Unlike normal addition, this acts as if each sound is padded with zeros at the end so that the lengths of all sounds match.</p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/76491d2dd7eb6759df2223b6574d0a50185041e5/src/audio.jl#L13-L20' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.mult' href='#Weber.mult'>#</a>
 <strong><code>Weber.mult</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>mult(x,y,...)
 </code></pre>
 
 <p>Mutliply several sounds (or streams) together. Typically used to apply an amplitude envelope.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/c61b599324691ce077d73fc6507108d7e1cd7c02/src/sound.jl#L182-L187' class='documenter-source'>source</a><br></p>
+<p>Unlike normal multiplication, this acts as if each sound is padded with ones at the end so that the lengths of all sounds match.</p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/76491d2dd7eb6759df2223b6574d0a50185041e5/src/audio.jl#L23-L31' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.envelope' href='#Weber.envelope'>#</a>
 <strong><code>Weber.envelope</code></strong> &mdash; <em>Function</em>.</p>
-<pre><code>envelope(mult,length,[sample_rate_Hz=44100])
+<pre><code>envelope(mult,length;[sample_rate_Hz=44100])
 </code></pre>
 
-<p>Creates an evelope of a given multiplier and length (in seconds).</p>
-<p>If mult = 0 this is the same as calling silence. This function is useful in conjunction with <a href="./#Weber.fadeto"><code>fadeto</code></a> and <a href="./#Weber.mult"><code>mult</code></a> when defining an envelope that changes in level. For example, the following will play a 1kHz tone for 1 second, which changes in volume halfway through to a softer level.</p>
+<p>creates an envelope of a given multiplier and length (in seconds).</p>
+<p>If mult = 0 this is the same as calling <a href="./#Weber.silence"><code>silence</code></a>. This function is useful in conjunction with <a href="./#Weber.fadeto"><code>fadeto</code></a> and <a href="./#Weber.mult"><code>mult</code></a> when defining an envelope that changes in level. For example, the following will play a 1kHz tone for 1 second, which changes in volume halfway through to a softer level.</p>
 <pre><code>mult(tone(1000,1),fadeto(envelope(1,0.5),envelope(0.1,0.5)))
 </code></pre>
 
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/c61b599324691ce077d73fc6507108d7e1cd7c02/src/sound.jl#L200-L213' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/76491d2dd7eb6759df2223b6574d0a50185041e5/src/audio.jl#L43-L56' class='documenter-source'>source</a><br></p>
 <p><a id='Playback-1'></a></p>
 <h1 id="playback">Playback</h1>
-<p><a id='Weber.setup_sound' href='#Weber.setup_sound'>#</a>
-<strong><code>Weber.setup_sound</code></strong> &mdash; <em>Function</em>.</p>
-<pre><code>setup_sound([sample_rate_Hz=44100],[num_channels=8],[queue_size=8],
-            [stream_unit=2^10])
+<pre><code>setup_sound 
+play
+duration
+stream
+stop
+samplerate
+current_sound_latency
+pause_sounds
+resume_sounds
+run_calibrate
 </code></pre>
-
-<p>Initialize format and capacity of audio playback.</p>
-<p>This function is called automatically (using the default settings) the first time a <code>Sound</code> object is created (normally during <a href="./#Weber.play"><code>play</code></a> or <a href="./#Weber.stream"><code>stream</code></a>).  It need not normally be called explicitly, unless you wish to change one of the default settings.</p>
-<p><strong>Sample Rate</strong></p>
-<p>Sample rate determines the maximum playable frequency (max freq is ≈ sample_rate/2). Changing the sample rate from the default 44100 to a new value will also change the default sample rate sounds will be created at, to match this new sample rate.</p>
-<p><strong>Channel Number</strong></p>
-<p>The number of channels determines the number of sounds and streams that can be played concurrently. Note that discrete sounds and streams use a distinct set of channels.</p>
-<p><strong>Queue Size</strong></p>
-<p>Sounds can be queued to play ahead of time (using the <code>time</code> parameter of <a href="./#Weber.play"><code>play</code></a>). When you request that a sound be played it may be queued to play on a channel where a sound is already playing. The number of sounds that can be queued to play at once is determined by queue size. The number of channels times the queue size determines the number of sounds that you can queue up to play ahead of time.</p>
-<p><strong>Stream Unit</strong></p>
-<p>The stream unit determines the number of samples that are streamed at one time. Iterators to be used as streams should generate this many samples at a time.  If this value is too small for your hardware, streams will sound jumpy. However the latency of streams will increase as the stream unit increases. Future versions of Weber will likely improve the latency of stream playback.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/c61b599324691ce077d73fc6507108d7e1cd7c02/src/sound.jl#L679-L720' class='documenter-source'>source</a><br></p>
-<p><a id='Weber.play' href='#Weber.play'>#</a>
-<strong><code>Weber.play</code></strong> &mdash; <em>Function</em>.</p>
-<pre><code>play(x;[time=0.0],[channel=0])
-</code></pre>
-
-<p>Plays a sound (created via <a href="./#Weber.sound"><code>sound</code></a>).</p>
-<p>For convenience, play can also can be called on any object that can be turned into a sound (via <code>sound</code>).</p>
-<p>This function returns immediately with the channel the sound is playing on. You may provide a specific channel that the sound plays on: only one sound can be played per channel. Normally it is unecessary to specify a channel, because an appropriate channel is selected for you. However, pausing and resuming of sounds occurs on a per channel basis, so if you plan to pause a specific sound, you can do so by specifying its channel.</p>
-<p>If <code>time &gt; 0</code>, the sound plays at the given time (in seconds from epoch, or seconds from experiment start if an experiment is running), otherwise the sound plays as close to right now as is possible.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/c61b599324691ce077d73fc6507108d7e1cd7c02/src/sound.jl#L788-L806' class='documenter-source'>source</a><br></p>
-<pre><code>play(fn::Function)
-</code></pre>
-
-<p>Play the sound that's returned by calling <code>fn</code>.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/c61b599324691ce077d73fc6507108d7e1cd7c02/src/sound.jl#L993-L997' class='documenter-source'>source</a><br></p>
-<p><a id='Weber.duration' href='#Weber.duration'>#</a>
-<strong><code>Weber.duration</code></strong> &mdash; <em>Function</em>.</p>
-<pre><code>duration(x)
-</code></pre>
-
-<p>Get the duration of the given sound in seconds.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/c61b599324691ce077d73fc6507108d7e1cd7c02/src/sound.jl#L1034-L1038' class='documenter-source'>source</a><br></p>
-<p><a id='Weber.stream' href='#Weber.stream'>#</a>
-<strong><code>Weber.stream</code></strong> &mdash; <em>Function</em>.</p>
-<pre><code>stream([itr | fn],channel=1)
-</code></pre>
-
-<p>Plays sounds continuously on a given channel by reading from the iterator <code>itr</code> whenever more data is required. The iterator should return objects that can be turned into sounds (via <a href="./#Weber.sound"><code>sound</code></a>). The number of available streaming channels is determined by <a href="./#Weber.setup_sound"><code>setup_sound</code></a>. The size, in samples, of each sound returned by this iterator should be equal to <a href="./#Weber.stream_unit"><code>stream_unit</code></a>.</p>
-<p>Alternatively a <code>fn</code> can be streamed: this transforms a previously streamed itr into a new iterator by calling <code>fn(itr)</code>. If no stream already exists on the given channel, <code>fn</code> is passed the result of <code>countfrom()</code>.</p>
-<p>A stream stops playing if the iterator is finished. There can only be one stream per channel.  Streaming a new iterator on the same channel as another stream stops the older stream. The channels for <code>stream</code> are separate from the channels for <code>play</code>. That is, <code>play(mysound,channel=1)</code> plays a sound on a channel separate from <code>stream(mystream,1)</code>.</p>
-<div class="admonition warning">
-<p class="admonition-title">Streams are not precisely timed</p>
-<p>Streams cannot occur at a precise time. Their latency is variable and depends on the value of <code>stream_unit()</code>. Future versions of Weber will likely allow for precisely timed audio streams.</p>
-</div>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/c61b599324691ce077d73fc6507108d7e1cd7c02/src/sound.jl#L867-L892' class='documenter-source'>source</a><br></p>
-<p><a id='Weber.stop' href='#Weber.stop'>#</a>
-<strong><code>Weber.stop</code></strong> &mdash; <em>Function</em>.</p>
-<pre><code>stop(channel)
-</code></pre>
-
-<p>Stop the stream that is playing on the given channel.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/c61b599324691ce077d73fc6507108d7e1cd7c02/src/sound.jl#L952-L956' class='documenter-source'>source</a><br></p>
-<p><a id='SampledSignals.samplerate' href='#SampledSignals.samplerate'>#</a>
-<strong><code>SampledSignals.samplerate</code></strong> &mdash; <em>Function</em>.</p>
-<pre><code>samplerate([sound])
-</code></pre>
-
-<p>Report the sampling rate of the sound or of any object that can be turned into a sound.</p>
-<p>If no sound is passed, the curent playback sampling rate is reported (as determined by <a href="./#Weber.setup_sound"><code>setup_sound</code></a>).  The sampling rate of an object determines how many samples per second are used to represent the sound. Objects that can be converted to sounds assume the sampling rate of the current hardware settings as defined by <a href="./#Weber.setup_sound"><code>setup_sound</code></a>.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/c61b599324691ce077d73fc6507108d7e1cd7c02/src/sound.jl#L623-L634' class='documenter-source'>source</a><br></p>
-<p><a id='Weber.current_sound_latency' href='#Weber.current_sound_latency'>#</a>
-<strong><code>Weber.current_sound_latency</code></strong> &mdash; <em>Function</em>.</p>
-<pre><code>current_sound_latency()
-</code></pre>
-
-<p>Reports the current, minimum latency of audio playback.</p>
-<p>The current latency depends on your hardware and software drivers. This estimate does not include the time it takes for a sound to travel from your sound card to speakers or headphones. This latency estimate is used internally by <a href="./#Weber.play"><code>play</code></a> to present sounds at accurate times.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/c61b599324691ce077d73fc6507108d7e1cd7c02/src/sound.jl#L773-L782' class='documenter-source'>source</a><br></p>
-<p><a id='Weber.pause_sounds' href='#Weber.pause_sounds'>#</a>
-<strong><code>Weber.pause_sounds</code></strong> &mdash; <em>Function</em>.</p>
-<pre><code>pause_sounds([channel],[isstream])
-</code></pre>
-
-<p>Pause all sounds (or a stream) playing on a given channel.</p>
-<p>If no channel is specified, then all sounds are paused.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/c61b599324691ce077d73fc6507108d7e1cd7c02/src/sound.jl#L1002-L1008' class='documenter-source'>source</a><br></p>
-<p><a id='Weber.resume_sounds' href='#Weber.resume_sounds'>#</a>
-<strong><code>Weber.resume_sounds</code></strong> &mdash; <em>Function</em>.</p>
-<pre><code>resume_sounds([channel],[isstream])
-</code></pre>
-
-<p>Resume all sounds (or a stream) playing on a given channel.</p>
-<p>If no channel is specified, then all sounds are resumed.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/c61b599324691ce077d73fc6507108d7e1cd7c02/src/sound.jl#L1018-L1024' class='documenter-source'>source</a><br></p>
-<p><a id='Weber.run_calibrate' href='#Weber.run_calibrate'>#</a>
-<strong><code>Weber.run_calibrate</code></strong> &mdash; <em>Function</em>.</p>
-<p>run_calibrate()</p>
-<p>Runs a program that will allow you to play pure tones and adjust their level.</p>
-<p>This program provides one means of calibrating the levels of sound in your experiment. Using a sound-level meter you can determine the dB SPL of each tone, and adjust the attenuation to achieve a desired sound level.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/c61b599324691ce077d73fc6507108d7e1cd7c02/src/helpers.jl#L28-L36' class='documenter-source'>source</a><br></p>
               
             </div>
           </div>
