@@ -168,7 +168,7 @@ function Experiment(;skip=0,columns=Symbol[],debug=false,
                     extensions = Extension[],
                     width=exp_width,height=exp_height,
                     warn_on_trials_only = true)
-  if !isready(sound_setup_state)
+  if !isready(sound_setup_state) && !null_window
     setup_sound()
   end
 
