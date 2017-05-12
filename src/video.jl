@@ -1,6 +1,7 @@
 using Colors
 using FixedPointNumbers
 using Images
+using FileIO
 using DataStructures
 using Lazy: @>>
 using LRUCache
@@ -390,6 +391,41 @@ end
 
 fonts = Dict{Tuple{String,Int},SDLFont}()
 
+# TODO: improve documentation for visual,
+# since strings can do one of two things
+
+
+image_formats = [
+  "BMP",
+  "AVI",
+  "CRW",
+  "CUR",
+  "DCX",
+  "DOT",
+  "EPS",
+  "GIF",
+  "HDR",
+  "ICO",
+  "INFO",
+  "JP2",
+  "JPEG",
+  "PCX",
+  "PDB",
+  "PDF",
+  "PGM",
+  "PNG",
+  "PSD",
+  "RGB",
+  "TIFF",
+  "WMF",
+  "WPG",
+  "TGA"
+]
+function isimage(str::String)
+  ismatch(r".*\.(\w{3,4})$",str) &&
+    uppercase(match(r".*\.(\w{3,4})$",str)[1]) in image_formats
+end
+
 """
     visual(str::String, [font=nothing], [font_name="arial"], [size=32],
            [color=colorant"white"],
@@ -405,9 +441,18 @@ before wrapping.
 * clean_whitespace: if true, replace all consecutive white space with a single
   space.
 """
-function visual(window::SDLWindow,str::String;
-                font=nothing,font_name="arial",size=32,info...)
+function visual(window::SDLWindow,str::String,cache=true;keys...)
+  if isimage(str)
+    image_cache(cache,str) do
+      visual(window,load(str),false;keys...)
+    end
+  else
+    visual_text(window,str;keys...)
+  end
+end
 
+function visual_text(window::SDLWindow,str::String;
+                     font=nothing,font_name="arial",size=32,info...)
   if font == nothing
     f = get!(fonts,(font_name,size)) do
       Weber.font(font_name,size)
@@ -493,21 +538,38 @@ function update_arguments(img::SDLImage;w=NaN,h=NaN,duration=img.duration*s,
 end
 
 const convert_cache = LRU{UInt,Array{RGBA{N0f8}}}(256)
-const image_cache = LRU{UInt,SDLImage}(256)
+const _image_cache = LRU{UInt,SDLImage}(256)
+function image_cache(fn,usecache,x)
+  if usecache
+    get!(fn,_image_cache,object_id(x))
+  else
+    fn()
+  end
+end
+
+function image_cache(fn,usecache::Union{File,String},x)
+  if usecache
+    get!(fn,_image_cache,x)
+  else
+    fn()
+  end
+end
+
 """
-    visual(img::Array, [x=0],[y=0],[duration=0s],[priority=0])
+    visual(img, [x=0],[y=0],[duration=0s],[priority=0])
 
 Prepare the color or gray scale image to be displayed to the screen.
 
-This utilizes all the conventions in the `Images` package for representing
-images. Internally, real-number 2d arrays are interpreted as gray scale images,
-and real-number 3d arrays as an RGB image or RGBA image, depending on whether
-size(img,1) is of size 3 or 4. A 3d array with a size(img,1) ∉ [3,4] results in
-an error.
+For a string or file reference, this loads and prepares for display the given
+image file. For an array this utilizes all the conventions in the `Images`
+package for representing images. Internally, real-number 2d arrays are
+interpreted as gray scale images, and real-number 3d arrays as an RGB image or
+RGBA image, depending on whether size(img,1) is of size 3 or 4. A 3d array with
+a size(img,1) ∉ [3,4] results in an error.
 """
-function visual{T <: AbstractFloat}(window::SDLWindow,img::Array{T};keys...)
-  converted = get!(convert_cache,object_id(img)) do
-    if length(size(img)) == 3
+function visual(window::SDLWindow,img::Array{<:AbstractFloat},cache=true;keys...)
+  image_cache(cache,img) do
+    converted = if length(size(img)) == 3
       if size(img,1) == 3
         n0f8.(colorview(RGB,img))
       elseif size(img,1) == 4
@@ -518,20 +580,19 @@ function visual{T <: AbstractFloat}(window::SDLWindow,img::Array{T};keys...)
     elseif length(size(img)) == 2
       n0f8.(colorview(Gray,img))
     end
+    visual(window,converted,false;keys...)
   end
-  visual(window,converted;keys...)
 end
 
-function visual(window::SDLWindow,img::Array;keys...)
-  converted = get!(convert_cache,object_id(img)) do
-    convert(RGBA,n0f8.(img))
+function visual(window::SDLWindow,img::Array,cache=true;keys...)
+  image_cache(cache,img) do
+    visual(window,convert(RGBA,n0f8.(img)),false;keys...)
   end
-  visual(window,converted;keys...)
 end
 
-function visual(window::SDLWindow,img::Array{RGBA{N0f8}};
+function visual(window::SDLWindow,img::Array{RGBA{N0f8}},cache=true;
                 x=0,y=0,duration=0s,priority=0)
-  get!(image_cache,object_id(img)) do
+  image_cache(cache,img) do
     surface = ccall((:SDL_CreateRGBSurfaceFrom,weber_SDL2),Ptr{Void},
                     (Ptr{Void},Cint,Cint,Cint,Cint,UInt32,UInt32,UInt32,UInt32),
                     pointer(copy(img')),size(img,2),size(img,1),32,
