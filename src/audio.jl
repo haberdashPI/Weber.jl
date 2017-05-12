@@ -303,11 +303,11 @@ for streams, defaults to 1 second.
 # TODO: allow a time constant for Sound's in Julia 0.6?
 # using braodcast operator
 function attenuate(x::Sound,atten_dB)
-	10^(-atten_dB/20) * x / rms(x)
+	similar(x) .= 10^(-atten_dB/20) .* x ./ rms(x)
 end
 function attenuate(x::AbstractStream,atten_dB;time_constant=1s)
-	audiofn(soundop(./,x,rms(x,time_constant))) do x
-    10^(-atten_dB/20) * x
+	audiofn(soundop((x,y) -> x ./ y,x,rms(x,time_constant))) do x
+    10^(-atten_dB/20) .* x
   end
 end
 
