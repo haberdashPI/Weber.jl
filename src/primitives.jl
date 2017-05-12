@@ -136,7 +136,7 @@ function show_cross(delta_t::Number=0s;render_options...)
 end
 
 function as_arg(expr)
-  if isa(expr,Symbol) || expr.head != :kw
+  if expr.head != :(=)
     error("Expected keyword parameters specifying additional program arguments.")
   end
 
