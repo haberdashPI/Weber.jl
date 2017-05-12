@@ -220,7 +220,7 @@ function clear(window::SDLWindow,color::RGB{N0f8}=colorant"gray")
 end
 clear(win::NullWindow,color) = nothing
 
-struct SDLFont
+mutable struct SDLFont
   data::Ptr{Void}
   color::RGBA{N0f8}
 end
@@ -358,7 +358,7 @@ function draw(window::SDLWindow,texture::SDLTextured)
   nothing
 end
 
-struct SDLText <: SDLTextured
+mutable struct SDLText <: SDLTextured
   str::String
   data::Ptr{Void}
   rect::SDLRect
@@ -470,7 +470,7 @@ function visual(window::SDLWindow,x::Real,y::Real,font::SDLFont,color::RGB{N0f8}
   end
 end
 
-struct SDLImage <: SDLTextured
+mutable struct SDLImage <: SDLTextured
   data::Ptr{Void}
   img::Array{RGBA{N0f8}}
   rect::SDLRect
