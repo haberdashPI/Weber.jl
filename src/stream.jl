@@ -171,6 +171,8 @@ from the stream.
   Stream{R,T}(i -> fn(stream.fn(i)),stream.index)
 end
 
+# TODO: we need to lookup the guidelines for implementing broadcast
+# before implementing this
 # # TODO: this is mostly useful Julia 0.6 where ./ etc... invokes broadcast
 # function broadcast{R,T}(f::Function,xs::Stream{R,T}...)
 #   let offsets = Int[]
