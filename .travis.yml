@@ -3,7 +3,7 @@ language: julia
 os:
   - osx
 julia:
-  - 0.6.0-rc1
+  - 0.6.0
   - nightly
 matrix:
   allow_failures:
