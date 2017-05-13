@@ -136,7 +136,7 @@ function show_cross(delta_t::Number=0s;render_options...)
 end
 
 function as_arg(expr)
-  if expr.head != :(=)
+  if !isexpr(expr,:(=))
     error("Expected keyword parameters specifying additional program arguments.")
   end
 
@@ -289,11 +289,14 @@ macro read_args(description,keys...)
   push!(arg_body.args,result_tuple)
 
   script_file = gensym(:script_file)
-  collect_args = :(collect_args($(esc(description))))
-  for k in keys
-    push!(collect_args.args,k)
+  collect_args = :(collect_args($(esc(description)),$script_file))
+  for key in keys
+    if !isexpr(key,:(=))
+      error("Expected keyword parameters specifying additional program arguments.")
+    else
+      push!(collect_args.args,Expr(:kw,key.args...))
+    end
   end
-  push!(collect_args.args,script_file)
 
   quote
     cd(dirname(@__FILE__))
