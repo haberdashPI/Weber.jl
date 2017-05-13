@@ -5,7 +5,7 @@ environment:
 branches:
   only:
     - master
-    - v0.6.0-rc1
+    - v0.6-latest
 
 notifications:
   - provider: Email
