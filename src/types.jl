@@ -231,7 +231,7 @@ const str_to_code = Dict{String,Key}(
 )
 
 function show(io::IO,key::KeyboardKey)
-  found = filter((_,akey) -> isa(akey,KeyboardKey) && akey.code == key.code,
+  found = filter((_,akey) -> (akey isa KeyboardKey) && akey.code == key.code,
                  str_to_code)
   if !isempty(found)
     found = collect(found)

@@ -194,8 +194,8 @@ function Experiment(;skip=0,columns=Symbol[],debug=false,
   start_time = precise_time()
   start_date = now()
   timestr = Dates.format(start_date,"yyyy-mm-dd__HH_MM_SS")
-  info_values = filter(x -> isa(x,Pair),columns)
-  reserved_columns = filter(x -> !isa(x,Pair),columns)
+  info_values = filter(x -> x isa Pair,columns)
+  reserved_columns = filter(x -> !(x isa Pair),columns)
   info_str = join(map(x -> x[2],info_values),"_")
   filename = (data_dir == nothing || hide_output ? Nullable() :
               Nullable(joinpath(data_dir,info_str*"_"*timestr*".csv")))

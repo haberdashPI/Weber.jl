@@ -140,7 +140,7 @@ function as_arg(expr)
     error("Expected keyword parameters specifying additional program arguments.")
   end
 
-  if isa(expr.args[2],Symbol)
+  if expr.args[2] isa Symbol
     quote
       $(string(expr.args[1]))
       $(esc(:required)) = true
@@ -159,7 +159,7 @@ function as_arg(expr)
 end
 
 function as_arg_checker(expr)
-  if !isa(expr.args[2],Symbol) && expr.args[2].head == :vect
+  if !(expr.args[2] isa Symbol) && expr.args[2].head == :vect
     quote
       let str = $(string(expr.args[1])), vals = $(expr.args[2])
         if !any(s -> string(s) == parsed[str],vals)
@@ -175,7 +175,7 @@ function as_arg_checker(expr)
 end
 
 function as_arg_result(expr)
-  if !isa(expr.args[2],Symbol) && expr.args[2].head == :vect
+  if !(expr.args[2] isa Symbol) && expr.args[2].head == :vect
     :(Symbol(parsed[$(string(expr.args[1]))]))
   else
     :(parsed[$(string(expr.args[1]))])
@@ -322,7 +322,7 @@ function collect_args(description,script_file;keys...)
   sid = chomp(input())
   args = Array{Any}(length(keys))
   for (i,(kw,value)) in enumerate(keys)
-    if isa(value,Type)
+    if value isa Type
       except = true
       while except
         try

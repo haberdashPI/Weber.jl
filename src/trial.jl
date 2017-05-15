@@ -172,7 +172,7 @@ function addmoment(q,ms)
   try
     first(ms)
   catch e
-    if isa(e,MethodError)
+    if e isa MethodError
       handle_error()
     else
       rethrow(e)

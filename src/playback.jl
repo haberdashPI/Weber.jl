@@ -362,7 +362,7 @@ function stop(channel::Int)
 end
 
 function process(streamer::Streamer)
-  if isa(streamer.stream,EmptyStream)
+  if streamer.stream isa EmptyStream
     return
   elseif done(streamer.stream) && isnull(streamer.cache)
     stop(streamer.channel)
