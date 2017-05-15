@@ -14,8 +14,6 @@ immutable Stream{R,T} <: AbstractStream{R,T}
   index::Array{Int,0}
 end
 Stream{T}(R::Int,::Type{T},fn::Function) = Stream{R,T}(fn,Array{Int}() .= 1)
-left(x::AbstractStream) = error("Expected stereo stream")
-right(x::AbstractStream) = error("Expected stereo stream")
 
 duration(x::Stream) = Inf*s
 nsamples(x::Stream) = typemax(Int)
