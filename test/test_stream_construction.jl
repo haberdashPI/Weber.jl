@@ -10,11 +10,12 @@ same(x,y) = isapprox(x,y,rtol=1e-6)
              @> tone(1kHz) rampon rampoff(5ms,1s) sound)
   @test [leftright(tone(1kHz,1s),tone(2kHz,1s)); tone(1.5kHz,1s)] ==
     @> leftright(tone(1kHz),tone(2kHz)) limit(1s) vcat(tone(1.5kHz)) sound(2s)
-  a,b = tone(1kHz),tone(2kHz)
   @test same((@_ mix(tone(1kHz),tone(2kHz)) audiofn(x -> x ./ 2,_) sound(_,1s)),
              (@_ mix(tone(1kHz),tone(2kHz)) sound(_,1s) audiofn(x -> x ./ 2,_)))
-  @test left(leftright(a,b)) == a
-  @test right(leftright(a,b)) == b
+  a,b = tone(1kHz),tone(2kHz)
+  @test sound(left(leftright(a,b)),1s) == sound(tone(1kHz),1s)
+  a,b = tone(1kHz),tone(2kHz)
+  @test sound(right(leftright(a,b)),1s) == sound(tone(2kHz),1s)
   a = tone(1kHz)
   @test duration([sound(a,0.5s); @> a limit(1s) sound]) == 1.5s
   @test_throws ErrorException @> tone(1kHz) limit(50ms) sound ramp(100ms)
