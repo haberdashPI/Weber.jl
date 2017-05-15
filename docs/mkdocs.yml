@@ -27,6 +27,7 @@ pages:
       - 'Getting Started': start.md
       - 'Trial Creation': trial_guide.md
       # - 'Testing': testing.md
+      - 'Stimulus Generation': stimulus.md
       - 'Adaptive Tracks': adaptive.md
       # - 'Calibration': calibrate.md
       - 'Advanced Experiments': advanced.md

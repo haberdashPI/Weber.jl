@@ -1,18 +1,12 @@
-In addition to functions available below you can also call
-[`FileIO.jl`](https://github.com/JuliaIO/FileIO.jl)'s `load` and `save`
-functions for common audio file formats (e.g. "wav", "aiff", "ogg").
-
 # Sound Creation
 
 ```@docs
+sound
 tone
 noise
 silence
 harmonic_complex
-asstream
-stream_unit
-sound
-buffer
+audible
 ```
 
 # Sound Manipulation
@@ -30,15 +24,22 @@ attenuate
 mix
 mult
 envelope
+duration
+nchannels(::Weber.Sound)
+nsamples(::Weber.Sound)
+audiofn
+leftright
+left
+right
 ```
 
 # Playback
 
 ```@docs
+play 
 setup_sound 
-play
-duration
-stream
+playable
+resample(::Weber.Sound,::Any)
 stop
 samplerate
 current_sound_latency
