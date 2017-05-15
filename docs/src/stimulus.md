@@ -47,7 +47,7 @@ Weber exports the macro `@>` (from [Lazy.jl](https://github.com/MikeInnes/Lazy.j
 
 ```juila
 mytone = @> tone(1kHz,1s) ramp attenuate(20)
-mynoise = @> noise(1s) bandstop(0.5kHz,1.5kHz)
+mynoise = @> noise(1s) bandstop(0.5kHz,1.5kHz) attenuate(25)
 addtrial(moment(play, mix(bandstop(noise(1s),0.5kHz,1.5kHz))))
 ```
 
