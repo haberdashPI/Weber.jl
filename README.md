@@ -23,6 +23,6 @@ For more details, see the [documentation](https://haberdashPI.github.io/Weber.jl
 
 # Documentation
 
-* [STABLE](https://haberdashPI.github.io/Weber.jl/stable) - *Most recent version of documentation*
+* [STABLE](https://haberdashPI.github.io/Weber.jl/stable) - **Most recent version of documentation**
 * [LATEST](https://haberdashPI.github.io/Weber.jl/latest) - *In developement documentation*
 
