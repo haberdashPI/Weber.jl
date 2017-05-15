@@ -37,7 +37,7 @@ mult{R}(xs::Union{Audible{R},Array}...) = soundop((x,y) -> x .* y,xs...)
 Creates period of silence of the given length (in seconds).
 """
 function silence(length;sample_rate=samplerate())
-  audible((t::UnitRange{Int}) -> zeros(t),length,false,sample_rate=sample_rate)
+  audible(t -> zeros(t),length,false,sample_rate=sample_rate)
 end
 
 """
@@ -55,7 +55,7 @@ in volume halfway through to a softer level.
 
 """
 function envelope(mult,length;sample_rate=samplerate())
-  audible((t::UnitRange{Int}) -> mult*ones(t),length,sample_rate=sample_rate)
+  audible(t -> mult*ones(t),length,sample_rate=sample_rate)
 end
 
 """
@@ -81,7 +81,7 @@ out the length entirely.
 """
 function tone(freq,len=Inf;sample_rate=samplerate(),phase=0.0)
   freq_Hz = ustrip(inHz(freq))
-  audible((t::StepRangeLen{Float64}) -> sin.(2π*t * freq_Hz + phase),len,
+  audible(t -> sin.(2π*t * freq_Hz + phase),len,
           sample_rate=sample_rate)
 end
 
@@ -198,7 +198,7 @@ function ramp{R}(x::Sound{R},len=5ms)
   end
 
   n = nsamples(x)
-	r = audible(duration(x),false,sample_rate=R*Hz) do t::UnitRange{Int}
+	r = audible(duration(x),false,sample_rate=R*Hz) do t
     ifelse.(t .< ramp_n,
       -0.5.*cos.(π.*t./ramp_n).+0.5,
     ifelse.(t .< n .- ramp_n,
@@ -220,7 +220,7 @@ function rampon{R}(x::Audible{R},len=5ms)
           "$(rounded_time(duration(x),R)) sound.")
   end
 
-	r = audible(ramp_n*samples,false,sample_rate=R*Hz) do t::UnitRange{Int}
+	r = audible(ramp_n*samples,false,sample_rate=R*Hz) do t
     -0.5.*cos.(π.*t./ramp_n).+0.5
 	end
 	mult(x,r)
@@ -256,8 +256,8 @@ function rampoff_helper{R}(x::Audible{R},len::Int,after::Int)
   end
 
   rampstart = (after - len)
-	r = audible(after*samples,false) do t::UnitRange{Int}
-    ifelse.(t .< rampstart,1,-0.5.*cos.(π.*(t.-rampstart)./len+π).+0.5)
+	r = audible(after*samples,false) do t
+    ifelse.(t .< rampstart,1,-0.5.*cos.(π.*(t.-rampstart)./len.+π).+0.5)
 	end
 	mult(limit(x,after),r)
 end
