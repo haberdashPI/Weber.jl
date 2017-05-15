@@ -318,16 +318,14 @@ function collect_args(description,script_file;keys...)
          "Entering them further down (next to the '>') will not work.")
   end
 
-  print("Enter subject id: ")
-  sid = chomp(input())
+  sid = chomp(input("Enter subject id: "))
   args = Array{Any}(length(keys))
   for (i,(kw,value)) in enumerate(keys)
     if value isa Type
       except = true
       while except
         try
-          print("Enter $kw: ")
-          args[i] = parse(value,chomp(input()))
+          args[i] = parse(value,chomp(input("Enter $kw: ")))
           except = false
         catch
           except = true
@@ -337,8 +335,8 @@ function collect_args(description,script_file;keys...)
     else
       error = true
       while error
-        print("Enter $kw ($(join(map(string,value),", "," or "))): ")
-        args[i] = chomp(input())
+        prompt = "Enter $kw ($(join(map(string,value),", "," or "))): "
+        args[i] = chomp(input(prompt))
         if Symbol(args[i]) ∉ value
           println("Expected $kw to be $(join(map(string,value),", "," or ")) "*
                   "but got $(args[i]).")
@@ -349,8 +347,7 @@ function collect_args(description,script_file;keys...)
       end
     end
   end
-  print("Offset to start at? (default = 0): ")
-  str = input()
+  str = input("Offset to start at? (default = 0): ")
   if isempty(chomp(str))
     skip = 0
   else
