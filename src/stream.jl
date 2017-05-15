@@ -244,18 +244,5 @@ end
 leftright{R,T}(x::AbstractStream{R,T},y::AbstractStream{R,T}) =
   soundop(leftright,x,y)
 
-function left(x::OpStream)
-  if x.op !== leftright
-    error("Expected stereo stream.")
-  else
-    x.a
-  end
-end
-
-function right(x::OpStream)
-  if x.op !== leftright
-    error("Expected stereo stream.")
-  else
-    x.b
-  end
-end
+left(x::AbstractStream) = audiofn(left,x)
+right(x::AbstractStream) = audiofn(right,x)
