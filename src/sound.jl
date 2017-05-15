@@ -501,17 +501,10 @@ function leftright{R,T}(x::Sound{R,T},y::Sound{R,T},sample_rate=R*Hz)
           "Use `playable` or `resample` to change the sampling rate.")
   end
   if size(x.data,2) == size(y.data,2) == 1
-    Sound{R,T,2}(hcat(x.data,y.data))
+    mix(hcat(x,silence(nsamples(x)*samples)),
+        hcat(silence(nsamples(y)*samples),y))
   else
     error("Expected two monaural sounds.")
-  end
-end
-
-function leftright{T}(x::Array{T},y::Array{T};sample_rate=samplerate())
-  if size(x,2) == size(y,2) == 1 && 1 <= ndims(x) <= 2 && 1 <= ndims(y) <= 2
-    Sound{ustrip(sample_rate),T,2}(hcat(x,y))
-  else
-    error("Expected two vectors.")
   end
 end
 
