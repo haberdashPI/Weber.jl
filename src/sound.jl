@@ -83,10 +83,16 @@ end
 Get the duration of the given sound in seconds.
 """
 duration{R}(x::Sound{R}) = uconvert(s,nsamples(x) / (R*Hz))
+
+"""
+    nchannels(sound)
+
+Return the number of channels (1 for mono, 2 for stereo) in this sound.
+"""
 nchannels(x::Sound) = size(x.data,2)
 
 """
-    nsamples(x::Sound)
+    nsamples(sound::Sound)
 
 Returns the number of samples in the sound.
 """
@@ -474,9 +480,9 @@ function playable{R}(x::Sound{R,Q0f15},cache=true,sample_rate=samplerate())
 end
 
 """
-    sound(file,[cahce=true];[sample_rate=samplerate(file)])
+    sound(file,[cache=true];[sample_rate=samplerate(file)])
 
-Load a specified file (e.g. by filename or stream) as a sound.
+Load a specified file as a sound.
 """
 sound(file::File,cache=true;keys...) = sound(load(file),cache;keys...)
 sound(file::String,cache=true;keys...) = sound(load(file),cache;keys...)

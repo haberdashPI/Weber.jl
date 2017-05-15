@@ -171,7 +171,7 @@ function current_sound_latency()
 end
 
 """
-    play(x;[time=0.0s],[channel=0])
+    play(x;[channel=0])
 
 Plays a sound (created via [`sound`](@ref)).
 
@@ -185,9 +185,13 @@ appropriate channel is selected for you. However, pausing and resuming of
 sounds occurs on a per channel basis, so if you plan to pause a specific
 sound, you can do so by specifying its channel.
 
-If `time > 0s`, the sound plays at the given time (in seconds from epoch, or
-seconds from experiment start if an experiment is running), otherwise the sound
-plays as close to right now as is possible.
+# Streams
+
+Play can also be used to present a continuous stream of sound.  In this case,
+the channel defaults to channel 1 (there is no automatic selection of channels
+for streams). Streams are usually created by specifying an infinite length
+during sound generation using [`tone`](@ref), [`noise`](@ref),
+[`harmonic_complex`](@ref) or [`audible`](@ref).
 """
 function play(x;time=0.0s,channel=0)
   if !isready(sound_setup_state)
@@ -291,13 +295,6 @@ function streamon(channel::Int)
   end
 end
 
-"""
-Play can also be used to present a continuous stream of sound.  In this case,
-the channel defaults to channel 1 (there is no automatic selection of channels
-for streams). Streams are usually created by specifying an infinite length
-during sound generation using [`tone`](@ref), [`noise`](@ref),
-[`harmonic_complex`](@ref) or [`audible`](@ref).
-"""
 function play_{R}(stream::AbstractStream{R},time::Float64=0.0,channel::Int=1)
   channel = channel == 0 ? 1 : channel
   @assert 1 <= channel <= sound_setup_state.num_channels
