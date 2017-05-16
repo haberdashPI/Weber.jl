@@ -300,8 +300,7 @@ The keyword argument `time_constant` determines the time across which the sound
 is normalized to power 1, which, for sounds, defaults to the entire sound and,
 for streams, defaults to 1 second.
 """
-# TODO: allow a time constant for Sound's in Julia 0.6?
-# using braodcast operator
+# TODO: allow a time constant for Sound's using braodcast operator
 function attenuate(x::Sound,atten_dB)
 	similar(x) .= 10^(-atten_dB/20) .* x ./ rms(x)
 end

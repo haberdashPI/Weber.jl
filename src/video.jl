@@ -391,10 +391,6 @@ end
 
 fonts = Dict{Tuple{String,Int},SDLFont}()
 
-# TODO: improve documentation for visual,
-# since strings can do one of two things
-
-
 image_formats = [
   "BMP",
   "AVI",
@@ -432,12 +428,19 @@ end
            [wrap_width=0.8],[clean_whitespace=true],[x=0],[y=0],[duration=0s],
            [priority=0])
 
-Render the given string as an image that can be displayed. An optional
-second argument can specify a font, loaded using the `font` function.
+Render the given string as an image that can be displayed. An optional second
+argument can specify a font, loaded using the `font` function.
+
+!!! note "Strings treated as files..."
+
+    If the string passed refers to an image file--becasue the string ends in a
+    file type, like .bmp or .png---it will be treated as an image to be loaded
+    and displayed, rather than as a string to be printed to the screen.
+    Refer to the documentation of `visual` for image objects.
 
 # Arguments
 * wrap_width: the proporition of the screen that the text can utilize
-before wrapping.
+  before wrapping.
 * clean_whitespace: if true, replace all consecutive white space with a single
   space.
 """
@@ -732,15 +735,15 @@ end
 
 Displays anything rendered by `visual` onto the current experiment window.
 
-Any keyword arguments, available from `visual` are also available here.  They
-overload the arguments as specified during visual (but do not change them).
+Any keyword arguments, available from [`visual`](@ref) are also available here.
+They overload the arguments as specified during visual (but do not change them).
 
     display(x;kwds...)
 
-Short-hand for `display(visual(x);kwds...)`. Commonly used when calling
-display as part of an trial moment. For example:
+Short-hand for `display(visual(x);kwds...)`. This is the most common way to use
+display. For example:
 
-    moment(0.5,display,"Hello, World!")
+    moment(0.5s,display,"Hello, World!")
 
 This code will show the text "Hello, World!" on the screen 0.5 seconds after
 the start of the previous moment.
@@ -750,7 +753,7 @@ the start of the previous moment.
     Assuming your hardware and video drivers permit it, `display` sycnrhonizes
     to the screen refresh rate so long as the experiment window uses accelerated
     graphics (true by default). The display of a visual can be no more accurate
-    than that permitted by this refresh rate. In particular display can block
+    than that permitted by this refresh rate. In particular, display can block
     for up to the length of an entire refresh cycle. If you want accurate timing
     in your experiment, make sure that there is nothing you want to occur
     immediately after calling display. If you want to display multiple visuals

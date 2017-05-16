@@ -39,7 +39,7 @@ right
 play 
 setup_sound 
 playable
-resample(::Weber.Sound,::Any)
+DSP.Filters.resample(::Weber.Sound,::Any)
 stop
 samplerate
 current_sound_latency

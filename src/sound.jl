@@ -347,8 +347,8 @@ assampled{R}(x::Sound{R}) = SampledSignals.SampleBuf(x.data,float(R))
 Returns a new sound representing the sound `x` at the given sampling rate.
 
 You will loose all frequencies in the sound above samplerate/2. Resampling
-occurs automatically when you call [`sound`](@ref)---which is called inside
-[`play`](@ref))---anytime the sampling rate of the sound and the current audio
+occurs automatically when you call [`sound`](@ref)--which is called inside
+[`play`](@ref)--anytime the sampling rate of the sound and the current audio
 playback settings (determined by [`setup_sound`](@ref)) are not the same.
 
 To avoid automatic resampling you can either create sounds at the appropriate

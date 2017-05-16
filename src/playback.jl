@@ -77,9 +77,9 @@ end
 Initialize format and capacity of audio playback.
 
 This function is called automatically (using the default settings) the first
-time a `Sound` object is created (normally during [`play`](@ref) or
-[`stream`](@ref)).  It need not normally be called explicitly, unless you wish
-to change one of the default settings.
+time a `Sound` object is created (e.g. during [`play`](@ref)).  It need not
+normally be called explicitly, unless you wish to change one of the default
+settings.
 
 # Sample Rate
 
@@ -106,11 +106,8 @@ up to play ahead of time.
 # Stream Unit
 
 The stream unit determines the number of samples that are streamed at one time.
-Iterators to be used as streams should generate this many samples at a time.  If
-this value is too small for your hardware, streams will sound jumpy. However the
-latency of streams will increase as the stream unit increases. Future versions
-of Weber will likely improve the latency of stream playback.
-
+If this value is too small for your hardware, streams will sound jumpy. However
+the latency of streams will increase as the stream unit increases.
 """
 function setup_sound(;sample_rate=samplerate(),
                      buffer_size=nothing,queue_size=8,num_channels=8,

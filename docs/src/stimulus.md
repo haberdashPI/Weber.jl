@@ -16,7 +16,7 @@ addtrial(moment(play,"mysound_file.wav"))
 
     You can safely play the same file multiple times: the sound is cached, and will only load into memory once.
 
-If you need to manipulate the sound before playing it, it you can load it using [`sound`](@ref).  For example, to remove any frequencys from `"mysound_file.wav"` above 400Hz before playing the sound, you could do the following.
+If you need to manipulate the sound before playing it, you can load it using [`sound`](@ref).  For example, to remove any frequencies from `"mysound_file.wav"` above 400Hz before playing the sound, you could do the following.
 
 ```julia
 mysound = lowpass(sound("mysound_file.wav"),400Hz)
@@ -25,7 +25,7 @@ addtrial(moment(play,mysound))
 
 ## Sound Primivites
 
-There are several primitives you can use to generate simple sounds directly in Weber. They are [`tone`](@ref) ()to create pure tones), [`noise`](@ref) (to generate white noise), [`silence`](@ref) (for a silent period) and [`harmonic_complex`](@ref), (to create multiple pure tones with integer frequency ratios).
+There are several primitives you can use to generate simple sounds directly in Weber. They are [`tone`](@ref) (to create pure tones), [`noise`](@ref) (to generate white noise), [`silence`](@ref) (for a silent period) and [`harmonic_complex`](@ref), (to create multiple pure tones with integer frequency ratios).
 
 These primitives can then be combined and manipuliated to generate more interesting sounds. You can filter sounds ([`bandpass`](@ref), [`bandstop`](@ref), [`lowpass`](@ref), [`highpass`](@ref) and [`lowpass`](@ref)), mix them together ([`mix`](@ref)) and set an appropriate decibel level ([`attenuate`](@ref)). You can also manipulate the envelope of the sound ([`ramp`](@ref), [`rampon`](@ref), [`rampoff`](@ref), [`fadeto`](@ref), [`envelope`](@ref) and [`mult`](@ref)).
 
@@ -43,7 +43,7 @@ mynoise = attenuate(mynoise,25)
 addtrial(moment(play,mix(mysound,mynoise))
 ```
 
-Weber exports the macro `@>` (from [Lazy.jl](https://github.com/MikeInnes/Lazy.jl)) to simplify this pattern. It is easiest to understand the macro by example: the below code yields the some result as that above.
+Weber exports the macro `@>` (from [Lazy.jl](https://github.com/MikeInnes/Lazy.jl)) to simplify this pattern. It is easiest to understand the macro by example: the below code yields the same result as the code above.
 
 ```juila
 mytone = @> tone(1kHz,1s) ramp attenuate(20)
@@ -53,7 +53,7 @@ addtrial(moment(play, mix(bandstop(noise(1s),0.5kHz,1.5kHz))))
 
 Weber also exports `@>>`, and `@_` (refer to the Lazy.jl's README.md for details).
 
-## Sounds are like arrays
+## Sounds are arrays
 Sounds can be manipulated in the same way that any array can be manipulated in Julia, with some additional support for indexing sounds using time units. For instance, to get the first 5 seconds of a sound you can do the following.
 
 ```julia
@@ -70,8 +70,7 @@ addtrial(moment(play,interval))
 
 ## Stereo Sounds
 
-You can create sounds with two channels using [`leftright`](@ref), and reference the left and
-right channel of a sound using `:left` or `:right` as a second index, like so.
+You can create sounds with using [`leftright`](@ref), and reference the left and right channel of a sound using `:left` or `:right` as a second index, like so.
 
 ```julia
 stereo_sound = leftright(tone(1kHz,2s),tone(2kHz,2s))
@@ -89,7 +88,7 @@ In addition to the discrete sounds that have been discussed so far, Weber also s
 addtrial(moment(play,tone(1kHz)))
 ```
 
-Streams always play on a specific stream channel, so if you want to stop the stream at some point you can request that the channel stop. The following plays a pure tone until the participate hits space.
+Streams always play on a specific stream channel, so if you want to stop the stream at some point you can request that the channel stop. The following plays a pure tone until the experiment participant hits space.
 
 ```julia
 addtrial(moment(play,tone(1kHz),channel=1),
