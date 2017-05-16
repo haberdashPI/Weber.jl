@@ -1,23 +1,26 @@
 # Available Extensions
 
-Extensions provide additional functionality.
+Extensions provide additional functionality for Weber. Currently there are two
+extensions availble:
 
-Currently there are two extensions availble:
-
-* [WeberCedrus](https://github.com/haberdashPI/WeberCedrus.jl.git)
-* [WeberDAQmx](https://github.com/haberdashPI/WeberDAQmx.jl.git)
-
+```@docs
+@Cedrus
+@DAQmx
+```
 # Creating Extensions
 
 The following functions are used when [extending experiments](extend.md).
 
+To register your extension within Weber, so users can import your extension with
+ease, you use can use the `@extension` macro.
+
+```@docs
+Weber.@extension
+```
+
 ## Functions operating over extensions
 
 These functions operate directly on an `ExtendedExperiment`.
-
-```@meta
-CurrentModule = Weber
-```
 
 ```@docs
 next(::ExtendedExperiment)

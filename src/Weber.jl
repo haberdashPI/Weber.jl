@@ -3,6 +3,7 @@ __precompile__()
 module Weber
 using Juno
 using Base.Iterators
+using MacroTools
 using Lazy: @>, @>>, @_
 export resize_cache!, @>, @>>, @_
 
@@ -119,6 +120,9 @@ include(joinpath(dirname(@__FILE__),"helpers.jl"))
 include(joinpath(dirname(@__FILE__),"adaptive.jl"))
 
 include(joinpath(dirname(@__FILE__),"precompile.jl"))
+
+include(joinpath(dirname(@__FILE__),"extension_macro.jl"))
+include(joinpath(dirname(@__FILE__),"extensions.jl"))
 
 const localunits = Unitful.basefactors
 const localpromotion = Unitful.promotion

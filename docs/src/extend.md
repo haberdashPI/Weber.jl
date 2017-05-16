@@ -2,8 +2,11 @@ Functionality can be added to Weber via extensions. You can add multiple
 extensions to the same experiment. The [reference](extend_ref.md) provides a
 list of available extensions. Here we'll cover how to create new extensions.
 
-To handle multiple extensions properly, so that all extensions work, the
-following functions have special extension machinery.
+Extensions can create new methods on custom types, just like any Julia package,
+and this may be all that's necessary to extend Weber.
+
+However, extensions also have several ways to extend the behavior of a number of
+methods with special extension machinery.
 
 ```@meta
 CurrentModule = Weber
@@ -18,7 +21,7 @@ CurrentModule = Weber
 * [`addbreak`](@ref)
 * [`poll_events`](@ref)
 
-To extend one of these functions you must first define an extension type. For example:
+To extend one of these functions you first define an extension type. For example:
 
 ```julia
 type MyExtension <: Weber.Extension
@@ -157,3 +160,15 @@ never dispatch on an extended experiment, and no calls to [`top`](@ref),
 object. Further, each moment should belong to one specific extension, in which
 all functionality for that custom moment should be implemented.
 
+# Registering Your Extension
+
+Optionally, you can make it possible for users to extend Weber without ever
+having to manually download or import your extension.
+
+To do so you register your extension using the [`@Weber.extension`](@ref) macro. This macro
+is not exported and should not be called within your extensions module. Instead
+you should submit a pull request to
+[Weber](https://github.com/haberdashPI/Weber.jl/pulls) with your new extension
+defintion added to `extensions.jl`. Once your extension is also registered with
+[METADATA.jl](https://github.com/JuliaLang/METADATA.jl) it can then be
+downloaded the first time a user initializes the extension.

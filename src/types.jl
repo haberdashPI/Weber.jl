@@ -754,6 +754,7 @@ function extend{W}(exp::UnextendedExperiment{W},exts)
   if isempty(exts)
     exp
   else
+    exts = filter(x -> !(x isa Void),exts)
     exts = reverse(exts) # first extension takes precedence over subsequent ones
     exts_tup = tuple(exts...)
     E = typeof(exts[end])
