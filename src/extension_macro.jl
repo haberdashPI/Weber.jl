@@ -40,7 +40,12 @@ macro extension(symbol,docstr)
         init_call = :($$(Expr(:quote,mod)).InitExtension())
         append!(init_call.args,Weber.clean_kws($args))
         quote
-          $(Expr(:import,$(Expr(:quote,mod))))
+          try
+            $(Expr(:import,$(Expr(:quote,mod))))
+          catch
+            Pkg.add($$(string(mod)))
+            $(Expr(:import,$(Expr(:quote,mod))))
+          end
           $(esc(init_call))
         end
       end
