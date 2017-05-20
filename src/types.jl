@@ -27,7 +27,7 @@ for which each watcher method must have a precompiled method.
 """
 macro event(type_form)
   if !isexpr(type_form,:type)
-    error("@event expects a type or immutable")
+    error("@event expects a type or struct")
   end
   decl = type_form.args[2]
   if !isexpr(decl,:<:)
@@ -41,24 +41,24 @@ macro event(type_form)
   end
 end
 
-@event immutable QuitEvent <: ExpEvent
+@event struct QuitEvent <: ExpEvent
 end
 
-@event immutable KeyUpEvent <: ExpEvent
+@event struct KeyUpEvent <: ExpEvent
   code::UInt32
   time::Float64
 end
 
-@event immutable KeyDownEvent <: ExpEvent
+@event struct KeyDownEvent <: ExpEvent
   code::UInt32
   time::Float64
 end
 
-@event immutable WindowFocused <: ExpEvent
+@event struct WindowFocused <: ExpEvent
   time::Float64
 end
 
-@event immutable WindowUnfocused <: ExpEvent
+@event struct WindowUnfocused <: ExpEvent
   time::Float64
 end
 
@@ -519,7 +519,7 @@ delta_t(m::ExpandingMoment) = 0.0
 required_delta_t(m::ExpandingMoment) = Inf
 can_continue_sequence(m::ExpandingMoment) = false
 
-immutable ExpandingMomentStub <: AbstractMoment
+struct ExpandingMomentStub <: AbstractMoment
 end
 const expanding_stub = ExpandingMomentStub()
 delta_t(m::ExpandingMomentStub) = 0.0
@@ -650,7 +650,7 @@ end
 # experiment types
 
 # information that remains true throughout an experiment
-immutable ExperimentInfo
+struct ExperimentInfo
   values::Array
   meta::Dict{Symbol,Any}
   input_resolution::Float64
@@ -686,7 +686,7 @@ end
 abstract type Extension end
 abstract type Experiment{W} end
 
-immutable UnextendedExperiment{W} <: Experiment{W}
+struct UnextendedExperiment{W} <: Experiment{W}
   info::ExperimentInfo
   data::ExperimentData
   flags::ExperimentFlags
@@ -704,7 +704,7 @@ Get the the top-most extended verison for this experiment, if any.
 """
 top(e::Experiment) = e
 
-immutable ExtendedExperiment{E <: Extension,ES <: Tuple,N,W} <: Experiment{W}
+struct ExtendedExperiment{E <: Extension,ES <: Tuple,N,W} <: Experiment{W}
   exp::UnextendedExperiment{W}
   extensions::ES
 end
@@ -739,7 +739,7 @@ function next{E,ES,W}(e::ExtendedExperiment{E,ES,1,W})
   BaseExtendedExperiment{W,typeof(top(e))}(top(e))
 end
 
-immutable BaseExtendedExperiment{W,E <: ExtendedExperiment} <: Experiment{W}
+struct BaseExtendedExperiment{W,E <: ExtendedExperiment} <: Experiment{W}
   top::E
 end
 info(e::BaseExtendedExperiment) = e.top.exp.info
