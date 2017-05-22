@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <meta name="author" content="haberdashPI">
+  <link rel="shortcut icon" href="../img/favicon.ico">
+  <title>Stimulus Generation - Weber.jl</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="../css/highlight.css">
+  <link href="../assets/Documenter.css" rel="stylesheet">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Stimulus Generation";
+    var mkdocs_page_input_path = "stimulus.md";
+    var mkdocs_page_url = "/stimulus/";
+  </script>
+  
+  <script src="../js/jquery-2.1.1.min.js"></script>
+  <script src="../js/modernizr-2.8.3.min.js"></script>
+  <script type="text/javascript" src="../js/highlight.pack.js"></script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href=".." class="icon icon-home"> Weber.jl</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="..">Introduction</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">User Guide</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../start/">Getting Started</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../trial_guide/">Trial Creation</a>
+                </li>
+                <li class=" current">
+                    
+    <a class="current" href="./">Stimulus Generation</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l3"><a href="#sounds">Sounds</a></li>
+    
+        <ul>
+        
+            <li><a class="toctree-l4" href="#loading-a-file">Loading a file</a></li>
+        
+            <li><a class="toctree-l4" href="#sound-primivites">Sound Primivites</a></li>
+        
+            <li><a class="toctree-l4" href="#sounds-are-arrays">Sounds are arrays</a></li>
+        
+            <li><a class="toctree-l4" href="#stereo-sounds">Stereo Sounds</a></li>
+        
+            <li><a class="toctree-l4" href="#streams">Streams</a></li>
+        
+            <li><a class="toctree-l4" href="#low-level-soundstream-generation">Low-level Sound/Stream Generation</a></li>
+        
+        </ul>
+    
+
+    <li class="toctree-l3"><a href="#images">Images</a></li>
+    
+        <ul>
+        
+            <li><a class="toctree-l4" href="#loading-a-file_1">Loading a file</a></li>
+        
+            <li><a class="toctree-l4" href="#image-primitives">Image Primitives</a></li>
+        
+        </ul>
+    
+
+    </ul>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../adaptive/">Adaptive Tracks</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../advanced/">Advanced Experiments</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../extend/">Extending Weber</a>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Reference</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../experiment/">Experiments</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../trials/">Trials</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../sound/">Sound</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../video/">Video</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../event/">Events</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../extend_ref/">Extensions</a>
+                </li>
+    </ul>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="..">Weber.jl</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="..">Docs</a> &raquo;</li>
+    
+      
+        
+          <li>User Guide &raquo;</li>
+        
+      
+    
+    <li>Stimulus Generation</li>
+    <li class="wy-breadcrumbs-aside">
+      
+        <a href="https://github.com/haberdashPI/Weber.jl/edit/master/docs/stimulus.md"
+          class="icon icon-github"> Edit on GitHub</a>
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <p>So far we have seen several examples of how to generate sounds and simple images (text). Here we'll cover stimulus generation in more detail.</p>
+<p><a id='Sounds-1'></a></p>
+<h1 id="sounds">Sounds</h1>
+<p>Weber's primary focus is on psychoacoustics, so there are many methods for generating and manipulation sounds. There are two primary ways to create sound stimuli: loading a file and sound primitives.</p>
+<p><a id='Loading-a-file-1'></a></p>
+<h2 id="loading-a-file">Loading a file</h2>
+<p>Generating stimuli by loading a file is easy. You simply play the given file, like so.</p>
+<pre><code class="julia">addtrial(moment(play,&quot;mysound_file.wav&quot;))
+</code></pre>
+
+<div class="admonition note">
+<p class="admonition-title">Sounds are cached</p>
+<p>You can safely play the same file multiple times: the sound is cached, and will only load into memory once.</p>
+</div>
+<p>If you need to manipulate the sound before playing it, you can load it using <a href="../sound/#Weber.sound"><code>sound</code></a>.  For example, to remove any frequencies from <code>"mysound_file.wav"</code> above 400Hz before playing the sound, you could do the following.</p>
+<pre><code class="julia">mysound = lowpass(sound(&quot;mysound_file.wav&quot;),400Hz)
+addtrial(moment(play,mysound))
+</code></pre>
+
+<p><a id='Sound-Primivites-1'></a></p>
+<h2 id="sound-primivites">Sound Primivites</h2>
+<p>There are several primitives you can use to generate simple sounds directly in Weber. They are <a href="../sound/#Weber.tone"><code>tone</code></a> (to create pure tones), <a href="../sound/#Weber.noise"><code>noise</code></a> (to generate white noise), <a href="../sound/#Weber.silence"><code>silence</code></a> (for a silent period) and <a href="../sound/#Weber.harmonic_complex"><code>harmonic_complex</code></a>, (to create multiple pure tones with integer frequency ratios).</p>
+<p>These primitives can then be combined and manipuliated to generate more interesting sounds. You can filter sounds (<a href="../sound/#Weber.bandpass"><code>bandpass</code></a>, <a href="../sound/#Weber.bandstop"><code>bandstop</code></a>, <a href="../sound/#Weber.lowpass"><code>lowpass</code></a>, <a href="../sound/#Weber.highpass"><code>highpass</code></a> and <a href="../sound/#Weber.lowpass"><code>lowpass</code></a>), mix them together (<a href="../sound/#Weber.mix"><code>mix</code></a>) and set an appropriate decibel level (<a href="../sound/#Weber.attenuate"><code>attenuate</code></a>). You can also manipulate the envelope of the sound (<a href="../sound/#Weber.ramp"><code>ramp</code></a>, <a href="../sound/#Weber.rampon"><code>rampon</code></a>, <a href="../sound/#Weber.rampoff"><code>rampoff</code></a>, <a href="../sound/#Weber.fadeto"><code>fadeto</code></a>, <a href="../sound/#Weber.envelope"><code>envelope</code></a> and <a href="../sound/#Weber.mult"><code>mult</code></a>).</p>
+<p>For instance, to play a 1 kHz tone for 1 second inside of a noise with a notch from 0.5 to 1.5 kHz, with 5 dB SNR you could call the following.</p>
+<pre><code class="julia">mysound = tone(1kHz,1s)
+mysound = ramp(mysound)
+mysound = attenuate(mysound,20)
+
+mynoise = noise(1s)
+mynoise = bandstop(mynoise,0.5kHz,1.5kHz)
+mynoise = attenuate(mynoise,25)
+
+addtrial(moment(play,mix(mysound,mynoise))
+</code></pre>
+
+<p>Weber exports the macro <code>@&gt;</code> (from <a href="https://github.com/MikeInnes/Lazy.jl">Lazy.jl</a>) to simplify this pattern. It is easiest to understand the macro by example: the below code yields the same result as the code above.</p>
+<pre><code class="juila">mytone = @&gt; tone(1kHz,1s) ramp attenuate(20)
+mynoise = @&gt; noise(1s) bandstop(0.5kHz,1.5kHz) attenuate(25)
+addtrial(moment(play, mix(bandstop(noise(1s),0.5kHz,1.5kHz))))
+</code></pre>
+
+<p>Weber also exports <code>@&gt;&gt;</code>, and <code>@_</code> (refer to the Lazy.jl's README.md for details).</p>
+<p><a id='Sounds-are-arrays-1'></a></p>
+<h2 id="sounds-are-arrays">Sounds are arrays</h2>
+<p>Sounds can be manipulated in the same way that any array can be manipulated in Julia, with some additional support for indexing sounds using time units. For instance, to get the first 5 seconds of a sound you can do the following.</p>
+<pre><code class="julia">mytone = tone(1kHz,10s)
+mytone[0s .. 5s]
+</code></pre>
+
+<p>Furthermore, we can concatentate multiple sounds, to play them in sequence. The following code plays two tones in sequence, with 100ms gap between them.</p>
+<pre><code class="julia">interval = [tone(400Hz,50ms); silence(100ms); tone(400Hz * 2^(5/12),50ms)]
+addtrial(moment(play,interval))
+</code></pre>
+
+<p><a id='Stereo-Sounds-1'></a></p>
+<h2 id="stereo-sounds">Stereo Sounds</h2>
+<p>You can create sounds with using <a href="../sound/#Weber.leftright"><code>leftright</code></a>, and reference the left and right channel of a sound using <code>:left</code> or <code>:right</code> as a second index, like so.</p>
+<pre><code class="julia">stereo_sound = leftright(tone(1kHz,2s),tone(2kHz,2s))
+addtrial(moment(play,stereo_sound[:,:left],
+         moment(2s,play,stereo_sound[:,:right]))
+</code></pre>
+
+<p>The functions <a href="../sound/#Weber.left"><code>left</code></a> and <a href="../sound/#Weber.right"><code>right</code></a> serve the same purpose, but can also operate on streams.</p>
+<p><a id='Streams-1'></a></p>
+<h2 id="streams">Streams</h2>
+<p>In addition to the discrete sounds that have been discussed so far, Weber also supports sound streams. Streams are aribtrarily long: you need not decide when they should stop until after they start playing. All of the primitives described so far can apply to streams, except that streams cannot be indexed. To create a stream you can use one of the standard primitives, leaving out the length parameter. For example, the following will play a 1kHz pure tone until Weber quits.</p>
+<pre><code class="julia">addtrial(moment(play,tone(1kHz)))
+</code></pre>
+
+<p>Streams always play on a specific stream channel, so if you want to stop the stream at some point you can request that the channel stop. The following plays a pure tone until the experiment participant hits space.</p>
+<pre><code class="julia">addtrial(moment(play,tone(1kHz),channel=1),
+         await_response(iskeydown(key&quot;:space:&quot;)),
+         moment(stop,1))
+</code></pre>
+
+<p>Streams can be manipulated as they are playing as well, so if you wanted to have a ramp at the start and end of the stream to avoid clicks, you could change the example above, to the following.</p>
+<pre><code class="julia">ongoing_tone = @&gt; tone(1kHz) rampon
+addtrial(moment(play,ongoing_tone,channel=1),
+         await_response(iskeydown(key&quot;:space:&quot;)),
+         moment(play,rampoff(ongoing_tone),channel=1))
+</code></pre>
+
+<p>Just as with any moment, these manipulations to streams can be precisely timed. The following will turn the sound off precisely 1 second after the space key is pressed.</p>
+<pre><code class="julia">ongoing_tone = @&gt; tone(1kHz) rampon
+addtrial(moment(play,ongoing_tone,channel=1),
+         await_response(iskeydown(key&quot;:space:&quot;)),
+         moment(1s,play,rampoff(ongoing_tone),channel=1))
+</code></pre>
+
+<p>If you wish to turn the entirety of a finite stream into a sound, you can use <a href="../sound/#Weber.sound"><code>sound</code></a>. You can also grab the next section of an infinite stream using <a href="../sound/#Weber.sound"><code>sound</code></a> if you provide a second parameter specifying the length of the stream you want to turn into a sound.</p>
+<p>Some manipulations of streams require that the stream be treated as a sound. You can have  small segments of the stream be manipulated, just before they play, by calling <a href="../sound/#Weber.audiofn"><code>audiofn</code></a> which will apply the given function to each segment of sound extracted from the stream, just as it is about to be played. (Calling <a href="../sound/#Weber.audiofn"><code>audiofn</code></a> on a sound, rather than a stream, is the same as applying the given function to the sound directly).</p>
+<p><a id='Low-level-Sound/Stream-Generation-1'></a></p>
+<h2 id="low-level-soundstream-generation">Low-level Sound/Stream Generation</h2>
+<p>Finally, if none of the functions above suit your purposes for generating sounds or streams, you can use the function <a href="../sound/#Weber.audible"><code>audible</code></a>, which can be used to generate any arbitrary sound or stream you want. Please refer to the source code for <a href="../sound/#Weber.tone"><code>tone</code></a> and <a href="../sound/#Weber.noise"><code>noise</code></a> to see examples of the two ways to use this function.</p>
+<p><a id='Images-1'></a></p>
+<h1 id="images">Images</h1>
+<p>Images can also be generated by either displaying a file or generating image primitves.</p>
+<p><a id='Loading-a-file-2'></a></p>
+<h2 id="loading-a-file_1">Loading a file</h2>
+<p>Displaying an image file is a simple matter of calling display on that file.</p>
+<pre><code class="julia">addtrial(moment(display,&quot;myimage.png&quot;))
+</code></pre>
+
+<div class="admonition note">
+<p class="admonition-title">Images are cached</p>
+<p>You can safely display the same file multiple times: the image is cached, and will only load into memory once.</p>
+</div>
+<p>Analogous to sounds, if you need to manipulate the image before displaying it you can load it using <a href="../video/#Weber.visual"><code>visual</code></a>. For example, the following displays the upper quarter of an image.</p>
+<pre><code class="julia">myimage = visual(&quot;myimage.png&quot;)
+addtrial(moment(display,myimage[1:div(end,2),1:div(end,2)]))
+</code></pre>
+
+<p>Note that displaying a string can also result in that string being printed to the screen. Weber determines the difference between a string you want to display and a string referring to an image file by looking at the end of the string. If the string ends in a file type (.bmp, .jpeg, .png, etc...), Weber assumes it is an image file you want to load, otherwise it assumes it is a string you want to print to the screen. </p>
+<p><a id='Image-Primitives-1'></a></p>
+<h2 id="image-primitives">Image Primitives</h2>
+<p>Support for generating images in Weber comes from <a href="https://github.com/JuliaImages/Images.jl">Images.jl</a>. In this package, images are represented as arrays. For instance, to display a white 100x100 pixel box next to a black 100x100 pixel box, we could do the following.</p>
+<pre><code class="julia">addtrial(moment(display,[ones(100,100); zeros(100,100)]))
+</code></pre>
+
+<p>For more information about generating images please refer to the <a href="http://juliaimages.github.io/latest/">JuliaImages</a> documentation.</p>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../adaptive/" class="btn btn-neutral float-right" title="Adaptive Tracks">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../trial_guide/" class="btn btn-neutral" title="Trial Creation"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+	  
+        </div>
+      </div>
+
+    </section>
+    
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+          <a href="https://github.com/haberdashPI/Weber.jl" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
+      
+      
+        <span><a href="../trial_guide/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../adaptive/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+    <script src="../js/theme.js"></script>
+      <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+      <script src="../assets/mathjaxhelper.js"></script>
+
+</body>
+</html>
