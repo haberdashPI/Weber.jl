@@ -318,10 +318,10 @@ is a keydown event modified by a given modifier key.
 """
 modifiedby(modifier::Symbol) = e -> modifiedby(e,modifier)
 modifiedby(event::ExpEvent,modifier::Symbol) = false
-const shift_bit = 0x0003
-const ctrl_bit = 0x0c0
-const alt_bit = 0x0300
-const gui_bit = 0x0c00
+const shift_bit = 0x0003  # SDL2: KMOD_SHIFT
+const ctrl_bit = 0x0c0 # SDL2: KMOD_CTRL
+const alt_bit = 0x0300 # SDL2: KMOD_ALT
+const gui_bit = 0x0c00 # SDL2: KMOD_GUI
 function modifiedby(event::KeyDownEvent,modifier::Symbol)
   if modifier == :shift
     event.mod & shift_bit > 0
