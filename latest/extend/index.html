@@ -67,6 +67,10 @@
                 </li>
                 <li class="">
                     
+    <a class="" href="../stimulus/">Stimulus Generation</a>
+                </li>
+                <li class="">
+                    
     <a class="" href="../adaptive/">Adaptive Tracks</a>
                 </li>
                 <li class="">
@@ -87,6 +91,9 @@
             <li><a class="toctree-l4" href="#custom-moments">Custom Moments</a></li>
         
         </ul>
+    
+
+    <li class="toctree-l3"><a href="#registering-your-extension">Registering Your Extension</a></li>
     
 
     </ul>
@@ -165,7 +172,8 @@
             <div class="section">
               
                 <p>Functionality can be added to Weber via extensions. You can add multiple extensions to the same experiment. The <a href="../extend_ref/">reference</a> provides a list of available extensions. Here we'll cover how to create new extensions.</p>
-<p>To handle multiple extensions properly, so that all extensions work, the following functions have special extension machinery.</p>
+<p>Extensions can create new methods on custom types, just like any Julia package, and this may be all that's necessary to extend Weber.</p>
+<p>However, extensions also have several ways to extend the behavior of a number of methods with special extension machinery.</p>
 <ul>
 <li><a href="../experiment/#Weber.addcolumn"><code>addcolumn</code></a></li>
 <li><a href="../experiment/#Weber.setup"><code>setup</code></a></li>
@@ -176,7 +184,7 @@
 <li><a href="../trials/#Weber.addbreak"><code>addbreak</code></a></li>
 <li><a href="../extend_ref/#Weber.poll_events"><code>poll_events</code></a></li>
 </ul>
-<p>To extend one of these functions you must first define an extension type. For example:</p>
+<p>To extend one of these functions you first define an extension type. For example:</p>
 <pre><code class="julia">type MyExtension &lt;: Weber.Extension
   my_value::String
 end
@@ -237,6 +245,10 @@ Weber.str_to_code[&quot;my_button1&quot;] = MyHardwareKey(2)
 <p>You can create your own moment types, which must be children of <code>Weber.SimpleMoment</code>. These new moments will have to be generated using some newly defined function, or added automatically by extending <a href="../trials/#Weber.addtrial"><code>addtrial</code></a>. Once created, and added to trials, these moments will be processed at run-time using the function <a href="../extend_ref/#Weber.handle"><code>handle</code></a>, which should define the moment's run-time behavior. Such a moment must also define <a href="../extend_ref/#Weber.moment_trace"><code>moment_trace</code></a>.</p>
 <p>A moment can also define <a href="../extend_ref/#Weber.delta_t"><code>delta_t</code></a>–to define when it occurs–or <a href="../extend_ref/#Weber.prepare!"><code>prepare!</code></a>–to have some sort of initialization occur before its onset–but these both have default implementations.</p>
 <p>Methods of <a href="../extend_ref/#Weber.handle"><code>handle</code></a> should not make use of the extension machinery described above. What this means is that methods of <a href="../extend_ref/#Weber.handle"><code>handle</code></a> should never dispatch on an extended experiment, and no calls to <a href="../extend_ref/#DataStructures.top-Tuple{Weber.Experiment}"><code>top</code></a>, <a href="../extend_ref/#Base.next-Tuple{Weber.ExtendedExperiment}"><code>next</code></a> or <a href="../extend_ref/#Weber.extension-Tuple{Weber.ExtendedExperiment}"><code>extension</code></a> should occur on the experiment object. Further, each moment should belong to one specific extension, in which all functionality for that custom moment should be implemented.</p>
+<p><a id='Registering-Your-Extension-1'></a></p>
+<h1 id="registering-your-extension">Registering Your Extension</h1>
+<p>Optionally, you can make it possible for users to extend Weber without ever having to manually download or import your extension.</p>
+<p>To do so you register your extension using the <a href="../extend_ref/#Weber.@extension"><code>@Weber.extension</code></a> macro. This macro is not exported and should not be called within your extensions module. Instead you should submit a pull request to <a href="https://github.com/haberdashPI/Weber.jl/pulls">Weber</a> with your new extension defintion added to <code>extensions.jl</code>. Once your extension is also registered with <a href="https://github.com/JuliaLang/METADATA.jl">METADATA.jl</a> it can then be downloaded the first time a user initializes the extension.</p>
               
             </div>
           </div>
