@@ -13,6 +13,7 @@ const SDL_WINDOWEVENT_FOCUS_LOST = 0x0000000d
 const type_ptr = 0x0000000000000000       # offsetof(SDL_Event,type)
 const keysym_ptr = 0x0000000000000010     # offsetof(SDL_KeyboardEvent,keysym)
 const sym_ptr = 0x0000000000000004        # offsetof(SDL_Keysym,sym)
+const mod_ptr = 0x0000000000000008        # offsetof(SDL_Keysym,mod)
 const win_event_ptr = 0x000000000000000c  # offsetof(SDL_WindowEvent,event)
 const event_size = 0x0000000000000038     # sizeof(SDL_Event)
 
@@ -42,10 +43,12 @@ function poll_events{T <: BaseExperiment{SDLWindow}}(callback,exp::T,time::Float
     etype = at(event,UInt32,type_ptr)
     if etype == SDL_KEYDOWN
       code = at(event,UInt32,keysym_ptr + sym_ptr)
-      callback(exp,KeyDownEvent(code,time))
+      mod = at(event,UInt16,keysym_ptr + mod_ptr)
+      callback(exp,KeyDownEvent(code,mod,time))
     elseif etype == SDL_KEYUP
       code = at(event,UInt32,keysym_ptr + sym_ptr)
-      callback(exp,KeyUpEvent(code,time))
+      mod = at(event,UInt16,keysym_ptr + mod_ptr)
+      callback(exp,KeyUpEvent(code,mod,time))
     elseif etype == SDL_WINDOWEVENT
       wevent = at(event,UInt8,win_event_ptr)
       if wevent == SDL_WINDOWEVENT_FOCUS_GAINED

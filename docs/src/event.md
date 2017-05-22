@@ -9,6 +9,7 @@ CurrentModule = Weber
 time(::ExpEvent)
 keycode
 iskeydown
+modifiedby
 iskeyup
 listkeys
 run_keycode_helper

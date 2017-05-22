@@ -5,7 +5,7 @@ using MacroTools
 
 export iskeydown, iskeyup, iskeypressed, isfocused, isunfocused, keycode,
   endofpause, @key_str, time, response_time, keycode, listkeys,
-  ExtendedExperiment, extension, next, top
+  ExtendedExperiment, extension, next, top, modifiedby
 
 ################################################################################
 # event types
@@ -46,11 +46,13 @@ end
 
 @event struct KeyUpEvent <: ExpEvent
   code::UInt32
+  mod::UInt16
   time::Float64
 end
 
 @event struct KeyDownEvent <: ExpEvent
   code::UInt32
+  mod::UInt16
   time::Float64
 end
 
@@ -304,6 +306,35 @@ iskeydown(event::KeyDownEvent) = true
 iskeydown(key::KeyboardKey) = e -> iskeydown(e,key::KeyboardKey)
 iskeydown(event::ExpEvent,keycode::Key) = false
 iskeydown(event::KeyDownEvent,key::KeyboardKey) = event.code == key.code
+
+"""
+    modifiedby(event,modifier = [:shift,:ctrl,:alt,:gui])
+
+Returns true if the given even represents a keydown event modified by a given
+modifier key.
+
+Without the first argument, returns a function that tests if the given event
+is a keydown event modified by a given modifier key.
+"""
+modifiedby(modifier::Symbol) = e -> modifiedby(e,modifier)
+modifiedby(event::ExpEvent,modifier::Symbol) = false
+const shift_bit = 0x0003
+const ctrl_bit = 0x0c0
+const alt_bit = 0x0300
+const gui_bit = 0x0c00
+function modifiedby(event::KeyDownEvent,modifier::Symbol)
+  if modifier == :shift
+    event.mod & shift_bit > 0
+  elseif modifier in [:ctrl,:control]
+    event.mod & ctrl_bit > 0
+  elseif modifier == :alt
+    event.mod & alt_bit > 0
+  elseif modifier == :gui
+    event.mod & gui_bit > 0
+  else
+    error("Undefined modifier key $modifier")
+  end
+end
 
 """
     iskeyup(event,[key])
