@@ -128,26 +128,7 @@ addtrial(moment(play,ongoing_tone,channel=1),
     part of a stream has been played it is forever consumed, and cannot be
     played again. After the stream is played, subsequent modifications only apply
     to unplayed frames of the stream. *BEWARE*: this means that you cannot
-    play two different modifications of the same stream. So for instance,
-    the first snippet of code results in an error, while the
-    second will play two noises at once, as desired.
-
-        # throws an error!
-        mystream = noise()
-        mystream_mod1 = lowpass(mystream,300Hz)
-        mystream_mod2 = highpass(mystream,500Hz)
-        addtrial(moment(play,mix(mystream_mod1,mystream_mod2)))
-
-        # do this instead
-        stream1 = lowpass(noise(),300Hz)
-        stream2 = highpass(noise(),500Hz)
-        addtrial(moment(play,mix(stream1,stream2)))
-
-        # or this
-        mystream = noise()
-        mystream_mod1 = lowpass(mystream,300Hz)
-        mystream_mod2 = highpass(mystream,500Hz)
-        addtrial(moment(play,mix(mystream_mod1,deepcopy(mystream_mod2))))
+    play two different modifications of the same.
 
 Just as with any moment, these manipulations to streams can be precisely timed. The following will turn the sound off precisely 1 second after the space key is pressed.
 
