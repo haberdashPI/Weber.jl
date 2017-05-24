@@ -3,7 +3,7 @@ language: julia
 os:
   - osx
 julia:
-  - 0.6
+  - 0.6 # TODO: when I change this back to latest, remember to update make.jl as well
   - nightly
 matrix:
   allow_failures:
