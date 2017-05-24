@@ -191,7 +191,7 @@
 <p>Do not call @Cedrus inside of a package or in tests. It should only be used in one-off scripts. If WeberCedrus is not currently installed it will be installed by this macro using <code>Pkg.add</code> which can lead to problems when called in packages or tests.</p>
 <p>If you want to include an extension without this behavior you can call @Cedrus_safe which mimics @Cedrus except that it will never call <code>Pkg.add</code>.</p>
 </div>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/14cc8ce4084a585c9f4ad6f3e14f444dd23d1c1e/src/extensions.jl#L1-L26' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/d098804edef6ab34d5057a8c7ab45485e531e168/src/extensions.jl#L1-L26' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.@DAQmx' href='#Weber.@DAQmx'>#</a>
 <strong><code>Weber.@DAQmx</code></strong> &mdash; <em>Macro</em>.</p>
 <p><a href="https://github.com/haberdashPI/WeberDAQmx.jl">Extension Website</a></p>
@@ -221,7 +221,7 @@ run(experiment)
 <p>Do not call @DAQmx inside of a package or in tests. It should only be used in one-off scripts. If WeberDAQmx is not currently installed it will be installed by this macro using <code>Pkg.add</code> which can lead to problems when called in packages or tests.</p>
 <p>If you want to include an extension without this behavior you can call @DAQmx_safe which mimics @DAQmx except that it will never call <code>Pkg.add</code>.</p>
 </div>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/14cc8ce4084a585c9f4ad6f3e14f444dd23d1c1e/src/extensions.jl#L18-L61' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/d098804edef6ab34d5057a8c7ab45485e531e168/src/extensions.jl#L18-L61' class='documenter-source'>source</a><br></p>
 <p><a id='Creating-Extensions-1'></a></p>
 <h1 id="creating-extensions">Creating Extensions</h1>
 <p>The following functions are used when <a href="../extend/">extending experiments</a>.</p>
@@ -235,7 +235,7 @@ end
 
 <p>Registers a given Weber extension. This creates a macro called <code>@[Symbol]</code> which imports <code>Weber[Symbol]</code> and calls <code>Weber[Symbol].InitExtension</code>, with the given arguments. InitExtension should return either <code>nothing</code> or an extension object.</p>
 <p>The doc string is used to document the usage of the extension, and should normally include a link to the website of a julia package for the extension.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/14cc8ce4084a585c9f4ad6f3e14f444dd23d1c1e/src/extension_macro.jl#L34-L47' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/d098804edef6ab34d5057a8c7ab45485e531e168/src/extension_macro.jl#L34-L47' class='documenter-source'>source</a><br></p>
 <p><a id='Functions-operating-over-extensions-1'></a></p>
 <h2 id="functions-operating-over-extensions">Functions operating over extensions</h2>
 <p>These functions operate directly on an <code>ExtendedExperiment</code>.</p>
@@ -245,21 +245,21 @@ end
 </code></pre>
 
 <p>Get the next extended version of this experiment.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/14cc8ce4084a585c9f4ad6f3e14f444dd23d1c1e/src/types.jl#L760-L764' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/d098804edef6ab34d5057a8c7ab45485e531e168/src/types.jl#L760-L764' class='documenter-source'>source</a><br></p>
 <p><a id='DataStructures.top-Tuple{Weber.Experiment}' href='#DataStructures.top-Tuple{Weber.Experiment}'>#</a>
 <strong><code>DataStructures.top</code></strong> &mdash; <em>Method</em>.</p>
 <pre><code>top(experiment::Experiment)
 </code></pre>
 
 <p>Get the the top-most extended verison for this experiment, if any.</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/14cc8ce4084a585c9f4ad6f3e14f444dd23d1c1e/src/types.jl#L731-L735' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/d098804edef6ab34d5057a8c7ab45485e531e168/src/types.jl#L731-L735' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.extension-Tuple{Weber.ExtendedExperiment}' href='#Weber.extension-Tuple{Weber.ExtendedExperiment}'>#</a>
 <strong><code>Weber.extension</code></strong> &mdash; <em>Method</em>.</p>
 <pre><code>extension(experiment::ExtendedExperiment)
 </code></pre>
 
 <p>Get the extension object for this extended expeirment</p>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/14cc8ce4084a585c9f4ad6f3e14f444dd23d1c1e/src/types.jl#L747-L751' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/d098804edef6ab34d5057a8c7ab45485e531e168/src/types.jl#L747-L751' class='documenter-source'>source</a><br></p>
 <p><a id='Extendable-Private-Functions-1'></a></p>
 <h2 id="extendable-private-functions">Extendable Private Functions</h2>
 <p><a id='Weber.poll_events' href='#Weber.poll_events'>#</a>
@@ -272,7 +272,7 @@ end
 <p class="admonition-title">Warning</p>
 <p>This function should never be called directly by user code. A new method of this function can be implemented to extend Weber, allowing it to report new kinds events.</p>
 </div>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/14cc8ce4084a585c9f4ad6f3e14f444dd23d1c1e/src/event.jl#L24-L37' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/d098804edef6ab34d5057a8c7ab45485e531e168/src/event.jl#L24-L37' class='documenter-source'>source</a><br></p>
 <p><a id='Private-Moment-Functions-1'></a></p>
 <h2 id="private-moment-functions">Private Moment Functions</h2>
 <p>New <code>Weber.SimpleMoment</code> subtypes can define methods for the following functions to extend the runtime behavior of Weber.</p>
@@ -287,19 +287,22 @@ end
 <p class="admonition-title">Note</p>
 <p>This method is part of the private interface for moments. It should not be called directly, but implemented as part of an extension. You need only extend the method taking a single arugment unless you intend to use this information during prepartion.</p>
 </div>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/14cc8ce4084a585c9f4ad6f3e14f444dd23d1c1e/src/trial.jl#L489-L515' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/d098804edef6ab34d5057a8c7ab45485e531e168/src/trial.jl#L489-L515' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.handle' href='#Weber.handle'>#</a>
 <strong><code>Weber.handle</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>handle(exp,queue,moment,to_handle)
 </code></pre>
 
-<p>Internal method to handle the given moment object in a manner specific to the type of moment. The <code>to_handle</code> object is either a <code>Float64</code>, indicating the current time, or it is an <code>ExpEvent</code> indicating the event that just occured. A timed moment, for instance, will run when it recieves a <code>Float64</code> value. The queue is a <code>MomentQueue</code> object, which has the same interface as the <code>Dequeue</code> object (from the <code>DataStructures</code> package) but it is also iterable. Upon calling handle, <code>top(queue) == moment</code>.</p>
-<p>Handle returns a boolean indicating whether the event was "handled" or not. If unhandled, the moment should remain on top of the queue. If returning true, handle should <em>normally</em> remove the top moment from the queue. Exceptions exist (for instance, to allow for loops), but one does not normally need to implement custom moments that have such behavior.</p>
+<p>Internal method to handle the given moment object in a manner specific to its type.</p>
+<p>The function <code>handle</code> is only called when the appropriate time has been reached for the next moment to be presented (according to <a href="./#Weber.delta_t"><code>delta_t</code></a>) or when an event occurs.</p>
+<p>The <code>to_handle</code> object is either a <code>Float64</code>, indicating the current experiment time, or it is an <code>ExpEvent</code> indicating the event that just occured. As an example, a timed moment, will run when it recieves any <code>Float64</code> value, but nothing occurs when passed an event.</p>
+<p>The queue is a <code>MomentQueue</code> object, which has the same interface as the <code>Dequeue</code> object (from the <code>DataStructures</code> package) but it is also iterable. Upon calling handle, <code>top(queue) == moment</code>.</p>
+<p>Handle should return a boolean indicating whether the event was "handled" or not. If unhandled, the moment should remain on top of the queue. If returning true, handle should <em>normally</em> remove the top moment from the queue. Exceptions exist (for instance, to allow for loops), but one does not normally need to implement custom moments that have such behavior.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>This method is part of the private interface for moments. It should not be called directly, but implemented as part of an extension. It is called during the course of running an experiment.</p>
 </div>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/14cc8ce4084a585c9f4ad6f3e14f444dd23d1c1e/src/trial.jl#L563-L586' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/d098804edef6ab34d5057a8c7ab45485e531e168/src/trial.jl#L563-L594' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.moment_trace' href='#Weber.moment_trace'>#</a>
 <strong><code>Weber.moment_trace</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>moment_trace(m)
@@ -310,7 +313,7 @@ end
 <p class="admonition-title">Note</p>
 <p>This method is part of the private interface for moments. It should not be called directly, but implemented as part of an extension.  You can get a stacktrace inside the function you define that constructs your custom moment using <code>stacktrace()[2:end]</code>.</p>
 </div>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/14cc8ce4084a585c9f4ad6f3e14f444dd23d1c1e/src/types.jl#L399-L410' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/d098804edef6ab34d5057a8c7ab45485e531e168/src/types.jl#L399-L410' class='documenter-source'>source</a><br></p>
 <p><a id='Weber.delta_t' href='#Weber.delta_t'>#</a>
 <strong><code>Weber.delta_t</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>delta_t(m::AbstractMoment)
@@ -321,7 +324,7 @@ end
 <p class="admonition-title">Note</p>
 <p>This method is part of the private interface for moments. It should not be called directly, but implemented as part of an extension.</p>
 </div>
-<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/14cc8ce4084a585c9f4ad6f3e14f444dd23d1c1e/src/types.jl#L382-L392' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/haberdashPI/Weber.jl/tree/d098804edef6ab34d5057a8c7ab45485e531e168/src/types.jl#L382-L392' class='documenter-source'>source</a><br></p>
               
             </div>
           </div>

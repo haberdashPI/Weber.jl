@@ -84,6 +84,19 @@
         
             <li><a class="toctree-l4" href="#streams">Streams</a></li>
         
+        </ul>
+    
+
+    <li class="toctree-l3"><a href="#throws-an-error">throws an error!</a></li>
+    
+
+    <li class="toctree-l3"><a href="#do-this-instead">do this instead</a></li>
+    
+
+    <li class="toctree-l3"><a href="#or-this">or this</a></li>
+    
+        <ul>
+        
             <li><a class="toctree-l4" href="#low-level-soundstream-generation">Low-level Sound/Stream Generation</a></li>
         
         </ul>
@@ -190,7 +203,7 @@
                 <p>So far we have seen several examples of how to generate sounds and simple images (text). Here we'll cover stimulus generation in more detail.</p>
 <p><a id='Sounds-1'></a></p>
 <h1 id="sounds">Sounds</h1>
-<p>Weber's primary focus is on psychoacoustics, so there are many methods for generating and manipulation sounds. There are two primary ways to create sound stimuli: loading a file and sound primitives.</p>
+<p>Weber's primary focus is on psychoacoustics, so there are many methods for generating and manipulating sounds. There are two primary ways to create sound stimuli: loading a file and composing sound primitives.</p>
 <p><a id='Loading-a-file-1'></a></p>
 <h2 id="loading-a-file">Loading a file</h2>
 <p>Generating stimuli by loading a file is easy. You simply play the given file, like so.</p>
@@ -208,7 +221,7 @@ addtrial(moment(play,mysound))
 
 <p><a id='Sound-Primivites-1'></a></p>
 <h2 id="sound-primivites">Sound Primivites</h2>
-<p>There are several primitives you can use to generate simple sounds directly in Weber. They are <a href="../sound/#Weber.tone"><code>tone</code></a> (to create pure tones), <a href="../sound/#Weber.noise"><code>noise</code></a> (to generate white noise), <a href="../sound/#Weber.silence"><code>silence</code></a> (for a silent period) and <a href="../sound/#Weber.harmonic_complex"><code>harmonic_complex</code></a>, (to create multiple pure tones with integer frequency ratios).</p>
+<p>There are several primitives you can use to generate simple sounds directly in Weber. They are <a href="../sound/#Weber.tone"><code>tone</code></a> (to create pure tones), <a href="../sound/#Weber.noise"><code>noise</code></a> (to generate white noise), <a href="../sound/#Weber.silence"><code>silence</code></a> (for a silent period) and <a href="../sound/#Weber.harmonic_complex"><code>harmonic_complex</code></a> (to create multiple pure tones with integer frequency ratios).</p>
 <p>These primitives can then be combined and manipuliated to generate more interesting sounds. You can filter sounds (<a href="../sound/#Weber.bandpass"><code>bandpass</code></a>, <a href="../sound/#Weber.bandstop"><code>bandstop</code></a>, <a href="../sound/#Weber.lowpass"><code>lowpass</code></a>, <a href="../sound/#Weber.highpass"><code>highpass</code></a> and <a href="../sound/#Weber.lowpass"><code>lowpass</code></a>), mix them together (<a href="../sound/#Weber.mix"><code>mix</code></a>) and set an appropriate decibel level (<a href="../sound/#Weber.attenuate"><code>attenuate</code></a>). You can also manipulate the envelope of the sound (<a href="../sound/#Weber.ramp"><code>ramp</code></a>, <a href="../sound/#Weber.rampon"><code>rampon</code></a>, <a href="../sound/#Weber.rampoff"><code>rampoff</code></a>, <a href="../sound/#Weber.fadeto"><code>fadeto</code></a>, <a href="../sound/#Weber.envelope"><code>envelope</code></a> and <a href="../sound/#Weber.mult"><code>mult</code></a>).</p>
 <p>For instance, to play a 1 kHz tone for 1 second inside of a noise with a notch from 0.5 to 1.5 kHz, with 5 dB SNR you could call the following.</p>
 <pre><code class="julia">mysound = tone(1kHz,1s)
@@ -222,13 +235,13 @@ mynoise = attenuate(mynoise,25)
 addtrial(moment(play,mix(mysound,mynoise))
 </code></pre>
 
-<p>Weber exports the macro <code>@&gt;</code> (from <a href="https://github.com/MikeInnes/Lazy.jl">Lazy.jl</a>) to simplify this pattern. It is easiest to understand the macro by example: the below code yields the same result as the code above.</p>
+<p>Weber exports the macro <code>@&gt;</code> (from <a href="https://github.com/MikeInnes/Lazy.jl#macros">Lazy.jl</a>) to simplify this pattern. It is easiest to understand the macro by example: the below code yields the same result as the code above.</p>
 <pre><code class="juila">mytone = @&gt; tone(1kHz,1s) ramp attenuate(20)
 mynoise = @&gt; noise(1s) bandstop(0.5kHz,1.5kHz) attenuate(25)
-addtrial(moment(play, mix(bandstop(noise(1s),0.5kHz,1.5kHz))))
+addtrial(moment(play, mix(mytone,mynoise)))
 </code></pre>
 
-<p>Weber also exports <code>@&gt;&gt;</code>, and <code>@_</code> (refer to the Lazy.jl's README.md for details).</p>
+<p>Weber also exports <code>@&gt;&gt;</code>, and <code>@_</code> (refer to <a href="https://github.com/MikeInnes/Lazy.jl#macros">Lazy.jl</a> for details).</p>
 <p><a id='Sounds-are-arrays-1'></a></p>
 <h2 id="sounds-are-arrays">Sounds are arrays</h2>
 <p>Sounds can be manipulated in the same way that any array can be manipulated in Julia, with some additional support for indexing sounds using time units. For instance, to get the first 5 seconds of a sound you can do the following.</p>
@@ -236,14 +249,14 @@ addtrial(moment(play, mix(bandstop(noise(1s),0.5kHz,1.5kHz))))
 mytone[0s .. 5s]
 </code></pre>
 
-<p>Furthermore, we can concatentate multiple sounds, to play them in sequence. The following code plays two tones in sequence, with 100ms gap between them.</p>
+<p>Furthermore, we can concatentate multiple sounds, to play them in sequence. The following code plays two tones in sequence, with a 100 ms gap between them.</p>
 <pre><code class="julia">interval = [tone(400Hz,50ms); silence(100ms); tone(400Hz * 2^(5/12),50ms)]
 addtrial(moment(play,interval))
 </code></pre>
 
 <p><a id='Stereo-Sounds-1'></a></p>
 <h2 id="stereo-sounds">Stereo Sounds</h2>
-<p>You can create sounds with using <a href="../sound/#Weber.leftright"><code>leftright</code></a>, and reference the left and right channel of a sound using <code>:left</code> or <code>:right</code> as a second index, like so.</p>
+<p>You can create stereo sounds with using <a href="../sound/#Weber.leftright"><code>leftright</code></a>, and reference their left and right channel sound using <code>:left</code> or <code>:right</code> as a second index, like so.</p>
 <pre><code class="julia">stereo_sound = leftright(tone(1kHz,2s),tone(2kHz,2s))
 addtrial(moment(play,stereo_sound[:,:left],
          moment(2s,play,stereo_sound[:,:right]))
@@ -252,11 +265,16 @@ addtrial(moment(play,stereo_sound[:,:left],
 <p>The functions <a href="../sound/#Weber.left"><code>left</code></a> and <a href="../sound/#Weber.right"><code>right</code></a> serve the same purpose, but can also operate on streams.</p>
 <p><a id='Streams-1'></a></p>
 <h2 id="streams">Streams</h2>
-<p>In addition to the discrete sounds that have been discussed so far, Weber also supports sound streams. Streams are aribtrarily long: you need not decide when they should stop until after they start playing. All of the primitives described so far can apply to streams, except that streams cannot be indexed. To create a stream you can use one of the standard primitives, leaving out the length parameter. For example, the following will play a 1kHz pure tone until Weber quits.</p>
+<p>In addition to the discrete sounds that have been discussed so far, Weber also supports sound streams. Streams are aribtrarily long: you need not decide when they should stop until after they start playing. All of the primitives described so far can apply to streams, except that streams cannot be indexed.</p>
+<div class="admonition note">
+<p class="admonition-title">Streaming operations are lazy</p>
+<p>All manipulations of streams are lazy: they are applied just as the stream is played. The more operators you apply to a stream the more processing that has to occur. If you have a particularly complicated stream you may have to increase streaming latency by changing the <code>stream_unit</code> parameter of <a href="../sound/#Weber.setup_sound"><code>setup_sound</code></a>, or consider an alternative approach (e.g. <a href="../sound/#Weber.audible"><code>audible</code></a>).</p>
+</div>
+<p>To create a stream you can use one of the standard primitives, leaving out the length parameter. For example, the following will play a 1 kHz pure tone until Weber quits.</p>
 <pre><code class="julia">addtrial(moment(play,tone(1kHz)))
 </code></pre>
 
-<p>Streams always play on a specific stream channel, so if you want to stop the stream at some point you can request that the channel stop. The following plays a pure tone until the experiment participant hits space.</p>
+<p>Streams always play on a specific stream channel, so if you want to stop the stream at some point you can request that the channel stop. The following plays a pure tone until the experiment participant hits spacebar.</p>
 <pre><code class="julia">addtrial(moment(play,tone(1kHz),channel=1),
          await_response(iskeydown(key&quot;:space:&quot;)),
          moment(stop,1))
@@ -269,6 +287,26 @@ addtrial(moment(play,ongoing_tone,channel=1),
          moment(play,rampoff(ongoing_tone),channel=1))
 </code></pre>
 
+<div class="admonition warning">
+<p class="admonition-title">Streams are stateful</p>
+<p>This example also demonstrates the stateful nature of streams. Once some part of a stream has been played it is forever consumed, and cannot be played again. After the stream is played, subsequent modifications only apply to unplayed frames of the stream. <em>BEWARE</em>: this means that you cannot play two different modifications of the same stream. So for instance, the first snippet of code results in an error, while the second will play two noises at once, as desired.</p>
+<p>```</p>
+<h1 id="throws-an-error">throws an error!</h1>
+<p>mystream = noise()
+mystream_mod1 = lowpass(mystream,300Hz)
+mystream_mod2 = highpass(mystream,500Hz)
+addtrial(moment(play,mix(mystream_mod1,mystream_mod2)))</p>
+<h1 id="do-this-instead">do this instead</h1>
+<p>stream1 = lowpass(noise(),300Hz)
+stream2 = highpass(noise(),500Hz)
+addtrial(moment(play,mix(stream1,stream2)))</p>
+<h1 id="or-this">or this</h1>
+<p>mystream = noise()
+mystream_mod1 = lowpass(mystream,300Hz)
+mystream_mod2 = highpass(mystream,500Hz)
+addtrial(moment(play,mix(mystream_mod1,deepcopy(mystream_mod2))))
+```</p>
+</div>
 <p>Just as with any moment, these manipulations to streams can be precisely timed. The following will turn the sound off precisely 1 second after the space key is pressed.</p>
 <pre><code class="julia">ongoing_tone = @&gt; tone(1kHz) rampon
 addtrial(moment(play,ongoing_tone,channel=1),
@@ -277,7 +315,7 @@ addtrial(moment(play,ongoing_tone,channel=1),
 </code></pre>
 
 <p>If you wish to turn the entirety of a finite stream into a sound, you can use <a href="../sound/#Weber.sound"><code>sound</code></a>. You can also grab the next section of an infinite stream using <a href="../sound/#Weber.sound"><code>sound</code></a> if you provide a second parameter specifying the length of the stream you want to turn into a sound.</p>
-<p>Some manipulations of streams require that the stream be treated as a sound. You can have  small segments of the stream be manipulated, just before they play, by calling <a href="../sound/#Weber.audiofn"><code>audiofn</code></a> which will apply the given function to each segment of sound extracted from the stream, just as it is about to be played. (Calling <a href="../sound/#Weber.audiofn"><code>audiofn</code></a> on a sound, rather than a stream, is the same as applying the given function to the sound directly).</p>
+<p>Some manipulations of streams require that the stream be treated as a sound. You can modify individual sound segments as they play from the stream using <a href="../sound/#Weber.audiofn"><code>audiofn</code></a>. (Calling <a href="../sound/#Weber.audiofn"><code>audiofn</code></a> on a sound, rather than a stream, is the same as applying the given function to the sound directly).</p>
 <p><a id='Low-level-Sound/Stream-Generation-1'></a></p>
 <h2 id="low-level-soundstream-generation">Low-level Sound/Stream Generation</h2>
 <p>Finally, if none of the functions above suit your purposes for generating sounds or streams, you can use the function <a href="../sound/#Weber.audible"><code>audible</code></a>, which can be used to generate any arbitrary sound or stream you want. Please refer to the source code for <a href="../sound/#Weber.tone"><code>tone</code></a> and <a href="../sound/#Weber.noise"><code>noise</code></a> to see examples of the two ways to use this function.</p>
