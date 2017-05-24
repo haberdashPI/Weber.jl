@@ -9,7 +9,7 @@ eltype{R,T}(x::AbstractStream{R,T}) = T
 isinf(x::AbstractStream) = isinf(duration(x))
 done(x::AbstractStream) = duration(x) <= 0s
 
-immutable Stream{R,T} <: AbstractStream{R,T}
+struct Stream{R,T} <: AbstractStream{R,T}
   fn::Function
   index::Array{Int,0}
 end
@@ -84,7 +84,7 @@ function audible(fn::Function,len=Inf,asseconds=true;
   end
 end
 
-immutable LimitStream{R,T} <: AbstractStream{R,T}
+struct LimitStream{R,T} <: AbstractStream{R,T}
   data::AbstractStream{R,T}
   n::Int
 end
@@ -121,7 +121,7 @@ index(x::CatStream) = index(x.a)
 left(x::CatStream) = CatStream(left(x.a),left(x.b))
 right(x::CatStream) = CatStream(right(x.a),right(x.b))
 
-immutable EmptyStream{R,T} <: AbstractStream{R,T}
+struct EmptyStream{R,T} <: AbstractStream{R,T}
 end
 
 duration(x::EmptyStream) = 0s
