@@ -308,9 +308,9 @@ iskeydown(event::ExpEvent,keycode::Key) = false
 iskeydown(event::KeyDownEvent,key::KeyboardKey) = event.code == key.code
 
 """
-    modifiedby(event,modifier = [:shift,:ctrl,:alt,:gui])
+    modifiedby([event],[modifier = :shift,:ctrl,:alt or :gui])
 
-Returns true if the given even represents a keydown event modified by a given
+Returns true if the given event represents a keydown event modified by a given
 modifier key.
 
 Without the first argument, returns a function that tests if the given event
@@ -329,7 +329,7 @@ function modifiedby(event::KeyDownEvent,modifier::Symbol)
     event.mod & ctrl_bit > 0
   elseif modifier == :alt
     event.mod & alt_bit > 0
-  elseif modifier == :gui
+  elseif modifier in [:gui,:windows,:apple]
     event.mod & gui_bit > 0
   else
     error("Undefined modifier key $modifier")
