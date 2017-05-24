@@ -1,6 +1,5 @@
 using Weber
 using Base.Test
-using Lazy: @>, @_
 
 rng() = MersenneTwister(1983)
 same(x,y) = isapprox(x,y,rtol=1e-6)
@@ -24,4 +23,13 @@ same(x,y) = isapprox(x,y,rtol=1e-6)
              @> noise(rng=rng()) bandpass(400Hz,800Hz) sound(1s))
   @test same(sound("sounds/complex.wav"),
              @> harmonic_complex(200Hz,0:5,ones(6)) sound(1s) attenuate(20))
+  x = noise(rng=rng())
+  a,b = bandpass(x,200Hz,400Hz), bandpass(x,500Hz,600Hz)
+  @test_throws ErrorException @> mix(a,b) sound(500ms)
+
+  x = noise(rng=rng())
+  a,b = bandpass(x,200Hz,400Hz), bandpass(x,500Hz,600Hz)
+  @test @>(mix(a,deepcopy(b)),sound(500ms))[:] ==
+    mix(@>(noise(rng=rng()),bandpass(200Hz,400Hz),sound(500ms)),
+        @>(noise(rng=rng()),bandpass(500Hz,600Hz),sound(500ms)))[:]
 end

@@ -18,6 +18,7 @@ Stream{T}(R::Int,::Type{T},fn::Function) = Stream{R,T}(fn,Array{Int}() .= 1)
 duration(x::Stream) = Inf*s
 nsamples(x::Stream) = typemax(Int)
 index(x::Stream) = x.index[]
+index_ids(x::Stream) = [object_id(x.index)]
 
 Stream{R,T}(x::Sound{R,T,1}) = limit(Stream(R,T,i -> x[i]),nsamples(x))
 function Stream{R,T}(x::Sound{R,T,2})
@@ -92,6 +93,7 @@ end
 duration{R}(x::LimitStream{R}) = inseconds((x.n - index(x.data))*samples,R)
 nsamples(x::LimitStream) = x.n - index(x.data)
 index(x::LimitStream) = index(x.data)
+index_ids(x::LimitStream) = index_ids(x.data)
 sound(ts::LimitStream,len::Int) = sound(ts.data,min(len,nsamples(ts)))
 right(x::LimitStream) = limit(right(x.data),n)
 left(x::LimitStream) = limit(left(x.data),n)
@@ -118,6 +120,7 @@ duration(x::CatStream) = duration(x.a) + duration(x.b)
 nsamples(x::CatStream) =
   isinf(x.a) || isinf(x.b) ? typemax(Int) : nsamples(x.a) + nsamples(x.b)
 index(x::CatStream) = index(x.a)
+index_ids(x::CatStream) = [index_ids(x.a); index_ids(x.b)]
 left(x::CatStream) = CatStream(left(x.a),left(x.b))
 right(x::CatStream) = CatStream(right(x.a),right(x.b))
 
@@ -128,6 +131,7 @@ duration(x::EmptyStream) = 0s
 nsamples(x::EmptyStream) = 0
 sound{R,T}(x::EmptyStream{R,T},len::Int) = Sound{R,T,1}(T[])
 index(x::EmptyStream) = 0
+index_ids(x::EmptyStream) = UInt64[]
 left(x::EmptyStream) = x
 right(x::EmptyStream) = y
 
@@ -200,12 +204,18 @@ soundop{R}(op,xs::Union{Audible{R},Array}...) = soundop(op,map(asstream,xs)...)
 soundop{R}(op,xs::AbstractStream{R}...) = reduce((x,y) -> soundop(op,x,y),xs)
 soundop(op,x::AbstractStream) = x
 function soundop{R,T}(op,x::AbstractStream{R,T},y::AbstractStream{R,T})
+  if x !== y && any(i ∈ index_ids(x) for i ∈ index_ids(y))
+    error("Cannot combine two streams derrived from the same underlying ",
+          " stream. Please use `deepcopy` on one of the streams you are trying",
+          " to combine.")
+  end
   OpStream{R,T}(op,x,y)
 end
 
 duration(x::OpStream) = max(duration(x.a),duration(x.b))
 nsamples(x::OpStream) = max(nsamples(x.a),nsamples(x.b))
 index(x::OpStream) = index(x.a)
+index_ids(x::OpStream) = [index_ids(x.a); index_ids(x.b)]
 
 function sound{R,T}(os::OpStream{R,T},len::Int)
   if os.op === emptyfn
