@@ -2,7 +2,9 @@ So far we have seen several examples of how to generate sounds and simple images
 
 # Sounds
 
-Weber's primary focus is on psychoacoustics, so there are many methods for generating and manipulation sounds. There are two primary ways to create sound stimuli: loading a file and sound primitives.
+Weber's primary focus is on psychoacoustics, so there are many methods for
+generating and manipulating sounds. There are two primary ways to create sound
+stimuli: loading a file and composing sound primitives.
 
 ## Loading a file
 
@@ -25,7 +27,7 @@ addtrial(moment(play,mysound))
 
 ## Sound Primivites
 
-There are several primitives you can use to generate simple sounds directly in Weber. They are [`tone`](@ref) (to create pure tones), [`noise`](@ref) (to generate white noise), [`silence`](@ref) (for a silent period) and [`harmonic_complex`](@ref), (to create multiple pure tones with integer frequency ratios).
+There are several primitives you can use to generate simple sounds directly in Weber. They are [`tone`](@ref) (to create pure tones), [`noise`](@ref) (to generate white noise), [`silence`](@ref) (for a silent period) and [`harmonic_complex`](@ref) (to create multiple pure tones with integer frequency ratios).
 
 These primitives can then be combined and manipuliated to generate more interesting sounds. You can filter sounds ([`bandpass`](@ref), [`bandstop`](@ref), [`lowpass`](@ref), [`highpass`](@ref) and [`lowpass`](@ref)), mix them together ([`mix`](@ref)) and set an appropriate decibel level ([`attenuate`](@ref)). You can also manipulate the envelope of the sound ([`ramp`](@ref), [`rampon`](@ref), [`rampoff`](@ref), [`fadeto`](@ref), [`envelope`](@ref) and [`mult`](@ref)).
 
@@ -43,15 +45,15 @@ mynoise = attenuate(mynoise,25)
 addtrial(moment(play,mix(mysound,mynoise))
 ```
 
-Weber exports the macro `@>` (from [Lazy.jl](https://github.com/MikeInnes/Lazy.jl)) to simplify this pattern. It is easiest to understand the macro by example: the below code yields the same result as the code above.
+Weber exports the macro `@>` (from [Lazy.jl](https://github.com/MikeInnes/Lazy.jl#macros)) to simplify this pattern. It is easiest to understand the macro by example: the below code yields the same result as the code above.
 
 ```juila
 mytone = @> tone(1kHz,1s) ramp attenuate(20)
 mynoise = @> noise(1s) bandstop(0.5kHz,1.5kHz) attenuate(25)
-addtrial(moment(play, mix(bandstop(noise(1s),0.5kHz,1.5kHz))))
+addtrial(moment(play, mix(mytone,mynoise)))
 ```
 
-Weber also exports `@>>`, and `@_` (refer to the Lazy.jl's README.md for details).
+Weber also exports `@>>`, and `@_` (refer to [Lazy.jl](https://github.com/MikeInnes/Lazy.jl#macros) for details).
 
 ## Sounds are arrays
 Sounds can be manipulated in the same way that any array can be manipulated in Julia, with some additional support for indexing sounds using time units. For instance, to get the first 5 seconds of a sound you can do the following.
@@ -61,7 +63,8 @@ mytone = tone(1kHz,10s)
 mytone[0s .. 5s]
 ```
 
-Furthermore, we can concatentate multiple sounds, to play them in sequence. The following code plays two tones in sequence, with 100ms gap between them.
+Furthermore, we can concatentate multiple sounds, to play them in sequence. The
+following code plays two tones in sequence, with a 100 ms gap between them.
 
 ```julia
 interval = [tone(400Hz,50ms); silence(100ms); tone(400Hz * 2^(5/12),50ms)]
@@ -70,7 +73,7 @@ addtrial(moment(play,interval))
 
 ## Stereo Sounds
 
-You can create sounds with using [`leftright`](@ref), and reference the left and right channel of a sound using `:left` or `:right` as a second index, like so.
+You can create stereo sounds with using [`leftright`](@ref), and reference their left and right channel sound using `:left` or `:right` as a second index, like so.
 
 ```julia
 stereo_sound = leftright(tone(1kHz,2s),tone(2kHz,2s))
@@ -82,13 +85,27 @@ The functions [`left`](@ref) and [`right`](@ref) serve the same purpose, but can
 
 ## Streams
 
-In addition to the discrete sounds that have been discussed so far, Weber also supports sound streams. Streams are aribtrarily long: you need not decide when they should stop until after they start playing. All of the primitives described so far can apply to streams, except that streams cannot be indexed. To create a stream you can use one of the standard primitives, leaving out the length parameter. For example, the following will play a 1kHz pure tone until Weber quits.
+In addition to the discrete sounds that have been discussed so far, Weber also
+supports sound streams. Streams are aribtrarily long: you need not decide when
+they should stop until after they start playing. All of the primitives described
+so far can apply to streams, except that streams cannot be indexed.
+
+!!! note "Streaming operations are lazy"
+
+    All manipulations of streams are lazy: they are applied just as the stream is
+    played. The more operators you apply to a stream the more processing that has
+    to occur. If you have a particularly complicated stream you may have to
+    increase streaming latency by changing the `stream_unit` parameter of
+    [`setup_sound`](@ref), or consider an alternative approach (e.g. [`audible`](@ref)).
+
+To create a stream you can use one of the standard primitives, leaving out the
+length parameter. For example, the following will play a 1 kHz pure tone until Weber quits.
 
 ```julia
 addtrial(moment(play,tone(1kHz)))
 ```
 
-Streams always play on a specific stream channel, so if you want to stop the stream at some point you can request that the channel stop. The following plays a pure tone until the experiment participant hits space.
+Streams always play on a specific stream channel, so if you want to stop the stream at some point you can request that the channel stop. The following plays a pure tone until the experiment participant hits spacebar.
 
 ```julia
 addtrial(moment(play,tone(1kHz),channel=1),
@@ -105,6 +122,33 @@ addtrial(moment(play,ongoing_tone,channel=1),
          moment(play,rampoff(ongoing_tone),channel=1))
 ```
 
+!!! warning "Streams are stateful"
+
+    This example also demonstrates the stateful nature of streams. Once some
+    part of a stream has been played it is forever consumed, and cannot be
+    played again. After the stream is played, subsequent modifications only apply
+    to unplayed frames of the stream. *BEWARE*: this means that you cannot
+    play two different modifications of the same stream. So for instance,
+    the first snippet of code results in an error, while the
+    second will play two noises at once, as desired.
+
+        # throws an error!
+        mystream = noise()
+        mystream_mod1 = lowpass(mystream,300Hz)
+        mystream_mod2 = highpass(mystream,500Hz)
+        addtrial(moment(play,mix(mystream_mod1,mystream_mod2)))
+
+        # do this instead
+        stream1 = lowpass(noise(),300Hz)
+        stream2 = highpass(noise(),500Hz)
+        addtrial(moment(play,mix(stream1,stream2)))
+
+        # or this
+        mystream = noise()
+        mystream_mod1 = lowpass(mystream,300Hz)
+        mystream_mod2 = highpass(mystream,500Hz)
+        addtrial(moment(play,mix(mystream_mod1,deepcopy(mystream_mod2))))
+
 Just as with any moment, these manipulations to streams can be precisely timed. The following will turn the sound off precisely 1 second after the space key is pressed.
 
 
@@ -117,7 +161,9 @@ addtrial(moment(play,ongoing_tone,channel=1),
 
 If you wish to turn the entirety of a finite stream into a sound, you can use [`sound`](@ref). You can also grab the next section of an infinite stream using [`sound`](@ref) if you provide a second parameter specifying the length of the stream you want to turn into a sound.
 
-Some manipulations of streams require that the stream be treated as a sound. You can have  small segments of the stream be manipulated, just before they play, by calling [`audiofn`](@ref) which will apply the given function to each segment of sound extracted from the stream, just as it is about to be played. (Calling [`audiofn`](@ref) on a sound, rather than a stream, is the same as applying the given function to the sound directly).
+Some manipulations of streams require that the stream be treated as a sound. You
+can modify individual sound segments as they play from the stream using
+[`audiofn`](@ref). (Calling [`audiofn`](@ref) on a sound, rather than a stream, is the same as applying the given function to the sound directly).
 
 ## Low-level Sound/Stream Generation
 

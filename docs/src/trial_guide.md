@@ -18,7 +18,7 @@ then runs the specified function (`fn`), if any, passing it any `args` and
 `keys` provided. Below is an example of creating a timed moment.
 
 ```julia
-moment(0.5,play,mysound)
+moment(0.5s,play,mysound)
 ```
 
 This moment plays `mysound` 0.5 seconds after the onset of the previous moment.
@@ -63,19 +63,19 @@ together using the `>>` operator or `moment(momoment1,moment2,...)`.
 
 A concatenation of moments starts immediately, proceeding through each of the
 moments in order. This allows for a more complex relationship in inter-moment
-timing. For example, the following code will present two sounds, one at 100ms,
-the other at 200ms after the start of the trial. It will also display "Too
-Late!" on the screen if no keyboard key is pressed 150ms after the start of the
+timing. For example, the following code will present two sounds, one at 100 ms,
+the other 200 ms after the start of the trial. It will also display "Too
+Late!" on the screen if no keyboard key is pressed 150 ms after the start of the
 trial. 
 
 ```julia
-addtrial(moment(0.1,play,soundA) >> moment(0.1,play,soundB),
-         timeout(() -> display("Too Late!"),iskeydown,0.15))
+addtrial(moment(100ms,play,soundA) >> moment(100ms,play,soundB),
+         timeout(() -> display("Too Late!"),iskeydown,150ms))
 ```
 
 This exact sequence of timing would not be possible withou using the `>>`
-operator because the timing of `timeout` moment depends on user input, while we
-desire that soundB be played at a reliable time.
+operator because the timing of the `timeout` moment depends on user input, while we
+want soundB to be played at a reliable time.
 
 ## Watcher Moments
 
@@ -95,13 +95,13 @@ If the watcher is the first moment in a trial, the convenient `do` block syntax 
 message = visual("You hit spacebar!")
 addtrial(moment2,moment3) do event
   if iskeydown(key":space:")
-    display(message,duration=0.500)
+    display(message,duration=500ms)
     record()
   end
 end
 ```
 
-In the above example, "You hit spacebar!" is displayed for 500ms every time the spacebar
+In the above example, "You hit spacebar!" is displayed for 500 ms every time the spacebar
 is hit.
 
 Refer to the documentation for [Events](event.md) for full details on how to respond to events.

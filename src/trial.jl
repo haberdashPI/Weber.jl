@@ -563,19 +563,27 @@ end
 """
     handle(exp,queue,moment,to_handle)
 
-Internal method to handle the given moment object in a manner specific to the
-type of moment. The `to_handle` object is either a `Float64`, indicating the
-current time, or it is an `ExpEvent` indicating the event that just occured. A
-timed moment, for instance, will run when it recieves a `Float64` value. The
-queue is a `MomentQueue` object, which has the same interface as the `Dequeue`
-object (from the `DataStructures` package) but it is also iterable. Upon calling
-handle, `top(queue) == moment`.
+Internal method to handle the given moment object in a manner specific to its
+type.
 
-Handle returns a boolean indicating whether the event was "handled" or not. If
-unhandled, the moment should remain on top of the queue. If returning true,
-handle should *normally* remove the top moment from the queue. Exceptions exist
-(for instance, to allow for loops), but one does not normally need to implement
-custom moments that have such behavior.
+The function `handle` is only called when the appropriate time has been
+reached for the next moment to be presented (according to [`delta_t`](@ref)) or
+when an event occurs.
+
+The `to_handle` object is either a `Float64`, indicating the current experiment
+time, or it is an `ExpEvent` indicating the event that just occured. As an
+example, a timed moment, will run when it recieves any `Float64` value, but
+nothing occurs when passed an event.
+
+The queue is a `MomentQueue` object, which has the same interface as the
+`Dequeue` object (from the `DataStructures` package) but it is also
+iterable. Upon calling handle, `top(queue) == moment`.
+
+Handle should return a boolean indicating whether the event was "handled" or
+not. If unhandled, the moment should remain on top of the queue. If returning
+true, handle should *normally* remove the top moment from the queue. Exceptions
+exist (for instance, to allow for loops), but one does not normally need to
+implement custom moments that have such behavior.
 
 !!! note
 

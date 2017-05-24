@@ -2,11 +2,12 @@ Functionality can be added to Weber via extensions. You can add multiple
 extensions to the same experiment. The [reference](extend_ref.md) provides a
 list of available extensions. Here we'll cover how to create new extensions.
 
-Extensions can create new methods on custom types, just like any Julia package,
-and this may be all that's necessary to extend Weber.
+Extensions can create new methods of existing Weber functions on custom types,
+just like any Julia package, and this may be all that's necessary to extend
+Weber.
 
-However, extensions also have several ways to extend the behavior of a number of
-methods with special extension machinery.
+However, extensions also have several ways to insert additional behavior into a number of
+methods via special extension machinery.
 
 ```@meta
 CurrentModule = Weber
@@ -39,7 +40,7 @@ with an `ExtendedExperiment{MyExtension}` argument.
 !!! warning "Don't extend unlisted functions"
 
     These functions have specific machinery setup to make extension possible.
-    Don't use the same approach with other functions and expect your extension to work.
+    Don't use this same approach with other functions and expect your extension to work.
 
 As an example, [`record`](@ref) could be extended as follows.
 
@@ -54,14 +55,14 @@ the extension object is accessed using [`extension`](@ref).
 
 Second, `record` is called on the [`next`](@ref) extension.  **All extended
 functions should follow this pattern**. Each experiment can have multiple
-extensions, and each pairing of an experiment with a particular plugin is called
-an experiment *version*. These are ordered from top-most to bottom-most
-version. The top-most version is the first extension in the list specified in
-the call to [`Experiment`](@ref). Subsequent versions are accessed in this same
-order, using [`next`](@ref), until the bottom-most version, which is the
-experiment without any paired extension. 
+extensions, and each pairing of an experiment with a particular extension is
+called an experiment *version*. These are ordered from top-most to bottom-most
+version. The top-most version is paired with the first extension in the list
+specified during the call to [`Experiment`](@ref). Subsequent versions are accessed
+in this same order, using [`next`](@ref), until the bottom-most version, which
+is the experiment without any paired extension.
 
-For this extension to actually work, `setup` must also be extended to add the
+For the extension to `record` to actually work, `setup` must also be extended to add the
 column `:my_extension` to the data file.
 
 ```julia
@@ -80,8 +81,8 @@ utilized in the call to `addcolumn`.
 
 !!! note "When to use `next` and `top`"
 
-    As a general rule, inside an extended method, when you call the same
-    function which that method implements, you should pass `next(experiment)`
+    As a general rule, inside an extended method, when you dispatch over the same
+    function which that method implements, you should pass it `next(experiment)`
     while all other functions taking an experiment argument should be passed
     `top(experiment)`.
 
@@ -116,7 +117,7 @@ when to run the next moment when a prior moment triggers on the event.
 One approach, if you are implementing events for a hardware input device, is to
 implement methods for [`iskeydown`](@ref). You can define your own type
 of keycode (which should be of some new custom type `<: Weber.Key`). Then, you can
-then make use of the [`@key_str`](@ref) macro by adding entries to the
+make use of the [`@key_str`](@ref) macro by adding entries to the
 `Weber.str_to_code` dictionary (a private global constant). So for example, you
 could add the following to the module implementing your extension.
 
@@ -125,15 +126,15 @@ Weber.str_to_code["my_button1"] = MyHardwareKey(1)
 Weber.str_to_code["my_button1"] = MyHardwareKey(2)
 ```
 
-Such key types should implement `==`, `hash` and `isless` so that the events can
+Such key types should implement `==`, `hash` and `isless` so that key events can
 be ordered. This allows them to be displayed in an organized fashion when
 printed using [`listkeys`](@ref).
 
 Once these events are defined you can extend [`poll_events`](@ref) so that it
 generates events that return true for `iskeydown(myevent,key"my_button1")` (and
 a corresponding method for `iskeyup`). How this happens will depend on the
-specific hardware you are supporting. The buttons presses could then checked for
-during an experiment as follows.
+specific hardware you are supporting. These new events could then be used in an
+experiment as follows.
 
 ```julia
 response(key"my_button1" => "button1_pressed",
@@ -150,7 +151,7 @@ the function [`handle`](@ref), which should define the moment's run-time
 behavior. Such a moment must also define [`moment_trace`](@ref).
 
 A moment can also define [`delta_t`](@ref)--to define when it occurs--or
-[`prepare!`](@ref)--to have some sort of initialization occur before its
+[`prepare!`](@ref)--to have some kind of initialization occur before its
 onset--but these both have default implementations.
 
 Methods of [`handle`](@ref) should not make use of the extension machinery
@@ -165,10 +166,11 @@ all functionality for that custom moment should be implemented.
 Optionally, you can make it possible for users to extend Weber without ever
 having to manually download or import your extension.
 
-To do so you register your extension using the [`@Weber.extension`](@ref) macro. This macro
-is not exported and should not be called within your extensions module. Instead
-you should submit a pull request to
+To do so you register your extension using the [`@Weber.extension`](@ref)
+macro. This macro is not exported and should not be called within your
+extensions module. Instead you should submit a pull request to
 [Weber](https://github.com/haberdashPI/Weber.jl/pulls) with your new extension
-defintion added to `extensions.jl`. Once your extension is also registered with
-[METADATA.jl](https://github.com/JuliaLang/METADATA.jl) it can then be
-downloaded the first time a user initializes the extension.
+defintion added to `extensions.jl`. Once your extension is also a registered
+package with [METADATA.jl](https://github.com/JuliaLang/METADATA.jl) it can be
+downloaded the first time a user initializes your extension using its
+corresponding macro.
