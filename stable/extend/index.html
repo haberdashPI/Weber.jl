@@ -172,8 +172,8 @@
             <div class="section">
               
                 <p>Functionality can be added to Weber via extensions. You can add multiple extensions to the same experiment. The <a href="../extend_ref/">reference</a> provides a list of available extensions. Here we'll cover how to create new extensions.</p>
-<p>Extensions can create new methods on custom types, just like any Julia package, and this may be all that's necessary to extend Weber.</p>
-<p>However, extensions also have several ways to extend the behavior of a number of methods with special extension machinery.</p>
+<p>Extensions can create new methods of existing Weber functions on custom types, just like any Julia package, and this may be all that's necessary to extend Weber.</p>
+<p>However, extensions also have several ways to insert additional behavior into a number of methods via special extension machinery.</p>
 <ul>
 <li><a href="../experiment/#Weber.addcolumn"><code>addcolumn</code></a></li>
 <li><a href="../experiment/#Weber.setup"><code>setup</code></a></li>
@@ -193,7 +193,7 @@ end
 <p>For all of the public functions above (everything but <code>poll_events</code>), you can then define a new method of these functions that includes one additional argument beyond that listed in its documentation, located before all other arguments. This argument should be of type <code>ExtendedExperiment{MyExtension}</code>. To extend the private <code>poll_events</code> function, replace the <code>Experiment</code> argument with an <code>ExtendedExperiment{MyExtension}</code> argument.</p>
 <div class="admonition warning">
 <p class="admonition-title">Don't extend unlisted functions</p>
-<p>These functions have specific machinery setup to make extension possible. Don't use the same approach with other functions and expect your extension to work.</p>
+<p>These functions have specific machinery setup to make extension possible. Don't use this same approach with other functions and expect your extension to work.</p>
 </div>
 <p>As an example, <a href="../trials/#Weber.record"><code>record</code></a> could be extended as follows.</p>
 <pre><code class="julia">function record(experiment::ExtendedExperiment{MyExtension},code;keys...)
@@ -202,8 +202,8 @@ end
 </code></pre>
 
 <p>There are a few things to note about this implementation. First,  the extension object is accessed using <a href="../extend_ref/#Weber.extension-Tuple{Weber.ExtendedExperiment}"><code>extension</code></a>.</p>
-<p>Second, <code>record</code> is called on the <a href="../extend_ref/#Base.next-Tuple{Weber.ExtendedExperiment}"><code>next</code></a> extension.  <strong>All extended functions should follow this pattern</strong>. Each experiment can have multiple extensions, and each pairing of an experiment with a particular plugin is called an experiment <em>version</em>. These are ordered from top-most to bottom-most version. The top-most version is the first extension in the list specified in the call to <a href="../experiment/#Weber.Experiment"><code>Experiment</code></a>. Subsequent versions are accessed in this same order, using <a href="../extend_ref/#Base.next-Tuple{Weber.ExtendedExperiment}"><code>next</code></a>, until the bottom-most version, which is the experiment without any paired extension. </p>
-<p>For this extension to actually work, <code>setup</code> must also be extended to add the column <code>:my_extension</code> to the data file.</p>
+<p>Second, <code>record</code> is called on the <a href="../extend_ref/#Base.next-Tuple{Weber.ExtendedExperiment}"><code>next</code></a> extension.  <strong>All extended functions should follow this pattern</strong>. Each experiment can have multiple extensions, and each pairing of an experiment with a particular extension is called an experiment <em>version</em>. These are ordered from top-most to bottom-most version. The top-most version is paired with the first extension in the list specified during the call to <a href="../experiment/#Weber.Experiment"><code>Experiment</code></a>. Subsequent versions are accessed in this same order, using <a href="../extend_ref/#Base.next-Tuple{Weber.ExtendedExperiment}"><code>next</code></a>, until the bottom-most version, which is the experiment without any paired extension.</p>
+<p>For the extension to <code>record</code> to actually work, <code>setup</code> must also be extended to add the column <code>:my_extension</code> to the data file.</p>
 <pre><code class="julia">function setup(fn::Function,experiment::ExtendedExperiment{MyExtension})
   setup(next(experiment)) do
     addcolumn(top(experiment),:my_extension)
@@ -215,7 +215,7 @@ end
 <p>This demonstrates one last important concept. When calling <code>addcolumn</code>, the function <a href="../extend_ref/#DataStructures.top-Tuple{Weber.Experiment}"><code>top</code></a> is called on the experiment to get the top-most version of the experiment. This is done so that any functionality of versions above the current one will be utilized in the call to <code>addcolumn</code>.</p>
 <div class="admonition note">
 <p class="admonition-title">When to use <code>next</code> and <code>top</code></p>
-<p>As a general rule, inside an extended method, when you call the same function which that method implements, you should pass <code>next(experiment)</code> while all other functions taking an experiment argument should be passed <code>top(experiment)</code>.</p>
+<p>As a general rule, inside an extended method, when you dispatch over the same function which that method implements, you should pass it <code>next(experiment)</code> while all other functions taking an experiment argument should be passed <code>top(experiment)</code>.</p>
 </div>
 <p><a id='The-private-interface-of-run-time-objects.-1'></a></p>
 <h1 id="the-private-interface-of-run-time-objects">The private interface of run-time objects.</h1>
@@ -229,13 +229,13 @@ end
 <p>To specify event timing, you must define a <code>time</code> method for your custom event. You can simply store the time passed to <a href="../extend_ref/#Weber.poll_events"><code>poll_events</code></a> in your custom event, or, if you have more precise timing information for your hardware you can store it here. Internally, the value returend by <code>time</code> is used to determine when to run the next moment when a prior moment triggers on the event.</p>
 <p><a id='Custom-Key-Events-1'></a></p>
 <h3 id="custom-key-events">Custom Key Events</h3>
-<p>One approach, if you are implementing events for a hardware input device, is to implement methods for <a href="../event/#Weber.iskeydown"><code>iskeydown</code></a>. You can define your own type of keycode (which should be of some new custom type <code>&lt;: Weber.Key</code>). Then, you can then make use of the <a href="../event/#Weber.@key_str"><code>@key_str</code></a> macro by adding entries to the <code>Weber.str_to_code</code> dictionary (a private global constant). So for example, you could add the following to the module implementing your extension.</p>
+<p>One approach, if you are implementing events for a hardware input device, is to implement methods for <a href="../event/#Weber.iskeydown"><code>iskeydown</code></a>. You can define your own type of keycode (which should be of some new custom type <code>&lt;: Weber.Key</code>). Then, you can make use of the <a href="../event/#Weber.@key_str"><code>@key_str</code></a> macro by adding entries to the <code>Weber.str_to_code</code> dictionary (a private global constant). So for example, you could add the following to the module implementing your extension.</p>
 <pre><code class="julia">Weber.str_to_code[&quot;my_button1&quot;] = MyHardwareKey(1)
 Weber.str_to_code[&quot;my_button1&quot;] = MyHardwareKey(2)
 </code></pre>
 
-<p>Such key types should implement <code>==</code>, <code>hash</code> and <code>isless</code> so that the events can be ordered. This allows them to be displayed in an organized fashion when printed using <a href="../event/#Weber.listkeys"><code>listkeys</code></a>.</p>
-<p>Once these events are defined you can extend <a href="../extend_ref/#Weber.poll_events"><code>poll_events</code></a> so that it generates events that return true for <code>iskeydown(myevent,key"my_button1")</code> (and a corresponding method for <code>iskeyup</code>). How this happens will depend on the specific hardware you are supporting. The buttons presses could then checked for during an experiment as follows.</p>
+<p>Such key types should implement <code>==</code>, <code>hash</code> and <code>isless</code> so that key events can be ordered. This allows them to be displayed in an organized fashion when printed using <a href="../event/#Weber.listkeys"><code>listkeys</code></a>.</p>
+<p>Once these events are defined you can extend <a href="../extend_ref/#Weber.poll_events"><code>poll_events</code></a> so that it generates events that return true for <code>iskeydown(myevent,key"my_button1")</code> (and a corresponding method for <code>iskeyup</code>). How this happens will depend on the specific hardware you are supporting. These new events could then be used in an experiment as follows.</p>
 <pre><code class="julia">response(key&quot;my_button1&quot; =&gt; &quot;button1_pressed&quot;,
          key&quot;my_button2&quot; =&gt; &quot;button2_pressed&quot;)
 </code></pre>
@@ -243,12 +243,12 @@ Weber.str_to_code[&quot;my_button1&quot;] = MyHardwareKey(2)
 <p><a id='Custom-Moments-1'></a></p>
 <h2 id="custom-moments">Custom Moments</h2>
 <p>You can create your own moment types, which must be children of <code>Weber.SimpleMoment</code>. These new moments will have to be generated using some newly defined function, or added automatically by extending <a href="../trials/#Weber.addtrial"><code>addtrial</code></a>. Once created, and added to trials, these moments will be processed at run-time using the function <a href="../extend_ref/#Weber.handle"><code>handle</code></a>, which should define the moment's run-time behavior. Such a moment must also define <a href="../extend_ref/#Weber.moment_trace"><code>moment_trace</code></a>.</p>
-<p>A moment can also define <a href="../extend_ref/#Weber.delta_t"><code>delta_t</code></a>–to define when it occurs–or <a href="../extend_ref/#Weber.prepare!"><code>prepare!</code></a>–to have some sort of initialization occur before its onset–but these both have default implementations.</p>
+<p>A moment can also define <a href="../extend_ref/#Weber.delta_t"><code>delta_t</code></a>–to define when it occurs–or <a href="../extend_ref/#Weber.prepare!"><code>prepare!</code></a>–to have some kind of initialization occur before its onset–but these both have default implementations.</p>
 <p>Methods of <a href="../extend_ref/#Weber.handle"><code>handle</code></a> should not make use of the extension machinery described above. What this means is that methods of <a href="../extend_ref/#Weber.handle"><code>handle</code></a> should never dispatch on an extended experiment, and no calls to <a href="../extend_ref/#DataStructures.top-Tuple{Weber.Experiment}"><code>top</code></a>, <a href="../extend_ref/#Base.next-Tuple{Weber.ExtendedExperiment}"><code>next</code></a> or <a href="../extend_ref/#Weber.extension-Tuple{Weber.ExtendedExperiment}"><code>extension</code></a> should occur on the experiment object. Further, each moment should belong to one specific extension, in which all functionality for that custom moment should be implemented.</p>
 <p><a id='Registering-Your-Extension-1'></a></p>
 <h1 id="registering-your-extension">Registering Your Extension</h1>
 <p>Optionally, you can make it possible for users to extend Weber without ever having to manually download or import your extension.</p>
-<p>To do so you register your extension using the <a href="../extend_ref/#Weber.@extension"><code>@Weber.extension</code></a> macro. This macro is not exported and should not be called within your extensions module. Instead you should submit a pull request to <a href="https://github.com/haberdashPI/Weber.jl/pulls">Weber</a> with your new extension defintion added to <code>extensions.jl</code>. Once your extension is also registered with <a href="https://github.com/JuliaLang/METADATA.jl">METADATA.jl</a> it can then be downloaded the first time a user initializes the extension.</p>
+<p>To do so you register your extension using the <a href="../extend_ref/#Weber.@extension"><code>@Weber.extension</code></a> macro. This macro is not exported and should not be called within your extensions module. Instead you should submit a pull request to <a href="https://github.com/haberdashPI/Weber.jl/pulls">Weber</a> with your new extension defintion added to <code>extensions.jl</code>. Once your extension is also a registered package with <a href="https://github.com/JuliaLang/METADATA.jl">METADATA.jl</a> it can be downloaded the first time a user initializes your extension using its corresponding macro.</p>
               
             </div>
           </div>

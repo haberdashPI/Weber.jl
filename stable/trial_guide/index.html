@@ -186,7 +186,7 @@
 </code></pre>
 
 <p>A timed moment waits <code>delta_t</code> seconds after the onset of the previous moment, and then runs the specified function (<code>fn</code>), if any, passing it any <code>args</code> and <code>keys</code> provided. Below is an example of creating a timed moment.</p>
-<pre><code class="julia">moment(0.5,play,mysound)
+<pre><code class="julia">moment(0.5s,play,mysound)
 </code></pre>
 
 <p>This moment plays <code>mysound</code> 0.5 seconds after the onset of the previous moment.</p>
@@ -212,12 +212,12 @@
 <p><a id='Compound-Moments-1'></a></p>
 <h2 id="compound-moments">Compound Moments</h2>
 <p>You can create more complicated moments by concatenating simpler moments together using the <code>&gt;&gt;</code> operator or <code>moment(momoment1,moment2,...)</code>.</p>
-<p>A concatenation of moments starts immediately, proceeding through each of the moments in order. This allows for a more complex relationship in inter-moment timing. For example, the following code will present two sounds, one at 100ms, the other at 200ms after the start of the trial. It will also display "Too Late!" on the screen if no keyboard key is pressed 150ms after the start of the trial. </p>
-<pre><code class="julia">addtrial(moment(0.1,play,soundA) &gt;&gt; moment(0.1,play,soundB),
-         timeout(() -&gt; display(&quot;Too Late!&quot;),iskeydown,0.15))
+<p>A concatenation of moments starts immediately, proceeding through each of the moments in order. This allows for a more complex relationship in inter-moment timing. For example, the following code will present two sounds, one at 100 ms, the other 200 ms after the start of the trial. It will also display "Too Late!" on the screen if no keyboard key is pressed 150 ms after the start of the trial. </p>
+<pre><code class="julia">addtrial(moment(100ms,play,soundA) &gt;&gt; moment(100ms,play,soundB),
+         timeout(() -&gt; display(&quot;Too Late!&quot;),iskeydown,150ms))
 </code></pre>
 
-<p>This exact sequence of timing would not be possible withou using the <code>&gt;&gt;</code> operator because the timing of <code>timeout</code> moment depends on user input, while we desire that soundB be played at a reliable time.</p>
+<p>This exact sequence of timing would not be possible withou using the <code>&gt;&gt;</code> operator because the timing of the <code>timeout</code> moment depends on user input, while we want soundB to be played at a reliable time.</p>
 <p><a id='Watcher-Moments-1'></a></p>
 <h2 id="watcher-moments">Watcher Moments</h2>
 <p>Watcher moments are used to respond to events. Often, watcher moments need not be directly used. Instead, the higher level <a href="../trials/#Weber.response"><code>response</code></a> method can be used.</p>
@@ -226,13 +226,13 @@
 <pre><code class="julia">message = visual(&quot;You hit spacebar!&quot;)
 addtrial(moment2,moment3) do event
   if iskeydown(key&quot;:space:&quot;)
-    display(message,duration=0.500)
+    display(message,duration=500ms)
     record()
   end
 end
 </code></pre>
 
-<p>In the above example, "You hit spacebar!" is displayed for 500ms every time the spacebar is hit.</p>
+<p>In the above example, "You hit spacebar!" is displayed for 500 ms every time the spacebar is hit.</p>
 <p>Refer to the documentation for <a href="../event/">Events</a> for full details on how to respond to events.</p>
 <p><a id='Conditional-Moments-1'></a></p>
 <h2 id="conditional-moments">Conditional Moments</h2>
