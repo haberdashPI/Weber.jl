@@ -128,7 +128,7 @@ addtrial(moment(play,ongoing_tone,channel=1),
     part of a stream has been played it is forever consumed, and cannot be
     played again. After the stream is played, subsequent modifications only apply
     to unplayed frames of the stream. *BEWARE*: this means that you cannot
-    play two different modifications of the same.
+    play two different modifications of the same stream.
 
 Just as with any moment, these manipulations to streams can be precisely timed. The following will turn the sound off precisely 1 second after the space key is pressed.
 
