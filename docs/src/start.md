@@ -25,17 +25,17 @@ Remove all text in run_simple.jl and replace it with the following.
 using Weber
 sid,skip = @read_args("A simple frequency discrimination experiment.")
 
-const low = ramp(tone(1000,0.5))
-const high = ramp(tone(1100,0.5))
+const low = ramp(tone(1kHz,0.5s))
+const high = ramp(tone(1.1kHz,0.5s))
 
 function one_trial()
   if rand(Bool)
-    stim1 = moment(0.5,play,low)
-	stim2 = moment(0.5,play,high)
+    stim1 = moment(0.5s,play,low)
+	stim2 = moment(0.5s,play,high)
     resp = response(key"q" => "low_first", key"p" => "low_second",correct = "low_first")
   else
-	stim1 = moment(0.5,play,high)
-	stim2 = moment(0.5,play,low)
+	stim1 = moment(0.5s,play,high)
+	stim2 = moment(0.5s,play,low)
     resp = response(key"q" => "low_first", key"p" => "low_second",correct = "low_second")	
   end
   return [show_cross(),stim1,stim2,resp,await_response(iskeydown)]
@@ -93,8 +93,8 @@ about the [`Weber.offset`](@ref) function).
 ## Stimulus Generation
 
 ```julia
-const low = ramp(tone(1000,0.5))
-const high = ramp(tone(1100,0.5))
+const low = ramp(tone(1kHz,0.5s))
+const high = ramp(tone(1.1kHz,0.5s))
 ```
 
 These next two lines create two stimuli. A 1000 Hz tone (`low`) and a 1100 Hz
@@ -110,12 +110,12 @@ to open a sound file on your computer. Refer to the documentation in
 ```julia
 function one_trial()
   if rand(Bool)
-    stim1 = moment(0.5,play,low)
-	stim2 = moment(0.5,play,high)
+    stim1 = moment(0.5s,play,low)
+	stim2 = moment(0.5s,play,high)
     resp = response(key"q" => "low_first", key"p" => "low_second",correct = "low_first")
   else
-	stim1 = moment(0.5,play,high)
-	stim2 = moment(0.5,play,low)
+	stim1 = moment(0.5s,play,high)
+	stim2 = moment(0.5s,play,low)
     resp = response(key"q" => "low_first", key"p" => "low_second",correct = "low_second")	
   end
   return [show_cross(),stim1,stim2,resp,await_response(iskeydown)]

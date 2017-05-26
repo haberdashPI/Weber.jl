@@ -15,27 +15,26 @@ version = v"0.0.2"
 sid,trial_skip,adapt = @read_args("Frequency Discrimination ($version).",
                                   adapt=[:levitt,:bayes])
 
-const ms = 1/1000
 const atten_dB = 30
 const n_trials = 60
 const feedback_delay = 750ms
 
 isresponse(e) = iskeydown(e,key"p") || iskeydown(e,key"q")
 
-const standard_freq = 1000
+const standard_freq = 1kHz
 const standard = attenuate(ramp(tone(standard_freq,0.1)),atten_dB)
 function one_trial(adapter)
   first_lower = rand(Bool)
   resp = response(adapter,key"q" => "first_lower",key"p" => "second_lower",
                   correct=(first_lower ? "first_lower" : "second_lower"))
 
-  signal() = attenuate(ramp(tone(standard_freq*(1-delta(adapter)),0.1)),atten_dB)
+  signal() = attenuate(ramp(tone(standard_freq*(1-delta(adapter)),0.1s)),atten_dB)
   stimuli = first_lower? [signal,standard] : [standard,signal]
 
   [moment(feedback_delay,play,stimuli[1]),
    show_cross(),
-   moment(0.9,play,stimuli[2]),
-   moment(0.1 + 0.3,display,
+   moment(0.9s,play,stimuli[2]),
+   moment(0.1s + 0.3s,display,
           "Was the first [Q] or second sound [P] lower in pitch?"),
    resp,await_response(isresponse)]
 end
@@ -113,9 +112,9 @@ is the object you create to run an adaptive track, and defines the particular al
 ## Generating Stimuli
 
 ```julia
-const standard = attenuate(ramp(tone(standard_freq,0.1)),atten_dB)
+const standard = attenuate(ramp(tone(standard_freq,0.1s)),atten_dB)
 ...
-signal() = attenuate(ramp(tone(1000*(1-delta(adapter)),0.1)),atten_dB)
+signal() = attenuate(ramp(tone(standard_freq*(1-delta(adapter)),0.1s)),atten_dB)
 stimuli = first_lower? [signal,standard] : [standard,signal]
 ```
 

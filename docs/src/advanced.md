@@ -103,7 +103,7 @@ on some delta value that changes during the experimrent the following will not w
 
 ```julia
 # THIS WILL NOT WORK!!!
-moment(play,tone(1000+my_delta))
+moment(play,tone(1kHz+my_delta,1s))
 ```
 
 The basic problem here is that tone is used to generate a sound at
@@ -112,7 +112,7 @@ The basic problem here is that tone is used to generate a sound at
 will be used to generate a sound during runtime.
 
 ```julia
-moment(play,() -> tone(1000+my_delta,1))
+moment(play,() -> tone(1kHz+my_delta,1s))
 ```
 
 Similarly, we can use a runtime value in display by passing a function to display.
@@ -129,7 +129,7 @@ following example, `mysound` will be generated ~0.5 seconds before play is
 called right after "Get ready!" is displayed.
 
 ```julia
-addtrial(moment(display,"Get ready!"),moment(0.5),
+addtrial(moment(display,"Get ready!"),moment(0.5s),
          moment(display,"Here we go!"),moment(play,mysound))
 ```
 
