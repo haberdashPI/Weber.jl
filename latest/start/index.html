@@ -197,17 +197,17 @@ create_new_project(&quot;simple&quot;)
 <pre><code class="julia">using Weber
 sid,skip = @read_args(&quot;A simple frequency discrimination experiment.&quot;)
 
-const low = ramp(tone(1000,0.5))
-const high = ramp(tone(1100,0.5))
+const low = ramp(tone(1kHz,0.5s))
+const high = ramp(tone(1.1kHz,0.5s))
 
 function one_trial()
   if rand(Bool)
-    stim1 = moment(0.5,play,low)
-    stim2 = moment(0.5,play,high)
+    stim1 = moment(0.5s,play,low)
+    stim2 = moment(0.5s,play,high)
     resp = response(key&quot;q&quot; =&gt; &quot;low_first&quot;, key&quot;p&quot; =&gt; &quot;low_second&quot;,correct = &quot;low_first&quot;)
   else
-    stim1 = moment(0.5,play,high)
-    stim2 = moment(0.5,play,low)
+    stim1 = moment(0.5s,play,high)
+    stim2 = moment(0.5s,play,low)
     resp = response(key&quot;q&quot; =&gt; &quot;low_first&quot;, key&quot;p&quot; =&gt; &quot;low_second&quot;,correct = &quot;low_second&quot;)   
   end
   return [show_cross(),stim1,stim2,resp,await_response(iskeydown)]
@@ -251,8 +251,8 @@ sid,skip = @read_args(&quot;A simple frequency discrimination experiment.&quot;)
 <p>Don't worry about the offset right now. (If you wish to learn more you can read about the <a href="../experiment/#Weber.offset"><code>Weber.offset</code></a> function).</p>
 <p><a id='Stimulus-Generation-1'></a></p>
 <h2 id="stimulus-generation">Stimulus Generation</h2>
-<pre><code class="julia">const low = ramp(tone(1000,0.5))
-const high = ramp(tone(1100,0.5))
+<pre><code class="julia">const low = ramp(tone(1kHz,0.5s))
+const high = ramp(tone(1.1kHz,0.5s))
 </code></pre>
 
 <p>These next two lines create two stimuli. A 1000 Hz tone (<code>low</code>) and a 1100 Hz tone (<code>high</code>) each 0.5 seconds long. The <a href="../sound/#Weber.ramp"><code>ramp</code></a> function tapers the start and end of a sound to avoid click sounds.</p>
@@ -261,12 +261,12 @@ const high = ramp(tone(1100,0.5))
 <h2 id="creating-a-trial">Creating a trial</h2>
 <pre><code class="julia">function one_trial()
   if rand(Bool)
-    stim1 = moment(0.5,play,low)
-    stim2 = moment(0.5,play,high)
+    stim1 = moment(0.5s,play,low)
+    stim2 = moment(0.5s,play,high)
     resp = response(key&quot;q&quot; =&gt; &quot;low_first&quot;, key&quot;p&quot; =&gt; &quot;low_second&quot;,correct = &quot;low_first&quot;)
   else
-    stim1 = moment(0.5,play,high)
-    stim2 = moment(0.5,play,low)
+    stim1 = moment(0.5s,play,high)
+    stim2 = moment(0.5s,play,low)
     resp = response(key&quot;q&quot; =&gt; &quot;low_first&quot;, key&quot;p&quot; =&gt; &quot;low_second&quot;,correct = &quot;low_second&quot;)   
   end
   return [show_cross(),stim1,stim2,resp,await_response(iskeydown)]

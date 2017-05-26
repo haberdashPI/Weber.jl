@@ -243,11 +243,11 @@ end
 <h1 id="run-time-stimulus-generation">Run-time stimulus generation.</h1>
 <p>When stimuli need to be generated during an experiment the normal approach will not work. For instance, if you want a tone's frequency to depend on some delta value that changes during the experimrent the following will not work.</p>
 <pre><code class="julia"># THIS WILL NOT WORK!!!
-moment(play,tone(1000+my_delta))
+moment(play,tone(1kHz+my_delta,1s))
 </code></pre>
 
 <p>The basic problem here is that tone is used to generate a sound at <a href="../start/#setup_time-1">setup-time</a>. What we want is for the run-time value of <code>my_delta</code> to be used. To do this you can pass a function to play. This function will be used to generate a sound during runtime.</p>
-<pre><code class="julia">moment(play,() -&gt; tone(1000+my_delta,1))
+<pre><code class="julia">moment(play,() -&gt; tone(1kHz+my_delta,1s))
 </code></pre>
 
 <p>Similarly, we can use a runtime value in display by passing a function to display.</p>
@@ -255,7 +255,7 @@ moment(play,tone(1000+my_delta))
 </code></pre>
 
 <p>When moments are created this way, the sound or visual is generated before the moment even begins, to eliminate any latency that would be introduced by loading the sound or visual into memory. Specifically, the stimulus is generated during the most recent non-zero pause occuring before a moment. So for instance, in the following example, <code>mysound</code> will be generated ~0.5 seconds before play is called right after "Get ready!" is displayed.</p>
-<pre><code class="julia">addtrial(moment(display,&quot;Get ready!&quot;),moment(0.5),
+<pre><code class="julia">addtrial(moment(display,&quot;Get ready!&quot;),moment(0.5s),
          moment(display,&quot;Here we go!&quot;),moment(play,mysound))
 </code></pre>
               

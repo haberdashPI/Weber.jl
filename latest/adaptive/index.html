@@ -189,27 +189,26 @@ version = v&quot;0.0.2&quot;
 sid,trial_skip,adapt = @read_args(&quot;Frequency Discrimination ($version).&quot;,
                                   adapt=[:levitt,:bayes])
 
-const ms = 1/1000
 const atten_dB = 30
 const n_trials = 60
 const feedback_delay = 750ms
 
 isresponse(e) = iskeydown(e,key&quot;p&quot;) || iskeydown(e,key&quot;q&quot;)
 
-const standard_freq = 1000
+const standard_freq = 1kHz
 const standard = attenuate(ramp(tone(standard_freq,0.1)),atten_dB)
 function one_trial(adapter)
   first_lower = rand(Bool)
   resp = response(adapter,key&quot;q&quot; =&gt; &quot;first_lower&quot;,key&quot;p&quot; =&gt; &quot;second_lower&quot;,
                   correct=(first_lower ? &quot;first_lower&quot; : &quot;second_lower&quot;))
 
-  signal() = attenuate(ramp(tone(standard_freq*(1-delta(adapter)),0.1)),atten_dB)
+  signal() = attenuate(ramp(tone(standard_freq*(1-delta(adapter)),0.1s)),atten_dB)
   stimuli = first_lower? [signal,standard] : [standard,signal]
 
   [moment(feedback_delay,play,stimuli[1]),
    show_cross(),
-   moment(0.9,play,stimuli[2]),
-   moment(0.1 + 0.3,display,
+   moment(0.9s,play,stimuli[2]),
+   moment(0.1s + 0.3s,display,
           &quot;Was the first [Q] or second sound [P] lower in pitch?&quot;),
    resp,await_response(isresponse)]
 end
@@ -283,9 +282,9 @@ end
 <p>The present experiment can be run using either of two built-in adapters: <a href="../trials/#Weber.levitt_adapter"><code>levitt_adapter</code></a> and <a href="../trials/#Weber.bayesian_adapter"><code>bayesian_adapter</code></a>. An adapter is the object you create to run an adaptive track, and defines the particular algorithm that will be used to select a new delta on each trial, based on the responses to previous deltas. </p>
 <p><a id='Generating-Stimuli-1'></a></p>
 <h2 id="generating-stimuli">Generating Stimuli</h2>
-<pre><code class="julia">const standard = attenuate(ramp(tone(standard_freq,0.1)),atten_dB)
+<pre><code class="julia">const standard = attenuate(ramp(tone(standard_freq,0.1s)),atten_dB)
 ...
-signal() = attenuate(ramp(tone(1000*(1-delta(adapter)),0.1)),atten_dB)
+signal() = attenuate(ramp(tone(standard_freq*(1-delta(adapter)),0.1s)),atten_dB)
 stimuli = first_lower? [signal,standard] : [standard,signal]
 </code></pre>
 

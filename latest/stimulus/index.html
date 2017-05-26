@@ -276,7 +276,7 @@ addtrial(moment(play,ongoing_tone,channel=1),
 
 <div class="admonition warning">
 <p class="admonition-title">Streams are stateful</p>
-<p>This example also demonstrates the stateful nature of streams. Once some part of a stream has been played it is forever consumed, and cannot be played again. After the stream is played, subsequent modifications only apply to unplayed frames of the stream. <em>BEWARE</em>: this means that you cannot play two different modifications of the same.</p>
+<p>This example also demonstrates the stateful nature of streams. Once some part of a stream has been played it is forever consumed, and cannot be played again. After the stream is played, subsequent modifications only apply to unplayed frames of the stream. <em>BEWARE</em>: this means that you cannot play two different modifications of the same stream.</p>
 </div>
 <p>Just as with any moment, these manipulations to streams can be precisely timed. The following will turn the sound off precisely 1 second after the space key is pressed.</p>
 <pre><code class="julia">ongoing_tone = @&gt; tone(1kHz) rampon
