@@ -86,17 +86,18 @@ The functions [`left`](@ref) and [`right`](@ref) serve the same purpose, but can
 ## Streams
 
 In addition to the discrete sounds that have been discussed so far, Weber also
-supports sound streams. Streams are aribtrarily long: you need not decide when
+supports sound streams. Streams are arbitrarily long: you need not decide when
 they should stop until after they start playing. All of the primitives described
 so far can apply to streams, except that streams cannot be indexed.
 
 !!! note "Streaming operations are lazy"
 
-    All manipulations of streams are lazy: they are applied just as the stream is
-    played. The more operators you apply to a stream the more processing that has
-    to occur. If you have a particularly complicated stream you may have to
-    increase streaming latency by changing the `stream_unit` parameter of
-    [`setup_sound`](@ref), or consider an alternative approach (e.g. [`audible`](@ref)).
+    All manipulations of streams are lazy: they are applied just as the stream
+    is played. The more operators you apply to a stream the more processing that
+    has to occur during playback. If you have a particularly complicated stream
+    you may have to increase streaming latency by changing the `stream_unit`
+    parameter of [`setup_sound`](@ref), or consider an alternative approach
+    (e.g. [`audible`](@ref)).
 
 To create a stream you can use one of the standard primitives, leaving out the
 length parameter. For example, the following will play a 1 kHz pure tone until Weber quits.
