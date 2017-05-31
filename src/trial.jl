@@ -487,7 +487,7 @@ function when(condition::Function,moments...;loop=false,update_offset=false)
 end
 
 """
-    Weber.prepare!(m,[last_moment])
+    Weber.prepare!(m,[onset_s])
 
 If there is anything the moment needs to do before it occurs, it is done during
 `prepare!`. Prepare can be used to set up precise timing even when hardware
@@ -499,12 +499,12 @@ before this moment. However, if several moments with no pause occur, prepare!
 will occur before all of those moments as well.
 
 Prepare accepts an optional second argument used to indicate the time, in
-seconds from the start of the experiemnt when this moment will begin.
-This argument may be Inf, indicating that it is not possible to predict
-when the moment will occur at this point, because the timing depends on
-some stateful information (e.g. a participant's response). It is accetable
-in this case to throw an error, explaining that this kind of moment
-must be able to know when it occurs sooner.
+seconds from the start of the experiemnt when this moment will begin (as a
+Float64).  This argument may be Inf, indicating that it is not possible to
+predict when the moment will occur at this point, because the timing depends on
+some stateful information (e.g. a participant's response). It is accetable in
+this case to throw an error, explaining that this kind of moment must be able to
+know precisely when it occurs to be prepared.
 
 !!! note
 
@@ -513,27 +513,27 @@ must be able to know when it occurs sooner.
     You need only extend the method taking a single arugment unless you
     intend to use this information during prepartion.
 """
-prepare!(m::AbstractMoment,last_moment::Float64) = prepare!(m)
+prepare!(m::AbstractMoment,onset_s::Float64) = prepare!(m)
 prepare!(m::AbstractMoment) = nothing
-function prepare!(ms::MomentSequence,last_moment::Float64)
-  for m in ms.data prepare!(m,last_moment) end
+function prepare!(ms::MomentSequence,onset_s::Float64)
+  for m in ms.data prepare!(m,onset_s) end
 end
 
 function prepare!(m::DisplayFunctionMoment)
   m.visual = Nullable(visual(m.fn();m.keys...))
 end
 
-function prepare!(m::PlayMoment,last_moment::Float64)
-  if !isinf(last_moment)
-    play_(m.sound,last_moment,m.channel)
+function prepare!(m::PlayMoment,onset_s::Float64)
+  if !isinf(onset_s)
+    play_(m.sound,onset_s,m.channel)
   else
     m.prepared = true
   end
 end
 
-function prepare!(m::PlayFunctionMoment,last_moment::Float64)
-  if !isinf(last_moment)
-    play_(playable(m.fn()),last_moment,m.channel)
+function prepare!(m::PlayFunctionMoment,onset_s::Float64)
+  if !isinf(onset_s)
+    play_(playable(m.fn()),onset_s,m.channel)
   else
     m.prepared = Nullable(playable(m.fn()))
   end
