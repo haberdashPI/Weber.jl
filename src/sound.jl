@@ -434,8 +434,8 @@ end
 Prepare a sound or stream to be played.
 
 A call to `playable` will ensure the sound is in the format required by
-[`play`](@ref).  This automatically calls [`sound`](@ref) on `x` if it not
-already appear to be a sound or a stream.
+[`play`](@ref).  This automatically calls [`sound`](@ref) on `x` if it does not
+appear to already be a sound or a stream.
 
 !!! note "Called Implicitly"
 
