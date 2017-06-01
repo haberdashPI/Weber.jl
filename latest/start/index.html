@@ -1,200 +1,6 @@
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
-<head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
-  <meta name="author" content="haberdashPI">
-  <link rel="shortcut icon" href="../img/favicon.ico">
-  <title>Getting Started - Weber.jl</title>
-  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
-
-  <link rel="stylesheet" href="../css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../css/theme_extra.css" type="text/css" />
-  <link rel="stylesheet" href="../css/highlight.css">
-  <link href="../assets/Documenter.css" rel="stylesheet">
-  
-  <script>
-    // Current page data
-    var mkdocs_page_name = "Getting Started";
-    var mkdocs_page_input_path = "start.md";
-    var mkdocs_page_url = "/start/";
-  </script>
-  
-  <script src="../js/jquery-2.1.1.min.js"></script>
-  <script src="../js/modernizr-2.8.3.min.js"></script>
-  <script type="text/javascript" src="../js/highlight.pack.js"></script> 
-  
-</head>
-
-<body class="wy-body-for-nav" role="document">
-
-  <div class="wy-grid-for-nav">
-
-    
-    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
-      <div class="wy-side-nav-search">
-        <a href=".." class="icon icon-home"> Weber.jl</a>
-        <div role="search">
-  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
-  </form>
-</div>
-      </div>
-
-      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-	<ul class="current">
-	  
-          
-            <li class="toctree-l1">
-		
-    <a class="" href="..">Introduction</a>
-	    </li>
-          
-            <li class="toctree-l1">
-		
-    <span class="caption-text">User Guide</span>
-    <ul class="subnav">
-                <li class=" current">
-                    
-    <a class="current" href="./">Getting Started</a>
-    <ul class="subnav">
-            
-    <li class="toctree-l3"><a href="#creating-a-simple-program">Creating a simple program</a></li>
-    
-
-    <li class="toctree-l3"><a href="#running-the-program">Running the program</a></li>
-    
-
-    <li class="toctree-l3"><a href="#code-walk-through">Code Walk-through</a></li>
-    
-        <ul>
-        
-            <li><a class="toctree-l4" href="#read-experiment-parameters">Read Experiment Parameters</a></li>
-        
-            <li><a class="toctree-l4" href="#stimulus-generation">Stimulus Generation</a></li>
-        
-            <li><a class="toctree-l4" href="#creating-a-trial">Creating a trial</a></li>
-        
-            <li><a class="toctree-l4" href="#experiment-definition">Experiment Definition</a></li>
-        
-            <li><a class="toctree-l4" href="#experiment-setup">Experiment Setup</a></li>
-        
-        </ul>
-    
-
-    <li class="toctree-l3"><a href="#where-to-go-from-here">Where to go from here</a></li>
-    
-
-    </ul>
-                </li>
-                <li class="">
-                    
-    <a class="" href="../trial_guide/">Trial Creation</a>
-                </li>
-                <li class="">
-                    
-    <a class="" href="../stimulus/">Stimulus Generation</a>
-                </li>
-                <li class="">
-                    
-    <a class="" href="../adaptive/">Adaptive Tracks</a>
-                </li>
-                <li class="">
-                    
-    <a class="" href="../advanced/">Advanced Experiments</a>
-                </li>
-                <li class="">
-                    
-    <a class="" href="../extend/">Extending Weber</a>
-                </li>
-    </ul>
-	    </li>
-          
-            <li class="toctree-l1">
-		
-    <span class="caption-text">Reference</span>
-    <ul class="subnav">
-                <li class="">
-                    
-    <a class="" href="../experiment/">Experiments</a>
-                </li>
-                <li class="">
-                    
-    <a class="" href="../trials/">Trials</a>
-                </li>
-                <li class="">
-                    
-    <a class="" href="../sound/">Sound</a>
-                </li>
-                <li class="">
-                    
-    <a class="" href="../video/">Video</a>
-                </li>
-                <li class="">
-                    
-    <a class="" href="../event/">Events</a>
-                </li>
-                <li class="">
-                    
-    <a class="" href="../extend_ref/">Extensions</a>
-                </li>
-    </ul>
-	    </li>
-          
-        </ul>
-      </div>
-      &nbsp;
-    </nav>
-
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
-        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="..">Weber.jl</a>
-      </nav>
-
-      
-      <div class="wy-nav-content">
-        <div class="rst-content">
-          <div role="navigation" aria-label="breadcrumbs navigation">
-  <ul class="wy-breadcrumbs">
-    <li><a href="..">Docs</a> &raquo;</li>
-    
-      
-        
-          <li>User Guide &raquo;</li>
-        
-      
-    
-    <li>Getting Started</li>
-    <li class="wy-breadcrumbs-aside">
-      
-        <a href="https://github.com/haberdashPI/Weber.jl/edit/master/docs/start.md"
-          class="icon icon-github"> Edit on GitHub</a>
-      
-    </li>
-  </ul>
-  <hr/>
-</div>
-          <div role="main">
-            <div class="section">
-              
-                <p>In the following example, we'll run through all the basics of how to create an experiment in Weber. It's assumed you have already followed the <a href="..#install-1">directions for installing Julia and Juno</a>. First, open Atom.</p>
-<p>You may want to familiarize yourself with the basics of Julia. There are a number of useful <a href="http://docs.julialang.org/en/stable/manual/getting-started/#resources">resources</a> available to learn Julia.</p>
-<p><a id='Creating-a-simple-program-1'></a></p>
-<h1 id="creating-a-simple-program">Creating a simple program</h1>
-<p>First, open the Julia console, and enter the following lines of code.</p>
-<pre><code class="julia">using Weber
-create_new_project(&quot;simple&quot;)
-</code></pre>
-
-<p>This will create a set of files in your current directory to get you started creating your experiment. Open the file called run_simple.jl in Atom.</p>
-<p>Remove all text in run_simple.jl and replace it with the following.</p>
-<pre><code class="julia">using Weber
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Getting Started · Weber.jl</title><link href="https://cdnjs.cloudflare.com/ajax/libs/normalize/4.2.0/normalize.min.css" rel="stylesheet" type="text/css"/><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.2.0/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link href="../assets/highlightjs/default.css" rel="stylesheet" type="text/css"/><link href="../assets/documenter.css" rel="stylesheet" type="text/css"/></head><body><nav class="toc"><h1>Weber.jl</h1><select id="version-selector" onChange="window.location.href=this.value" style="visibility: hidden"></select><form class="search" action="../search/"><input id="search-query" name="q" type="text" placeholder="Search docs"/></form><ul><li><a class="toctext" href="../">Introduction</a></li><li><span class="toctext">User guide</span><ul><li class="current"><a class="toctext" href>Getting Started</a><ul class="internal"><li class="toplevel"><a class="toctext" href="#Running-the-program-1">Running the program</a></li><li class="toplevel"><a class="toctext" href="#Code-Walk-through-1">Code Walk-through</a></li><li><a class="toctext" href="#Read-Experiment-Parameters-1">Read Experiment Parameters</a></li><li><a class="toctext" href="#Stimulus-Generation-1">Stimulus Generation</a></li><li><a class="toctext" href="#Creating-a-trial-1">Creating a trial</a></li><li><a class="toctext" href="#Experiment-Definition-1">Experiment Definition</a></li><li><a class="toctext" href="#Experiment-Setup-1">Experiment Setup</a></li><li class="toplevel"><a class="toctext" href="#Where-to-go-from-here-1">Where to go from here</a></li></ul></li><li><a class="toctext" href="../trial_guide/">Trial Creation</a></li><li><a class="toctext" href="../stimulus/">Stimulus Generation</a></li><li><a class="toctext" href="../adaptive/">Adaptive Tracks</a></li><li><a class="toctext" href="../advanced/">Advanced Experiments</a></li><li><a class="toctext" href="../extend/">Extending Weber</a></li></ul></li><li><span class="toctext">Reference</span><ul><li><a class="toctext" href="../experiment/">Experiments</a></li><li><a class="toctext" href="../trials/">Trials</a></li><li><a class="toctext" href="../sound/">Sound</a></li><li><a class="toctext" href="../video/">Video</a></li><li><a class="toctext" href="../event/">Events</a></li><li><a class="toctext" href="../extend_ref/">Extensions</a></li></ul></li></ul></nav><article id="docs"><header><nav><ul><li>User guide</li><li><a href>Getting Started</a></li></ul><a class="edit-page" href="https://github.com/haberdashPI/Weber.jl/tree/094bb7a81fb349c1297888576c20bdeaf16b63c9/docs/src/start.md"><span class="fa"></span> Edit on GitHub</a></nav><hr/><div id="topbar"><span>Getting Started</span><a class="fa fa-bars" href="#"></a></div></header><p>In the following example, we&#39;ll run through all the basics of how to create an experiment in Weber. It&#39;s assumed you have already followed the <a href="../#install-1">directions for installing Julia and Juno</a>. First, open Atom.</p><p>You may want to familiarize yourself with the basics of Julia. There are a number of useful <a href="http://docs.julialang.org/en/stable/manual/getting-started/#resources">resources</a> available to learn Julia.</p><h1><a class="nav-anchor" id="Creating-a-simple-program-1" href="#Creating-a-simple-program-1">Creating a simple program</a></h1><p>First, open the Julia console, and enter the following lines of code.</p><pre><code class="language-julia">using Weber
+create_new_project(&quot;simple&quot;)</code></pre><p>This will create a set of files in your current directory to get you started creating your experiment. Open the file called run_simple.jl in Atom.</p><p>Remove all text in run_simple.jl and replace it with the following.</p><pre><code class="language-julia">using Weber
 sid,skip = @read_args(&quot;A simple frequency discrimination experiment.&quot;)
 
 const low = ramp(tone(1kHz,0.5s))
@@ -203,163 +9,40 @@ const high = ramp(tone(1.1kHz,0.5s))
 function one_trial()
   if rand(Bool)
     stim1 = moment(0.5s,play,low)
-    stim2 = moment(0.5s,play,high)
+	stim2 = moment(0.5s,play,high)
     resp = response(key&quot;q&quot; =&gt; &quot;low_first&quot;, key&quot;p&quot; =&gt; &quot;low_second&quot;,correct = &quot;low_first&quot;)
   else
-    stim1 = moment(0.5s,play,high)
-    stim2 = moment(0.5s,play,low)
-    resp = response(key&quot;q&quot; =&gt; &quot;low_first&quot;, key&quot;p&quot; =&gt; &quot;low_second&quot;,correct = &quot;low_second&quot;)   
+	stim1 = moment(0.5s,play,high)
+	stim2 = moment(0.5s,play,low)
+    resp = response(key&quot;q&quot; =&gt; &quot;low_first&quot;, key&quot;p&quot; =&gt; &quot;low_second&quot;,correct = &quot;low_second&quot;)	
   end
   return [show_cross(),stim1,stim2,resp,await_response(iskeydown)]
 end
 
 exp = Experiment(columns = [:sid =&gt; sid,condition =&gt; &quot;ConditionA&quot;,:correct],skip=skip)
 setup(exp) do
-  addbreak(instruct(&quot;Press 'q' when you hear the low tone first and 'p' otherwise.&quot;))
+  addbreak(instruct(&quot;Press &#39;q&#39; when you hear the low tone first and &#39;p&#39; otherwise.&quot;))
   for trial in 1:10
     addtrial(one_trial())
   end
 end
 
-run(exp)
-</code></pre>
-
-<p><a id='Running-the-program-1'></a></p>
-<h1 id="running-the-program">Running the program</h1>
-<p>Now, <a href="..#install-1">open the julia console</a>, and enter the following:</p>
-<pre><code class="juila">include(&quot;run_simple.jl&quot;)
-</code></pre>
-
-<div class="admonition note">
-<p class="admonition-title">Make sure you're in the correct directory</p>
-<p>You may get an error that looks like "could not open file [file name here]". This probably means Julia's working directory is not set correctly. Open run_simple.jl in Atom, make sure you are focused on this file (by clicking inside the file), and then, in the menu, click "Julia" &gt; "Working Directory" &gt; "Current File's Folder". This will set Julia's working directory to run_simple.jl's directory.</p>
-</div>
-<div class="admonition note">
-<p class="admonition-title">You can exit at any time</p>
-<p>To prematurely end the experiment hit the escape key.</p>
-</div>
-<p><a id='Code-Walk-through-1'></a></p>
-<h1 id="code-walk-through">Code Walk-through</h1>
-<p>After running the experiment on yourself, let's walk through the parts of this experiment piece-by-piece.</p>
-<p><a id='Read-Experiment-Parameters-1'></a></p>
-<h2 id="read-experiment-parameters">Read Experiment Parameters</h2>
-<pre><code class="julia">using Weber
-sid,skip = @read_args(&quot;A simple frequency discrimination experiment.&quot;)
-</code></pre>
-
-<p>The first line loads Weber. Then, when the script is run, the second line will read two important experimental parameters from the user: their subject ID, and an <em>offset</em>.</p>
-<p>Don't worry about the offset right now. (If you wish to learn more you can read about the <a href="../experiment/#Weber.offset"><code>Weber.offset</code></a> function).</p>
-<p><a id='Stimulus-Generation-1'></a></p>
-<h2 id="stimulus-generation">Stimulus Generation</h2>
-<pre><code class="julia">const low = ramp(tone(1kHz,0.5s))
-const high = ramp(tone(1.1kHz,0.5s))
-</code></pre>
-
-<p>These next two lines create two stimuli. A 1000 Hz tone (<code>low</code>) and a 1100 Hz tone (<code>high</code>) each 0.5 seconds long. The <a href="../sound/#Weber.ramp"><code>ramp</code></a> function tapers the start and end of a sound to avoid click sounds.</p>
-<p>You can generate many simple stimuli in Weber, or you can use <code>load("sound.wav")</code> to open a sound file on your computer. Refer to the documentation in <a href="../sound/"><code>Sound</code></a>.</p>
-<p><a id='Creating-a-trial-1'></a></p>
-<h2 id="creating-a-trial">Creating a trial</h2>
-<pre><code class="julia">function one_trial()
+run(exp)</code></pre><h1><a class="nav-anchor" id="Running-the-program-1" href="#Running-the-program-1">Running the program</a></h1><p>Now, <a href="../#install-1">open the julia console</a>, and enter the following:</p><pre><code class="language-juila">include(&quot;run_simple.jl&quot;)</code></pre><div class="admonition note"><div class="admonition-title">Make sure you&#39;re in the correct directory</div><div class="admonition-text"><p>You may get an error that looks like &quot;could not open file [file name here]&quot;. This probably means Julia&#39;s working directory is not set correctly. Open run_simple.jl in Atom, make sure you are focused on this file (by clicking inside the file), and then, in the menu, click &quot;Julia&quot; &gt; &quot;Working Directory&quot; &gt; &quot;Current File&#39;s Folder&quot;. This will set Julia&#39;s working directory to run_simple.jl&#39;s directory.</p></div></div><div class="admonition note"><div class="admonition-title">You can exit at any time</div><div class="admonition-text"><p>To prematurely end the experiment hit the escape key.</p></div></div><h1><a class="nav-anchor" id="Code-Walk-through-1" href="#Code-Walk-through-1">Code Walk-through</a></h1><p>After running the experiment on yourself, let&#39;s walk through the parts of this experiment piece-by-piece.</p><h2><a class="nav-anchor" id="Read-Experiment-Parameters-1" href="#Read-Experiment-Parameters-1">Read Experiment Parameters</a></h2><pre><code class="language-julia">using Weber
+sid,skip = @read_args(&quot;A simple frequency discrimination experiment.&quot;)</code></pre><p>The first line loads Weber. Then, when the script is run, the second line will read two important experimental parameters from the user: their subject ID, and an <em>offset</em>.</p><p>Don&#39;t worry about the offset right now. (If you wish to learn more you can read about the <a href="../experiment/#Weber.offset"><code>Weber.offset</code></a> function).</p><h2><a class="nav-anchor" id="Stimulus-Generation-1" href="#Stimulus-Generation-1">Stimulus Generation</a></h2><pre><code class="language-julia">const low = ramp(tone(1kHz,0.5s))
+const high = ramp(tone(1.1kHz,0.5s))</code></pre><p>These next two lines create two stimuli. A 1000 Hz tone (<code>low</code>) and a 1100 Hz tone (<code>high</code>) each 0.5 seconds long. The <a href="../sound/#Weber.ramp"><code>ramp</code></a> function tapers the start and end of a sound to avoid click sounds.</p><p>You can generate many simple stimuli in Weber, or you can use <code>load(&quot;sound.wav&quot;)</code> to open a sound file on your computer. Refer to the documentation in <a href="../sound/"><code>Sound</code></a>.</p><h2><a class="nav-anchor" id="Creating-a-trial-1" href="#Creating-a-trial-1">Creating a trial</a></h2><pre><code class="language-julia">function one_trial()
   if rand(Bool)
     stim1 = moment(0.5s,play,low)
-    stim2 = moment(0.5s,play,high)
+	stim2 = moment(0.5s,play,high)
     resp = response(key&quot;q&quot; =&gt; &quot;low_first&quot;, key&quot;p&quot; =&gt; &quot;low_second&quot;,correct = &quot;low_first&quot;)
   else
-    stim1 = moment(0.5s,play,high)
-    stim2 = moment(0.5s,play,low)
-    resp = response(key&quot;q&quot; =&gt; &quot;low_first&quot;, key&quot;p&quot; =&gt; &quot;low_second&quot;,correct = &quot;low_second&quot;)   
+	stim1 = moment(0.5s,play,high)
+	stim2 = moment(0.5s,play,low)
+    resp = response(key&quot;q&quot; =&gt; &quot;low_first&quot;, key&quot;p&quot; =&gt; &quot;low_second&quot;,correct = &quot;low_second&quot;)	
   end
   return [show_cross(),stim1,stim2,resp,await_response(iskeydown)]
-end
-</code></pre>
-
-<p>These lines define a function that is used to create a single trial of the experiment. To create a trial, a random boolean value (true or false) is produced. When true, the low stimulus is presented first, when false, the high stimulus is presented first. There are two basic components of trial creation: trial moments and trial events.</p>
-<p><a id='Trial-Moments-1'></a></p>
-<h3 id="trial-moments">Trial Moments</h3>
-<p>Each trial is composed of a sequence of <em>moments</em>. Most moments just run a short function at some well defined point in time. For example, during the experiment, the moment <code>moment(0.5,play,low)</code> will call the function <a href="../sound/#Weber.play"><code>play</code></a> on the <code>low</code> stimulus, doing so 0.5 seconds after the onset of the previous moment. All moments running at a specified time do so in reference to the onset of the prior moment.</p>
-<p>There are two other moments created in this function: <a href="../trials/#Weber.show_cross"><code>show_cross</code></a>–which simply displays a "+" symbol in the middle of the screen–and <a href="../trials/#Weber.await_response"><code>await_response</code></a>–which is a moment that begins only once a key is pressed, and then immediately ends.</p>
-<p>Once all of the moments have been defined, they are returned in an array and will be run in sequence during the experiment.</p>
-<p>For more details on how to create trial moments you can refer to the <a href="../trial_guide/"><code>Trial Creation</code></a> section of the user guide and the <a href="../trials/"><code>Trials</code></a> section of the reference.</p>
-<p><a id='Trial-Events-1'></a></p>
-<h3 id="trial-events">Trial Events</h3>
-<p>The <a href="../trials/#Weber.response"><code>response</code></a> function also creates a moment. It's purpose is to record the keyboard presses to q or p. It works a little differently than other moments. Rather than running once after a specified time, it runs anytime an event occurs.</p>
-<p>Events indicate that something has changed: e.g. a key has been pressed, a key has been released, the experiment has been paused. Keyboard events signal a particular code, referring to the key the experiment participant pressed. In the code above <code>key"p"</code> and <code>key"q"</code> are used to indicate the 'q' and 'p' keys on the keyboard. For details on how events work you can refer to the reference section on <a href="../event/"><code>Events</code></a>. The <code>response</code> moment listens for events with the 'p' or 'q' key codes, and records those events.</p>
-<p><a id='Experiment-Definition-1'></a></p>
-<h2 id="experiment-definition">Experiment Definition</h2>
-<pre><code class="julia">exp = Experiment(columns = [:sid =&gt; sid,condition =&gt; &quot;ConditionA&quot;,:correct],skip=skip) 
-</code></pre>
-
-<p>This line creates the actual experiment. It creates a datafile with an appropriate name, and opens a window for the experiment to be displayed in.</p>
-<p>The code <code>columns</code> creates a number of columns. Some of these columns have fixed values, that are the same for each row of the data (e.g. <code>:sid =&gt; sid</code>) but one of them, <code>:correct</code>, is different on each line. Note that in the call to <code>response</code> in <code>one_trial</code>, the value of correct is set to the response listeners should have pressed during a trial.</p>
-<p>You can add as many columns as you want, either when you first create an experiment, as above, or using <a href="../experiment/#Weber.addcolumn"><code>addcolumn</code></a>. Trying to record values to a column you haven't added results in an error.</p>
-<p><a id='Experiment-Setup-1'></a></p>
-<h2 id="experiment-setup">Experiment Setup</h2>
-<pre><code class="julia">setup(exp) do
-  addbreak(instruct(&quot;Press 'q' when you hear the low tone first and 'p' otherwise.&quot;))
+end</code></pre><p>These lines define a function that is used to create a single trial of the experiment. To create a trial, a random boolean value (true or false) is produced. When true, the low stimulus is presented first, when false, the high stimulus is presented first. There are two basic components of trial creation: trial moments and trial events.</p><h3><a class="nav-anchor" id="Trial-Moments-1" href="#Trial-Moments-1">Trial Moments</a></h3><p>Each trial is composed of a sequence of <em>moments</em>. Most moments just run a short function at some well defined point in time. For example, during the experiment, the moment <code>moment(0.5,play,low)</code> will call the function <a href="../sound/#Weber.play"><code>play</code></a> on the <code>low</code> stimulus, doing so 0.5 seconds after the onset of the previous moment. All moments running at a specified time do so in reference to the onset of the prior moment.</p><p>There are two other moments created in this function: <a href="../trials/#Weber.show_cross"><code>show_cross</code></a>–which simply displays a &quot;+&quot; symbol in the middle of the screen–and <a href="../trials/#Weber.await_response"><code>await_response</code></a>–which is a moment that begins only once a key is pressed, and then immediately ends.</p><p>Once all of the moments have been defined, they are returned in an array and will be run in sequence during the experiment.</p><p>For more details on how to create trial moments you can refer to the <a href="../trial_guide/"><code>Trial Creation</code></a> section of the user guide and the <a href="../trials/"><code>Trials</code></a> section of the reference.</p><h3><a class="nav-anchor" id="Trial-Events-1" href="#Trial-Events-1">Trial Events</a></h3><p>The <a href="../trials/#Weber.response"><code>response</code></a> function also creates a moment. It&#39;s purpose is to record the keyboard presses to q or p. It works a little differently than other moments. Rather than running once after a specified time, it runs anytime an event occurs.</p><p>Events indicate that something has changed: e.g. a key has been pressed, a key has been released, the experiment has been paused. Keyboard events signal a particular code, referring to the key the experiment participant pressed. In the code above <code>key&quot;p&quot;</code> and <code>key&quot;q&quot;</code> are used to indicate the &#39;q&#39; and &#39;p&#39; keys on the keyboard. For details on how events work you can refer to the reference section on <a href="../event/"><code>Events</code></a>. The <code>response</code> moment listens for events with the &#39;p&#39; or &#39;q&#39; key codes, and records those events.</p><h2><a class="nav-anchor" id="Experiment-Definition-1" href="#Experiment-Definition-1">Experiment Definition</a></h2><pre><code class="language-julia">exp = Experiment(columns = [:sid =&gt; sid,condition =&gt; &quot;ConditionA&quot;,:correct],skip=skip) </code></pre><p>This line creates the actual experiment. It creates a datafile with an appropriate name, and opens a window for the experiment to be displayed in.</p><p>The code <code>columns</code> creates a number of columns. Some of these columns have fixed values, that are the same for each row of the data (e.g. <code>:sid =&gt; sid</code>) but one of them, <code>:correct</code>, is different on each line. Note that in the call to <code>response</code> in <code>one_trial</code>, the value of correct is set to the response listeners should have pressed during a trial.</p><p>You can add as many columns as you want, either when you first create an experiment, as above, or using <a href="../experiment/#Weber.addcolumn"><code>addcolumn</code></a>. Trying to record values to a column you haven&#39;t added results in an error.</p><h2><a class="nav-anchor" id="Experiment-Setup-1" href="#Experiment-Setup-1">Experiment Setup</a></h2><pre><code class="language-julia">setup(exp) do
+  addbreak(instruct(&quot;Press &#39;q&#39; when you hear the low tone first and &#39;p&#39; otherwise.&quot;))
   for trial in 1:10
     addtrial(one_trial())
   end
-end
-</code></pre>
-
-<p>Once the experiment is defined, you can setup any trials and instructions that you want the experiment to have. The above code adds a break providing instructions for the listeners, and 10 trials, created using the <code>one_trial</code> function we defined above. Please refer to the <a href="../trial_guide/"><code>Trial Creation</code></a> section of the user guide for more details on how to add trials.</p>
-<p><a id='setup_time-1'></a></p>
-<h3 id="setup-vs-run-time">Setup- vs. run-time</h3>
-<pre><code class="julia">run(exp)
-</code></pre>
-
-<p>This final part of the code actually runs the experiment. Note that almost none of the code in setup actually runs during the experiment. This is <em>important</em>! Weber is designed to run as much code as possible before the experiment starts, during setup. This is called setup-time. This ensures that code which does run during the experiment, during run-time, can do so in a timely manner. The only code that actually runs during the experiment is the behavior defined within each moment (e.g. playing sounds, displaying text, etc...).</p>
-<p><a id='Where-to-go-from-here-1'></a></p>
-<h1 id="where-to-go-from-here">Where to go from here</h1>
-<p>From here you can begin writing your own simple experiments. Take a look at some of the example experiments under Weber's example directory to see what you can do. You can find the location of this directory by typing <code>Pkg.dir("Weber","examples")</code> in the julia console. To further your understanding of the details of Weber, you can also read through the rest of the user guide. Topics in the guide have been organized from simplest, and most useful, to the more advanced, least-frequently-necessary features.</p>
-              
-            </div>
-          </div>
-          <footer>
-  
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="../trial_guide/" class="btn btn-neutral float-right" title="Trial Creation">Next <span class="icon icon-circle-arrow-right"></span></a>
-      
-      
-        <a href=".." class="btn btn-neutral" title="Introduction"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-      
-    </div>
-  
-
-  <hr/>
-
-  <div role="contentinfo">
-    <!-- Copyright etc -->
-    
-  </div>
-
-  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
-</footer>
-	  
-        </div>
-      </div>
-
-    </section>
-    
-  </div>
-
-  <div class="rst-versions" role="note" style="cursor: pointer">
-    <span class="rst-current-version" data-toggle="rst-current-version">
-      
-          <a href="https://github.com/haberdashPI/Weber.jl" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
-      
-      
-        <span><a href=".." style="color: #fcfcfc;">&laquo; Previous</a></span>
-      
-      
-        <span style="margin-left: 15px"><a href="../trial_guide/" style="color: #fcfcfc">Next &raquo;</a></span>
-      
-    </span>
-</div>
-    <script src="../js/theme.js"></script>
-      <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-      <script src="../assets/mathjaxhelper.js"></script>
-
-</body>
-</html>
+end</code></pre><p>Once the experiment is defined, you can setup any trials and instructions that you want the experiment to have. The above code adds a break providing instructions for the listeners, and 10 trials, created using the <code>one_trial</code> function we defined above. Please refer to the <a href="../trial_guide/"><code>Trial Creation</code></a> section of the user guide for more details on how to add trials.</p><h3><a class="nav-anchor" id="setup_time-1" href="#setup_time-1">Setup- vs. run-time</a></h3><pre><code class="language-julia">run(exp)</code></pre><p>This final part of the code actually runs the experiment. Note that almost none of the code in setup actually runs during the experiment. This is _important_! Weber is designed to run as much code as possible before the experiment starts, during setup. This is called setup-time. This ensures that code which does run during the experiment, during run-time, can do so in a timely manner. The only code that actually runs during the experiment is the behavior defined within each moment (e.g. playing sounds, displaying text, etc...).</p><h1><a class="nav-anchor" id="Where-to-go-from-here-1" href="#Where-to-go-from-here-1">Where to go from here</a></h1><p>From here you can begin writing your own simple experiments. Take a look at some of the example experiments under Weber&#39;s example directory to see what you can do. You can find the location of this directory by typing <code>Pkg.dir(&quot;Weber&quot;,&quot;examples&quot;)</code> in the julia console. To further your understanding of the details of Weber, you can also read through the rest of the user guide. Topics in the guide have been organized from simplest, and most useful, to the more advanced, least-frequently-necessary features.</p><footer><hr/><a class="previous" href="../"><span class="direction">Previous</span><span class="title">Introduction</span></a><a class="next" href="../trial_guide/"><span class="direction">Next</span><span class="title">Trial Creation</span></a></footer></article></body></html>

@@ -1,197 +1,7 @@
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
-<head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
-  <meta name="author" content="haberdashPI">
-  <link rel="shortcut icon" href="../img/favicon.ico">
-  <title>Advanced Experiments - Weber.jl</title>
-  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
-
-  <link rel="stylesheet" href="../css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../css/theme_extra.css" type="text/css" />
-  <link rel="stylesheet" href="../css/highlight.css">
-  <link href="../assets/Documenter.css" rel="stylesheet">
-  
-  <script>
-    // Current page data
-    var mkdocs_page_name = "Advanced Experiments";
-    var mkdocs_page_input_path = "advanced.md";
-    var mkdocs_page_url = "/advanced/";
-  </script>
-  
-  <script src="../js/jquery-2.1.1.min.js"></script>
-  <script src="../js/modernizr-2.8.3.min.js"></script>
-  <script type="text/javascript" src="../js/highlight.pack.js"></script> 
-  
-</head>
-
-<body class="wy-body-for-nav" role="document">
-
-  <div class="wy-grid-for-nav">
-
-    
-    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
-      <div class="wy-side-nav-search">
-        <a href=".." class="icon icon-home"> Weber.jl</a>
-        <div role="search">
-  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
-  </form>
-</div>
-      </div>
-
-      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-	<ul class="current">
-	  
-          
-            <li class="toctree-l1">
-		
-    <a class="" href="..">Introduction</a>
-	    </li>
-          
-            <li class="toctree-l1">
-		
-    <span class="caption-text">User Guide</span>
-    <ul class="subnav">
-                <li class="">
-                    
-    <a class="" href="../start/">Getting Started</a>
-                </li>
-                <li class="">
-                    
-    <a class="" href="../trial_guide/">Trial Creation</a>
-                </li>
-                <li class="">
-                    
-    <a class="" href="../stimulus/">Stimulus Generation</a>
-                </li>
-                <li class="">
-                    
-    <a class="" href="../adaptive/">Adaptive Tracks</a>
-                </li>
-                <li class=" current">
-                    
-    <a class="current" href="./">Advanced Experiments</a>
-    <ul class="subnav">
-            
-    <li class="toctree-l3"><a href="#stateful-trials">Stateful Trials</a></li>
-    
-        <ul>
-        
-            <li><a class="toctree-l4" href="#blocks-of-trials">Blocks of Trials</a></li>
-        
-            <li><a class="toctree-l4" href="#conditional-trials">Conditional Trials</a></li>
-        
-            <li><a class="toctree-l4" href="#looping-trials">Looping Trials</a></li>
-        
-        </ul>
-    
-
-    <li class="toctree-l3"><a href="#run-time-stimulus-generation">Run-time stimulus generation.</a></li>
-    
-
-    </ul>
-                </li>
-                <li class="">
-                    
-    <a class="" href="../extend/">Extending Weber</a>
-                </li>
-    </ul>
-	    </li>
-          
-            <li class="toctree-l1">
-		
-    <span class="caption-text">Reference</span>
-    <ul class="subnav">
-                <li class="">
-                    
-    <a class="" href="../experiment/">Experiments</a>
-                </li>
-                <li class="">
-                    
-    <a class="" href="../trials/">Trials</a>
-                </li>
-                <li class="">
-                    
-    <a class="" href="../sound/">Sound</a>
-                </li>
-                <li class="">
-                    
-    <a class="" href="../video/">Video</a>
-                </li>
-                <li class="">
-                    
-    <a class="" href="../event/">Events</a>
-                </li>
-                <li class="">
-                    
-    <a class="" href="../extend_ref/">Extensions</a>
-                </li>
-    </ul>
-	    </li>
-          
-        </ul>
-      </div>
-      &nbsp;
-    </nav>
-
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
-        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="..">Weber.jl</a>
-      </nav>
-
-      
-      <div class="wy-nav-content">
-        <div class="rst-content">
-          <div role="navigation" aria-label="breadcrumbs navigation">
-  <ul class="wy-breadcrumbs">
-    <li><a href="..">Docs</a> &raquo;</li>
-    
-      
-        
-          <li>User Guide &raquo;</li>
-        
-      
-    
-    <li>Advanced Experiments</li>
-    <li class="wy-breadcrumbs-aside">
-      
-        <a href="https://github.com/haberdashPI/Weber.jl/edit/master/docs/advanced.md"
-          class="icon icon-github"> Edit on GitHub</a>
-      
-    </li>
-  </ul>
-  <hr/>
-</div>
-          <div role="main">
-            <div class="section">
-              
-                <p>There are several concepts and techniques best avoided unless they are really necessary. These generally complicate the creation of experiments. </p>
-<p><a id='Stateful-Trials-1'></a></p>
-<h1 id="stateful-trials">Stateful Trials</h1>
-<p>Some experiments require that what trials present depend on responses to previous trials. For instance, adaptive tracking to find a discrimination threshold.</p>
-<p>If your trials depend on experiment-changing state, you need to use the macro <a href="../trials/#Weber.@addtrials"><code>@addtrials</code></a>.</p>
-<p>There are three kinds of trials you can add with this macro: blocks, conditionals and loops.</p>
-<p><a id='Blocks-of-Trials-1'></a></p>
-<h2 id="blocks-of-trials">Blocks of Trials</h2>
-<pre><code>@addtrials let [assignments]
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Advanced Experiments · Weber.jl</title><link href="https://cdnjs.cloudflare.com/ajax/libs/normalize/4.2.0/normalize.min.css" rel="stylesheet" type="text/css"/><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.2.0/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link href="../assets/highlightjs/default.css" rel="stylesheet" type="text/css"/><link href="../assets/documenter.css" rel="stylesheet" type="text/css"/></head><body><nav class="toc"><h1>Weber.jl</h1><select id="version-selector" onChange="window.location.href=this.value" style="visibility: hidden"></select><form class="search" action="../search/"><input id="search-query" name="q" type="text" placeholder="Search docs"/></form><ul><li><a class="toctext" href="../">Introduction</a></li><li><span class="toctext">User guide</span><ul><li><a class="toctext" href="../start/">Getting Started</a></li><li><a class="toctext" href="../trial_guide/">Trial Creation</a></li><li><a class="toctext" href="../stimulus/">Stimulus Generation</a></li><li><a class="toctext" href="../adaptive/">Adaptive Tracks</a></li><li class="current"><a class="toctext" href>Advanced Experiments</a><ul class="internal"><li><a class="toctext" href="#Blocks-of-Trials-1">Blocks of Trials</a></li><li><a class="toctext" href="#Conditional-Trials-1">Conditional Trials</a></li><li><a class="toctext" href="#Looping-Trials-1">Looping Trials</a></li><li class="toplevel"><a class="toctext" href="#Run-time-stimulus-generation-1">Run-time stimulus generation</a></li></ul></li><li><a class="toctext" href="../extend/">Extending Weber</a></li></ul></li><li><span class="toctext">Reference</span><ul><li><a class="toctext" href="../experiment/">Experiments</a></li><li><a class="toctext" href="../trials/">Trials</a></li><li><a class="toctext" href="../sound/">Sound</a></li><li><a class="toctext" href="../video/">Video</a></li><li><a class="toctext" href="../event/">Events</a></li><li><a class="toctext" href="../extend_ref/">Extensions</a></li></ul></li></ul></nav><article id="docs"><header><nav><ul><li>User guide</li><li><a href>Advanced Experiments</a></li></ul><a class="edit-page" href="https://github.com/haberdashPI/Weber.jl/tree/094bb7a81fb349c1297888576c20bdeaf16b63c9/docs/src/advanced.md"><span class="fa"></span> Edit on GitHub</a></nav><hr/><div id="topbar"><span>Advanced Experiments</span><a class="fa fa-bars" href="#"></a></div></header><p>There are several concepts and techniques best avoided unless they are really necessary. These generally complicate the creation of experiments. </p><h1><a class="nav-anchor" id="Stateful-Trials-1" href="#Stateful-Trials-1">Stateful Trials</a></h1><p>Some experiments require that what trials present depend on responses to previous trials. For instance, adaptive tracking to find a discrimination threshold.</p><p>If your trials depend on experiment-changing state, you need to use the macro <a href="../trials/#Weber.@addtrials"><code>@addtrials</code></a>.</p><p>There are three kinds of trials you can add with this macro: blocks, conditionals and loops.</p><h2><a class="nav-anchor" id="Blocks-of-Trials-1" href="#Blocks-of-Trials-1">Blocks of Trials</a></h2><pre><code class="language-none">@addtrials let [assignments]
   body...
-end
-</code></pre>
-
-<p>Blocks of trials are useful for setting up state that will change during the trials. Such state can then be used in a subsequent @addtrials expression. In fact all other types of @addtrials expression will likely be nested inside blocks. The main reason to use such a block is to ensure that  <a href="../experiment/#Weber.offset"><code>Weber.offset</code></a> is well defined.</p>
-<p>The offset counter is used to fast-forward through the expeirment by specifying an offset greater than 0.  However, if there is state that changes throughout the course of several trials, those trials cannot reliably be reproduced when only some of them are skipped. Either all or none of the trials that depend on one another should be skipped.</p>
-<p>Anytime you have a series of trials, some of which depend on what happens earlier in an expeirment, such trials should be placed inside of an @addtrials let block. Otherwise experiment fast forwarding will result in unexpected behaviors.</p>
-<p><a id='Conditional-Trials-1'></a></p>
-<h2 id="conditional-trials">Conditional Trials</h2>
-<pre><code>@addtrials if [cond1]
+end</code></pre><p>Blocks of trials are useful for setting up state that will change during the trials. Such state can then be used in a subsequent @addtrials expression. In fact all other types of @addtrials expression will likely be nested inside blocks. The main reason to use such a block is to ensure that  <a href="../experiment/#Weber.offset"><code>Weber.offset</code></a> is well defined.</p><p>The offset counter is used to fast-forward through the expeirment by specifying an offset greater than 0.  However, if there is state that changes throughout the course of several trials, those trials cannot reliably be reproduced when only some of them are skipped. Either all or none of the trials that depend on one another should be skipped.</p><p>Anytime you have a series of trials, some of which depend on what happens earlier in an expeirment, such trials should be placed inside of an @addtrials let block. Otherwise experiment fast forwarding will result in unexpected behaviors.</p><h2><a class="nav-anchor" id="Conditional-Trials-1" href="#Conditional-Trials-1">Conditional Trials</a></h2><pre><code class="language-none">@addtrials if [cond1]
   body...
 elseif [cond2]
   body...
@@ -200,12 +10,7 @@ elseif [condN]
   body...
 else
   body...
-end
-</code></pre>
-
-<p>Adds one or mores trials that are presented only if the given conditions are met. The expressions <code>cond1</code> through <code>condN</code> are evaluted during the experiment, but each <code>body</code> is executed before the experiment begins, and is used to indicate the set of trials (and breaks or practice trials) that will be run for a given condition.</p>
-<p>For example, the following code only runs the second trial if the user hits the "y" key.</p>
-<pre><code>@addtrials let y_hit = false
+end</code></pre><p>Adds one or mores trials that are presented only if the given conditions are met. The expressions <code>cond1</code> through <code>condN</code> are evaluted during the experiment, but each <code>body</code> is executed before the experiment begins, and is used to indicate the set of trials (and breaks or practice trials) that will be run for a given condition.</p><p>For example, the following code only runs the second trial if the user hits the &quot;y&quot; key.</p><pre><code class="language-none">@addtrials let y_hit = false
   isresponse(e) = iskeydown(e,key&quot;y&quot;) || iskeydown(e,key&quot;n&quot;)
   addtrial(moment(display,&quot;Hit Y or N.&quot;),await_response(isresponse)) do event
     if iskeydown(event,key&quot;y&quot;)
@@ -216,96 +21,15 @@ end
   @addtrials if !y_hit
     addtrial(moment(display,&quot;You did not hit Y!&quot;),await_response(iskeydown))
   end
-end
-</code></pre>
-
-<p>If <code>@addtrials if !y_hit</code> was replaced with <code>if !y_hit</code> in the above example, the second trial would always run. This is because the <code>if</code> expression would be run during setup-time, before any trials were run (when <code>y_hit</code> is false).</p>
-<p><a id='Looping-Trials-1'></a></p>
-<h2 id="looping-trials">Looping Trials</h2>
-<pre><code>@addtrials while expr
+end</code></pre><p>If <code>@addtrials if !y_hit</code> was replaced with <code>if !y_hit</code> in the above example, the second trial would always run. This is because the <code>if</code> expression would be run during setup-time, before any trials were run (when <code>y_hit</code> is false).</p><h2><a class="nav-anchor" id="Looping-Trials-1" href="#Looping-Trials-1">Looping Trials</a></h2><pre><code class="language-none">@addtrials while expr
   body...
-end
-</code></pre>
-
-<p>Add some number of trials that repeat as long as <code>expr</code> evalutes to true. For example the follow code runs as long as the user hits the "y" key.</p>
-<pre><code>@addtrials let y_hit = true
+end</code></pre><p>Add some number of trials that repeat as long as <code>expr</code> evalutes to true. For example the follow code runs as long as the user hits the &quot;y&quot; key.</p><pre><code class="language-none">@addtrials let y_hit = true
   @addtrials while y_hit
     message = moment(display,&quot;Hit Y if you want to continue&quot;)
     addtrial(message,await_response(iskeydown)) do event
       y_hit = iskeydown(event,key&quot;y&quot;)
     end
   end
-end
-</code></pre>
-
-<p>If <code>@addtrials while y_hit</code> was replaced with <code>while y_hit</code> in the above example, the while loop would never terminate, running an infinite loop, because <code>y_hit</code> is true before the experiment starts.</p>
-<p><a id='Run-time-stimulus-generation.-1'></a></p>
-<h1 id="run-time-stimulus-generation">Run-time stimulus generation.</h1>
-<p>When stimuli need to be generated during an experiment the normal approach will not work. For instance, if you want a tone's frequency to depend on some delta value that changes during the experimrent the following will not work.</p>
-<pre><code class="julia"># THIS WILL NOT WORK!!!
-moment(play,tone(1kHz+my_delta,1s))
-</code></pre>
-
-<p>The basic problem here is that tone is used to generate a sound at <a href="../start/#setup_time-1">setup-time</a>. What we want is for the run-time value of <code>my_delta</code> to be used. To do this you can pass a function to play. This function will be used to generate a sound during runtime.</p>
-<pre><code class="julia">moment(play,() -&gt; tone(1kHz+my_delta,1s))
-</code></pre>
-
-<p>Similarly, we can use a runtime value in display by passing a function to display.</p>
-<pre><code class="julia">moment(display,() -&gt; &quot;hello $my_name.&quot;)
-</code></pre>
-
-<p>When moments are created this way, the sound or visual is generated before the moment even begins, to eliminate any latency that would be introduced by loading the sound or visual into memory. Specifically, the stimulus is generated during the most recent non-zero pause occuring before a moment. So for instance, in the following example, <code>mysound</code> will be generated ~0.5 seconds before play is called right after "Get ready!" is displayed.</p>
-<pre><code class="julia">addtrial(moment(display,&quot;Get ready!&quot;),moment(0.5s),
-         moment(display,&quot;Here we go!&quot;),moment(play,mysound))
-</code></pre>
-              
-            </div>
-          </div>
-          <footer>
-  
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="../extend/" class="btn btn-neutral float-right" title="Extending Weber">Next <span class="icon icon-circle-arrow-right"></span></a>
-      
-      
-        <a href="../adaptive/" class="btn btn-neutral" title="Adaptive Tracks"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-      
-    </div>
-  
-
-  <hr/>
-
-  <div role="contentinfo">
-    <!-- Copyright etc -->
-    
-  </div>
-
-  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
-</footer>
-	  
-        </div>
-      </div>
-
-    </section>
-    
-  </div>
-
-  <div class="rst-versions" role="note" style="cursor: pointer">
-    <span class="rst-current-version" data-toggle="rst-current-version">
-      
-          <a href="https://github.com/haberdashPI/Weber.jl" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
-      
-      
-        <span><a href="../adaptive/" style="color: #fcfcfc;">&laquo; Previous</a></span>
-      
-      
-        <span style="margin-left: 15px"><a href="../extend/" style="color: #fcfcfc">Next &raquo;</a></span>
-      
-    </span>
-</div>
-    <script src="../js/theme.js"></script>
-      <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-      <script src="../assets/mathjaxhelper.js"></script>
-
-</body>
-</html>
+end</code></pre><p>If <code>@addtrials while y_hit</code> was replaced with <code>while y_hit</code> in the above example, the while loop would never terminate, running an infinite loop, because <code>y_hit</code> is true before the experiment starts.</p><h1><a class="nav-anchor" id="Run-time-stimulus-generation-1" href="#Run-time-stimulus-generation-1">Run-time stimulus generation</a></h1><p>When stimuli need to be generated during an experiment the normal approach will not work. For instance, if you want a tone&#39;s frequency to depend on some delta value that changes during the experimrent the following will not work.</p><pre><code class="language-julia"># THIS WILL NOT WORK!!!
+moment(play,tone(1kHz+my_delta,1s))</code></pre><p>The basic problem here is that tone is used to generate a sound at <a href="../start/#setup_time-1">setup-time</a>. What we want is for the run-time value of <code>my_delta</code> to be used. To do this you can pass a function to play. This function will be used to generate a sound during runtime.</p><pre><code class="language-julia">moment(play,() -&gt; tone(1kHz+my_delta,1s))</code></pre><p>Similarly, we can use a runtime value in display by passing a function to display.</p><pre><code class="language-julia">moment(display,() -&gt; &quot;hello $my_name.&quot;)</code></pre><p>When moments are created this way, the sound or visual is generated before the moment even begins, to eliminate any latency that would be introduced by loading the sound or visual into memory. Specifically, the stimulus is generated during the most recent non-zero pause occuring before a moment. So for instance, in the following example, <code>mysound</code> will be generated ~0.5 seconds before play is called right after &quot;Get ready!&quot; is displayed.</p><pre><code class="language-julia">addtrial(moment(display,&quot;Get ready!&quot;),moment(0.5s),
+         moment(display,&quot;Here we go!&quot;),moment(play,mysound))</code></pre><footer><hr/><a class="previous" href="../adaptive/"><span class="direction">Previous</span><span class="title">Adaptive Tracks</span></a><a class="next" href="../extend/"><span class="direction">Next</span><span class="title">Extending Weber</span></a></footer></article></body></html>
