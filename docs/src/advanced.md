@@ -95,7 +95,7 @@ If `@addtrials while y_hit` was replaced with `while y_hit` in the above
 example, the while loop would never terminate, running an infinite loop, because
 `y_hit` is true before the experiment starts.
 
-# Run-time stimulus generation.
+# Run-time stimulus generation
 
 When stimuli need to be generated during an experiment the normal approach will
 not work. For instance, if you want a tone's frequency to depend
