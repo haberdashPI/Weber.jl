@@ -981,7 +981,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Sound",
     "title": "Weber.playable",
     "category": "Function",
-    "text": "playable(x,[cache=true],[sample_rate=samplerate()])\n\nPrepare a sound or stream to be played.\n\nA call to playable will ensure the sound is in the format required by play.  This automatically calls sound on x if it not already appear to be a sound or a stream.\n\nnote: Called Implicitly\nThis need not be called explicitly, as play will call it for you, if need be.\n\n\n\n"
+    "text": "playable(x,[cache=true],[sample_rate=samplerate()])\n\nPrepare a sound or stream to be played.\n\nA call to playable will ensure the sound is in the format required by play.  This automatically calls sound on x if it does not appear to already be a sound or a stream.\n\nnote: Called Implicitly\nThis need not be called explicitly, as play will call it for you, if need be.\n\n\n\n"
 },
 
 {
