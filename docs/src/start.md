@@ -99,11 +99,13 @@ const high = ramp(tone(1.1kHz,0.5s))
 
 These next two lines create two stimuli. A 1000 Hz tone (`low`) and a 1100 Hz
 tone (`high`) each 0.5 seconds long. The [`ramp`](@ref) function tapers the
-start and end of a sound to avoid click sounds.
+start and end of a sound to avoid click sounds. In Weber you can affix Hz or kHz
+to indicate a frequency and s or ms to indicate an amount of time (thanks to
+[Unitful.jl](http://ajkeller34.github.io/Unitful.jl/stable/)).
 
-You can generate many simple stimuli in Weber, or you can use `load("sound.wav")`
-to open a sound file on your computer. Refer to the documentation in
-[`Sound`](sound.md).
+You can generate many simple stimuli in Weber, or you can use `sound("sound.wav")`
+to open a sound file on your computer. Refer the section on
+[stimulus generation](stimulus.md) for more details.
 
 ## Creating a trial
 
