@@ -101,7 +101,7 @@ All calls to record also result in many additional values being written to the
 data file. The start time and date of the experiment, the trial and offset
 number, the version of Weber, and the time at which the last moment started are
 all stored.  Additional information can be added during creation of the
-experiment (see `Experiment`).
+experiment (see [`Experiment`](@ref)).
 
 Each call to record writes a new row to the data file used for the experiment, so
 there should be no loss of data if the program is terminated prematurely for
