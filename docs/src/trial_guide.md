@@ -59,7 +59,7 @@ directly by a moment are first precompiled.
 ## Compound Moments
 
 You can create more complicated moments by concatenating simpler moments
-together using the `>>` operator or `moment(momoment1,moment2,...)`.
+together using the `>>` operator or `moment(moment1,moment2,...)`.
 
 A concatenation of moments starts immediately, proceeding through each of the
 moments in order. This allows for a more complex relationship in inter-moment
@@ -73,7 +73,7 @@ addtrial(moment(100ms,play,soundA) >> moment(100ms,play,soundB),
          timeout(() -> display("Too Late!"),iskeydown,150ms))
 ```
 
-This exact sequence of timing would not be possible withou using the `>>`
+This exact sequence of timing would not be possible without using the `>>`
 operator because the timing of the `timeout` moment depends on user input, while we
 want soundB to be played at a reliable time.
 
@@ -115,6 +115,6 @@ Conditional moments are a more advanced technique for creating moments and aren'
 Normally, to add moments to a trial you simply call [`addtrial`](@ref). There is also [`addpractice`](@ref), and [`addbreak`](@ref). These functions are nearly identical to [`addtrial`](@ref) but differ in how they update the trial and offset counters, and what they automatically [`record`](@ref) to a data file.
 
 All of these functions take a series of iterable objects of moments. The moments
-of all arguments are added in sequence. For convience these iterables can be
+of all arguments are added in sequence. For convenience these iterables can be
 nested, allowing functions that return multiple moments themselves to be easily
 passed to [`addtrial`](@ref).
