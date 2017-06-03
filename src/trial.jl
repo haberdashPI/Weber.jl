@@ -426,7 +426,7 @@ function await_response(fn::Function;atleast=0.0)
 end
 
 """
-    timeout(fn,isresponse,timeout,[atleast=0.0])
+    timeout(fn,isresponse,timeout,[atleast=0s])
 
 This moment starts when either `isresponse` evaluates to true or
 timeout time (in seconds) passes.
