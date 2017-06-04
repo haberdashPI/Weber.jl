@@ -11,3 +11,4 @@ deps/build/
 deps/lib/
 docs/build/
 docs/site/
+flycheck_*
