@@ -263,7 +263,7 @@ function rampoff_helper{R}(x::Audible{R},len::Int,after::Int)
 end
 
 """
-    fadeto(stream,channel=1,transition=0.05)
+    fadeto(stream,channel=1,transition=50ms)
 
 A smooth transition from the currently playing stream to another stream.
 """
@@ -277,7 +277,7 @@ function fadeto(new::AbstractStream,channel::Int=1,transition=50ms)
 end
 
 """
-    fadeto(sound1,sound2,overlap=0.05)
+    fadeto(sound1,sound2,overlap=50ms)
 
 A smooth transition from sound1 to sound2, overlapping the end of sound1
 and the start of sound2 by `overlap` (in seconds).
