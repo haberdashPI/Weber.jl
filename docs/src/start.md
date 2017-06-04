@@ -3,9 +3,9 @@ experiment in Weber. It's assumed you have already followed the [directions for
 installing Julia and Juno](@ref install). First, open Atom.
 
 You may want to familiarize yourself with the basics of Julia. There are a
-number of useful
-[resources](http://docs.julialang.org/en/stable/manual/getting-started/#resources)
-available to learn Julia.
+useful resources
+[here](http://docs.julialang.org/en/stable/manual/getting-started/#resources)
+and [here](https://julialang.org/learning/) to learn Julia.
 
 # Creating a simple project
 
@@ -17,7 +17,7 @@ create_new_project("simple")
 ```
 
 This will create a set of files in your current directory to get you started
-creating your experiment project. Open the file called run_simple.jl in Atom.
+creating your experiment project. Open the file called `run_simple.jl` in Atom.
 
 Remove all text in run_simple.jl and replace it with the following.
 

@@ -8,7 +8,7 @@ stimuli: loading a file and composing sound primitives.
 
 ## Loading a file
 
-Generating stimuli by loading a file is easy. You simply play the given file, like so.
+Using files as stimuli can be done by calling `play` on a file name, like so.
 
 ```julia
 addtrial(moment(play,"mysound_file.wav"))
@@ -18,16 +18,17 @@ addtrial(moment(play,"mysound_file.wav"))
 
     You can safely play the same file multiple times: the sound is cached, and will only load into memory once.
 
-If you need to manipulate the sound before playing it, you can load it using [`sound`](@ref).  For example, to remove any frequencies from `"mysound_file.wav"` above 400Hz before playing the sound, you could do the following.
+If you need to manipulate the sound before playing it, you can load it using [`sound`](@ref).  For example, to remove any frequencies from `"mysound.wav"` above 400Hz before playing the sound, you could do the following.
 
 ```julia
-mysound = lowpass(sound("mysound_file.wav"),400Hz)
+mysound = lowpass(sound("mysound.wav"),400Hz)
 addtrial(moment(play,mysound))
 ```
 
 ## Sound Primitives
 
-There are several primitives you can use to generate simple sounds directly in Weber. They are [`tone`](@ref) (to create pure tones), [`noise`](@ref) (to generate white noise), [`silence`](@ref) (for a silent period) and [`harmonic_complex`](@ref) (to create multiple pure tones with integer frequency ratios).
+There are several primitives you can use to generate simple sounds directly in
+Weber. They are [`tone`](@ref) (to create a pure), [`noise`](@ref) (to generate white noise), [`silence`](@ref) (for a silent period) and [`harmonic_complex`](@ref) (to create multiple pure tones with integer frequency ratios).
 
 These primitives can then be combined and manipulated to generate more interesting sounds. You can filter sounds ([`bandpass`](@ref), [`bandstop`](@ref), [`lowpass`](@ref), [`highpass`](@ref) and [`lowpass`](@ref)), mix them together ([`mix`](@ref)) and set an appropriate decibel level ([`attenuate`](@ref)). You can also manipulate the envelope of the sound ([`ramp`](@ref), [`rampon`](@ref), [`rampoff`](@ref), [`fadeto`](@ref), [`envelope`](@ref) and [`mult`](@ref)).
 
@@ -56,7 +57,10 @@ addtrial(moment(play, mix(mytone,mynoise)))
 Weber also exports `@>>`, and `@_` (refer to [Lazy.jl](https://github.com/MikeInnes/Lazy.jl#macros) for details).
 
 ## Sounds are arrays
-Sounds can be manipulated in the same way that any array can be manipulated in Julia, with some additional support for indexing sounds using time units. For instance, to get the first 5 seconds of a sound you can do the following.
+
+Sounds are just a specific kind of array of real valued numbers. The amplitudes
+of a sound are represented as real numbers between -1 and 1 in sequence at a
+sampling rate specific to the sound's type. They can be manipulated in the same way that any array can be manipulated in Julia, with some additional support for indexing sounds using time units. For instance, to get the first 5 seconds of a sound you can do the following.
 
 ```julia
 mytone = tone(1kHz,10s)
@@ -73,7 +77,7 @@ addtrial(moment(play,interval))
 
 ## Stereo Sounds
 
-You can create stereo sounds with using [`leftright`](@ref), and reference their left and right channel sound using `:left` or `:right` as a second index, like so.
+You can create stereo sounds with [`leftright`](@ref), and reference the left and right channel using `:left` or `:right` as a second index, like so.
 
 ```julia
 stereo_sound = leftright(tone(1kHz,2s),tone(2kHz,2s))
@@ -81,14 +85,11 @@ addtrial(moment(play,stereo_sound[:,:left],
          moment(2s,play,stereo_sound[:,:right]))
 ```
 
-The functions [`left`](@ref) and [`right`](@ref) serve the same purpose, but can also operate on streams.
+The functions [`left`](@ref) and [`right`](@ref) can also extract the left and right chnanel, but work on both sounds and streams.
 
 ## Streams
 
-In addition to the discrete sounds that have been discussed so far, Weber also
-supports sound streams. Streams are arbitrarily long: you need not decide when
-they should stop until after they start playing. All of the primitives described
-so far can apply to streams, except that streams cannot be indexed.
+In addition to the discrete sounds that have been discussed so far, Weber also supports sound streams. Streams are arbitrarily long: you need not decide when they should stop until after they start playing. All of the primitives described so far can apply to streams, except that streams cannot be indexed.
 
 !!! note "Streaming operations are lazy"
 
@@ -149,7 +150,7 @@ can modify individual sound segments as they play from the stream using
 
 ## Low-level Sound/Stream Generation
 
-Finally, if none of the functions above suit your purposes for generating sounds or streams, you can use the function [`audible`](@ref), which can be used to generate any arbitrary sound or stream you want. Please refer to the source code for [`tone`](@ref) and [`noise`](@ref) to see examples of the two ways to use this function.
+Finally, if none of the functions above suit your purposes for generating sounds or streams, there are two more low-level approachs. You can use the function [`audible`](@ref) to define a sound or stream using a function `f(t)` or `f(i)` defining the amplitudes for any given time or index. Alternatively you can convert any array to a sound using [`sound`](@ref).
 
 # Images
 
@@ -157,7 +158,7 @@ Images can also be generated by either displaying a file or generating image pri
 
 ## Loading a file
 
-Displaying an image file is a simple matter of calling display on that file.
+You can display an image file by calling `display` on the file name.
 
 ```julia
 addtrial(moment(display,"myimage.png"))
@@ -174,7 +175,7 @@ myimage = visual("myimage.png")
 addtrial(moment(display,myimage[1:div(end,2),1:div(end,2)]))
 ```
 
-Note that displaying a string can also result in that string being printed to the screen. Weber determines the difference between a string you want to display and a string referring to an image file by looking at the end of the string. If the string ends in a file type (.bmp, .jpeg, .png, etc...), Weber assumes it is an image file you want to load, otherwise it assumes it is a string you want to print to the screen. 
+Note that displaying a string can also result in that string being printed to the screen. Weber determines the difference between a string you want to display and a string referring to an image file by looking at the end of the string. If the string ends in a valid image file type (.bmp, .jpeg, .png, etc...), Weber assumes it is an image file you want to load, otherwise it assumes it is a string you want to print to the screen.
 
 ## Image Primitives
 

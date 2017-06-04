@@ -59,7 +59,7 @@ end
     audible(fn,len=Inf,asseconds=true;[sample_rate=samplerate(),eltype=Float64])
 
 Creates monaural sound where `fn(t)` returns the amplitudes for a given `Range`
-of time points.
+of time points, value ranging between -1 and 1.
 
 If `asseconds` is false, `audible` creates a monaural sound where `fn(i)`
 returns the amplitudes for a given `Range` of sample indices.
@@ -70,7 +70,7 @@ If an infinite length is specified, a stream is created rather than a sound.
 
 The function `fn` need not be pure and it can be safely assumed that `fn` will
 only be called for a given range of indices once. While indices and times passed
-to `fn` normally begin from 0 and 1, respectively, this is not always the case.
+to `fn` normally begin from 1 and 0, respectively, this is not always the case.
 """
 function audible(fn::Function,len=Inf,asseconds=true;
                  sample_rate=samplerate(),eltype=Float64)

@@ -2,7 +2,7 @@
 
 using Weber
 
-version = v"0.0.2"
+version = v"0.0.3"
 sid,trial_skip,adapt = @read_args("Frequency Discrimination ($version).",
                                   adapt=[:levitt,:bayes])
 
@@ -65,9 +65,6 @@ second beep was lower.
     for trial in 1:n_trials
       addtrial(one_trial(a))
     end
-
-    # define this string during experiment setup
-    # when we know what block we're on...
 
     function threshold_report()
       mean,sd = estimate(adapter)

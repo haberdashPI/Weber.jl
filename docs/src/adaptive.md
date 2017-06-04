@@ -11,7 +11,7 @@ In this experiment, on each trial, listeners hear a low and a high tone, separat
 ```julia
 using Weber
 
-version = v"0.0.2"
+version = v"0.0.3"
 sid,trial_skip,adapt = @read_args("Frequency Discrimination ($version).",
                                   adapt=[:levitt,:bayes])
 
@@ -22,19 +22,23 @@ const feedback_delay = 750ms
 isresponse(e) = iskeydown(e,key"p") || iskeydown(e,key"q")
 
 const standard_freq = 1kHz
-const standard = attenuate(ramp(tone(standard_freq,0.1)),atten_dB)
+const standard = @> tone(standard_freq,100ms) ramp attenuate(atten_dB)
+
 function one_trial(adapter)
   first_lower = rand(Bool)
   resp = response(adapter,key"q" => "first_lower",key"p" => "second_lower",
                   correct=(first_lower ? "first_lower" : "second_lower"))
 
-  signal() = attenuate(ramp(tone(standard_freq*(1-delta(adapter)),0.1s)),atten_dB)
+  signal() = @> tone((1-delta(adapter))*standard_freq,100ms) begin
+    ramp
+    attenuate(atten_dB)
+  end
   stimuli = first_lower? [signal,standard] : [standard,signal]
 
   [moment(feedback_delay,play,stimuli[1]),
    show_cross(),
-   moment(0.9s,play,stimuli[2]),
-   moment(0.1s + 0.3s,display,
+   moment(900ms,play,stimuli[2]),
+   moment(100ms + 300ms,display,
           "Was the first [Q] or second sound [P] lower in pitch?"),
    resp,await_response(isresponse)]
 end
@@ -49,7 +53,7 @@ experiment = Experiment(
   ]
 )
 
-setup(experimerntent) do
+setup(experiment) do
   addbreak(moment(record,"start"))
 
   addbreak(instruct("""
@@ -71,9 +75,6 @@ second beep was lower.
       addtrial(one_trial(a))
     end
 
-    # define this string during experiment setup
-    # when we know what block we're on...
-
     function threshold_report()
       mean,sd = estimate(adapter)
       thresh = round(mean,3)*standard_freq
@@ -91,7 +92,7 @@ second beep was lower.
 
 end
 
-run(experimerntent)
+run(experiment)
 ```
 
 In what follows we'll walk through the parts of this code unique to creating an adaptive track. For more details on the basics of creating an experiment see [Getting Started](start.md).
@@ -151,9 +152,6 @@ measurement error.
 # Reporting the Threshold
 
 ```julia
-# define this string during experiment setup
-# when we know what block we're on...
-
 function threshold_report()
   mean,sd = estimate(adapter)
   thresh = round(mean,3)*standard_freq
