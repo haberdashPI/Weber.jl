@@ -7,7 +7,7 @@ number of useful
 [resources](http://docs.julialang.org/en/stable/manual/getting-started/#resources)
 available to learn Julia.
 
-# Creating a simple program
+# Creating a simple project
 
 First, open the Julia console, and enter the following lines of code.
 
@@ -17,7 +17,7 @@ create_new_project("simple")
 ```
 
 This will create a set of files in your current directory to get you started
-creating your experiment. Open the file called run_simple.jl in Atom.
+creating your experiment project. Open the file called run_simple.jl in Atom.
 
 Remove all text in run_simple.jl and replace it with the following.
 

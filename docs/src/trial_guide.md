@@ -96,7 +96,7 @@ message = visual("You hit spacebar!")
 addtrial(moment2,moment3) do event
   if iskeydown(key":space:")
     display(message,duration=500ms)
-    record()
+    record("spacebar_hit")
   end
 end
 ```
