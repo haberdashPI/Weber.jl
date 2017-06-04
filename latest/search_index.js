@@ -45,15 +45,15 @@ var documenterSearchIndex = {"docs": [
     "page": "Getting Started",
     "title": "Getting Started",
     "category": "page",
-    "text": "In the following example, we'll run through all the basics of how to create an experiment in Weber. It's assumed you have already followed the directions for installing Julia and Juno. First, open Atom.You may want to familiarize yourself with the basics of Julia. There are a number of useful resources available to learn Julia."
+    "text": "In the following example, we'll run through all the basics of how to create an experiment in Weber. It's assumed you have already followed the directions for installing Julia and Juno. First, open Atom.You may want to familiarize yourself with the basics of Julia. There are a useful resources here and here to learn Julia."
 },
 
 {
-    "location": "start/#Creating-a-simple-program-1",
+    "location": "start/#Creating-a-simple-project-1",
     "page": "Getting Started",
-    "title": "Creating a simple program",
+    "title": "Creating a simple project",
     "category": "section",
-    "text": "First, open the Julia console, and enter the following lines of code.using Weber\ncreate_new_project(\"simple\")This will create a set of files in your current directory to get you started creating your experiment. Open the file called run_simple.jl in Atom.Remove all text in run_simple.jl and replace it with the following.using Weber\nsid,skip = @read_args(\"A simple frequency discrimination experiment.\")\n\nconst low = ramp(tone(1kHz,0.5s))\nconst high = ramp(tone(1.1kHz,0.5s))\n\nfunction one_trial()\n  if rand(Bool)\n    stim1 = moment(0.5s,play,low)\n	stim2 = moment(0.5s,play,high)\n    resp = response(key\"q\" => \"low_first\", key\"p\" => \"low_second\",correct = \"low_first\")\n  else\n	stim1 = moment(0.5s,play,high)\n	stim2 = moment(0.5s,play,low)\n    resp = response(key\"q\" => \"low_first\", key\"p\" => \"low_second\",correct = \"low_second\")	\n  end\n  return [show_cross(),stim1,stim2,resp,await_response(iskeydown)]\nend\n\nexp = Experiment(columns = [:sid => sid,condition => \"ConditionA\",:correct],skip=skip)\nsetup(exp) do\n  addbreak(instruct(\"Press 'q' when you hear the low tone first and 'p' otherwise.\"))\n  for trial in 1:10\n    addtrial(one_trial())\n  end\nend\n\nrun(exp)"
+    "text": "First, open the Julia console, and enter the following lines of code.using Weber\ncreate_new_project(\"simple\")This will create a set of files in your current directory to get you started creating your experiment project. Open the file called run_simple.jl in Atom.Remove all text in run_simple.jl and replace it with the following.using Weber\nsid,skip = @read_args(\"A simple frequency discrimination experiment.\")\n\nconst low = ramp(tone(1kHz,0.5s))\nconst high = ramp(tone(1.1kHz,0.5s))\n\nfunction one_trial()\n  if rand(Bool)\n    stim1 = moment(0.5s,play,low)\n	stim2 = moment(0.5s,play,high)\n    resp = response(key\"q\" => \"low_first\", key\"p\" => \"low_second\",correct = \"low_first\")\n  else\n	stim1 = moment(0.5s,play,high)\n	stim2 = moment(0.5s,play,low)\n    resp = response(key\"q\" => \"low_first\", key\"p\" => \"low_second\",correct = \"low_second\")	\n  end\n  return [show_cross(),stim1,stim2,resp,await_response(iskeydown)]\nend\n\nexp = Experiment(columns = [:sid => sid,condition => \"ConditionA\",:correct],skip=skip)\nsetup(exp) do\n  addbreak(instruct(\"Press 'q' when you hear the low tone first and 'p' otherwise.\"))\n  for trial in 1:10\n    addtrial(one_trial())\n  end\nend\n\nrun(exp)"
 },
 
 {
@@ -85,7 +85,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Getting Started",
     "title": "Stimulus Generation",
     "category": "section",
-    "text": "const low = ramp(tone(1kHz,0.5s))\nconst high = ramp(tone(1.1kHz,0.5s))These next two lines create two stimuli. A 1000 Hz tone (low) and a 1100 Hz tone (high) each 0.5 seconds long. The ramp function tapers the start and end of a sound to avoid click sounds.You can generate many simple stimuli in Weber, or you can use load(\"sound.wav\") to open a sound file on your computer. Refer to the documentation in Sound."
+    "text": "const low = ramp(tone(1kHz,0.5s))\nconst high = ramp(tone(1.1kHz,0.5s))These next two lines create two stimuli. A 1000 Hz tone (low) and a 1100 Hz tone (high) each 0.5 seconds long. The ramp function tapers the start and end of a sound to avoid click sounds. In Weber you can affix Hz or kHz to indicate a frequency and s or ms to indicate an amount of time (thanks to Unitful.jl).You can generate many simple stimuli in Weber, or you can use sound(\"sound.wav\") to open a sound file on your computer. Refer the section on stimulus generation for more details."
 },
 
 {
@@ -149,7 +149,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Trial Creation",
     "title": "Trial Creation",
     "category": "page",
-    "text": "We'll look in detail at how to create trials of an experiment. For a broad overview of trial creation refer to Getting Started. The two basic steps to creating a trial are (1) defining a set of moments and (2) add moments to a trial. "
+    "text": "We'll look in detail at how to create trials of an experiment. For a broad overview of trial creation refer to Getting Started. The two basic steps to creating a trial are (1) defining a set of moments and (2) adding those moments to a trial."
 },
 
 {
@@ -157,7 +157,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Trial Creation",
     "title": "Defining Moments",
     "category": "section",
-    "text": "Trials are composed of moments. There are several types of moments: timed moments, compound moments, watcher moments, and conditional moments."
+    "text": "Trials are composed of moments. There are several types of moments: timed moments, compound moments, watcher moments, and conditional moments, each of which have somewhat different effects during a trial."
 },
 
 {
@@ -173,7 +173,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Trial Creation",
     "title": "Guidlines for low-latency moments",
     "category": "section",
-    "text": "Weber aims to present moments at low latencies for accurate experiments.To maintain low latency, as much of the experimental logic as possible should be precomputed, outside of trial moments, during setup-time. The following operations are definitely safe to perform during a moment:Calls to play to present a sound\nCalls to display to present a visual.\nCalls to record to save something to a data file (usually after any calls to play or display)Note that Julia compiles functions on demand (known as just-in-time or JIT compilation), which can lead to very slow runtimes the first time a function runs.  To minimize JIT compilation during an experiment, any functions called directly by a moment are first precompiled.warning: Keep Moments Short\nLong running moments will lead to latency issues. Make sure all functions that run in a moment terminate relatively quickly.warning: Sync visuals to the refresh rate.\nVisuals synchronize to the screen refresh rate. You can  find more details about this in the documentation of display"
+    "text": "Weber aims to present moments at low latencies for accurate experiments.To maintain low latency, as much of the experimental logic as possible should be precomputed, outside of trial moments, during setup time. The following operations are definitely safe to perform during a moment:Calls to play to present a sound\nCalls to display to present a visual.\nCalls to record to save something to a data file (usually after any calls to play or display)Note that Julia compiles functions on demand (known as just-in-time or JIT compilation), which can lead to very slow runtimes the first time a function runs.  To minimize JIT compilation during an experiment, any functions called directly by a moment are first precompiled.warning: Keep Moments Short\nLong running moments will lead to latency issues. Make sure all functions that run in a moment terminate relatively quickly.warning: Sync visuals to the refresh rate.\nVisuals synchronize to the screen refresh rate. You can  find more details about this in the documentation of display"
 },
 
 {
@@ -181,7 +181,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Trial Creation",
     "title": "Compound Moments",
     "category": "section",
-    "text": "You can create more complicated moments by concatenating simpler moments together using the >> operator or moment(momoment1,moment2,...).A concatenation of moments starts immediately, proceeding through each of the moments in order. This allows for a more complex relationship in inter-moment timing. For example, the following code will present two sounds, one at 100 ms, the other 200 ms after the start of the trial. It will also display \"Too Late!\" on the screen if no keyboard key is pressed 150 ms after the start of the trial. addtrial(moment(100ms,play,soundA) >> moment(100ms,play,soundB),\n         timeout(() -> display(\"Too Late!\"),iskeydown,150ms))This exact sequence of timing would not be possible withou using the >> operator because the timing of the timeout moment depends on user input, while we want soundB to be played at a reliable time."
+    "text": "You can create more complicated moments by concatenating simpler moments together using the >> operator or moment(moment1,moment2,...).A concatenation of moments starts immediately, proceeding through each of the moments in order. This allows for a more complex relationship in inter-moment timing. For example, the following code will present two sounds, one at 100 ms, the other 200 ms after the start of the trial. It will also display \"Too Late!\"  on the screen if no keyboard key is pressed 150 ms after the start of the trial.addtrial(moment(100ms,play,soundA) >> moment(100ms,play,soundB),\n         timeout(() -> display(\"Too Late!\"),iskeydown,150ms))This exact sequence of timing would not be possible without using the >> operator because the timing of the timeout moment depends on user input, and we want soundB to be played at a reliable time."
 },
 
 {
@@ -189,7 +189,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Trial Creation",
     "title": "Watcher Moments",
     "category": "section",
-    "text": "Watcher moments are used to respond to events. Often, watcher moments need not be directly used. Instead, the higher level response method can be used.As long as a watcher moment is active it occurs any time an event is triggered. A watcher moment becomes active at the start of the preceding moment, or at the start of a trial (if it's the first moment in a trial). This latter form is most common, since generally one wishes to listen to all events during a trial. A watcher moments is simply a function that takes one argument: the event to be processed.If the watcher is the first moment in a trial, the convenient do block syntax is possible.message = visual(\"You hit spacebar!\")\naddtrial(moment2,moment3) do event\n  if iskeydown(key\":space:\")\n    display(message,duration=500ms)\n    record()\n  end\nendIn the above example, \"You hit spacebar!\" is displayed for 500 ms every time the spacebar is hit.Refer to the documentation for Events for full details on how to respond to events."
+    "text": "Watcher moments are used to respond to events. Often, watcher moments need not be directly used. Instead, the higher level response method can be used.As long as a watcher moment is active it occurs any time an event is triggered. A watcher moment becomes active at the start of the preceding moment, or at the start of a trial (if it's the first moment in a trial). This latter form is most common, since generally one wishes to listen to all events during a trial. A watcher moments is simply a function that takes one argument: the event to be processed.If the watcher is the first moment in a trial, the convenient do block syntax is possible.message = visual(\"You hit spacebar!\")\naddtrial(moment2,moment3) do event\n  if iskeydown(key\":space:\")\n    display(message,duration=500ms)\n    record(\"spacebar_hit\")\n  end\nendIn the above example, \"You hit spacebar!\" is displayed for 500 ms every time the spacebar is hit.Refer to the documentation for Events for full details on how to respond to events."
 },
 
 {
@@ -205,7 +205,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Trial Creation",
     "title": "Adding Trials",
     "category": "section",
-    "text": "Normally, to add moments to a trial you simply call addtrial. There is also addpractice, and addbreak. These functions are nearly identical to addtrial but differ in how they update the trial and offset counters, and what they automatically record to a data file.All of these functions take a series of iterable objects of moments. The moments of all arguments are added in sequence. For convience these iterables can be nested, allowing functions that return multiple moments themselves to be easily passed to addtrial."
+    "text": "Normally, to add moments to a trial you simply call addtrial. There is also addpractice, and addbreak. These functions are nearly identical to addtrial but differ in how they update the trial and offset counters, and what they automatically record to a data file.All of these functions take a series of iterable objects of moments. The moments of all arguments are added in sequence. For convenience these iterables can be nested, allowing functions that return multiple moments themselves to be easily passed to addtrial just as one would pass a single moment to addtrial."
 },
 
 {
@@ -229,7 +229,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Stimulus Generation",
     "title": "Loading a file",
     "category": "section",
-    "text": "Generating stimuli by loading a file is easy. You simply play the given file, like so.addtrial(moment(play,\"mysound_file.wav\"))note: Sounds are cached\nYou can safely play the same file multiple times: the sound is cached, and will only load into memory once.If you need to manipulate the sound before playing it, you can load it using sound.  For example, to remove any frequencies from \"mysound_file.wav\" above 400Hz before playing the sound, you could do the following.mysound = lowpass(sound(\"mysound_file.wav\"),400Hz)\naddtrial(moment(play,mysound))"
+    "text": "Using files as stimuli can be done by calling play on a file name, like so.addtrial(moment(play,\"mysound_file.wav\"))note: Sounds are cached\nYou can safely play the same file multiple times: the sound is cached, and will only load into memory once.If you need to manipulate the sound before playing it, you can load it using sound.  For example, to remove any frequencies from \"mysound.wav\" above 400Hz before playing the sound, you could do the following.mysound = lowpass(sound(\"mysound.wav\"),400Hz)\naddtrial(moment(play,mysound))"
 },
 
 {
@@ -237,7 +237,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Stimulus Generation",
     "title": "Sound Primitives",
     "category": "section",
-    "text": "There are several primitives you can use to generate simple sounds directly in Weber. They are tone (to create pure tones), noise (to generate white noise), silence (for a silent period) and harmonic_complex (to create multiple pure tones with integer frequency ratios).These primitives can then be combined and manipulated to generate more interesting sounds. You can filter sounds (bandpass, bandstop, lowpass, highpass and lowpass), mix them together (mix) and set an appropriate decibel level (attenuate). You can also manipulate the envelope of the sound (ramp, rampon, rampoff, fadeto, envelope and mult).For instance, to play a 1 kHz tone for 1 second inside of a noise with a notch from 0.5 to 1.5 kHz, with 5 dB SNR you could call the following.mysound = tone(1kHz,1s)\nmysound = ramp(mysound)\nmysound = attenuate(mysound,20)\n\nmynoise = noise(1s)\nmynoise = bandstop(mynoise,0.5kHz,1.5kHz)\nmynoise = attenuate(mynoise,25)\n\naddtrial(moment(play,mix(mysound,mynoise))Weber exports the macro @> (from Lazy.jl) to simplify this pattern. It is easiest to understand the macro by example: the below code yields the same result as the code above.mytone = @> tone(1kHz,1s) ramp attenuate(20)\nmynoise = @> noise(1s) bandstop(0.5kHz,1.5kHz) attenuate(25)\naddtrial(moment(play, mix(mytone,mynoise)))Weber also exports @>>, and @_ (refer to Lazy.jl for details)."
+    "text": "There are several primitives you can use to generate simple sounds directly in Weber. They are tone (to create a pure), noise (to generate white noise), silence (for a silent period) and harmonic_complex (to create multiple pure tones with integer frequency ratios).These primitives can then be combined and manipulated to generate more interesting sounds. You can filter sounds (bandpass, bandstop, lowpass, highpass and lowpass), mix them together (mix) and set an appropriate decibel level (attenuate). You can also manipulate the envelope of the sound (ramp, rampon, rampoff, fadeto, envelope and mult).For instance, to play a 1 kHz tone for 1 second inside of a noise with a notch from 0.5 to 1.5 kHz, with 5 dB SNR you could call the following.mysound = tone(1kHz,1s)\nmysound = ramp(mysound)\nmysound = attenuate(mysound,20)\n\nmynoise = noise(1s)\nmynoise = bandstop(mynoise,0.5kHz,1.5kHz)\nmynoise = attenuate(mynoise,25)\n\naddtrial(moment(play,mix(mysound,mynoise))Weber exports the macro @> (from Lazy.jl) to simplify this pattern. It is easiest to understand the macro by example: the below code yields the same result as the code above.mytone = @> tone(1kHz,1s) ramp attenuate(20)\nmynoise = @> noise(1s) bandstop(0.5kHz,1.5kHz) attenuate(25)\naddtrial(moment(play, mix(mytone,mynoise)))Weber also exports @>>, and @_ (refer to Lazy.jl for details)."
 },
 
 {
@@ -245,7 +245,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Stimulus Generation",
     "title": "Sounds are arrays",
     "category": "section",
-    "text": "Sounds can be manipulated in the same way that any array can be manipulated in Julia, with some additional support for indexing sounds using time units. For instance, to get the first 5 seconds of a sound you can do the following.mytone = tone(1kHz,10s)\nmytone[0s .. 5s]Furthermore, we can concatenate multiple sounds, to play them in sequence. The following code plays two tones in sequence, with a 100 ms gap between them.interval = [tone(400Hz,50ms); silence(100ms); tone(400Hz * 2^(5/12),50ms)]\naddtrial(moment(play,interval))"
+    "text": "Sounds are just a specific kind of array of real valued numbers. The amplitudes of a sound are represented as real numbers between -1 and 1 in sequence at a sampling rate specific to the sound's type. They can be manipulated in the same way that any array can be manipulated in Julia, with some additional support for indexing sounds using time units. For instance, to get the first 5 seconds of a sound you can do the following.mytone = tone(1kHz,10s)\nmytone[0s .. 5s]Furthermore, we can concatenate multiple sounds, to play them in sequence. The following code plays two tones in sequence, with a 100 ms gap between them.interval = [tone(400Hz,50ms); silence(100ms); tone(400Hz * 2^(5/12),50ms)]\naddtrial(moment(play,interval))"
 },
 
 {
@@ -253,7 +253,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Stimulus Generation",
     "title": "Stereo Sounds",
     "category": "section",
-    "text": "You can create stereo sounds with using leftright, and reference their left and right channel sound using :left or :right as a second index, like so.stereo_sound = leftright(tone(1kHz,2s),tone(2kHz,2s))\naddtrial(moment(play,stereo_sound[:,:left],\n         moment(2s,play,stereo_sound[:,:right]))The functions left and right serve the same purpose, but can also operate on streams."
+    "text": "You can create stereo sounds with leftright, and reference the left and right channel using :left or :right as a second index, like so.stereo_sound = leftright(tone(1kHz,2s),tone(2kHz,2s))\naddtrial(moment(play,stereo_sound[:,:left],\n         moment(2s,play,stereo_sound[:,:right]))The functions left and right can also extract the left and right chnanel, but work on both sounds and streams."
 },
 
 {
@@ -269,7 +269,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Stimulus Generation",
     "title": "Low-level Sound/Stream Generation",
     "category": "section",
-    "text": "Finally, if none of the functions above suit your purposes for generating sounds or streams, you can use the function audible, which can be used to generate any arbitrary sound or stream you want. Please refer to the source code for tone and noise to see examples of the two ways to use this function."
+    "text": "Finally, if none of the functions above suit your purposes for generating sounds or streams, there are two more low-level approachs. You can use the function audible to define a sound or stream using a function f(t) or f(i) defining the amplitudes for any given time or index. Alternatively you can convert any array to a sound using sound."
 },
 
 {
@@ -285,7 +285,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Stimulus Generation",
     "title": "Loading a file",
     "category": "section",
-    "text": "Displaying an image file is a simple matter of calling display on that file.addtrial(moment(display,\"myimage.png\"))note: Images are cached\nYou can safely display the same file multiple times: the image is cached, and will only load into memory once.Analogous to sounds, if you need to manipulate the image before displaying it you can load it using visual. For example, the following displays the upper quarter of an image.myimage = visual(\"myimage.png\")\naddtrial(moment(display,myimage[1:div(end,2),1:div(end,2)]))Note that displaying a string can also result in that string being printed to the screen. Weber determines the difference between a string you want to display and a string referring to an image file by looking at the end of the string. If the string ends in a file type (.bmp, .jpeg, .png, etc...), Weber assumes it is an image file you want to load, otherwise it assumes it is a string you want to print to the screen. "
+    "text": "You can display an image file by calling display on the file name.addtrial(moment(display,\"myimage.png\"))note: Images are cached\nYou can safely display the same file multiple times: the image is cached, and will only load into memory once.Analogous to sounds, if you need to manipulate the image before displaying it you can load it using visual. For example, the following displays the upper quarter of an image.myimage = visual(\"myimage.png\")\naddtrial(moment(display,myimage[1:div(end,2),1:div(end,2)]))Note that displaying a string can also result in that string being printed to the screen. Weber determines the difference between a string you want to display and a string referring to an image file by looking at the end of the string. If the string ends in a valid image file type (.bmp, .jpeg, .png, etc...), Weber assumes it is an image file you want to load, otherwise it assumes it is a string you want to print to the screen."
 },
 
 {
@@ -309,7 +309,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Adaptive Tracks",
     "title": "Using an Adaptive Track",
     "category": "section",
-    "text": "To use an adaptive track in your experiment, you need to make use of some of the advanced features of Weber. In this section we'll walk through the necessary steps, using a simple frequency discrimination experiment.In this experiment, on each trial, listeners hear a low and a high tone, separated in frequency by an adaptively adjusted delta. Their task is to indicate which tone is lower, and the delta is adjusted to determine the difference in frequency at which listeners respond with 79% accuracy. The entire example code is provided below. using Weber\n\nversion = v\"0.0.2\"\nsid,trial_skip,adapt = @read_args(\"Frequency Discrimination ($version).\",\n                                  adapt=[:levitt,:bayes])\n\nconst atten_dB = 30\nconst n_trials = 60\nconst feedback_delay = 750ms\n\nisresponse(e) = iskeydown(e,key\"p\") || iskeydown(e,key\"q\")\n\nconst standard_freq = 1kHz\nconst standard = attenuate(ramp(tone(standard_freq,0.1)),atten_dB)\nfunction one_trial(adapter)\n  first_lower = rand(Bool)\n  resp = response(adapter,key\"q\" => \"first_lower\",key\"p\" => \"second_lower\",\n                  correct=(first_lower ? \"first_lower\" : \"second_lower\"))\n\n  signal() = attenuate(ramp(tone(standard_freq*(1-delta(adapter)),0.1s)),atten_dB)\n  stimuli = first_lower? [signal,standard] : [standard,signal]\n\n  [moment(feedback_delay,play,stimuli[1]),\n   show_cross(),\n   moment(0.9s,play,stimuli[2]),\n   moment(0.1s + 0.3s,display,\n          \"Was the first [Q] or second sound [P] lower in pitch?\"),\n   resp,await_response(isresponse)]\nend\n\nexperiment = Experiment(\n  skip=trial_skip,\n  columns = [\n    :sid => sid,\n    :condition => \"example\",\n    :version => version,\n    :standard => standard_freq\n  ]\n)\n\nsetup(experimerntent) do\n  addbreak(moment(record,\"start\"))\n\n  addbreak(instruct(\"\"\"\n\n    On each trial, you will hear two beeps. Indicate which of the two beeps you\nheard was lower in pitch. Hit 'Q' if the first beep was lower, and 'P' if the\nsecond beep was lower.\n\"\"\"))\n\n  if adapt == :levitt\n    adapter = levitt_adapter(down=3,up=1,min_delta=0,max_delta=1,\n                             big=2,little=sqrt(2),mult=true)\n  else\n    adapter = bayesian_adapter(min_delta = 0,max_delta = 0.95)\n  end\n\n  @addtrials let a = adapter\n    for trial in 1:n_trials\n      addtrial(one_trial(a))\n    end\n\n    # define this string during experiment setup\n    # when we know what block we're on...\n\n    function threshold_report()\n      mean,sd = estimate(adapter)\n      thresh = round(mean,3)*standard_freq\n      thresh_sd = round(sd,3)*standard_freq\n\n      # define this string during run time when we know\n      # what the threshold estimate is.\n      \"Threshold $(thresh)Hz (SD: $thresh_sd)\\n\"*\n      \"Hit spacebar to continue...\"\n    end\n\n    addbreak(moment(display,threshold_report,clean_whitespace=false),\n             await_response(iskeydown(key\":space:\")))\n  end\n\nend\n\nrun(experimerntent)In what follows we'll walk through the parts of this code unique to creating an adaptive track. For more details on the basics of creating an experiment see Getting Started."
+    "text": "To use an adaptive track in your experiment, you need to make use of some of the advanced features of Weber. In this section we'll walk through the necessary steps, using a simple frequency discrimination experiment.In this experiment, on each trial, listeners hear a low and a high tone, separated in frequency by an adaptively adjusted delta. Their task is to indicate which tone is lower, and the delta is adjusted to determine the difference in frequency at which listeners respond with 79% accuracy. The entire example code is provided below. using Weber\n\nversion = v\"0.0.3\"\nsid,trial_skip,adapt = @read_args(\"Frequency Discrimination ($version).\",\n                                  adapt=[:levitt,:bayes])\n\nconst atten_dB = 30\nconst n_trials = 60\nconst feedback_delay = 750ms\n\nisresponse(e) = iskeydown(e,key\"p\") || iskeydown(e,key\"q\")\n\nconst standard_freq = 1kHz\nconst standard = @> tone(standard_freq,100ms) ramp attenuate(atten_dB)\n\nfunction one_trial(adapter)\n  first_lower = rand(Bool)\n  resp = response(adapter,key\"q\" => \"first_lower\",key\"p\" => \"second_lower\",\n                  correct=(first_lower ? \"first_lower\" : \"second_lower\"))\n\n  signal() = @> tone((1-delta(adapter))*standard_freq,100ms) begin\n    ramp\n    attenuate(atten_dB)\n  end\n  stimuli = first_lower? [signal,standard] : [standard,signal]\n\n  [moment(feedback_delay,play,stimuli[1]),\n   show_cross(),\n   moment(900ms,play,stimuli[2]),\n   moment(100ms + 300ms,display,\n          \"Was the first [Q] or second sound [P] lower in pitch?\"),\n   resp,await_response(isresponse)]\nend\n\nexperiment = Experiment(\n  skip=trial_skip,\n  columns = [\n    :sid => sid,\n    :condition => \"example\",\n    :version => version,\n    :standard => standard_freq\n  ]\n)\n\nsetup(experiment) do\n  addbreak(moment(record,\"start\"))\n\n  addbreak(instruct(\"\"\"\n\n    On each trial, you will hear two beeps. Indicate which of the two beeps you\nheard was lower in pitch. Hit 'Q' if the first beep was lower, and 'P' if the\nsecond beep was lower.\n\"\"\"))\n\n  if adapt == :levitt\n    adapter = levitt_adapter(down=3,up=1,min_delta=0,max_delta=1,\n                             big=2,little=sqrt(2),mult=true)\n  else\n    adapter = bayesian_adapter(min_delta = 0,max_delta = 0.95)\n  end\n\n  @addtrials let a = adapter\n    for trial in 1:n_trials\n      addtrial(one_trial(a))\n    end\n\n    function threshold_report()\n      mean,sd = estimate(adapter)\n      thresh = round(mean,3)*standard_freq\n      thresh_sd = round(sd,3)*standard_freq\n\n      # define this string during run time when we know\n      # what the threshold estimate is.\n      \"Threshold $(thresh)Hz (SD: $thresh_sd)\\n\"*\n      \"Hit spacebar to continue...\"\n    end\n\n    addbreak(moment(display,threshold_report,clean_whitespace=false),\n             await_response(iskeydown(key\":space:\")))\n  end\n\nend\n\nrun(experiment)In what follows we'll walk through the parts of this code unique to creating an adaptive track. For more details on the basics of creating an experiment see Getting Started."
 },
 
 {
@@ -349,7 +349,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Adaptive Tracks",
     "title": "Reporting the Threshold",
     "category": "section",
-    "text": "# define this string during experiment setup\n# when we know what block we're on...\n\nfunction threshold_report()\n  mean,sd = estimate(adapter)\n  thresh = round(mean,3)*standard_freq\n  thresh_sd = round(sd,3)*standard_freq\n\n  # define this string during run time when we know\n  # what the threshold estimate is.\n  \"Threshold $(thresh)Hz (SD: $thresh_sd)\\n\"*\n  \"Hit spacebar to continue...\"\nend\n\naddbreak(moment(display,threshold_report,clean_whitespace=false),\n         await_response(iskeydown(key\":space:\")))You can report the threshold at the end of an experiment using estimate, as above, but this isn't strictly necessary. The tricky part is to make sure you find the estimate after trials have been run (during run time)."
+    "text": "function threshold_report()\n  mean,sd = estimate(adapter)\n  thresh = round(mean,3)*standard_freq\n  thresh_sd = round(sd,3)*standard_freq\n\n  # define this string during run time when we know\n  # what the threshold estimate is.\n  \"Threshold $(thresh)Hz (SD: $thresh_sd)\\n\"*\n  \"Hit spacebar to continue...\"\nend\n\naddbreak(moment(display,threshold_report,clean_whitespace=false),\n         await_response(iskeydown(key\":space:\")))You can report the threshold at the end of an experiment using estimate, as above, but this isn't strictly necessary. The tricky part is to make sure you find the estimate after trials have been run (during run time)."
 },
 
 {
@@ -637,7 +637,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Trials",
     "title": "Weber.timeout",
     "category": "Function",
-    "text": "timeout(fn,isresponse,timeout,[atleast=0.0])\n\nThis moment starts when either isresponse evaluates to true or timeout time (in seconds) passes.\n\nThe isresponse function will be called anytime an event occurs. It should take one parameter (the event that just occured).\n\nIf the moment times out, the function fn (with no arguments) will be called.\n\nIf the response is provided before atleast seconds, the moment does not begin until atleast seconds (fn will not be called).\n\n\n\n"
+    "text": "timeout(fn,isresponse,timeout,[atleast=0s])\n\nThis moment starts when either isresponse evaluates to true or timeout time (in seconds) passes.\n\nThe isresponse function will be called anytime an event occurs. It should take one parameter (the event that just occured).\n\nIf the moment times out, the function fn (with no arguments) will be called.\n\nIf the response is provided before atleast seconds, the moment does not begin until atleast seconds (fn will not be called).\n\n\n\n"
 },
 
 {
@@ -789,7 +789,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Sound",
     "title": "Weber.audible",
     "category": "Function",
-    "text": "audible(fn,len=Inf,asseconds=true;[sample_rate=samplerate(),eltype=Float64])\n\nCreates monaural sound where fn(t) returns the amplitudes for a given Range of time points.\n\nIf asseconds is false, audible creates a monaural sound where fn(i) returns the amplitudes for a given Range of sample indices.\n\nThe function fn should always return elements of type eltype.\n\nIf an infinite length is specified, a stream is created rather than a sound.\n\nThe function fn need not be pure and it can be safely assumed that fn will only be called for a given range of indices once. While indices and times passed to fn normally begin from 0 and 1, respectively, this is not always the case.\n\n\n\n"
+    "text": "audible(fn,len=Inf,asseconds=true;[sample_rate=samplerate(),eltype=Float64])\n\nCreates monaural sound where fn(t) returns the amplitudes for a given Range of time points, value ranging between -1 and 1.\n\nIf asseconds is false, audible creates a monaural sound where fn(i) returns the amplitudes for a given Range of sample indices.\n\nThe function fn should always return elements of type eltype.\n\nIf an infinite length is specified, a stream is created rather than a sound.\n\nThe function fn need not be pure and it can be safely assumed that fn will only be called for a given range of indices once. While indices and times passed to fn normally begin from 1 and 0, respectively, this is not always the case.\n\n\n\n"
 },
 
 {
