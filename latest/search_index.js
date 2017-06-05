@@ -861,7 +861,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Sound",
     "title": "Weber.fadeto",
     "category": "Function",
-    "text": "fadeto(stream,channel=1,transition=0.05)\n\nA smooth transition from the currently playing stream to another stream.\n\n\n\nfadeto(sound1,sound2,overlap=0.05)\n\nA smooth transition from sound1 to sound2, overlapping the end of sound1 and the start of sound2 by overlap (in seconds).\n\n\n\n"
+    "text": "fadeto(stream,channel=1,transition=50ms)\n\nA smooth transition from the currently playing stream to another stream.\n\n\n\nfadeto(sound1,sound2,overlap=50ms)\n\nA smooth transition from sound1 to sound2, overlapping the end of sound1 and the start of sound2 by overlap (in seconds).\n\n\n\n"
 },
 
 {
