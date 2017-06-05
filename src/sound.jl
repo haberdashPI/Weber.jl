@@ -68,6 +68,11 @@ asstereo{R,T}(x::Sound{R,T,2}) = size(x,2) == 1 ? hcat(x.data,x.data) : x.data
 asmono{R,T}(x::Sound{R,T,1}) = x.data
 asmono{R,T}(x::Sound{R,T,2}) = squeeze(x.data,2)
 
+vcat(xs::Sound...) = error("Sample rates differ, fix with `resample`.")
+function vcat{R}(xs::Sound{R}...)
+  T = promote_type(map(eltype,xs)...)
+  vcat((map(el -> convert(T,el),x) for x in xs)...)
+end
 vcat{R,T}(xs::Sound{R,T,1}...) = Sound{R,T,1}(vcat(map(x -> x.data,xs)...))
 function vcat{R,T}(xs::Sound{R,T}...)
   if any(x -> nchannels(x) == 2,xs)

@@ -61,6 +61,9 @@ end
   @test same(sound("sounds/two_tone.wav"),
              [tone(1kHz,100ms);silence(800ms);tone(1kHz,100ms)])
   a,b = tone(1kHz,200ms),tone(2kHz,200ms)
+  @test [sound(zeros(10)); sound(zeros(Float32,10))[:,:]] ==
+           [sound(zeros(10,1)); sound(zeros(10,1))]
+  @test_throws ErrorException [sound(zeros(10)); sound(zeros(10);sample_rate=22050Hz)]
   @test leftright(a,b)[:,:left] == a
   @test leftright(a,b)[:,:right] == b
   @test size([tone(1kHz,0.2s); tone(2kHz,0.2s)],2) == 1
