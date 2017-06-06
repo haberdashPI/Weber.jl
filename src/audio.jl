@@ -335,7 +335,7 @@ function attenuate(x::Sound,atten_dB)
 	similar(x) .= 10^(-atten_dB/20) .* x ./ rms(x)
 end
 function attenuate(x::AbstractStream,atten_dB;time_constant=1s)
-	audiofn(soundop((x,y) -> x ./ y,x,rms(x,time_constant))) do x
+	audiofn(soundop((x,y) -> x ./ y,x,rms(deepcopy(x),time_constant))) do x
     10^(-atten_dB/20) .* x
   end
 end
