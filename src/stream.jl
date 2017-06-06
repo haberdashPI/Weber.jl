@@ -200,6 +200,20 @@ end
 asstream(x::AbstractArray) = Stream(x)
 asstream(x::AbstractStream) = x
 
+function *(x::Number,stream::Stream)
+  audiofn(stream) do stream
+    x * stream
+  end
+end
+
+function *(stream::Stream,x::Number)
+  audiofn(stream) do stream
+    x * stream
+  end
+end
+
+soundop(op,xs::AbstractStream...) =
+  error("Incompatible sample rates. Use `resample`.")
 soundop{R}(op,xs::Union{Audible{R},Array}...) = soundop(op,map(asstream,xs)...)
 soundop{R}(op,xs::AbstractStream{R}...) = reduce((x,y) -> soundop(op,x,y),xs)
 soundop(op,x::AbstractStream) = x

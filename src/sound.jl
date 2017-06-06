@@ -82,6 +82,16 @@ function vcat{R,T}(xs::Sound{R,T}...)
   end
 end
 
+function *(x::Number,y::Sound)
+  z = similar(y)
+  z .= x .* y
+end
+
+function *(y::Sound,x::Number)
+  z = similar(y)
+  z .= x .* y
+end
+
 """
     duration(x)
 
