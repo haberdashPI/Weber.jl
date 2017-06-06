@@ -67,7 +67,13 @@ mytone = tone(1kHz,10s)
 mytone[0s .. 5s]
 ```
 
-Furthermore, we can concatenate multiple sounds, to play them in sequence. The
+To represent the end of a sound using this special indexing, you can use `ends`. For instance, to get the last 5 seconds of `mysound` you can do the following.
+
+```julia
+mytone[5s .. ends]
+```
+
+We can concatenate multiple sounds, to play them in sequence. The
 following code plays two tones in sequence, with a 100 ms gap between them.
 
 ```julia
@@ -89,7 +95,7 @@ The functions [`left`](@ref) and [`right`](@ref) can also extract the left and r
 
 ## Streams
 
-In addition to the discrete sounds that have been discussed so far, Weber also supports sound streams. Streams are arbitrarily long: you need not decide when they should stop until after they start playing. All of the primitives described so far can apply to streams, except that streams cannot be indexed.
+In addition to the discrete sounds that have been discussed so far, Weber also supports sound streams. Streams are arbitrarily long: you need not decide when they should stop until after they start playing. All of the primitives described so far can apply to streams (including concatenation), except that streams cannot be indexed.
 
 !!! note "Streaming operations are lazy"
 
@@ -100,8 +106,7 @@ In addition to the discrete sounds that have been discussed so far, Weber also s
     parameter of [`setup_sound`](@ref), or consider an alternative approach
     (e.g. [`audible`](@ref)).
 
-To create a stream you can use one of the standard primitives, leaving out the
-length parameter. For example, the following will play a 1 kHz pure tone until Weber quits.
+To create a stream you can use one of the standard primitives, leaving out the length parameter. For example, the following will play a 1 kHz pure tone until Weber quits.
 
 ```julia
 addtrial(moment(play,tone(1kHz)))
@@ -144,9 +149,7 @@ addtrial(moment(play,ongoing_tone,channel=1),
 
 If you wish to turn the entirety of a finite stream into a sound, you can use [`sound`](@ref). You can also grab the next section of an infinite stream using [`sound`](@ref) if you provide a second parameter specifying the length of the stream you want to turn into a sound.
 
-Some manipulations of streams require that the stream be treated as a sound. You
-can modify individual sound segments as they play from the stream using
-[`audiofn`](@ref). (Calling [`audiofn`](@ref) on a sound, rather than a stream, is the same as applying the given function to the sound directly).
+Some manipulations of streams require that the stream be treated as a sound. You can modify individual sound segments as they play from the stream using [`audiofn`](@ref). (Calling [`audiofn`](@ref) on a sound, rather than a stream, is the same as applying the given function to the sound directly).
 
 ## Low-level Sound/Stream Generation
 
