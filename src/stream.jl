@@ -123,7 +123,7 @@ function vcat_helper{R,T}(a::AbstractStream{R,T},b::AbstractStream{R,T})
   end
 end
 function vcat_helper{R,T,S}(a::AbstractStream{R,T},b::AbstractStream{R,S})
-  error("Cannot concatenate different element types, convert to comment ",
+  error("Cannot concatenate different element types, convert to common ",
         "element type.")
   # doesn't quite work...
   # P = promote_type(T,S)
