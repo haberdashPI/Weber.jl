@@ -85,11 +85,6 @@ function tone(freq,len=Inf;sample_rate=samplerate(),phase=0.0)
           sample_rate=sample_rate)
 end
 
-# function next{R,N}(ts::ToneStream{R,N},i::Int)
-#   t = (ts.length*(i-1):ts.length*i-1) ./ R
-#   Sound{R}(tone_helper(t,ustrip(ts.freq),ts.phase,N == 2)), i+1
-# end
-
 function complex_cycle(f0,harmonics,amps,sample_rate_Hz,phases)
   @assert all(0 .<= phases) && all(phases .< 2π)
 	n = maximum(harmonics)+1
