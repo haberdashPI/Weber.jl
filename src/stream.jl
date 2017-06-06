@@ -87,22 +87,26 @@ function audible(fn::Function,len=Inf,asseconds=true;
   end
 end
 
-struct LimitStream{R,T} <: AbstractStream{R,T}
+mutable struct LimitStream{R,T} <: AbstractStream{R,T}
   data::AbstractStream{R,T}
-  n::Int
+  limit::Int
+  limit_start::Int
 end
-
-duration{R}(x::LimitStream{R}) = inseconds((x.n - index(x.data))*samples,R)
-nsamples(x::LimitStream) = x.n - index(x.data)
+duration{R}(x::LimitStream{R}) = inseconds(nsamples(x)*samples,R)
+nsamples(x::LimitStream) =
+  clamp(min(x.limit,(x.limit_start + x.limit) - index(x.data)),
+        0,nsamples(x.data))
 index(x::LimitStream) = index(x.data)
 index_ids(x::LimitStream) = index_ids(x.data)
-sound(ts::LimitStream,len::Int) = sound(ts.data,min(len,nsamples(ts)))
+function sound(ls::LimitStream,len::Int = typemax(Int))
+  ls.limit_start = index(ls)
+  sound(ls.data,min(len,nsamples(ls)))
+end
 right(x::LimitStream) = limit(right(x.data),n)
 left(x::LimitStream) = limit(left(x.data),n)
 
 limit{R}(stream::AbstractStream{R},len::Time) = limit(stream,insamples(len,R*Hz))
-limit{R,T}(s::AbstractStream{R,T},n::Int) = LimitStream{R,T}(s,n+index(s))
-limit{R,T}(s::LimitStream{R,T},n::Int) = LimitStream{R,T}(s.data,min(n+index(s),s.n))
+limit{R,T}(s::AbstractStream{R,T},n::Int) = LimitStream{R,T}(s,n,1)
 
 mutable struct CatStream{R,T} <: AbstractStream{R,T}
   a::AbstractStream{R,T}
@@ -157,14 +161,14 @@ function step_next{R,T}(x::CatStream{R,T},b::AbstractStream{R,T})
 end
 
 function sound(cs::CatStream,len::Int)
-  if nsamples(cs.a) >= len
-    sound(cs.a,len)
-  else
-    result = sound(cs.a)
-    result = [result; sound(cs.b,len - nsamples(result))]
+  first_part = sound(cs.a,len)
+  if nsamples(first_part) < len
     step_next(cs,cs.b)
+    result = [first_part; sound(cs,len - nsamples(first_part))]
 
     result
+  else
+    first_part
   end
 end
 
