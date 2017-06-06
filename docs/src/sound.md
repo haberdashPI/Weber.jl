@@ -6,6 +6,7 @@ tone
 noise
 silence
 harmonic_complex
+irn
 audible
 ```
 
