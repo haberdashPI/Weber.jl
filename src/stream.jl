@@ -232,6 +232,13 @@ soundop(op,xs::AbstractStream...) =
 soundop{R}(op,xs::Union{Audible{R},Array}...) = soundop(op,map(asstream,xs)...)
 soundop{R}(op,xs::AbstractStream{R}...) = reduce((x,y) -> soundop(op,x,y),xs)
 soundop(op,x::AbstractStream) = x
+function soundop{R,T,S}(op,x::AbstractStream{R,T},y::AbstractStream{R,S})
+  error("The streams have different element types, convert to a common, ",
+        "element type first.")
+  #P = promote_type(T,S)
+  #helper(x,_) = map(e -> convert(P,e),x)
+  #soundop(op,...
+end
 function soundop{R,T}(op,x::AbstractStream{R,T},y::AbstractStream{R,T})
   if x !== y && any(i ∈ index_ids(x) for i ∈ index_ids(y))
     error("Cannot combine two streams derrived from the same underlying ",
