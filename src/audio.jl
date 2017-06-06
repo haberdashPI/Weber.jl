@@ -59,7 +59,7 @@ function envelope(mult,length;sample_rate=samplerate())
 end
 
 """
-    noise(length=Inf;[sample_rate_Hz=44100],[rng=global RNG])
+    noise(length=Inf;[sample_rate_Hz=44100],[rng=RandomDevice()])
 
 Creates a period of white noise of the given length (in seconds).
 
