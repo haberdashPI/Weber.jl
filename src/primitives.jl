@@ -75,7 +75,7 @@ end
 
 """
     oddball_paradigm(trial_body_fn,n_oddballs,n_standards;
-                     lead=20,no_oddball_repeats=true)
+                     lead=20,n_standard_after_odball=1)
 
 Helper to generate trials for an oddball paradigm.
 
@@ -98,27 +98,33 @@ the following code sets up 20 oddball and 150 standard trials.
 
 * **lead**: determines the number of standards that repeat before any oddballs
   get presented
-* **no_oddball_repeats**: determines if at least one standard must occur
-  between each oddball (true) or not (false).
+* **oddball_spacing**: determines the number of standards after
+  an oddball that must occur before a new oddball can occur.
 """
-function oddball_paradigm(fn,n_oddballs,n_standards;lead=20,no_oddball_repeats=true)
+function oddball_paradigm(fn,n_oddballs,n_standards;lead=20,oddball_spacing=1)
+  min_standards = (oddball_spacing + 1) * n_oddballs
+  @assert min_standards < n_standards """
+  You need at least $min_standards to have $n_oddballs and $oddball_spacing
+  standards between each oddball.
+  """
+
   oddballs_left = n_oddballs
   standards_left = n_standards
-  oddball_n_stimuli = n_oddballs + n_standards
-  last_stim_odd = false
-  for trial in 1:oddball_n_stimuli
+  n_stimuli = n_oddballs + n_standards
+  n_last_standard = 0
+  map(1:n_stimuli) do trial
     stimuli_left = oddballs_left + standards_left
     oddball_chance = oddballs_left / (stimuli_left - n_oddballs)
 
     if (trial > lead &&
-        (!last_stim_odd || no_oddball_repeats) &&
+        n_last_standard >= oddball_spacing &&
         rand() < oddball_chance)
 
-      last_stim_odd = true
+      n_last_standard = 0
       oddballs_left -= 1
       fn(true)
     else
-      last_stim_odd = false
+      n_last_standard += 1
       standards_left -= 1
       fn(false)
     end
