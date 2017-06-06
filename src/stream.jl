@@ -3,6 +3,7 @@ import Base: eltype, isinf
 
 abstract type AbstractStream{R,T} end
 const Audible{R,T} = Union{Sound{R,T},AbstractStream{R,T}}
+stream(x::AbstractStream) = x
 
 samplerate{R}(s::AbstractStream{R}) = R*Hz
 eltype{R,T}(x::AbstractStream{R,T}) = T
@@ -13,6 +14,7 @@ struct Stream{R,T} <: AbstractStream{R,T}
   fn::Function
   index::Array{Int,0}
 end
+stream(x::Sound) = Stream(x)
 Stream{T}(R::Int,::Type{T},fn::Function) = Stream{R,T}(fn,Array{Int}() .= 1)
 
 duration(x::Stream) = Inf*s
@@ -107,13 +109,22 @@ mutable struct CatStream{R,T} <: AbstractStream{R,T}
   b::AbstractStream{R,T}
 end
 
-vcat{R,T}(xs::AbstractStream{R,T}...) = reduce(vcat,xs)
-function vcat{R,T}(a::AbstractStream{R,T},b::AbstractStream{R,T})
+vcat(xs::Audible...) = error("Sample rates differ, fix with `resample`")
+vcat{R}(xs::Audible{R}...) = reduce(vcat_helper,map(stream,xs))
+function vcat_helper{R,T}(a::AbstractStream{R,T},b::AbstractStream{R,T})
   if isinf(a)
     error("Connot concatenate to the end of an infinite stream")
   else
     CatStream{R,T}(a,b)
   end
+end
+function vcat_helper{R,T,S}(a::AbstractStream{R,T},b::AbstractStream{R,S})
+  error("Cannot concatenate different element types, convert to comment ",
+        "element type.")
+  # doesn't quite work...
+  # P = promote_type(T,S)
+  # helper(s) = map(e -> convert(P,e),s)
+  # vcat(helper(a),helper(b))
 end
 
 duration(x::CatStream) = duration(x.a) + duration(x.b)
