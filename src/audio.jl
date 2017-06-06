@@ -8,7 +8,7 @@ include(joinpath(dirname(@__FILE__),"playback.jl"))
 
 export mix, mult, silence, envelope, noise, highpass, lowpass, bandpass,
   bandstop, tone, ramp, harmonic_complex, attenuate, asstream,
-  rampon, rampoff, fadeto
+  rampon, rampoff, fadeto, irn
 
 """
     mix(x,y,...)
@@ -123,6 +123,41 @@ function harmonic_complex(f0,harmonics,amps,len=Inf;
   N = size(cycle,1)
   audible((i::UnitRange{Int}) -> cycle[(i.-1) .% N + 1],len,false,sample_rate=sample_rate)
 end
+
+"""
+    irn(n,λ,[length=Inf];[g=1],[sample_rate=samplerate()],
+                         [rng=Base.GLOBAL_RNG()])
+
+Creates an iterated ripple ``y_n(t)`` for a noise ``y_0(t)`` according to
+the following formula.
+
+``
+y_n(t) = y_{n-1}(t) + g⋅y_{n-1}(t-d)
+
+You can create an infinitely long IRN by passing a length of Inf, or leaving
+out the length entirely.
+
+!!! note "RNG must be reproduceable"
+
+    For the streaming implementation, the noise's RNG is copied to generate the
+    iterations, so copying this RNG must reliabley reproduce the same sequence
+    of noise.  This means you cannot use `RandomDevice`.
+``
+"""
+function irn(n,λ,length=Inf;g=1,sample_rate=samplerate(),rng=Base.GLOBAL_RNG)
+  irn_helper(noise(length,sample_rate=sample_rate,rng=rng),n,λ,g,rng)
+end
+
+function irn_helper(source,n,λ,g,rng)
+  if n == 0
+    source
+  else
+    irn_helper(mix(source,[silence(λ); g * source_again(source,rng)]),n-1,λ,g,rng)
+  end
+end
+
+source_again(source::Sound,rng) = source
+source_again(source::Stream,rng) = noise(rng=deepcopy(rng))
 
 """
     bandpass(x,low,high;[order=5])
