@@ -293,28 +293,23 @@ function rampoff_helper{R}(x::Audible{R},len::Int,after::Int)
 end
 
 """
-    fadeto(stream,channel=1,transition=50ms)
+    fadeto(a,b,[transition=50ms],[after=overlap])
 
-A smooth transition from the currently playing stream to another stream.
+A smooth transition from a to b, overlapping the end of one
+with the start of the other by `overlap`.
+
+For streams you can specify how long after the newly
+modified stream begins playing the transition should finish.
 """
-function fadeto(new::AbstractStream,channel::Int=1,transition=50ms)
-  old = streamon(channel)
-  if isnull(old)
-    rampon(new,transition)
-  else
-    mix(rampoff(get(old),transition),rampon(new,transition))
-  end
+function fadeto{R}(a::Sound{R},b::Sound{R},transition=50ms)
+  mix(rampoff(a,transition),
+      [silence(duration(a) - transition); rampon(b,transition)])
 end
 
-"""
-    fadeto(sound1,sound2,overlap=50ms)
-
-A smooth transition from sound1 to sound2, overlapping the end of sound1
-and the start of sound2 by `overlap` (in seconds).
-"""
-function fadeto{R}(a::Sound{R},b::Sound{R},overlap=50ms)
-  mix(rampoff(a,overlap),
-      [silence(duration(a) - overlap); rampon(b,overlap)])
+function fadeto(old::AbstractStream,new::AbstractStream,channel::Int=1,
+                transition=50ms,after=50ms)
+  mix(rampoff(old,transition,after),
+      [silence(after - transition); rampon(new,transition)])
 end
 
 """
