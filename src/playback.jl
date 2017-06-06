@@ -284,11 +284,11 @@ const num_channels = 8
 const streamers = Dict{Int,Streamer}()
 
 function streamon(channel::Int)
-  streamer = in_experiment() ? data(get_experiment()).streamers : streamers
-  if channel in streamer
-    Nullable{Stream}(streamer[channel])
+  the_streamers = in_experiment() ? data(get_experiment()).streamers : streamers
+  if channel in keys(the_streamers)
+    Nullable{AbstractStream}(the_streamers[channel].stream)
   else
-    Nullable{Stream}()
+    Nullable{AbstractStream}()
   end
 end
 
