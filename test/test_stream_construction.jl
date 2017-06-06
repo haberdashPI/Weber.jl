@@ -32,4 +32,11 @@ same(x,y) = isapprox(x,y,rtol=1e-6)
   @test @>(mix(a,deepcopy(b)),sound(500ms))[:] ==
     mix(@>(noise(rng=rng()),bandpass(200Hz,400Hz),sound(500ms)),
         @>(noise(rng=rng()),bandpass(500Hz,600Hz),sound(500ms)))[:]
+
+  @test ErrorException mult(tone(1kHz),sound(ones(Float32,10)))
+
+  a = tone(1kHz); b = tone(2kHz);
+  @test [silence(10ms); a] != nothing
+  @test fadeto(a,b) != nothing
+  @test (@> tone(1kHz) attenuate(20) sound(1)) != nothing
 end
