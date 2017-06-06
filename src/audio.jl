@@ -257,19 +257,19 @@ function rampon{R}(x::Audible{R},len=5ms)
 end
 
 """
-    rampoff(stream,[len=5ms],[after=0s])
+    rampoff(stream,[len=5ms],[after=len])
 
 Applies a half consine ramp to the end sound, or to a stream.
 
-For streams, you may specify how many seconds after the call to
-rampff the stream should end.
+For streams, you can specify how many seconds after the newly
+modified stream begins playing the rampoff should finish.
 """
 
 function rampoff{R}(x::Sound{R},len=5ms)
   rampoff_helper(x,insamples(len,R*Hz),nsamples(x))
 end
 
-function rampoff{R}(x::AbstractStream{R},len=5ms,after=0ms)
+function rampoff{R}(x::AbstractStream{R},len=5ms,after=len)
   rampoff_helper(x,insamples(len,R*Hz),insamples(after,R*Hz))
 end
 
