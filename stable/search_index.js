@@ -245,7 +245,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Stimulus Generation",
     "title": "Sounds are arrays",
     "category": "section",
-    "text": "Sounds are just a specific kind of array of real valued numbers. The amplitudes of a sound are represented as real numbers between -1 and 1 in sequence at a sampling rate specific to the sound's type. They can be manipulated in the same way that any array can be manipulated in Julia, with some additional support for indexing sounds using time units. For instance, to get the first 5 seconds of a sound you can do the following.mytone = tone(1kHz,10s)\nmytone[0s .. 5s]Furthermore, we can concatenate multiple sounds, to play them in sequence. The following code plays two tones in sequence, with a 100 ms gap between them.interval = [tone(400Hz,50ms); silence(100ms); tone(400Hz * 2^(5/12),50ms)]\naddtrial(moment(play,interval))"
+    "text": "Sounds are just a specific kind of array of real valued numbers. The amplitudes of a sound are represented as real numbers between -1 and 1 in sequence at a sampling rate specific to the sound's type. They can be manipulated in the same way that any array can be manipulated in Julia, with some additional support for indexing sounds using time units. For instance, to get the first 5 seconds of a sound you can do the following.mytone = tone(1kHz,10s)\nmytone[0s .. 5s]To represent the end of a sound using this special indexing, you can use ends. For instance, to get the last 5 seconds of mysound you can do the following.mytone[5s .. ends]We can concatenate multiple sounds, to play them in sequence. The following code plays two tones in sequence, with a 100 ms gap between them.interval = [tone(400Hz,50ms); silence(100ms); tone(400Hz * 2^(5/12),50ms)]\naddtrial(moment(play,interval))"
 },
 
 {
@@ -261,7 +261,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Stimulus Generation",
     "title": "Streams",
     "category": "section",
-    "text": "In addition to the discrete sounds that have been discussed so far, Weber also supports sound streams. Streams are arbitrarily long: you need not decide when they should stop until after they start playing. All of the primitives described so far can apply to streams, except that streams cannot be indexed.note: Streaming operations are lazy\nAll manipulations of streams are lazy: they are applied just as the stream is played. The more operators you apply to a stream the more processing that has to occur during playback. If you have a particularly complicated stream you may have to increase streaming latency by changing the stream_unit parameter of setup_sound, or consider an alternative approach (e.g. audible).To create a stream you can use one of the standard primitives, leaving out the length parameter. For example, the following will play a 1 kHz pure tone until Weber quits.addtrial(moment(play,tone(1kHz)))Streams always play on a specific stream channel, so if you want to stop the stream at some point you can request that the channel stop. The following plays a pure tone until the experiment participant hits spacebar.addtrial(moment(play,tone(1kHz),channel=1),\n         await_response(iskeydown(key\":space:\")),\n         moment(stop,1))Streams can be manipulated as they are playing as well, so if you wanted to have a ramp at the start and end of the stream to avoid clicks, you could change the example above, to the following.ongoing_tone = @> tone(1kHz) rampon\naddtrial(moment(play,ongoing_tone,channel=1),\n         await_response(iskeydown(key\":space:\")),\n         moment(play,rampoff(ongoing_tone),channel=1))warning: Streams are stateful\nThis example also demonstrates the stateful nature of streams. Once some part of a stream has been played it is forever consumed, and cannot be played again. After the stream is played, subsequent modifications only apply to unplayed frames of the stream. BEWARE: this means that you cannot play two different modifications of the same stream.Just as with any moment, these manipulations to streams can be precisely timed. The following will turn the sound off precisely 1 second after the space key is pressed.ongoing_tone = @> tone(1kHz) rampon\naddtrial(moment(play,ongoing_tone,channel=1),\n         await_response(iskeydown(key\":space:\")),\n         moment(1s,play,rampoff(ongoing_tone),channel=1))If you wish to turn the entirety of a finite stream into a sound, you can use sound. You can also grab the next section of an infinite stream using sound if you provide a second parameter specifying the length of the stream you want to turn into a sound.Some manipulations of streams require that the stream be treated as a sound. You can modify individual sound segments as they play from the stream using audiofn. (Calling audiofn on a sound, rather than a stream, is the same as applying the given function to the sound directly)."
+    "text": "In addition to the discrete sounds that have been discussed so far, Weber also supports sound streams. Streams are arbitrarily long: you need not decide when they should stop until after they start playing. All of the primitives described so far can apply to streams (including concatenation), except that streams cannot be indexed.note: Streaming operations are lazy\nAll manipulations of streams are lazy: they are applied just as the stream is played. The more operators you apply to a stream the more processing that has to occur during playback. If you have a particularly complicated stream you may have to increase streaming latency by changing the stream_unit parameter of setup_sound, or consider an alternative approach (e.g. audible).To create a stream you can use one of the standard primitives, leaving out the length parameter. For example, the following will play a 1 kHz pure tone until Weber quits.addtrial(moment(play,tone(1kHz)))Streams always play on a specific stream channel, so if you want to stop the stream at some point you can request that the channel stop. The following plays a pure tone until the experiment participant hits spacebar.addtrial(moment(play,tone(1kHz),channel=1),\n         await_response(iskeydown(key\":space:\")),\n         moment(stop,1))Streams can be manipulated as they are playing as well, so if you wanted to have a ramp at the start and end of the stream to avoid clicks, you could change the example above, to the following.ongoing_tone = @> tone(1kHz) rampon\naddtrial(moment(play,ongoing_tone,channel=1),\n         await_response(iskeydown(key\":space:\")),\n         moment(play,rampoff(ongoing_tone),channel=1))warning: Streams are stateful\nThis example also demonstrates the stateful nature of streams. Once some part of a stream has been played it is forever consumed, and cannot be played again. After the stream is played, subsequent modifications only apply to unplayed frames of the stream. BEWARE: this means that you cannot play two different modifications of the same stream.Just as with any moment, these manipulations to streams can be precisely timed. The following will turn the sound off precisely 1 second after the space key is pressed.ongoing_tone = @> tone(1kHz) rampon\naddtrial(moment(play,ongoing_tone,channel=1),\n         await_response(iskeydown(key\":space:\")),\n         moment(1s,play,rampoff(ongoing_tone),channel=1))If you wish to turn the entirety of a finite stream into a sound, you can use sound. You can also grab the next section of an infinite stream using sound if you provide a second parameter specifying the length of the stream you want to turn into a sound.Some manipulations of streams require that the stream be treated as a sound. You can modify individual sound segments as they play from the stream using audiofn. (Calling audiofn on a sound, rather than a stream, is the same as applying the given function to the sound directly)."
 },
 
 {
@@ -701,7 +701,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Trials",
     "title": "Weber.oddball_paradigm",
     "category": "Function",
-    "text": "oddball_paradigm(trial_body_fn,n_oddballs,n_standards;\n                 lead=20,no_oddball_repeats=true)\n\nHelper to generate trials for an oddball paradigm.\n\nThe trial_body_fn should setup stimulus presentation: it takes one argument, indicating if the stimulus should be a standard (false) or oddball (true) stimulus.\n\nIt is usually best to use oddball_paradigm with a do block syntax. For instance, the following code sets up 20 oddball and 150 standard trials.\n\noddball_paradigm(20,150) do isoddball\n  if isoddball\n    addtrial(...create oddball trial here...)\n  else\n    addtrial(...create standard trial here...)\n  end\nend\n\nKeyword arguments\n\nlead: determines the number of standards that repeat before any oddballs get presented\nno_oddball_repeats: determines if at least one standard must occur between each oddball (true) or not (false).\n\n\n\n"
+    "text": "oddball_paradigm(trial_body_fn,n_oddballs,n_standards;\n                 lead=20,n_standard_after_odball=1)\n\nHelper to generate trials for an oddball paradigm.\n\nThe trial_body_fn should setup stimulus presentation: it takes one argument, indicating if the stimulus should be a standard (false) or oddball (true) stimulus.\n\nIt is usually best to use oddball_paradigm with a do block syntax. For instance, the following code sets up 20 oddball and 150 standard trials.\n\noddball_paradigm(20,150) do isoddball\n  if isoddball\n    addtrial(...create oddball trial here...)\n  else\n    addtrial(...create standard trial here...)\n  end\nend\n\nKeyword arguments\n\nlead: determines the number of standards that repeat before any oddballs get presented\noddball_spacing: determines the number of standards after an oddball that must occur before a new oddball can occur.\n\n\n\n"
 },
 
 {
@@ -765,7 +765,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Sound",
     "title": "Weber.noise",
     "category": "Function",
-    "text": "noise(length=Inf;[sample_rate_Hz=44100],[rng=global RNG])\n\nCreates a period of white noise of the given length (in seconds).\n\nYou can create an infinite stream of noise by passing a length of Inf, or leaving out the length entirely.\n\n\n\n"
+    "text": "noise(length=Inf;[sample_rate_Hz=44100],[rng=RandomDevice()])\n\nCreates a period of white noise of the given length (in seconds).\n\nYou can create an infinite stream of noise by passing a length of Inf, or leaving out the length entirely.\n\n\n\n"
 },
 
 {
@@ -785,6 +785,14 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
+    "location": "sound/#Weber.irn",
+    "page": "Sound",
+    "title": "Weber.irn",
+    "category": "Function",
+    "text": "irn(n,λ,[length=Inf];[g=1],[sample_rate=samplerate()],\n                     [rng=Base.GLOBAL_RNG()])\n\nCreates an iterated ripple y_n(t) for a noise y_0(t) according to the following formula.\n\n`` y_n(t) = y_{n-1}(t) + g⋅y_{n-1}(t-d)\n\nYou can create an infinitely long IRN by passing a length of Inf, or leaving out the length entirely.\n\nnote: RNG must be reproduceable\nFor the streaming implementation, the noise's RNG is copied to generate the iterations, so copying this RNG must reliabley reproduce the same sequence of noise.  This means you cannot use RandomDevice.\n\n``\n\n\n\n"
+},
+
+{
     "location": "sound/#Weber.audible",
     "page": "Sound",
     "title": "Weber.audible",
@@ -797,7 +805,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Sound",
     "title": "Sound Creation",
     "category": "section",
-    "text": "sound\ntone\nnoise\nsilence\nharmonic_complex\naudible"
+    "text": "sound\ntone\nnoise\nsilence\nharmonic_complex\nirn\naudible"
 },
 
 {
@@ -853,7 +861,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Sound",
     "title": "Weber.rampoff",
     "category": "Function",
-    "text": "rampoff(stream,[len=5ms],[after=0s])\n\nApplies a half consine ramp to the end sound, or to a stream.\n\nFor streams, you may specify how many seconds after the call to rampff the stream should end.\n\n\n\n"
+    "text": "rampoff(stream,[len=5ms],[after=len])\n\nApplies a half consine ramp to the end sound, or to a stream.\n\nFor streams, you can specify how many seconds after the newly modified stream begins playing the rampoff should finish.\n\n\n\n"
 },
 
 {
@@ -861,7 +869,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Sound",
     "title": "Weber.fadeto",
     "category": "Function",
-    "text": "fadeto(stream,channel=1,transition=50ms)\n\nA smooth transition from the currently playing stream to another stream.\n\n\n\nfadeto(sound1,sound2,overlap=50ms)\n\nA smooth transition from sound1 to sound2, overlapping the end of sound1 and the start of sound2 by overlap (in seconds).\n\n\n\n"
+    "text": "fadeto(a,b,[transition=50ms],[after=overlap])\n\nA smooth transition from a to b, overlapping the end of one with the start of the other by overlap.\n\nFor streams you can specify how long after the newly modified stream begins playing the transition should finish.\n\n\n\n"
 },
 
 {
