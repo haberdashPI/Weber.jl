@@ -75,7 +75,7 @@ end
 
 """
     oddball_paradigm(trial_body_fn,n_oddballs,n_standards;
-                     lead=20,n_standard_after_odball=1)
+                     lead=20,n_standard_after_oddball=1,rng=Base.GLOBAL_RNG)
 
 Helper to generate trials for an oddball paradigm.
 
@@ -94,6 +94,14 @@ the following code sets up 20 oddball and 150 standard trials.
       end
     end
 
+Alternatively, because `oddball_paradigm` returns the result of each
+function call, you can pass the oddball paradigm as a series of moments
+to a single trial.
+
+    create_oddball_moment(isoddball) =
+      isoddball ? moment(...oddball...) : moment(...standard...)
+    addtrial(oddball_paradigm(create_oddball_moment,20,150))
+
 # Keyword arguments
 
 * **lead**: determines the number of standards that repeat before any oddballs
@@ -101,11 +109,13 @@ the following code sets up 20 oddball and 150 standard trials.
 * **oddball_spacing**: determines the number of standards after
   an oddball that must occur before a new oddball can occur.
 """
-function oddball_paradigm(fn,n_oddballs,n_standards;lead=20,oddball_spacing=1)
-  min_standards = (oddball_spacing + 1) * n_oddballs
-  @assert min_standards < n_standards """
-  You need at least $min_standards to have $n_oddballs and $oddball_spacing
-  standards between each oddball.
+function oddball_paradigm(fn,n_oddballs,n_standards;lead=20,oddball_spacing=1,
+                          rng=Base.GLOBAL_RNG)
+  min_standards = oddball_spacing * n_oddballs + lead
+  @assert min_standards <= n_standards """
+  You need at least $min_standards standards to have $n_oddballs oddballs
+  because you need $oddball_spacing standards between each oddball and a lead of
+  $lead standards.
   """
 
   oddballs_left = n_oddballs
@@ -113,12 +123,12 @@ function oddball_paradigm(fn,n_oddballs,n_standards;lead=20,oddball_spacing=1)
   n_stimuli = n_oddballs + n_standards
   n_last_standard = 0
   map(1:n_stimuli) do trial
-    stimuli_left = oddballs_left + standards_left
-    oddball_chance = oddballs_left / (stimuli_left - n_oddballs)
+    oddball_chance = oddballs_left / (n_stimuli - trial + 1 -
+                                      oddballs_left*oddball_spacing)
 
     if (trial > lead &&
         n_last_standard >= oddball_spacing &&
-        rand() < oddball_chance)
+        rand(rng) < oddball_chance)
 
       n_last_standard = 0
       oddballs_left -= 1

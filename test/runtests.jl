@@ -16,4 +16,5 @@ using Base.Iterators
   include("test_extensions.jl")
   include("test_sound_construction.jl")
   include("test_stream_construction.jl")
+  include("test_oddball.jl")
 end
