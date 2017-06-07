@@ -107,7 +107,7 @@ to a single trial.
 * **lead**: determines the number of standards that repeat before any oddballs
   get presented
 * **oddball_spacing**: determines the number of standards after
-  an oddball that must occur before a new oddball can occur.
+  an oddball that must occur before a new oddball can occur
 """
 function oddball_paradigm(fn,n_oddballs,n_standards;lead=20,oddball_spacing=1,
                           rng=Base.GLOBAL_RNG)
