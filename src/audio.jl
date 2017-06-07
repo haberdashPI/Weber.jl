@@ -126,7 +126,7 @@ end
 
 """
     irn(n,λ,[length=Inf];[g=1],[sample_rate=samplerate()],
-                         [rng=Base.GLOBAL_RNG()])
+                         [rng=Base.GLOBAL_RNG])
 
 Creates an iterated ripple ``y_n(t)`` for a noise ``y_0(t)`` according to
 the following formula.
