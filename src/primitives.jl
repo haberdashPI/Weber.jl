@@ -123,8 +123,9 @@ function oddball_paradigm(fn,n_oddballs,n_standards;lead=20,oddball_spacing=1,
   n_stimuli = n_oddballs + n_standards
   n_last_standard = 0
   map(1:n_stimuli) do trial
-    oddball_chance = oddballs_left / (n_stimuli - trial + 1 -
-                                      oddballs_left*oddball_spacing)
+    stimuli_left = n_stimuli - trial + 1
+    min_trials_for_oddballs = oddballs_left*oddball_spacing
+    oddball_chance = oddballs_left / (stimuli_left - min_trials_for_oddballs)
 
     if (trial > lead &&
         n_last_standard >= oddball_spacing &&
