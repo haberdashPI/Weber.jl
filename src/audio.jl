@@ -208,8 +208,8 @@ end
 
 function filter_helper(audible,low,high,kind,order)
   ftype = buildfilt(ustrip(samplerate(audible)),low,high,kind)
-	f = digitalfilter(ftype,Butterworth(order))
-  audiofn(x -> filt(f,x),audible)
+  f = digitalfilter(ftype,Butterworth(order))
+  audiofn(x -> DSP.filt(f,x),audible)
 end
 
 """
