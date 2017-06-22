@@ -1,5 +1,4 @@
 using DSP
-using Lazy
 using Unitful
 
 include(joinpath(dirname(@__FILE__),"sound.jl"))
