@@ -168,12 +168,15 @@ function current_sound_latency()
 end
 
 """
-    play(x;[channel=0])
+    play(x;[channel=0],[time=0s])
 
 Plays a sound (created via [`sound`](@ref)).
 
 For convenience, play can also can be called on any object that can be turned
 into a sound (via `sound`).
+
+If a time is specified, it indicates the amount of time since epoch that the
+sound should start playing (see [`precise_time`](@ref)).
 
 This function returns immediately with the channel the sound is playing on. You
 may provide a specific channel that the sound plays on: only one sound can be
@@ -391,7 +394,7 @@ function process(streamer::Streamer)
 end
 
 """
-    pause_sounds([channel],[isstream])
+    pause_sounds([channel],[isstream=false])
 
 Pause all sounds (or a stream) playing on a given channel.
 
@@ -407,7 +410,7 @@ function pause_sounds(channel=-1,isstream=false)
 end
 
 """
-    resume_sounds([channel],[isstream])
+    resume_sounds([channel],[isstream=false])
 
 Resume all sounds (or a stream) playing on a given channel.
 

@@ -132,6 +132,7 @@ the following formula.
 
 ``
 y_n(t) = y_{n-1}(t) + g⋅y_{n-1}(t-d)
+``
 
 You can create an infinitely long IRN by passing a length of Inf, or leaving
 out the length entirely.
@@ -141,7 +142,6 @@ out the length entirely.
     For the streaming implementation, the noise's RNG is copied to generate the
     iterations, so copying this RNG must reliabley reproduce the same sequence
     of noise.  This means you cannot use `RandomDevice`.
-``
 """
 function irn(n,λ,length=Inf;g=1,sample_rate=samplerate(),rng=Base.GLOBAL_RNG)
   irn_helper(noise(length,sample_rate=sample_rate,rng=rng),n,λ,g,rng)
