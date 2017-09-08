@@ -20,7 +20,7 @@ end
   function precise_time()
     x = Array{Int64}()
     if !ccall(:QueryPerformanceCounter,Bool,(Ptr{Int64},),pointer(x))
-      error("Unsupported operating system. Use Windows XP or alter.")
+      error("Unsupported operating system. Use Windows XP or later.")
     else
       x[] / windows_time_freq
     end
