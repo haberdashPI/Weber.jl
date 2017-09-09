@@ -789,7 +789,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Sound",
     "title": "Weber.irn",
     "category": "Function",
-    "text": "irn(n,λ,[length=Inf];[g=1],[sample_rate=samplerate()],\n                     [rng=Base.GLOBAL_RNG])\n\nCreates an iterated ripple y_n(t) for a noise y_0(t) according to the following formula.\n\n`` y_n(t) = y_{n-1}(t) + g⋅y_{n-1}(t-d)\n\nYou can create an infinitely long IRN by passing a length of Inf, or leaving out the length entirely.\n\nnote: RNG must be reproduceable\nFor the streaming implementation, the noise's RNG is copied to generate the iterations, so copying this RNG must reliabley reproduce the same sequence of noise.  This means you cannot use RandomDevice.\n\n``\n\n\n\n"
+    "text": "irn(n,λ,[length=Inf];[g=1],[sample_rate=samplerate()],\n                     [rng=Base.GLOBAL_RNG])\n\nCreates an iterated ripple y_n(t) for a noise y_0(t) according to the following formula.\n\ny_n(t) = y_n-1(t) + gy_n-1(t-d)\n\nYou can create an infinitely long IRN by passing a length of Inf, or leaving out the length entirely.\n\nnote: RNG must be reproduceable\nFor the streaming implementation, the noise's RNG is copied to generate the iterations, so copying this RNG must reliabley reproduce the same sequence of noise.  This means you cannot use RandomDevice.\n\n\n\n"
 },
 
 {
@@ -973,7 +973,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Sound",
     "title": "Weber.play",
     "category": "Function",
-    "text": "play(x;[channel=0])\n\nPlays a sound (created via sound).\n\nFor convenience, play can also can be called on any object that can be turned into a sound (via sound).\n\nThis function returns immediately with the channel the sound is playing on. You may provide a specific channel that the sound plays on: only one sound can be played per channel. Normally it is unecessary to specify a channel, because an appropriate channel is selected for you. However, pausing and resuming of sounds occurs on a per channel basis, so if you plan to pause a specific sound, you can do so by specifying its channel.\n\nStreams\n\nPlay can also be used to present a continuous stream of sound.  In this case, the channel defaults to channel 1 (there is no automatic selection of channels for streams). Streams are usually created by specifying an infinite length during sound generation using tone, noise, harmonic_complex or audible.\n\n\n\nplay(fn::Function)\n\nPlay the sound that's returned by calling fn.\n\n\n\n"
+    "text": "play(x;[channel=0],[time=0s])\n\nPlays a sound (created via sound).\n\nFor convenience, play can also can be called on any object that can be turned into a sound (via sound).\n\nIf a time is specified, it indicates the amount of time since epoch that the sound should start playing (see precise_time).\n\nThis function returns immediately with the channel the sound is playing on. You may provide a specific channel that the sound plays on: only one sound can be played per channel. Normally it is unecessary to specify a channel, because an appropriate channel is selected for you. However, pausing and resuming of sounds occurs on a per channel basis, so if you plan to pause a specific sound, you can do so by specifying its channel.\n\nStreams\n\nPlay can also be used to present a continuous stream of sound.  In this case, the channel defaults to channel 1 (there is no automatic selection of channels for streams). Streams are usually created by specifying an infinite length during sound generation using tone, noise, harmonic_complex or audible.\n\n\n\nplay(fn::Function)\n\nPlay the sound that's returned by calling fn.\n\n\n\n"
 },
 
 {
@@ -1029,7 +1029,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Sound",
     "title": "Weber.pause_sounds",
     "category": "Function",
-    "text": "pause_sounds([channel],[isstream])\n\nPause all sounds (or a stream) playing on a given channel.\n\nIf no channel is specified, then all sounds are paused.\n\n\n\n"
+    "text": "pause_sounds([channel],[isstream=false])\n\nPause all sounds (or a stream) playing on a given channel.\n\nIf no channel is specified, then all sounds are paused.\n\n\n\n"
 },
 
 {
@@ -1037,7 +1037,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Sound",
     "title": "Weber.resume_sounds",
     "category": "Function",
-    "text": "resume_sounds([channel],[isstream])\n\nResume all sounds (or a stream) playing on a given channel.\n\nIf no channel is specified, then all sounds are resumed.\n\n\n\n"
+    "text": "resume_sounds([channel],[isstream=false])\n\nResume all sounds (or a stream) playing on a given channel.\n\nIf no channel is specified, then all sounds are resumed.\n\n\n\n"
 },
 
 {
