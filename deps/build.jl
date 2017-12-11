@@ -14,8 +14,6 @@ end
 
 SDL2 = "UNKNOWN"
 SDL2_ttf = "UNKNOWN"
-weber_sound = "UNKNOWN"
-portaudio = "UNKNOWN"
 
 @static if is_windows()
   # WinRPM lacks SDL2_ttf and SDL2_mixer binaries, so I'm just directly
@@ -41,48 +39,15 @@ portaudio = "UNKNOWN"
   finally
     rm(downloaddir,recursive=true,force=true)
   end
-
-  weber_build = joinpath(dirname(@__FILE__),"build",
-                         "libweber-sound.$(weber_sound_version).dll")
-  weber_sound = joinpath(bindir,"libweber-sound.$(weber_sound_version).dll")
-  portaudio_build = joinpath(dirname(@__FILE__),"lib","portaudio_x64.dll")
-  portaudio = joinpath(bindir,"portaudio_x64.dll")
-  if isfile(weber_build)
-    info("Using Makefile generated libraries $weber_build and $portaudio_build.")
-    mv(weber_build,weber_sound)
-    mv(portaudio_build,portaudio)
-  else
-    download("http://haberdashpi.github.io/libweber-sound."*
-             "$(weber_sound_version).dll",weber_sound)
-    download("http://haberdashpi.github.io/portaudio_x64.dll",portaudio)
-  end
-
-  weber_sound = replace(weber_sound,"\\","\\\\")
-  portaudio = replace(portaudio,"\\","\\\\")
 elseif is_apple()
   using Homebrew
 
   Homebrew.add("sdl2")
   Homebrew.add("sdl2_ttf")
-  Homebrew.add("portaudio")
 
   prefix = joinpath(Homebrew.prefix(),"lib")
   SDL2 = joinpath(prefix,"libSDL2-2.0.0.dylib")
   SDL2_ttf = joinpath(prefix,"libSDL2_ttf-2.0.0.dylib")
-  portaudio = joinpath(prefix,"libportaudio.2.dylib")
-
-  weber_build = joinpath(dirname(@__FILE__),"build",
-                         "libweber-sound.$(weber_sound_version).dylib")
-  weber_sound = joinpath(bindir,"libweber-sound.$(weber_sound_version).dylib")
-  if isfile(weber_build)
-    info("Using Makefile generated library $weber_build.")
-    cp(weber_build,weber_sound)
-  else
-    original_path = "/usr/local/opt/portaudio/lib/libportaudio.2.dylib"
-    download("http://haberdashpi.github.io/libweber-sound."*
-             "$(weber_sound_version).dylib",weber_sound)
-    run(`install_name_tool -change $original_path $portaudio $weber_sound`)
-  end
 elseif is_linux()
     error("Weber does not support Linux. You can try manually installing ",
           "SDL2, SDL2_ttf and portaudio and then creating an appropriate ",
@@ -103,14 +68,10 @@ end
 
 @assert SDL2 != "UNKNOWN"
 @assert SDL2_ttf != "UNKNOWN"
-@assert portaudio != "UNKNOWN"
-@assert weber_sound != "UNKNOWN"
 
 deps = joinpath(dirname(@__FILE__),"deps.jl")
 open(deps,"w") do s
   for (var,val) in [:weber_SDL2 => SDL2,
-                    :weber_portaudio => portaudio,
-                    :weber_sound => weber_sound,
                     :weber_SDL2_ttf => SDL2_ttf]
     println(s,"const $var = \"$val\"")
   end

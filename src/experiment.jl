@@ -168,26 +168,32 @@ function Experiment(;skip=0,columns=Symbol[],debug=false,
                     extensions = Extension[],
                     width=exp_width,height=exp_height,
                     warn_on_trials_only = true)
-  if !isready(sound_setup_state) && !null_window
+  if !sound_is_setup() && !null_window
     setup_sound()
+    clear_sound_cache()
+    empty!(image_cache)
+    empty!(convert_cache)
   end
+  TimedSound.sound_setup_state.hooks = WeberSoundHooks()
+  TimedSound.sound_setup_state.cache = true
+
 
   if !(data_dir == nothing || hide_output)
     mkpath(data_dir)
   elseif !hide_output
-    warn(cleanstr("No directory specified for saving data. ALL DATA FROM THIS",
+    warn("No directory specified for saving data. ALL DATA FROM THIS",
                   " EXPERIMENT WILL BE LOST!!! Refer to the documentation for",
-                  "`Experiment`."))
+                  "`Experiment`.")
   end
 
   moment_resolution_s = ustrip(inseconds(moment_resolution))
   input_resolution_s = ustrip(inseconds(input_resolution))
   if moment_resolution_s < approx_timer_resolution
-    warn(cleanstr("The desired timing resolution of $moment_resolution ",
-                  "seconds is probably not achievable on your system. The ",
-                  "approximate minimum is $approx_timer_resolution seconds.",
-                  " Try changing the moment_resolution to a higher value (see ",
-                  "documentation for `Experiment`)."))
+    warn("The desired timing resolution of $moment_resolution "*
+                  "seconds is probably not achievable on your system. The "*
+                  "approximate minimum is $approx_timer_resolution seconds."*
+                  " Try changing the moment_resolution to a higher value (see "*
+                  "documentation for `Experiment`).")
   end
 
   meta = Dict{Symbol,Any}()
@@ -514,14 +520,6 @@ function process(exp::Experiment,queue::MomentQueue,event::ExpEvent)
   queue
 end
 
-function show_latency_warnings()
-  if in_experiment()
-    !info(get_experiment()).warn_on_trials_only || Weber.trial() > 0
-  else
-    true
-  end
-end
-
 roundstr(x,n=6) = x > 10.0^-n ? string(round(x,n)) : "≤1e-$n"
 function process(exp::Experiment,queue::MomentQueue,t::Float64)
   skip_offsets(exp,queue)
@@ -547,14 +545,14 @@ function process(exp::Experiment,queue::MomentQueue,t::Float64)
             warn_delta_t(moment) &&
             show_latency_warnings() &&
             !info(exp).hide_output)
-          warn(cleanstr(
+          warn(
             "Delivered a moment with a high latency ($(roundstr(latency))
              seconds). This often happens at the start of an experiment, but
              should rarely, if ever, occur throughout the experiment. To reduce
              latency, reduce the amount of slow code in moments, close programs,
              or run on a faster machine. Or, if this amount of latency is
              acceptable, you should increase `moment_resolution` when you call
-             `Experiment`.\nMoment: $moment \n\n")*moment_trace_string())
+             `Experiment`.\nMoment: $moment \n\n"*moment_trace_string())
           record("high_latency",value=latency)
         end
 

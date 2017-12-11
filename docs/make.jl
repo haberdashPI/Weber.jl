@@ -17,7 +17,6 @@ makedocs(
     "Reference" => Any[
       "Experiments" => "experiment.md",
       "Trials" => "trials.md",
-      "Sound" => "sound.md",
       "Video" => "video.md",
       "Events" => "event.md",
       "Extensions" => "extend_ref.md"

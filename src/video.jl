@@ -7,7 +7,7 @@ using Lazy: @>>
 using LRUCache
 
 import Base: display, close, +, convert, promote_rule, convert, push!,
-  filter!, length, collect, copy
+  filter!, length, collect, copy, clear_image_cache
 
  # importing solely to allow their use in user code
 import Colors: @colorant_str, RGB
@@ -542,6 +542,12 @@ end
 
 const convert_cache = LRU{UInt,Array{RGBA{N0f8}}}(256)
 const _image_cache = LRU{UInt,SDLImage}(256)
+
+function clear_image_cache()
+  empty!(convert_cache)
+  empty!(_imge_cache)
+end
+
 function image_cache(fn,usecache,x)
   if usecache
     get!(fn,_image_cache,object_id(x))
@@ -805,9 +811,9 @@ end
 
 function display(w::SDLWindow,r)
   if experiment_running()
-    warn(cleanstr("Visual was not precomputed! To minimize latency, call ",
-         "`x = visual(obj)` before running an experiment, then call",
-         " `display(x)` during the experiment."),moment_trace_string())
+    warn("Visual was not precomputed! To minimize latency* call "*
+         "`x = visual(obj)` before running an experiment* then call"*
+         " `display(x)` during the experiment.",moment_trace_string())
   end
   display(w,visual(w,r))
 end

@@ -1,33 +1,14 @@
 __precompile__()
 
 module Weber
+using TimedSound
 using Juno
 using Base.Iterators
 using MacroTools
 using Lazy: @>, @>>, @_
 export resize_cache!, @>, @>>, @_
 
-# helper function for clean info and warn output
-function cleanstr(strs...;width=70)
-  nlines = 0
-  ncolumns = 0
-  words = (w for str in strs for w in split(str,r"\s+"))
-  result = IOBuffer()
-  print(result,first(words))
-  for word in drop(words,1)
-    if ncolumns + length(word) > width
-      ncolumns = 0
-      nlines += 1
-      print(result,"\n")
-    else
-      ncolumns += length(word) + 1
-      print(result," ")
-    end
-
-    print(result,word)
-  end
-  String(take!(result))
-end
+# TODO: export all desired TimedSound functions
 
 try
   @assert Sys.WORD_SIZE == 64
@@ -42,9 +23,9 @@ try
 
   suffix = (success(`git diff-index HEAD --quiet`) ? "" : "-dirty")
   if !isempty(suffix)
-    warn(cleanstr("Source files in $(Pkg.dir("Weber")) have been modified",
-                  "without being committed to git. Your experiment will not",
-                  "be reproduceable."))
+    warn("Source files in $(Pkg.dir("Weber")) have been modified"*
+                  "without being committed to git. Your experiment will not"*
+                  "be reproduceable.")
   end
   global const version =
     convert(VersionNumber,chomp(readstring(`git describe --match 'v*' --tags`))*suffix)
@@ -52,15 +33,15 @@ catch
   try
     global const version = Pkg.installed("Weber")
     if !isempty(version.build)
-      warn(cleanstr("Source files do not correspond to an official release ",
-                    "of Weber. Your experiment will not be reproducable. ",
-                    "Consider installing git and adding it to your PATH to ",
-                    "record a more precise version number."))
+      warn("Source files do not correspond to an official release "*
+                    "of Weber. Your experiment will not be reproducable. "*
+                    "Consider installing git and adding it to your PATH to "*
+                    "record a more precise version number.")
     end
   catch
-    warn(cleanstr("The Weber version number could not be determined.",
-         "Your experiment will not be reproducable.",
-         "It is recommended that you install Weber via Pkg.add(\"Weber\")."))
+    warn("The Weber version number could not be determined."*
+         "Your experiment will not be reproducable."*
+         "It is recommended that you install Weber via Pkg.add(\"Weber\").")
   end
 finally
   cd(old)
@@ -96,16 +77,11 @@ export load, save
 const sdl_is_setup = Array{Bool}()
 sdl_is_setup[] = false
 
-const weber_sound_is_setup = Array{Bool}()
-weber_sound_is_setup[] = false
-
 include(joinpath(dirname(@__FILE__),"units.jl"))
 include(joinpath(dirname(@__FILE__),"timing.jl"))
 include(joinpath(dirname(@__FILE__),"video.jl"))
-include(joinpath(dirname(@__FILE__),"audio.jl"))
 
 function resize_cache!(size)
-  resize!(sound_cache,size)
   resize!(image_cache,size)
   resize!(convert_cache,size)
 end
