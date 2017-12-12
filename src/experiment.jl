@@ -171,7 +171,7 @@ function Experiment(;skip=0,columns=Symbol[],debug=false,
   if !sound_is_setup() && !null_window
     setup_sound()
     clear_sound_cache()
-    empty!(image_cache)
+    empty!(_image_cache)
     empty!(convert_cache)
   end
   TimedSound.sound_setup_state.hooks = WeberSoundHooks()
@@ -216,7 +216,7 @@ function Experiment(;skip=0,columns=Symbol[],debug=false,
   next_moment = 0.0
   pause_mode = Running
   moments = [MomentQueue()]
-  streamers = Dict{Int,Streamer}()
+  streamers = Dict{Int,TimedSound.Streamer}()
   last_good_delta = -1.0
   last_bad_delta = -1.0
   data = ExperimentData(offset,trial,skip,last_time,next_moment,trial_watcher,
@@ -428,7 +428,7 @@ function run{T <: BaseExperiment}(
       # if after all this processing there's still plenty of time left
       # then sleep for a little while. (pausing also sleeps the loop)
       new_tick = precise_time() - start
-      stream_len = ustrip(sound_setup_state.stream_unit/samplerate())
+      stream_len = ustrip(TimedSound.sound_setup_state.stream_unit/samplerate())
       if !flags(exp).running
         gc()
         sleep(sleep_amount)
@@ -543,7 +543,7 @@ function process(exp::Experiment,queue::MomentQueue,t::Float64)
 
         if (latency > info(exp).moment_resolution &&
             warn_delta_t(moment) &&
-            show_latency_warnings() &&
+            show_sound_latency_warnings() &&
             !info(exp).hide_output)
           warn(
             "Delivered a moment with a high latency ($(roundstr(latency))

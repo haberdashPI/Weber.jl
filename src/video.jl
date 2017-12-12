@@ -7,12 +7,13 @@ using Lazy: @>>
 using LRUCache
 
 import Base: display, close, +, convert, promote_rule, convert, push!,
-  filter!, length, collect, copy, clear_image_cache
+  filter!, length, collect, copy
 
  # importing solely to allow their use in user code
 import Colors: @colorant_str, RGB
 
-export visual, window, font, display, close, @colorant_str, RGB
+export visual, window, font, display, close, @colorant_str, RGB,
+  clear_image_cache
 
 @static if is_windows()
   const font_dirs = [".",joinpath(ENV["WINDIR"],"fonts")]

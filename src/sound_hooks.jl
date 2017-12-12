@@ -1,13 +1,18 @@
-struct WeberSoundHooks
+struct WeberSoundHooks <: TimedSound.Hooks
 end
 
 function TimedSound.show_latency_warnings(::WeberSoundHooks)
+  show_sound_latency_warnings()
+end
+
+function show_sound_latency_warnings()
   if in_experiment()
     !info(get_experiment()).warn_on_trials_only || Weber.trial() > 0
   else
     true
   end
 end
+
 
 function TimedSound.on_play(::WeberSoundHooks)
   if in_experiment() && !experiment_running()

@@ -14,7 +14,5 @@ using Base.Iterators
   include("test_record_columns.jl")
   include("test_moment_checks.jl")
   include("test_extensions.jl")
-  include("test_sound_construction.jl")
-  include("test_stream_construction.jl")
   include("test_oddball.jl")
 end

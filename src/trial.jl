@@ -371,10 +371,10 @@ function moment(delta_t::Number,::PlayFunction,fn::Function;channel=0)
   PlayFunctionMoment(ustrip(inseconds(delta_t)),fn,channel,stacktrace()[2:end])
 end
 
-const StreamFunction = typeof(stream)
-function moment(delta_t::Number,::StreamFunction,itr,channel::Int)
-  StreamMoment(ustrip(inseconds(delta_t)),itr,channel,stacktrace()[2:end])
-end
+# const StreamFunction = typeof(TimedSound.stream)
+# function moment(delta_t::Number,::StreamFunction,itr,channel::Int)
+#   StreamMoment(ustrip(inseconds(delta_t)),itr,channel,stacktrace()[2:end])
+# end
 
 const DisplayFunction = typeof(display)
 function moment(delta_t::Number,::DisplayFunction,x;keys...)
@@ -525,7 +525,7 @@ end
 
 function prepare!(m::PlayMoment,onset_s::Float64)
   if !isinf(onset_s)
-    play_(m.sound,onset_s,m.channel)
+    TimedSound.play_(m.sound,onset_s,m.channel)
   else
     m.prepared = true
   end
@@ -533,7 +533,7 @@ end
 
 function prepare!(m::PlayFunctionMoment,onset_s::Float64)
   if !isinf(onset_s)
-    play_(playable(m.fn()),onset_s,m.channel)
+    TimedSound.play_(playable(m.fn()),onset_s,m.channel)
   else
     m.prepared = Nullable(playable(m.fn()))
   end
@@ -549,13 +549,13 @@ run(exp,q,m::DisplayFunctionMoment) = display(win(exp),get(m.visual))
 function run(exp,q,m::PlayMoment)
   if m.prepared
     m.prepared = false
-    play_(m.sound,0.0,m.channel)
+    TimedSound.play_(m.sound,0.0,m.channel)
   end
 end
 
 function run(exp,q,m::PlayFunctionMoment)
   if !isnull(m.prepared)
-    play_(get(m.prepared),0.0,m.channel)
+    TimedSound.play_(get(m.prepared),0.0,m.channel)
     m.prepared = Nullable()
   end
 end
@@ -600,12 +600,12 @@ function handle(exp::Experiment,q::MomentQueue,
   true
 end
 
-function handle(exp::Experiment,q::MomentQueue,
-                moment::StreamMoment,time::Float64)
-  stream(moment.itr,moment.channel)
-  dequeue!(q)
-  true
-end
+# function handle(exp::Experiment,q::MomentQueue,
+#                 moment::StreamMoment,time::Float64)
+#   stream(moment.itr,moment.channel)
+#   dequeue!(q)
+#   true
+# end
 
 function handle(exp::Experiment,q::MomentQueue,
                 moment::AbstractTimedMoment,event::ExpEvent)

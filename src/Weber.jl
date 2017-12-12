@@ -2,13 +2,19 @@ __precompile__()
 
 module Weber
 using TimedSound
+using Unitful
 using Juno
 using Base.Iterators
 using MacroTools
 using Lazy: @>, @>>, @_
 export resize_cache!, @>, @>>, @_
 
-# TODO: export all desired TimedSound functions
+export sound, tone, noise, silence, harmonic_complex, irn, audible, highpass,
+  lowpass, bandpass, bandstop, ramp, rampon, rampoff, fadeto, attenuate, mix,
+  mult, envelope, duration, nchannels, nsamples, audiofn, leftright, left,
+  right, play, setup_sound , playable, resample, stop, samplerate,
+  current_sound_latency, pause_sounds, resume_sounds, ..,
+  ms, s, kHz, Hz, samples
 
 try
   @assert Sys.WORD_SIZE == 64
@@ -23,8 +29,8 @@ try
 
   suffix = (success(`git diff-index HEAD --quiet`) ? "" : "-dirty")
   if !isempty(suffix)
-    warn("Source files in $(Pkg.dir("Weber")) have been modified"*
-                  "without being committed to git. Your experiment will not"*
+    warn("Source files in $(Pkg.dir("Weber")) have been modified "*
+                  "without being committed to git. Your experiment will not "*
                   "be reproduceable.")
   end
   global const version =
@@ -39,8 +45,8 @@ catch
                     "record a more precise version number.")
     end
   catch
-    warn("The Weber version number could not be determined."*
-         "Your experiment will not be reproducable."*
+    warn("The Weber version number could not be determined. "*
+         "Your experiment will not be reproducable. "*
          "It is recommended that you install Weber via Pkg.add(\"Weber\").")
   end
 finally
@@ -77,28 +83,28 @@ export load, save
 const sdl_is_setup = Array{Bool}()
 sdl_is_setup[] = false
 
-include(joinpath(dirname(@__FILE__),"units.jl"))
-include(joinpath(dirname(@__FILE__),"timing.jl"))
-include(joinpath(dirname(@__FILE__),"video.jl"))
+include(joinpath(@__DIR__,"timing.jl"))
+include(joinpath(@__DIR__,"video.jl"))
 
 function resize_cache!(size)
   resize!(image_cache,size)
   resize!(convert_cache,size)
 end
 
-include(joinpath(dirname(@__FILE__),"types.jl"))
-include(joinpath(dirname(@__FILE__),"event.jl"))
-include(joinpath(dirname(@__FILE__),"trial.jl"))
-include(joinpath(dirname(@__FILE__),"experiment.jl"))
+include(joinpath(@__DIR__,"types.jl"))
+include(joinpath(@__DIR__,"sound_hooks.jl"))
+include(joinpath(@__DIR__,"event.jl"))
+include(joinpath(@__DIR__,"trial.jl"))
+include(joinpath(@__DIR__,"experiment.jl"))
 
-include(joinpath(dirname(@__FILE__),"primitives.jl"))
-include(joinpath(dirname(@__FILE__),"helpers.jl"))
-include(joinpath(dirname(@__FILE__),"adaptive.jl"))
+include(joinpath(@__DIR__,"primitives.jl"))
+include(joinpath(@__DIR__,"helpers.jl"))
+include(joinpath(@__DIR__,"adaptive.jl"))
 
-include(joinpath(dirname(@__FILE__),"precompile.jl"))
+include(joinpath(@__DIR__,"precompile.jl"))
 
-include(joinpath(dirname(@__FILE__),"extension_macro.jl"))
-include(joinpath(dirname(@__FILE__),"extensions.jl"))
+include(joinpath(@__DIR__,"extension_macro.jl"))
+include(joinpath(@__DIR__,"extensions.jl"))
 
 const localunits = Unitful.basefactors
 const localpromotion = Unitful.promotion

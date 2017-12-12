@@ -459,7 +459,7 @@ moment_trace(m::OffsetStartMoment) = m.trace
 
 mutable struct PlayMoment <: AbstractTimedMoment
   delta_t::Float64
-  sound::Sound
+  sound::TimedSound.Sound
   channel::Int
   trace::StackTrace
   prepared::Bool
@@ -475,7 +475,7 @@ mutable struct PlayFunctionMoment <: AbstractTimedMoment
   fn::Function
   channel::Int
   trace::StackTrace
-  prepared::Nullable{Sound}
+  prepared::Nullable{TimedSound.Sound}
 end
 PlayFunctionMoment(d,f,c,t) = PlayFunctionMoment(d,f,c,t,Nullable())
 delta_t(m::PlayFunctionMoment) = m.delta_t
@@ -703,7 +703,7 @@ mutable struct ExperimentData
   trial_watcher::Function
   pause_mode::Int
   moments::Array{MomentQueue,1}
-  streamers::Dict{Int,Streamer}
+  streamers::Dict{Int,TimedSound.Streamer}
   last_good_delta::Float64
   last_bad_delta::Float64
 end
