@@ -15,6 +15,13 @@ Weber is a [Julia](http://julialang.org/) package that can be used to generate
 simple psychology experiments that present visual and auditory stimuli at
 precise times.
 
+## Plans
+
+This project is undergoing some major refactoring as I move the sound and image
+related functionality out into more modular, generic packages. The stable
+release should work just fine on Julia 0.5 and 0.6. I'll slowly be working on a
+new version of this once I get the visual and auditory packages finished.
+
 # Installation
 
     julia> Pkg.add("Weber")
