@@ -19,8 +19,8 @@ precise times.
 
 This project is undergoing some major refactoring as I move the sound and image
 related functionality out into more modular, generic packages. The stable
-release should work just fine on Julia 0.5 and 0.6. I'll slowly be working on a
-new version of this once I get the visual and auditory packages finished.
+release should work just fine on Julia 0.5 and 0.6 (Julia 0.7 should work soon). I'll slowly be working on a
+new version once I get the visual and auditory packages finished.
 
 # Installation
 
