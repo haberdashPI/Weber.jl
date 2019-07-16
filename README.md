@@ -1,5 +1,5 @@
 # Weber
-[![Project Status: Active - The project has reached a stable, usable state and is being actively developed.](http://www.repostatus.org/badges/latest/active.svg)](http://www.repostatus.org/#active)
+[![Project Status: Unsupported – The project has reached a stable, usable state but the author(s) have ceased all work on it. A new maintainer may be desired.](https://www.repostatus.org/badges/latest/unsupported.svg)](https://www.repostatus.org/#unsupported)
 [![Build status](https://ci.appveyor.com/api/projects/status/uvxq5mqlq0p2ap02/branch/master?svg=true)](https://ci.appveyor.com/project/haberdashPI/weber-jl/branch/master)
 [![TravisCI Status](https://travis-ci.org/haberdashPI/Weber.jl.svg?branch=master)](https://travis-ci.org/haberdashPI/Weber.jl)
 [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://haberdashPI.github.io/Weber.jl/stable)
@@ -17,10 +17,10 @@ precise times.
 
 ## Plans
 
-This project is undergoing some major refactoring as I move the sound and image
-related functionality out into more modular, generic packages. The stable
-release should work just fine on Julia 0.5 and 0.6 (Julia 0.7 should work soon). I'll slowly be working on a
-new version once I get the visual and auditory packages finished.
+While this is working on older versions of Julia (0.6), I have not had time to
+commit to updating this project as I am not actively developing any
+psychoacoustics experiments at the moment. I will probably pick up work on this
+at some future date, but I don't yet know when that will be.
 
 # Installation
 
