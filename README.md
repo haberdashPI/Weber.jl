@@ -19,8 +19,7 @@ precise times.
 
 While this is working on older versions of Julia (0.6), I have not had time to
 commit to updating this project as I am not actively developing any
-psychoacoustics experiments at the moment. I will probably pick up work on this
-at some future date, but I don't yet know when that will be.
+psychoacoustics experiments at the moment. I would not recommend using this package as is. It might be a useful place to start if you want to write your own package.
 
 # Installation
 
